@@ -31,6 +31,7 @@ public class Messages
    * @param key
    * @return
    */
+  @SuppressWarnings("squid:S1166") // Not sure if this is even used, so we'll just ignore the exceptions
   public static String getString(String key)
   {
     try

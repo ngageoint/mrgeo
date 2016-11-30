@@ -91,6 +91,7 @@ public class ServletUtils
    * @param image image bytes
    * @throws IOException
    */
+  @SuppressWarnings("squid:S1166") // Exception caught and handled
   public static void writeImageToResponse(HttpServletResponse response, byte[] image)
       throws IOException
     {

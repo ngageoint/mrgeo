@@ -20,6 +20,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
+import org.mrgeo.services.mrspyramid.MrsPyramidServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,10 +59,10 @@ MrsPyramidService service;
  * @return A list of color scale file paths
  * @throws IOException If an error occurs while accessing the file system.
  */
+@SuppressWarnings("squid:S00112") // just passing through from getColorScales
 @GET
 @Produces(MediaType.APPLICATION_JSON)
-public ColorScaleList get()
-    throws Exception
+public ColorScaleList get() throws Exception
 {
   log.info("Retrieving color scales file list...");
 
@@ -95,7 +96,7 @@ public Response getColorScaleSwatch(@PathParam("path") String colorScalePath,
 
     return service.getImageResponseWriter(format).write(ri).build();
   } catch (Exception ex) {
-    ex.printStackTrace();
+    log.error("Exception thrown {}", ex);
     return Response.status(Status.BAD_REQUEST).entity("Color scale file not found: " + colorScalePath).build();
   }
 }
@@ -212,8 +213,10 @@ public Response getColorScaleLegend(@PathParam("name") String name,
         .entity(html.toString())
         .header("Content-Type", "text/html")
         .build();
-  } catch (Exception ex) {
-    log.error("Color scale file not found: " + name, ex);
+  }
+  catch (MrsPyramidServiceException e)
+  {
+    log.error("Color scale file not found: " + name, e);
     return Response.status(Status.BAD_REQUEST).entity("Color scale not found: " + name).build();
   }
 }

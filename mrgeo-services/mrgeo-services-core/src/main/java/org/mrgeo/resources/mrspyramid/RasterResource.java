@@ -105,8 +105,7 @@ public Response createMapAlgebraJob(@PathParam("output") String outputId,
 //      return Response.status(Status.ACCEPTED).entity(jr).build();
     return Response.status(Status.ACCEPTED).build();
   } catch (Exception e) {
-    throw new WebApplicationException(
-        Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build() );
+    throw new WebApplicationException(e, Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build());
   }
 }
 
@@ -214,6 +213,7 @@ public Response getImage(@PathParam("output") String imgName,
     }
     catch (Exception e)
     {
+      log.error("Exception thrown {}", e);
       return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
     }
 
@@ -289,6 +289,7 @@ public Response getImage(@PathParam("output") String imgName,
     }
   }
   catch (FileNotFoundException fnfe) {
+    log.error("Exception thrown {}", fnfe);
     return Response.status(Status.NOT_FOUND).entity(fnfe.getMessage()).build();
   }
   catch (Exception e)

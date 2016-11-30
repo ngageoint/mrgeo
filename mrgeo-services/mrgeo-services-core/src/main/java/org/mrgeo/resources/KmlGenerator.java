@@ -62,7 +62,7 @@ import java.util.zip.ZipOutputStream;
 public class KmlGenerator
 {
 
-public class KmlGeneratorException extends java.lang.Exception
+public static class KmlGeneratorException extends java.lang.Exception
 {
 
   /**
@@ -399,6 +399,7 @@ public Element createTextElement(Element parent, String tagName, String text)
   return e;
 }
 
+@SuppressWarnings("squid:S1148") // We _are_ printing the exception, to a printwriter!
 @SuppressFBWarnings(value = {"SERVLET_QUERY_STRING",
     "SERVLET_PARAMETER"}, justification = "1) QueryString only checked for not null, 2) SERVICE & REQUEST validated")
 // @GET

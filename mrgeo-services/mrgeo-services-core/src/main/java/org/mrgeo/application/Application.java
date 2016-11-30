@@ -73,7 +73,6 @@ public class Application extends javax.ws.rs.core.Application
                 System.out.println("Unable to access to instantiate " + clz.getSimpleName() + ": " + e.getMessage());
             } catch (Exception e) {
                 System.out.println("Error instantiating " + clz.getSimpleName() + ": " + e.getMessage());
-                e.printStackTrace();
             }
         }
         return retval;

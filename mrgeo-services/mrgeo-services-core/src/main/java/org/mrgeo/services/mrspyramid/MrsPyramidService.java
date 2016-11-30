@@ -16,6 +16,7 @@
 
 package org.mrgeo.services.mrspyramid;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -62,26 +63,51 @@ public MrsPyramidService(Properties configuration) {
 
 public JobManager getJobManager() { return jobManager; }
 
-public ColorScale getColorScaleFromName(String colorScaleName) throws Exception {
-  return ColorScaleManager.fromName(colorScaleName, config);
-}
-
-public ColorScale getColorScaleFromJSON(String colorScaleJSON) throws Exception {
-  return ColorScaleManager.fromJSON(colorScaleJSON);
-}
-
-public List<String> getColorScales() throws Exception
+public ColorScale getColorScaleFromName(String colorScaleName) throws MrsPyramidServiceException
 {
-  ColorScale[] colorScales = ColorScaleManager.getColorScaleList();
-  List<String> result = new ArrayList<>(colorScales.length);
-  for (ColorScale cs : colorScales)
+  try
   {
-    result.add(cs.getName());
+    return ColorScaleManager.fromName(colorScaleName, config);
   }
-  return result;
+  catch (ColorScale.ColorScaleException e)
+  {
+    throw new MrsPyramidServiceException(e);
+  }
 }
 
-public MrGeoRaster createColorScaleSwatch(String name, String format, int width, int height) throws IOException
+public ColorScale getColorScaleFromJSON(String colorScaleJSON) throws MrsPyramidServiceException
+{
+  try
+  {
+    return ColorScaleManager.fromJSON(colorScaleJSON);
+  }
+  catch (ColorScale.ColorScaleException e)
+  {
+    throw new MrsPyramidServiceException(e);
+  }
+
+}
+
+public List<String> getColorScales() throws MrsPyramidServiceException
+{
+  try
+  {
+    ColorScale[] colorScales = ColorScaleManager.getColorScaleList();
+    List<String> result = new ArrayList<>(colorScales.length);
+    for (ColorScale cs : colorScales)
+    {
+      result.add(cs.getName());
+    }
+    return result;
+  }
+  catch (IOException e)
+  {
+    throw new MrsPyramidServiceException(e);
+  }
+}
+
+public MrGeoRaster createColorScaleSwatch(String name, String format, int width, int height)
+    throws MrsPyramidServiceException
 {
   ColorScale cs = null;
   try
@@ -92,11 +118,12 @@ public MrGeoRaster createColorScaleSwatch(String name, String format, int width,
   catch (Exception e)
   {
     log.error("Exception thrown {}", e);
-    throw new IOException("Error creating color scale " + name, e);
+    throw new MrsPyramidServiceException("Error creating color scale " + name, e);
   }
 }
 
-public MrGeoRaster createColorScaleSwatch(ColorScale cs, String format, int width, int height) throws IOException
+public MrGeoRaster createColorScaleSwatch(ColorScale cs, String format, int width, int height)
+    throws MrsPyramidServiceException
 {
   double[] extrema = {0, 0};
 
@@ -133,31 +160,63 @@ public MrGeoRaster createColorScaleSwatch(ColorScale cs, String format, int widt
   }
   catch (Exception e)
   {
-    throw new IOException("Error creating color scale swatch", e);
+    throw new MrsPyramidServiceException("Error creating color scale swatch", e);
   }
 }
 
-public boolean isZoomLevelValid(String pyramid,
-    ProviderProperties providerProperties,
-    int zoomLevel) throws IOException
+public boolean isZoomLevelValid(String pyramid, ProviderProperties providerProperties, int zoomLevel)
+    throws MrsPyramidServiceException
 {
-  MrsPyramid mp = getPyramid(pyramid, providerProperties);
-  return (mp.getMetadata().getName(zoomLevel) != null);
+  try
+  {
+    MrsPyramid mp = getPyramid(pyramid, providerProperties);
+    return (mp.getMetadata().getName(zoomLevel) != null);
+  }
+  catch (IOException e)
+  {
+    throw new MrsPyramidServiceException(e);
+  }
+
 }
 
-public ImageRenderer getImageRenderer(String format) throws Exception {
-  return (ImageRenderer)ImageHandlerFactory.getHandler(format, ImageRenderer.class);
+public ImageRenderer getImageRenderer(String format) throws MrsPyramidServiceException
+{
+  try
+  {
+    return (ImageRenderer) ImageHandlerFactory.getHandler(format, ImageRenderer.class);
+  }
+  catch (Exception e)
+  {
+    throw new MrsPyramidServiceException(e);
+  }
 }
 
-public MrGeoRaster applyColorScaleToImage(String format, MrGeoRaster result, ColorScale cs, ImageRenderer renderer, double[] extrema) throws Exception {
-  ColorScaleApplier applier = (ColorScaleApplier)ImageHandlerFactory.getHandler(format,
-      ColorScaleApplier.class);
+public MrGeoRaster applyColorScaleToImage(String format, MrGeoRaster result, ColorScale cs,
+    ImageRenderer renderer, double[] extrema) throws MrsPyramidServiceException
+{
+  try
+  {
+    ColorScaleApplier applier = (ColorScaleApplier) ImageHandlerFactory.getHandler(format,
+        ColorScaleApplier.class);
 
-  return applier.applyColorScale(result, cs, extrema, renderer.getDefaultValues());
+    return applier.applyColorScale(result, cs, extrema, renderer.getDefaultValues());
+  }
+  catch (Exception e)
+  {
+    throw new MrsPyramidServiceException(e);
+  }
 }
 
-public ImageResponseWriter getImageResponseWriter(String format) throws Exception {
-  return (ImageResponseWriter)ImageHandlerFactory.getHandler(format, ImageResponseWriter.class);
+public ImageResponseWriter getImageResponseWriter(String format) throws MrsPyramidServiceException
+{
+  try
+  {
+    return (ImageResponseWriter) ImageHandlerFactory.getHandler(format, ImageResponseWriter.class);
+  }
+  catch (Exception e)
+  {
+    throw new MrsPyramidServiceException(e);
+  }
 }
 
 public Response renderKml(String pyramidPathStr, Bounds bounds, int width, int height, ColorScale cs,
@@ -184,30 +243,38 @@ public Properties getConfig() { return config; }
 //        throw new IOException("No writer found for format [" + format + "]");
 //    }
 
-public byte[] getEmptyTile(int width, int height, String format) throws Exception
+public byte[] getEmptyTile(int width, int height, String format) throws MrsPyramidServiceException
 {
   //return an empty image
 
-  ImageResponseWriter writer = getImageResponseWriter(format);
-  ByteArrayOutputStream baos = new ByteArrayOutputStream();
+  try
+  {
+    ImageResponseWriter writer = getImageResponseWriter(format);
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-  int bands;
-  double[] nodatas;
-  if (format.equalsIgnoreCase("jpg") || format.equalsIgnoreCase("jpeg") )
-  {
-    bands = 3;
-    nodatas = new double[]{0.0,0.0,0.0};
-  } else
-  {
-    bands = 4;
-    nodatas = new double[]{0.0,0.0,0.0,0.0};
+    int bands;
+    double[] nodatas;
+    if (format.equalsIgnoreCase("jpg") || format.equalsIgnoreCase("jpeg"))
+    {
+      bands = 3;
+      nodatas = new double[]{0.0, 0.0, 0.0};
+    }
+    else
+    {
+      bands = 4;
+      nodatas = new double[]{0.0, 0.0, 0.0, 0.0};
+    }
+
+    MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, bands, DataBuffer.TYPE_BYTE, nodatas);
+    writer.writeToStream(raster, nodatas, baos);
+    byte[] imageData = baos.toByteArray();
+    IOUtils.closeQuietly(baos);
+    return imageData;
   }
-
-  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, bands, DataBuffer.TYPE_BYTE, nodatas);
-  writer.writeToStream(raster, nodatas, baos);
-  byte[] imageData = baos.toByteArray();
-  IOUtils.closeQuietly(baos);
-  return imageData;
+  catch (MrsPyramidServiceException | IOException e)
+  {
+    throw new MrsPyramidServiceException(e);
+  }
 
 }
 
@@ -221,18 +288,32 @@ public String getContentType(String format) {
  * @param imgName pyramid name to retrieve metadata for
  * @return String metadata for pyramid
  */
-public String getMetadata(String imgName) throws IOException
+public String getMetadata(String imgName) throws MrsPyramidServiceException
 {
-  MrsPyramid pyramid = MrsPyramid.open(imgName,
-      SecurityUtils.getProviderProperties());
-  ObjectMapper mapper = new ObjectMapper();
-  return mapper.writeValueAsString(pyramid.getMetadata());
+  try
+  {
+    MrsPyramid pyramid = MrsPyramid.open(imgName,
+        SecurityUtils.getProviderProperties());
+    ObjectMapper mapper = new ObjectMapper();
+    return mapper.writeValueAsString(pyramid.getMetadata());
+  }
+  catch (IOException e)
+  {
+    throw new MrsPyramidServiceException(e);
+  }
 }
 
 public MrsPyramid getPyramid(String name,
-    ProviderProperties providerProperties) throws IOException
+    ProviderProperties providerProperties) throws MrsPyramidServiceException
 {
-  return MrsPyramid.open(name, providerProperties);
+  try
+  {
+    return MrsPyramid.open(name, providerProperties);
+  }
+  catch (IOException e)
+  {
+    throw new MrsPyramidServiceException(e);
+  }
 }
 
 public String formatValue(Double value, String units) {
@@ -277,17 +358,4 @@ public String formatElapsedTime(Double elapsedTime) {
   return StringUtils.join(output, ":");
 }
 
-/**
- * Ingest raster stream in-memory
- *
- * @param input stream containing the raster to ingest
- * @param output pyramid name ingest raster to
- * @return Boolean success status of ingest
- */
-public String ingestImage(InputStream input, String output,
-    String protectionLevel,
-    ProviderProperties providerProperties) throws Exception {
-  log.error("Ingest image to " + output + " failed.");//e);
-  return null;
-}
 }
