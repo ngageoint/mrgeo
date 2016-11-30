@@ -57,12 +57,11 @@ MrsPyramidService service;
  * string list member variable here instead.
  *
  * @return A list of color scale file paths
- * @throws IOException If an error occurs while accessing the file system.
+ * @throws MrsPyramidServiceException If an error occurs while accessing the file system.
  */
-@SuppressWarnings("squid:S00112") // just passing through from getColorScales
 @GET
 @Produces(MediaType.APPLICATION_JSON)
-public ColorScaleList get() throws Exception
+public ColorScaleList get() throws MrsPyramidServiceException
 {
   log.info("Retrieving color scales file list...");
 
@@ -95,8 +94,10 @@ public Response getColorScaleSwatch(@PathParam("path") String colorScalePath,
     MrGeoRaster ri = service.createColorScaleSwatch(colorScalePath, format, width, height);
 
     return service.getImageResponseWriter(format).write(ri).build();
-  } catch (Exception ex) {
-    log.error("Exception thrown {}", ex);
+  }
+  catch (MrsPyramidServiceException e)
+  {
+    log.error("Exception thrown {}", e);
     return Response.status(Status.BAD_REQUEST).entity("Color scale file not found: " + colorScalePath).build();
   }
 }
