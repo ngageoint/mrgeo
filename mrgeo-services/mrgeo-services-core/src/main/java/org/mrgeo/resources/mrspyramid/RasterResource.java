@@ -23,7 +23,9 @@ import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.mapalgebra.MapAlgebraJob;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
+import org.mrgeo.services.mrspyramid.MrsPyramidServiceException;
 import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
+import org.mrgeo.services.mrspyramid.rendering.ImageRendererException;
 import org.mrgeo.services.mrspyramid.rendering.TiffImageRenderer;
 import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
@@ -39,6 +41,7 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Providers;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 
 //import org.mrgeo.services.mrspyramid.MrsPyramidService;
 
@@ -84,29 +87,24 @@ public Response createMapAlgebraJob(@PathParam("output") String outputId,
     @QueryParam("protectionLevel") @DefaultValue("") String protectionLevel,
     String expression)
 {
-  try
-  {
-    getService();
-    // TODO: After MrsPyramid 2.0 is complete, we will no longer specify a
-    // full path but instead just the resource name. This is because there is no concept of
-    // paths in Accumulo.
+  getService();
+  // TODO: After MrsPyramid 2.0 is complete, we will no longer specify a
+  // full path but instead just the resource name. This is because there is no concept of
+  // paths in Accumulo.
 //      String outputPathStr = service.getOutputImageStr(basePath, outputId);
-    // TODO: Need to construct provider properties from the WebRequest using
-    // a new security layer and pass those properties to MapAlgebraJob.
-    MapAlgebraJob job = new MapAlgebraJob(expression, outputId,
-        protectionLevel, SecurityUtils.getProviderProperties());
-    service.getJobManager().submitJob("MapAlgebra job " + outputId, job);
+  // TODO: Need to construct provider properties from the WebRequest using
+  // a new security layer and pass those properties to MapAlgebraJob.
+  MapAlgebraJob job = new MapAlgebraJob(expression, outputId,
+      protectionLevel, SecurityUtils.getProviderProperties());
+  service.getJobManager().submitJob("MapAlgebra job " + outputId, job);
 //      long jobId = service.getJobManager().submitJob("MapAlgebra job " + outputId, job);
 //      String jobUri = uriInfo.getBaseUri().toString() + "job/";
 //      jobUri = HttpUtil.updateSchemeFromHeaders(jobUri, request);
-    // TODO: Revisit the response whenever we re-think how job status reporting
-    // will work within Spark.
+  // TODO: Revisit the response whenever we re-think how job status reporting
+  // will work within Spark.
 //      JobInfoResponse jr = JobResponseFormatter.createJobResponse(service.getJobManager().getJob(jobId), jobUri);
 //      return Response.status(Status.ACCEPTED).entity(jr).build();
-    return Response.status(Status.ACCEPTED).build();
-  } catch (Exception e) {
-    throw new WebApplicationException(e, Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build());
-  }
+  return Response.status(Status.ACCEPTED).build();
 }
 
   /*
@@ -173,49 +171,41 @@ public Response getImage(@PathParam("output") String imgName,
     @QueryParam("zoom-level") @DefaultValue("-1") int zoomLevel)
 {
   String error;
+  String[] bBoxValues = bbox.split(",");
+  if (bBoxValues.length != 4)
+  {
+    return Response.status(Status.BAD_REQUEST)
+        .entity("Bounding box must have four comma delimited arguments.").build();
+  }
+  double minX = Double.valueOf(bBoxValues[0]);
+  double minY = Double.valueOf(bBoxValues[1]);
+  double maxX = Double.valueOf(bBoxValues[2]);
+  double maxY = Double.valueOf(bBoxValues[3]);
+
+  Bounds bounds = new Bounds(minX, minY, maxX, maxY);
+
+  ColorScale cs = null;
+
+  getService();
   try
   {
-    String[] bBoxValues = bbox.split(",");
-    if (bBoxValues.length != 4)
+    if (colorScaleName != null)
     {
-      return Response.status(Status.BAD_REQUEST)
-          .entity("Bounding box must have four comma delimited arguments.").build();
+      if (colorScale != null)
+      {
+        return Response.status(Status.BAD_REQUEST)
+            .entity("Only one of ColorScale or ColorScaleName can be specified.").build();
+      }
+      cs = service.getColorScaleFromName(colorScaleName);
     }
-    double minX = Double.valueOf(bBoxValues[0]);
-    double minY = Double.valueOf(bBoxValues[1]);
-    double maxX = Double.valueOf(bBoxValues[2]);
-    double maxY = Double.valueOf(bBoxValues[3]);
-
-    Bounds bounds = new Bounds(minX, minY, maxX, maxY);
-
-    ColorScale cs = null;
-
-    getService();
-    try
+    else if (colorScale != null)
     {
-      if (colorScaleName != null)
-      {
-        if (colorScale != null)
-        {
-          return Response.status(Status.BAD_REQUEST)
-              .entity("Only one of ColorScale or ColorScaleName can be specified.").build();
-        }
-        cs = service.getColorScaleFromName(colorScaleName);
-      }
-      else if (colorScale != null)
-      {
-        cs = service.getColorScaleFromJSON(colorScale);
-      }
+      cs = service.getColorScaleFromJSON(colorScale);
+    }
 //        else
 //        {
 //          cs = service.getColorScaleFromPyramid(imgName);
 //        }
-    }
-    catch (Exception e)
-    {
-      log.error("Exception thrown {}", e);
-      return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
-    }
 
     if ( zoomLevel != -1 )
     {
@@ -292,12 +282,11 @@ public Response getImage(@PathParam("output") String imgName,
     log.error("Exception thrown {}", fnfe);
     return Response.status(Status.NOT_FOUND).entity(fnfe.getMessage()).build();
   }
-  catch (Exception e)
+  catch (ImageRendererException | MrsPyramidServiceException | IOException e)
   {
-    error = e.getMessage();
-    log.error("Unable to retrieve image " + e.getMessage(), e);
+    log.error("Exception thrown {}", e);
+    return Response.serverError().entity(e.getMessage()).build();
   }
-  return Response.serverError().entity(error).build();
 }
 
 private void getService()
