@@ -79,7 +79,7 @@ public Response.ResponseBuilder write(final MrGeoRaster raster)
 
     return response;
   }
-  catch (final Exception e)
+  catch (IOException e)
   {
     log.error("Exception thrown {}", e);
     if (e.getMessage() != null)
@@ -87,9 +87,7 @@ public Response.ResponseBuilder write(final MrGeoRaster raster)
       return Response.serverError().entity(e.getMessage());
     }
     return Response.serverError().entity("Internal Error");
-
   }
-
 }
 
 @Override

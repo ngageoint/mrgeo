@@ -133,7 +133,7 @@ public MrGeoRaster createColorScaleSwatch(ColorScale cs, String format, int widt
 
     if (width > height)
     {
-      extrema[1] = width - 1;
+      extrema[1] = width - 1.0;
       for (int w = 0; w < width; w++)
       {
         for (int h = 0; h < height; h++)
@@ -144,7 +144,7 @@ public MrGeoRaster createColorScaleSwatch(ColorScale cs, String format, int widt
     }
     else
     {
-      extrema[1] = height - 1;
+      extrema[1] = height - 1.0;
       for (int h = 0; h < height; h++)
       {
         for (int w = 0; w < width; w++)
