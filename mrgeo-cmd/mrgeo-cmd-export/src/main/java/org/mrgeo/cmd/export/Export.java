@@ -188,14 +188,14 @@ private boolean saveSingleTile(final String output, final String pyramidName, fi
     log.info("no raster!");
 
   }
-  catch (final Exception e)
+  catch (IOException e)
   {
-    e.printStackTrace();
+    log.error("Exception thrown {}", e);
   }
   return false;
 }
 
-private MrGeoRaster colorRaster(MrsImage image, String format, MrGeoRaster raster) throws Exception
+private MrGeoRaster colorRaster(MrsImage image, String format, MrGeoRaster raster)
 {
   final ColorScaleApplier applier;
   switch (format)
@@ -211,7 +211,15 @@ private MrGeoRaster colorRaster(MrsImage image, String format, MrGeoRaster raste
     break;
   }
 
-  raster = applier.applyColorScale(raster, colorscale, image.getExtrema(), image.getMetadata().getDefaultValues());
+  try
+  {
+    raster = applier.applyColorScale(raster, colorscale, image.getExtrema(), image.getMetadata().getDefaultValues());
+  }
+  catch (Exception e)
+  {
+    log.error("Exception thrown {}", e);
+  }
+
   return raster;
 }
 
@@ -277,14 +285,15 @@ private boolean saveMultipleTiles(String output, String pyramidName, String form
     System.out.println("Wrote output to " + out);
     return true;
   }
-  catch (final Exception e)
+  catch (IOException e)
   {
-    e.printStackTrace();
+    log.error("Exception thrown {}", e);
   }
   return false;
 }
 
 @Override
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 public int run(final String[] args, Configuration conf, ProviderProperties providerProperties)
 {
   log.info("Export");
@@ -520,7 +529,7 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
   }
   catch (ColorScale.ColorScaleException | IOException e)
   {
-    e.printStackTrace();
+    log.error("Exception thrown {}", e);
   }
 
   return -1;

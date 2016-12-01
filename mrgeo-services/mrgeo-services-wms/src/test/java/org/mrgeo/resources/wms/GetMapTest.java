@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.Response;
 
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // Test code, not included in production
 public class GetMapTest extends WmsGeneratorTestAbstract
 {
   private static final Logger log = LoggerFactory.getLogger(GetMapTest.class);

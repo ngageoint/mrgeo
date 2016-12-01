@@ -30,15 +30,16 @@ import org.mrgeo.mapalgebra.parser.ParserException
 import org.mrgeo.test.{MapOpTestUtils, LocalRunnerTest}
 import org.scalatest.junit.AssertionsForJUnit
 
+@SuppressWarnings(Array("all")) // Test code, not included in production
 object ConvertMapOpTest
 {
   def EPSILON = 1e-8
   def SAMPLED_EPSILON = 1.0
-  def allHundredsName: String = "all-hundreds"
+  def allHundredsName = "all-hundreds"
   var allHundreds: String = Defs.INPUT + allHundredsName
-  var allHundredsPath: Path = null
+  var allHundredsPath:Path = _
 
-  var testUtils: MapOpTestUtils = null
+  var testUtils:MapOpTestUtils = _
 
   @BeforeClass
   def init()

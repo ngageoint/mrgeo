@@ -42,14 +42,22 @@ private static final Logger log = LoggerFactory.getLogger(PngColorScaleApplier.c
  */
 @Override
 public MrGeoRaster applyColorScale(final MrGeoRaster raster, ColorScale colorScale, final double[] extrema,
-    final double[] defaultValues) throws Exception
+    final double[] defaultValues) throws ColorScale.ColorScaleException
 {
-  MrGeoRaster colored = MrGeoRaster.createEmptyRaster(raster.width(), raster.height(), raster.bands() == 3 ? 3 : 4, DataBuffer.TYPE_BYTE);
-  colored.fill(RasterUtils.getDefaultNoDataForType(DataBuffer.TYPE_BYTE));
+  try
+  {
+    MrGeoRaster colored = MrGeoRaster
+        .createEmptyRaster(raster.width(), raster.height(), raster.bands() == 3 ? 3 : 4, DataBuffer.TYPE_BYTE);
+    colored.fill(RasterUtils.getDefaultNoDataForType(DataBuffer.TYPE_BYTE));
 
-  setupExtrema(colorScale, extrema, defaultValues[0]);
-  apply(raster, colored, colorScale);
-  return colored;
+    setupExtrema(colorScale, extrema, defaultValues[0]);
+    apply(raster, colored, colorScale);
+    return colored;
+  }
+  catch (MrGeoRaster.MrGeoRasterException e)
+  {
+    throw new ColorScale.ColorScaleException(e);
+  }
 }
 
 @Override

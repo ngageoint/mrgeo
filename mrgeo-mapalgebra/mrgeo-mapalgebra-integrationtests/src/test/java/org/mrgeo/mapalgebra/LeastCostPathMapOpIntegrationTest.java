@@ -43,7 +43,7 @@ import java.io.InputStreamReader;
 import java.util.HashSet;
 import java.util.Set;
 
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // Test code, not included in production
 public class LeastCostPathMapOpIntegrationTest extends LocalRunnerTest
 {
 private static MapOpTestUtils testUtils;

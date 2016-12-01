@@ -231,6 +231,7 @@ public static boolean isSourceShapefile(Path source)
   return false;
 }
 
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 public static boolean canOpen(final Configuration conf, String input,
     final ProviderProperties providerProperties) throws IOException
 {
@@ -316,6 +317,7 @@ private static Path resolveName(final Configuration conf, final String input,
   throw new IOException("Invalid image: " + input);
 }
 
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "method only makes complete URI out of the name")
 private static Path resolveNameToPath(final Configuration conf, final String input,
     final ProviderProperties providerProperties, final boolean mustExist) throws IOException

@@ -19,6 +19,7 @@ package org.mrgeo.mapalgebra.vector.paint;
 import org.mrgeo.geometry.*;
 import org.mrgeo.geometry.Point;
 import org.mrgeo.geometry.Polygon;
+import org.mrgeo.utils.FloatUtils;
 import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,13 +44,13 @@ private static final Logger log = LoggerFactory.getLogger(GeometryPainter.class)
 
 // Image bounds is in pixels and should not be confused with the world bounds.
 // Rectangle bounds;
-Graphics2D gr;
+private Graphics2D gr;
 
-WritableRaster raster;
+private WritableRaster raster;
 
-Color fillColor;
-Color backgroundColor;
-AffineTransform transform = new AffineTransform();
+private Color fillColor;
+private Color backgroundColor;
+private AffineTransform transform = new AffineTransform();
 
 public GeometryPainter(final Graphics2D gr, final WritableRaster raster, final Color fillColor,
     final Color backgroundColor)
@@ -229,7 +230,7 @@ public void paintEllipse(Point center, double major, double minor, double orient
 
   transform.transform(new Point2D.Double(center.getX(), center.getY()), dst);
 
-  if (orientation != 0.0)
+  if (!FloatUtils.isEqual(orientation, 0.0))
   {
     gr.rotate(-orientation, dst.getX(), dst.getY());
   }
@@ -238,7 +239,7 @@ public void paintEllipse(Point center, double major, double minor, double orient
   gr.fill(ellipse);
 
   // rotate back
-  if (orientation != 0.0)
+  if (!FloatUtils.isEqual(orientation, 0.0))
   {
     gr.rotate(orientation, dst.getX(), dst.getY());
   }

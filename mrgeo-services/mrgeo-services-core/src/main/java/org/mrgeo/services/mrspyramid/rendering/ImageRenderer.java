@@ -28,6 +28,7 @@ import org.mrgeo.utils.tms.Bounds;
  */
 public interface ImageRenderer
 {
+
 /**
  * Returns the default value used in the source raster data
  *
@@ -70,10 +71,10 @@ boolean outputIsTransparent();
  * @return rendered image
  */
 MrGeoRaster renderImage(String pyramidName, Bounds bounds, int width, int height, ProviderProperties providerProperties,
-    String epsg) throws Exception;
+    String epsg) throws ImageRendererException;
 
 MrGeoRaster renderImage(String pyramidName, Bounds bounds, ProviderProperties providerProperties, String epsg)
-    throws Exception;
+    throws ImageRendererException;
 
 /**
  * GetTile implementation
@@ -89,21 +90,21 @@ MrGeoRaster renderImage(String pyramidName, Bounds bounds, ProviderProperties pr
  * @return rendered image
  */
 MrGeoRaster renderImage(String pyramidName, int tileColumn, int tileRow, double scale,
-    ProviderProperties providerProperties) throws Exception;
+    ProviderProperties providerProperties) throws ImageRendererException;
 
 MrGeoRaster renderImage(String pyramidName, int tileColumn, int tileRow, double scale,
     String maskName, double maskMax,
-    ProviderProperties providerProperties) throws Exception;
+    ProviderProperties providerProperties) throws ImageRendererException;
 
 MrGeoRaster renderImage(String pyramidName, int tileColumn, int tileRow, double scale,
-    String maskName, ProviderProperties providerProperties) throws Exception;
+    String maskName, ProviderProperties providerProperties) throws ImageRendererException;
 
 MrGeoRaster renderImage(String pyramidName, int tileColumn, int tileRow, int zoom,
-    ProviderProperties providerProperties) throws Exception;
+    ProviderProperties providerProperties) throws ImageRendererException;
 
 MrGeoRaster renderImage(String pyramidName, int tileColumn, int tileRow, int zoom, String maskName,
-    double maskMax, ProviderProperties providerProperties) throws Exception;
+    double maskMax, ProviderProperties providerProperties) throws ImageRendererException;
 
 MrGeoRaster renderImage(String pyramidName, int tileColumn, int tileRow, int zoom, String maskName,
-    final ProviderProperties providerProperties) throws Exception;
+    final ProviderProperties providerProperties) throws ImageRendererException;
 }

@@ -31,6 +31,7 @@ import org.mrgeo.image.MrsPyramidMetadata.Classification;
 import java.io.*;
 
 @Ignore
+@SuppressWarnings("all") // Test code, not included in production
 public class AccumuloMrsPyramidMetadataReaderTest
 {
 

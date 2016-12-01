@@ -33,7 +33,7 @@ import java.io.IOException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // Test code, not included in production
 public class ImageFormatTypeVariantsTest extends WmsGeneratorTestAbstract
 {
   private static final Logger log = LoggerFactory.getLogger(ImageFormatTypeVariantsTest.class);

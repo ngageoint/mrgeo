@@ -38,6 +38,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 
+@SuppressWarnings("all") // Test code, not included in production
 public class AccumuloGeoTableTest
 {
 	

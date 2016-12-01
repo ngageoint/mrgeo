@@ -55,6 +55,7 @@ import java.util.concurrent.ExecutionException;
 
 import static org.mockito.Mockito.*;
 
+@SuppressWarnings("all") // Test code, not included in production
 public class TileMapServiceResourceIntegrationTest extends JerseyTest
 {
 private static final Logger log = LoggerFactory.getLogger(TileMapServiceResourceIntegrationTest.class);

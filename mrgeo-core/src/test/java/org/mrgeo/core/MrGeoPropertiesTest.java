@@ -12,6 +12,7 @@ import java.util.Properties;
 import static org.junit.Assert.*;
 import static org.mrgeo.core.MrGeoProperties.MRGEO_ENCRYPTION_MASTER_PASSWORD_PROPERTY;
 
+@SuppressWarnings("all") // test code, not included in production
 public class MrGeoPropertiesTest {
 
 private String ENCRYPTED_TEST_PROPERTY = "org.mrgeo.core.MrGeoPropertiesTest.testEncryptedProperty";

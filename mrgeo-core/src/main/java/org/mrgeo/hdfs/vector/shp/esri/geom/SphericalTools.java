@@ -17,6 +17,7 @@
 package org.mrgeo.hdfs.vector.shp.esri.geom;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.mrgeo.utils.FloatUtils;
 
 import java.util.Vector;
 
@@ -96,6 +97,7 @@ public class SphericalTools
    * 
    * @see esri.geom.CAG#getCoordOnLine(esri.geom.JLine, double, boolean)
    */
+  @SuppressWarnings("squid:S00112") // I didn't write this code, so I'm not sure why it throws the RuntimeException.  Keeping it
   public static Coord getCoordOnLine(JPolyLine line, double length, boolean reverse)
   {
     int numparts = line.getPartCount();
@@ -176,6 +178,7 @@ public class SphericalTools
    * 
    * @see esri.geom.CAG#getCoordsOnLine(esri.geom.JLine, double, boolean)
    */
+  @SuppressWarnings("squid:S00112") // I didn't write this code, so I'm not sure why it throws the RuntimeException.  Keeping it
   public static Coord[] getCoordsOnLine(JPolyLine line, double length, boolean reverse)
   {
     int numparts = line.getPartCount();
@@ -426,9 +429,9 @@ public class SphericalTools
     double denominator = Math.pow(distance, 2);
     double numerator = (p3.x - p1.x) * (p2.x - p1.x) + (p3.y - p1.y) * (p2.y - p1.y);
     double u;
-    if (denominator == 0)
+    if (FloatUtils.isEqual(denominator, 0.0))
     {
-      u = 0;
+      u = 0.0;
     }
     else
     {
@@ -465,32 +468,6 @@ public class SphericalTools
       sum += getDistance(c1, c2);
     }
     return sum;
-  }
-
-  public static Coord getPointFromNotation(String s) throws Exception
-  {
-    // latitude
-    int latN = s.indexOf('N');
-    int latS = s.indexOf('S');
-    if ((latN > 0 && latS > 0) || (latN == 0 && latS == 0))
-      throw new Exception("Invalid N-S format");
-    int latPos = Math.max(latN, latS);
-    String lat = s.substring(0, latPos);
-    double latitude = Double.parseDouble(lat);
-    if (latS > 0)
-      latitude = latitude * -1;
-    // longitude
-    int lonE = s.indexOf('E');
-    int lonW = s.indexOf('W');
-    if ((lonE > 0 && lonW > 0) || (lonE == 0 && lonW == 0))
-      throw new Exception("Invalid E-W format!");
-    int lonPos = Math.max(lonE, lonW);
-    String lon = s.substring(latPos + 1, lonPos);
-    double longitude = Double.parseDouble(lon);
-    if (lonW > 0)
-      longitude = longitude * -1;
-    // create point
-    return new Coord(longitude, latitude);
   }
 
   /*

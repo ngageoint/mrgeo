@@ -16,6 +16,7 @@
 
 package org.mrgeo.data.accumulo.utils;
 
+@SuppressWarnings("squid:S2068") // not a password
 public class MrGeoAccumuloConstants
 {
   public static final String MRGEO_ACC_PREFIX = "accumulo:";

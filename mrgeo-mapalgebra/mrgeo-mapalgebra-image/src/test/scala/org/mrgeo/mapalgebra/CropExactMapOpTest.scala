@@ -5,17 +5,17 @@ import org.mrgeo.mapalgebra.utils.RasterMapOpTestVerifySupport
 import org.mrgeo.utils.tms.Bounds
 import org.scalatest.{BeforeAndAfter, FlatSpec}
 
-
+@SuppressWarnings(Array("all")) // Test code, not included in production
 class CropExactMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTestVerifySupport {
 
-  private val tileIds: Array[Long] = Array(11, 12, 19, 20)
+  private val tileIds = Array(11l, 12l, 19l, 20l)
 
-  private var inputRaster: RasterMapOp = _
-  private var subject: RasterMapOp = _
+  private var inputRaster:RasterMapOp = _
+  private var subject:RasterMapOp = _
   private var zoomLevel = 3
   private var tileSize = 512
   private var initialData = 1.0
-  private var expectedData: Array[Double] = Array(initialData)
+  private var expectedData = Array(initialData)
 
   before {
     inputRaster = createRasterMapOp(tileIds = tileIds, zoomLevel = zoomLevel, tileSize = tileSize,

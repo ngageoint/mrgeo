@@ -105,8 +105,7 @@ public RecordReader<LongWritable, Geometry> createRecordReader(InputSplit split,
   }
   catch (SQLException e)
   {
-    e.printStackTrace();
-    throw new IOException("Could not get data from ResultSet.");
+    throw new IOException("Could not get data from ResultSet.", e);
   }
 
   if (split instanceof ResultSetInputSplit)
@@ -284,7 +283,6 @@ static public class PgQueryRecordReader extends RecordReader<LongWritable, Geome
         }
         catch (SQLException e1)
         {
-          e1.printStackTrace();
           throw new IOException(e1);
         }
       }
@@ -319,14 +317,12 @@ static public class PgQueryRecordReader extends RecordReader<LongWritable, Geome
         }
         catch (SQLException e)
         {
-          e.printStackTrace();
-          throw new IOException("Could not get data from ResultSet.");
+          throw new IOException("Could not get data from ResultSet.", e);
         }
       }
       catch (SQLException e)
       {
-        e.printStackTrace();
-        throw new IOException("Could now get data from ResultSet.");
+        throw new IOException("Could now get data from ResultSet.", e);
       }
     }
     else
@@ -337,6 +333,7 @@ static public class PgQueryRecordReader extends RecordReader<LongWritable, Geome
   }
 
   @Override
+  @SuppressWarnings("squid:S1166") // Exception caught and handled
   public boolean nextKeyValue() throws IOException
   {
     if (_wktReader == null)
@@ -349,7 +346,7 @@ static public class PgQueryRecordReader extends RecordReader<LongWritable, Geome
       currentIndex++;
       if (currentIndex < end)
       {
-        if (rs.next() == true)
+        if (rs.next())
         {
           String wktGeometry = null;
           Map<String, String> attrs = new HashMap<>();
@@ -381,7 +378,7 @@ static public class PgQueryRecordReader extends RecordReader<LongWritable, Geome
             {
               feature = GeometryFactory.fromJTS(_wktReader.read(wktGeometry), attrs);
             }
-            catch (Exception e)
+            catch (Exception ignored)
             {
               //try to correct wktGeometry if possible
               try
@@ -391,7 +388,7 @@ static public class PgQueryRecordReader extends RecordReader<LongWritable, Geome
               catch (Exception e2)
               {
                 //could not fix the geometry, so just set to null
-                log.error("Could not fix geometry: " + wktGeometry + ". Continuing with null geometry.");
+                log.error("Could not fix geometry: " + wktGeometry + ". Continuing with null geometry.", e2);
                 feature = GeometryFactory.createEmptyGeometry(attrs);
               }
             }
@@ -403,8 +400,7 @@ static public class PgQueryRecordReader extends RecordReader<LongWritable, Geome
     }
     catch (SQLException e)
     {
-      e.printStackTrace();
-      throw new IOException("Could not get data from ResultSet.");
+      throw new IOException("Could not get data from ResultSet.", e);
     }
     return result;
   }
@@ -428,70 +424,3 @@ static public class PgQueryRecordReader extends RecordReader<LongWritable, Geome
   }
 }
 }
-
-
-
-//    result = true;
-//
-//    if (values.length == 0)
-//    {
-//    log.info("Values empty. Weird.");
-//    }
-//
-//    for (int i = 0; i < values.length; i++)
-//    {
-//    if (i == _geometryCol)
-//    {
-//    wktGeometry = values[i];
-//    }
-//
-//    if (i < schema.getAttributeCount())
-//    {
-//    if (schema.getAttributeType(i) == AttributeType.DOUBLE)
-//    {
-//    try
-//    {
-//    if (values[i].trim().length() > 0)
-//    {
-//    feature.setAttribute(i, Double.parseDouble(values[i]));
-//    }
-//    else
-//    {
-//    feature.setAttribute(i, null);
-//    }
-//    }
-//    catch (NumberFormatException e)
-//    {
-//    log.error("Invalid numeric value for " + schema.getAttributeName(i) + ": " + values[i] + ". Continuing with null value.");
-//    feature.setAttribute(i, null);
-//    }
-//    }
-//    else
-//    {
-//    feature.setAttribute(i, values[i]);
-//    }
-//    }
-//    }
-//
-//    if (wktGeometry != null)
-//    {
-//    try
-//    {
-//    feature.setGeometry(_wktReader.read(wktGeometry));
-//    }
-//    catch (Exception e)
-//    {
-//    //try to correct wktGeometry if possible
-//    try
-//    {
-//    feature.setGeometry(_wktReader.read(WktGeometryUtils.wktGeometryFixer(wktGeometry)));
-//    }
-//    catch (Exception e2)
-//    {
-//    //could not fix the geometry, so just set to null
-//    log.error("Could not fix geometry: " + wktGeometry + ". Continuing with null geometry.");
-//    feature.setGeometry(null);
-//    }
-//    }
-//    }
-//    result = true;

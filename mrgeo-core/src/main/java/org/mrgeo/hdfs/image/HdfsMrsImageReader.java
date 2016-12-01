@@ -56,66 +56,66 @@ import java.util.concurrent.TimeUnit;
 @SuppressFBWarnings(value = "SIC_INNER_SHOULD_BE_STATIC_ANON", justification = "'readerCache' - Needs refactoring to remove")
 public class HdfsMrsImageReader extends MrsImageReader
 {
-  @SuppressWarnings("unused")
-  private static Logger log = LoggerFactory.getLogger(HdfsMrsImageReader.class);
-  private final static int READER_CACHE_SIZE = 100;
-  private final static int READER_CACHE_EXPIRE = 10; // minutes
+@SuppressWarnings("unused")
+private static Logger log = LoggerFactory.getLogger(HdfsMrsImageReader.class);
+private final static int READER_CACHE_SIZE = 100;
+private final static int READER_CACHE_EXPIRE = 10; // minutes
 
-  final private HdfsMrsImageDataProvider provider;
-  final private MrsPyramidReaderContext context;
-  final int tileSize;
-  private boolean canBeCached = true;
+//final private HdfsMrsImageDataProvider provider;
+final private MrsPyramidReaderContext context;
+final int tileSize;
+private boolean canBeCached = true;
 
 
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "check will only be used for reading valid MrsPyramids")
 public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
     MrsPyramidReaderContext context) throws IOException
+{
+  String path = new Path(provider.getResourcePath(true), "" + context.getZoomlevel()).toString();
+
+//    this.provider = provider;
+  this.context = context;
+  tileSize = provider.getMetadataReader().read().getTilesize();
+
+  String modifiedPath = path;
+
+  final File file = new File(path);
+  if (file.exists())
   {
-    String path = new Path(provider.getResourcePath(true), "" + context.getZoomlevel()).toString();
-
-    this.provider = provider;
-    this.context = context;
-    tileSize = provider.getMetadataReader().read().getTilesize();
-
-    String modifiedPath = path;
-
-    final File file = new File(path);
-    if (file.exists())
-    {
-      modifiedPath = "file://" + file.getAbsolutePath();
-    }
-
-    imagePath = new Path(modifiedPath);
-    FileSystem fs = HadoopFileUtils.getFileSystem(conf, imagePath);
-    if (!fs.exists(imagePath))
-    {
-      throw new IOException("Cannot open HdfsMrsTileReader for " + modifiedPath + ".  Path does not exist." );
-    }
-
-    // Do not perform caching when S3 is being used because it is accessed through
-    // a REST interface using HTTP, and there is a connection pool that can be
-    // filled and cause deadlock when too many readers are opened at once.
-    Path qualifiedImagePath = imagePath.makeQualified(fs);
-    URI imagePathUri = qualifiedImagePath.toUri();
-    String imageScheme = imagePathUri.getScheme().toLowerCase();
-    if (imageScheme.equals("s3") || imageScheme.equals("s3n"))
-    {
-      canBeCached = false;
-    }
-
-    readSplits(modifiedPath);
-
-    // set the profile
-    profile = System.getProperty("mrgeo.profile", "false").compareToIgnoreCase("true") == 0;
+    modifiedPath = "file://" + file.getAbsolutePath();
   }
 
-  private MapFile.Reader loadReader(int partitionIndex) throws IOException
+  imagePath = new Path(modifiedPath);
+  FileSystem fs = HadoopFileUtils.getFileSystem(conf, imagePath);
+  if (!fs.exists(imagePath))
   {
-    final FileSplit.FileSplitInfo part =
-            (FileSplit.FileSplitInfo) splits.getSplits()[partitionIndex];
+    throw new IOException("Cannot open HdfsMrsTileReader for " + modifiedPath + ".  Path does not exist." );
+  }
 
-    final Path path = new Path(imagePath, part.getName());
-    return new MapFile.Reader(path, conf);
+  // Do not perform caching when S3 is being used because it is accessed through
+  // a REST interface using HTTP, and there is a connection pool that can be
+  // filled and cause deadlock when too many readers are opened at once.
+  Path qualifiedImagePath = imagePath.makeQualified(fs);
+  URI imagePathUri = qualifiedImagePath.toUri();
+  String imageScheme = imagePathUri.getScheme().toLowerCase();
+  if ("s3".equals(imageScheme) || "s3n".equals(imageScheme))
+  {
+    canBeCached = false;
+  }
+
+  readSplits(modifiedPath);
+
+  // set the profile
+  profile = System.getProperty("mrgeo.profile", "false").compareToIgnoreCase("true") == 0;
+}
+
+private MapFile.Reader loadReader(int partitionIndex) throws IOException
+{
+  final FileSplit.FileSplitInfo part =
+      (FileSplit.FileSplitInfo) splits.getSplits()[partitionIndex];
+
+  final Path path = new Path(imagePath, part.getName());
+  return new MapFile.Reader(path, conf);
 
 //    if (profile)
 //    {
@@ -125,160 +125,160 @@ public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
 //                      "MapFile.Reader creation stack(ignore the Throwable...)")));
 //    }
 //    return reader;
-  }
+}
 
-  private final LoadingCache<Integer, MapFile.Reader> readerCache = CacheBuilder.newBuilder()
-          .maximumSize(READER_CACHE_SIZE)
-          .expireAfterAccess(READER_CACHE_EXPIRE, TimeUnit.SECONDS)
-          .removalListener(
-                  new RemovalListener<Integer, MapFile.Reader>()
-                  {
-                    @Override
-                    public void onRemoval(final RemovalNotification<Integer, MapFile.Reader> notification)
-                    {
-                      try
-                      {
-                        notification.getValue().close();
-                      }
-                      catch (IOException e)
-                      {
-                        e.printStackTrace();
-                      }
-                    }
-                  }).build(new CacheLoader<Integer, MapFile.Reader>()
+private final LoadingCache<Integer, MapFile.Reader> readerCache = CacheBuilder.newBuilder()
+    .maximumSize(READER_CACHE_SIZE)
+    .expireAfterAccess(READER_CACHE_EXPIRE, TimeUnit.SECONDS)
+    .removalListener(
+        new RemovalListener<Integer, MapFile.Reader>()
+        {
+          @Override
+          public void onRemoval(final RemovalNotification<Integer, MapFile.Reader> notification)
           {
-
-            @Override
-            public MapFile.Reader load(final Integer partitionIndex) throws IOException
+            try
             {
-              return loadReader(partitionIndex);
+              notification.getValue().close();
             }
-          });
-
-  @Override
-  public int getZoomlevel()
-  {
-    return context.getZoomlevel();
-  }
-
-  @Override
-  public int getTileSize()
-  {
-    return tileSize;
-  }
-
-  public KVIterator<TileIdWritable, MrGeoRaster> get(final LongRectangle tileBounds)
-  {
-    return new HdfsImageResultScanner(tileBounds, this);
-  }
-
-  /**
-   * This will retrieve tiles in a specified range.
-   *
-   * @param startKey
-   *          the start of the range of tiles to get
-   * @param endKey
-   *          the end (inclusive) of the range of tiles to get
-   *
-   * @return An Iterable object of tile data for the range requested
-   */
-  public KVIterator<TileIdWritable, MrGeoRaster> get(final TileIdWritable startKey,
-      final TileIdWritable endKey)
-  {
-    return new HdfsImageResultScanner(startKey, endKey, this);
-  }
-
-
-  protected int getWritableSize(RasterWritable val)
-  {
-    return val.getSize();
-  }
-
-  @Deprecated
-  protected MrGeoRaster toNonWritable(RasterWritable val) throws IOException
-  {
-    return RasterWritable.toMrGeoRaster(val);
-  }
-
-  public static class BoundsResultScanner implements KVIterator<Bounds, MrGeoRaster>
-  {
-    private KVIterator<TileIdWritable, MrGeoRaster> tileIterator;
-    private int zoomLevel;
-    private int tileSize;
-
-    public BoundsResultScanner(KVIterator<TileIdWritable, MrGeoRaster> tileIterator,
-                               int zoomLevel, int tileSize)
+            catch (IOException e)
+            {
+              log.error("IOException removing HdfsMrsImageReader from cache {} ", e);
+            }
+          }
+        }).build(new CacheLoader<Integer, MapFile.Reader>()
     {
-      this.tileIterator = tileIterator;
-      this.zoomLevel = zoomLevel;
-      this.tileSize = tileSize;
-    }
 
-    @Override
-    public boolean hasNext()
-    {
-      return tileIterator.hasNext();
-    }
+      @Override
+      public MapFile.Reader load(final Integer partitionIndex) throws IOException
+      {
+        return loadReader(partitionIndex);
+      }
+    });
 
-    @Override
-    public MrGeoRaster next()
-    {
-      return tileIterator.next();
-    }
+@Override
+public int getZoomlevel()
+{
+  return context.getZoomlevel();
+}
 
-    @Override
-    public void remove()
-    {
-      tileIterator.remove();
-    }
+@Override
+public int getTileSize()
+{
+  return tileSize;
+}
 
-    @Override
-    public Bounds currentKey()
-    {
-      TileIdWritable key = tileIterator.currentKey();
-      Tile tile = TMSUtils.tileid(key.get(), zoomLevel);
-      return TMSUtils.tileBounds(tile.tx, tile.ty, zoomLevel, tileSize);
-    }
+public KVIterator<TileIdWritable, MrGeoRaster> get(final LongRectangle tileBounds)
+{
+  return new HdfsImageResultScanner(tileBounds, this);
+}
 
-    @Override
-    public MrGeoRaster currentValue()
-    {
-      return tileIterator.currentValue();
-    }
-  }
+/**
+ * This will retrieve tiles in a specified range.
+ *
+ * @param startKey
+ *          the start of the range of tiles to get
+ * @param endKey
+ *          the end (inclusive) of the range of tiles to get
+ *
+ * @return An Iterable object of tile data for the range requested
+ */
+public KVIterator<TileIdWritable, MrGeoRaster> get(final TileIdWritable startKey,
+    final TileIdWritable endKey)
+{
+  return new HdfsImageResultScanner(startKey, endKey, this);
+}
 
-  final private FileSplit splits = new FileSplit();
 
-  // location of data
-  final Path imagePath;
+protected int getWritableSize(RasterWritable val)
+{
+  return val.getSize();
+}
 
-  // Hadoop Configuration for connection to HDFS
-  final Configuration conf = HadoopUtils.createConfiguration();
+@Deprecated
+protected MrGeoRaster toNonWritable(RasterWritable val) throws IOException
+{
+  return RasterWritable.toMrGeoRaster(val);
+}
 
-  final boolean profile;
+public static class BoundsResultScanner implements KVIterator<Bounds, MrGeoRaster>
+{
+  private KVIterator<TileIdWritable, MrGeoRaster> tileIterator;
+  private int zoomLevel;
+  private int tileSize;
 
-  protected Path getTilePath()
+  public BoundsResultScanner(KVIterator<TileIdWritable, MrGeoRaster> tileIterator,
+      int zoomLevel, int tileSize)
   {
-    return imagePath;
+    this.tileIterator = tileIterator;
+    this.zoomLevel = zoomLevel;
+    this.tileSize = tileSize;
   }
 
   @Override
-  public boolean canBeCached()
+  public boolean hasNext()
   {
-    return canBeCached;
+    return tileIterator.hasNext();
   }
 
   @Override
-  public long calculateTileCount()
+  public MrGeoRaster next()
   {
-    int count = 0;
-    try
-    {
-      final FileSystem fs = imagePath.getFileSystem(conf);
-      final Path[] names = FileUtil.stat2Paths(fs.listStatus(imagePath));
-      Arrays.sort(names);
-      final DataOutputBuffer key = new DataOutputBuffer();
+    return tileIterator.next();
+  }
 
+  @Override
+  public void remove()
+  {
+    tileIterator.remove();
+  }
+
+  @Override
+  public Bounds currentKey()
+  {
+    TileIdWritable key = tileIterator.currentKey();
+    Tile tile = TMSUtils.tileid(key.get(), zoomLevel);
+    return TMSUtils.tileBounds(tile.tx, tile.ty, zoomLevel, tileSize);
+  }
+
+  @Override
+  public MrGeoRaster currentValue()
+  {
+    return tileIterator.currentValue();
+  }
+}
+
+final private FileSplit splits = new FileSplit();
+
+// location of data
+final Path imagePath;
+
+// Hadoop Configuration for connection to HDFS
+final Configuration conf = HadoopUtils.createConfiguration();
+
+final boolean profile;
+
+protected Path getTilePath()
+{
+  return imagePath;
+}
+
+@Override
+public boolean canBeCached()
+{
+  return canBeCached;
+}
+
+@Override
+public long calculateTileCount()
+{
+  int count = 0;
+  try
+  {
+    final FileSystem fs = imagePath.getFileSystem(conf);
+    final Path[] names = FileUtil.stat2Paths(fs.listStatus(imagePath));
+    Arrays.sort(names);
+    try (DataOutputBuffer key = new DataOutputBuffer())
+    {
       for (final Path name : names)
       {
         final FileStatus[] dirFiles = fs.listStatus(name);
@@ -296,204 +296,205 @@ public HdfsMrsImageReader(HdfsMrsImageDataProvider provider,
           }
         }
       }
-      return count;
     }
-    catch (final IOException e)
-    {
-      throw new MrsImageException(e);
-    }
+    return count;
   }
-
-  /**
-   * This will go through the items in the cache and close all the readers.
-   */
-  @Override
-  public void close()
+  catch (final IOException e)
   {
-    readerCache.invalidateAll();
+    throw new MrsImageException(e);
   }
+}
 
-  /**
-   * Check if a tile exists in the data.
-   */
-  @Override
-  public boolean exists(final TileIdWritable key)
-  {
-    // check for a successful retrieval
-    return get(key) != null;
-  }
+/**
+ * This will go through the items in the cache and close all the readers.
+ */
+@Override
+public void close()
+{
+  readerCache.invalidateAll();
+}
 
-  @Override
-  public KVIterator<TileIdWritable, MrGeoRaster> get()
-  {
-    return get(null, null);
-  }
+/**
+ * Check if a tile exists in the data.
+ */
+@Override
+public boolean exists(final TileIdWritable key)
+{
+  // check for a successful retrieval
+  return get(key) != null;
+}
 
-  /**
-   * Retrieve a tile from the data.
-   *
-   * @param key
-   *          is the tile to get from the max zoom level
-   * @return the data for the tile requested
-   */
-  @SuppressWarnings("unchecked")
-  @Override
-  public MrGeoRaster get(final TileIdWritable key)
+@Override
+public KVIterator<TileIdWritable, MrGeoRaster> get()
+{
+  return get(null, null);
+}
+
+/**
+ * Retrieve a tile from the data.
+ *
+ * @param key
+ *          is the tile to get from the max zoom level
+ * @return the data for the tile requested
+ */
+@SuppressWarnings({"unchecked", "squid:S1166"}) // Exception caught and handled
+@Override
+public MrGeoRaster get(final TileIdWritable key)
+{
+  MapFile.Reader reader = null;
+  try
   {
-    MapFile.Reader reader = null;
+    // get the reader that handles the partition/map file
+    reader = getReader(getPartitionIndex(key));
+
+    // return object
+    RasterWritable val = (RasterWritable)reader.getValueClass().newInstance();
+
+    // get the tile from map file from HDFS
     try
     {
-      // get the reader that handles the partition/map file
-      reader = getReader(getPartitionIndex(key));
+      // log.debug("getting " + key);
+      reader.get(key, val);
+      if (getWritableSize(val) > 0)
+      {
+        // return the data
+        return toNonWritable(val);
+      }
+    }
+    catch (final IllegalStateException ignored)
+    {
+      // no-op. Accumulo's Value class will return an IllegalStateException if the reader
+      // returned no data, but you try to do a get or getSize. We'll trap it here and return
+      // a null for the tile.
+    }
 
-      // return object
-      RasterWritable val = (RasterWritable)reader.getValueClass().newInstance();
+    // nothing came back from the map file
+    return null;
 
-      // get the tile from map file from HDFS
+  }
+  catch (final IOException e)
+  {
+    log.error("Got IOException when reading tile", e);
+    throw new MrsImageException(e);
+  }
+  catch (InstantiationException | IllegalAccessException e)
+  {
+    throw new MrsImageException(e);
+  }
+  finally
+  {
+    if (reader != null && !canBeCached())
+    {
       try
       {
-        // log.debug("getting " + key);
-        reader.get(key, val);
-        if (getWritableSize(val) > 0)
-        {
-          // return the data
-          return toNonWritable(val);
-        }
+        reader.close();
       }
-      catch (final IllegalStateException e)
+      catch (IOException e)
       {
-        // no-op. Accumulo's Value class will return an IllegalStateException if the reader
-        // returned no data, but you try to do a get or getSize. We'll trap it here and return
-        // a null for the tile.
+        log.error("Unable to close reader for " + this.imagePath, e);
       }
+    }
+  }
+}
 
-      // nothing came back from the map file
-      return null;
+@Override
+public KVIterator<Bounds, MrGeoRaster> get(final Bounds bounds)
+{
+  TileBounds tileBounds = TMSUtils.boundsToTile(bounds, getZoomlevel(), getTileSize());
+  return new BoundsResultScanner(get(new LongRectangle(tileBounds.w, tileBounds.s, tileBounds.e, tileBounds.n)),
+      getZoomlevel(), getTileSize());
+}
 
-    }
-    catch (final IOException e)
+@SuppressWarnings("squid:S1166") // Exception caught and handled
+private void readSplits(final String parent) throws IOException
+{
+  try
+  {
+    splits.readSplits(new Path(parent));
+    return;
+  }
+  catch(FileNotFoundException ignored)
+  {
+    // When there is no splits file, the whole image is a single split
+  }
+
+  splits.generateSplits(new Path(parent), conf);
+}
+
+/**
+ * Get the number of directories with imagery files
+ *
+ * @return the number of data directories
+ */
+public int getMaxPartitions()
+{
+  return splits.length();
+}
+
+/**
+ * This will return the partition for the tile requested.
+ *
+ * @param key
+ *          the item to find the range for
+ * @return the partition of the requested key
+ */
+public int getPartitionIndex(final TileIdWritable key) throws IOException
+{
+  return splits.getSplitIndex(key.get());
+}
+
+/**
+ * This method will get a MapFile.Reader for the partition specified.
+ * Before closing the returned reader, the caller should make sure it
+ * is not cached in this class by calling isCachingEnabled(). If that
+ * method returns true, the caller should not close the reader. It will
+ * be automatically closed when it drops out of the cache.
+ *
+ * @param partitionIndex
+ *          is the particular reader being accessed
+ * @return the reader for the partition specified
+ * @throws IOException
+ */
+@SuppressWarnings("squid:S1166") // Exception caught and handled
+@SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST_OF_RETURN_VALUE", justification = "We _are_ checking!")
+public MapFile.Reader getReader(final int partitionIndex) throws IOException
+{
+  try
+  {
+    if (canBeCached)
     {
-      log.error("Got IOException when reading tile", e);
-      System.err.println("Got IOException when reading tile");
-      e.printStackTrace();
-      throw new MrsImageException(e);
-    }
-    catch (InstantiationException | IllegalAccessException e)
-    {
-      throw new MrsImageException(e);
-    }
-    finally
-    {
-      if (reader != null && !canBeCached())
+      log.info("Loading reader for partitionIndex " + partitionIndex + " through the cache");
+      MapFile.Reader reader = readerCache.get(partitionIndex);
+      try
       {
-        try
-        {
-          reader.close();
-        }
-        catch (IOException e)
-        {
-          log.error("Unable to close reader for " + this.imagePath, e);
-        }
+        // there is a slim chance the cached reader was closed, this will check, close the reader,
+        // then reopen it if needed
+        TileIdWritable key = new TileIdWritable();
+        reader.finalKey(key);
+        reader.reset();
+        return reader;
       }
-    }
-  }
-
-  @Override
-  public KVIterator<Bounds, MrGeoRaster> get(final Bounds bounds)
-  {
-    TileBounds tileBounds = TMSUtils.boundsToTile(bounds, getZoomlevel(), getTileSize());
-    return new BoundsResultScanner(get(new LongRectangle(tileBounds.w, tileBounds.s, tileBounds.e, tileBounds.n)),
-        getZoomlevel(), getTileSize());
-  }
-
-  private void readSplits(final String parent) throws IOException
-  {
-    try
-    {
-      splits.readSplits(new Path(parent));
-      return;
-    }
-    catch(FileNotFoundException fnf)
-    {
-      // When there is no splits file, the whole image is a single split
-    }
-
-    splits.generateSplits(new Path(parent), conf);
-  }
-
-  /**
-   * Get the number of directories with imagery files
-   *
-   * @return the number of data directories
-   */
-  public int getMaxPartitions()
-  {
-    return splits.length();
-  }
-
-  /**
-   * This will return the partition for the tile requested.
-   *
-   * @param key
-   *          the item to find the range for
-   * @return the partition of the requested key
-   */
-  public int getPartitionIndex(final TileIdWritable key) throws IOException
-  {
-    return splits.getSplitIndex(key.get());
-  }
-
-  /**
-   * This method will get a MapFile.Reader for the partition specified.
-   * Before closing the returned reader, the caller should make sure it
-   * is not cached in this class by calling isCachingEnabled(). If that
-   * method returns true, the caller should not close the reader. It will
-   * be automatically closed when it drops out of the cache.
-   *
-   * @param partitionIndex
-   *          is the particular reader being accessed
-   * @return the reader for the partition specified
-   * @throws IOException
-   */
-  @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST_OF_RETURN_VALUE", justification = "We _are_ checking!")
-  public MapFile.Reader getReader(final int partitionIndex) throws IOException
-  {
-    try
-    {
-      if (canBeCached)
+      catch (IOException e)
       {
-        log.info("Loading reader for partitionIndex " + partitionIndex + " through the cache");
-        MapFile.Reader reader = readerCache.get(partitionIndex);
-        try
-        {
-          // there is a slim chance the cached reader was closed, this will check, close the reader,
-          // then reopen it if needed
-          TileIdWritable key = new TileIdWritable();
-          reader.finalKey(key);
-          reader.reset();
-          return reader;
-        }
-        catch (IOException e)
-        {
-          log.info("Reader had been previously closed, opening a new one");
-          reader = loadReader(partitionIndex);
-          readerCache.put(partitionIndex, reader);
-          return reader;
-        }
-      }
-      else
-      {
-        log.info("Loading reader for partitionIndex " + partitionIndex + " without the cache");
-        return loadReader(partitionIndex);
+        log.info("Reader had been previously closed, opening a new one");
+        reader = loadReader(partitionIndex);
+        readerCache.put(partitionIndex, reader);
+        return reader;
       }
     }
-    catch (ExecutionException e)
+    else
     {
-      if (e.getCause() instanceof IOException)
-      {
-        throw (IOException)e.getCause();
-      }
-      throw new IOException(e);
+      log.info("Loading reader for partitionIndex " + partitionIndex + " without the cache");
+      return loadReader(partitionIndex);
     }
   }
+  catch (ExecutionException e)
+  {
+    if (e.getCause() instanceof IOException)
+    {
+      throw (IOException)e.getCause();
+    }
+    throw new IOException(e);
+  }
+}
 }

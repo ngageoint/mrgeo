@@ -5,9 +5,7 @@ import org.mrgeo.mapalgebra.utils.RasterMapOpTestVerifySupport
 import org.mrgeo.utils.tms.Bounds
 import org.scalatest.{BeforeAndAfter, FlatSpec}
 
-/**
-  * Created by ericwood on 7/19/16.
-  */
+@SuppressWarnings(Array("all")) // Test code, not included in production
 class CropMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTestVerifySupport {
 
   private val tileIds: Array[Long] = Array(11, 12, 19, 20)

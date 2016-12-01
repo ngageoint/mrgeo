@@ -57,6 +57,7 @@ import static org.junit.Assert.assertEquals;
 
 //import org.mrgeo.utils.logging.LoggingUtils;
 
+@SuppressWarnings("all") // Test code, not included in production
 public class WmsGeneratorTestAbstract extends JerseyTest
 {
 private static final Logger log = LoggerFactory.getLogger(WmsGeneratorTestAbstract.class);

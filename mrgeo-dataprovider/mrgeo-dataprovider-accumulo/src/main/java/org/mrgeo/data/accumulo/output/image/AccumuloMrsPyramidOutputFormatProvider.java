@@ -87,7 +87,8 @@ private String workDir = null;
 
 public AccumuloMrsPyramidOutputFormatProvider(final AccumuloMrsImageDataProvider provider,
     final ImageOutputFormatContext context,
-    final ColumnVisibility cv){
+    final ColumnVisibility cv)
+{
 
   super(context);
 
@@ -95,7 +96,8 @@ public AccumuloMrsPyramidOutputFormatProvider(final AccumuloMrsImageDataProvider
   this.cv = cv; //provider.getColumnVisibility();
 
   //TODO - program things to get rid of this
-  if(this.cv == null){
+  if (this.cv == null)
+  {
     this.cv = new ColumnVisibility();
   }
   log.info("column visibility of: " + this.cv.toString());
@@ -108,7 +110,8 @@ public AccumuloMrsPyramidOutputFormatProvider(final AccumuloMrsImageDataProvider
   this.tileBounds = TMSUtils.boundsToTile(this.bounds, this.zoomLevel, this.tileSize);
 
   this.table = context.getOutput();
-  if(table.startsWith(MrGeoAccumuloConstants.MRGEO_ACC_PREFIX)){
+  if (table.startsWith(MrGeoAccumuloConstants.MRGEO_ACC_PREFIX))
+  {
     table = table.replace(MrGeoAccumuloConstants.MRGEO_ACC_PREFIX, "");
   }
   log.info("Accumulo working with output table of: " + this.table);
@@ -120,11 +123,14 @@ public AccumuloMrsPyramidOutputFormatProvider(final AccumuloMrsImageDataProvider
   {
     props = AccumuloConnector.getAccumuloProperties();
 
-    if(props.containsKey(MrGeoAccumuloConstants.MRGEO_ACC_KEY_BULK_THRESHOLD)){
+    if (props.containsKey(MrGeoAccumuloConstants.MRGEO_ACC_KEY_BULK_THRESHOLD))
+    {
       bulkThreshold = Long.parseLong(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_BULK_THRESHOLD));
     }
-    if(props.containsKey(MrGeoAccumuloConstants.MRGEO_ACC_KEY_FORCE_BULK)){
-      if(Boolean.parseBoolean(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_FORCE_BULK))){
+    if (props.containsKey(MrGeoAccumuloConstants.MRGEO_ACC_KEY_FORCE_BULK))
+    {
+      if (Boolean.parseBoolean(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_FORCE_BULK)))
+      {
         log.info("Forcing bulk ingest!");
         forceBulk = true;
         doBulk = true;
@@ -135,7 +141,8 @@ public AccumuloMrsPyramidOutputFormatProvider(final AccumuloMrsImageDataProvider
         " (" + (this.tileBounds.e - this.tileBounds.w + 1) + "x" +
         (this.tileBounds.n - this.tileBounds.s + 1) + ") threshold at " + bulkThreshold);
 
-    if(tileCount > bulkThreshold){
+    if (tileCount > bulkThreshold)
+    {
       // doing bulk ingest
       log.info("Doing Bulk ingest");
       doBulk = true;
@@ -157,10 +164,13 @@ public OutputFormat getOutputFormat()
 {
   // TODO Auto-generated method stub
 
-  if(doBulk || forceBulk){
+  if (doBulk || forceBulk)
+  {
     return new AccumuloMrsPyramidFileOutputFormat(zoomLevel, cv);
     //return new AccumuloMrsPyramidFileOutputFormat();
-  } else {
+  }
+  else
+  {
 
     return new AccumuloMrsPyramidOutputFormat(zoomLevel, cv);
   }
@@ -201,7 +211,8 @@ public void save(RasterRDD raster, Configuration conf)
 
 }
 
-public boolean bulkJob(){
+public boolean bulkJob()
+{
   //return false;
   return doBulk;
 }
@@ -210,7 +221,6 @@ public boolean bulkJob(){
 //    return workDir + "files" + File.separator;    
 //    
 //  } // end getWorkDir
-
 
 
 //  private MrsImageDataProvider getImageProvider()
@@ -227,24 +237,29 @@ public Configuration setupOutput(final Configuration conf) throws DataProviderEx
   return conf2;
 }
 
-
+@SuppressWarnings("squid:S2095") // hadoop FileSystem cannot be closed, or else subsequent uses will fail
 private void setupConfig(final Configuration conf, final Job job) throws DataProviderException
 {
-  try{
+  try
+  {
     // zoom level - output zoom level
     zoomLevel = context.getZoomLevel();
 //      zoomLevel = conf.getInt("zoomlevel", 0);
-    if(zoomLevel != 0){
+    if (zoomLevel != 0)
+    {
       conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOMLEVEL, Integer.toString(zoomLevel));
     }
 
     //conf.set("zoomLevel", Integer.toString(zoomLevel));
-    if(doBulk || forceBulk){
+    if (doBulk || forceBulk)
+    {
       conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_JOBTYPE,
           MrGeoAccumuloConstants.MRGEO_ACC_VALUE_JOB_BULK);
       conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PREFIX + Integer.toString(zoomLevel),
           MrGeoAccumuloConstants.MRGEO_ACC_VALUE_JOB_BULK);
-    } else {
+    }
+    else
+    {
       conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_JOBTYPE,
           MrGeoAccumuloConstants.MRGEO_ACC_VALUE_JOB_DIRECT);
       conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PREFIX + Integer.toString(zoomLevel),
@@ -262,9 +277,12 @@ private void setupConfig(final Configuration conf, final Job job) throws DataPro
 //        conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS,
 //                 props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS));
 
-    if(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_OUTPUT_TABLE) == null){
+    if (props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_OUTPUT_TABLE) == null)
+    {
       conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_OUTPUT_TABLE, this.table);
-    } else {
+    }
+    else
+    {
       conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_OUTPUT_TABLE,
           props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_OUTPUT_TABLE));
     }
@@ -289,12 +307,15 @@ private void setupConfig(final Configuration conf, final Job job) throws DataPro
 //                   new String("true"));
 //        }
 
-    if(conf.get(MrGeoConstants.MRGEO_PROTECTION_LEVEL) != null){
+    if (conf.get(MrGeoConstants.MRGEO_PROTECTION_LEVEL) != null)
+    {
       cv = new ColumnVisibility(conf.get(MrGeoConstants.MRGEO_PROTECTION_LEVEL));
     }
-    if(cv == null){
+    if (cv == null)
+    {
 
-      if(props.containsKey(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ)){
+      if (props.containsKey(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ))
+      {
 
         conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ,
             props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ));
@@ -303,22 +324,29 @@ private void setupConfig(final Configuration conf, final Job job) throws DataPro
 
       }
 
-    } else {
+    }
+    else
+    {
       conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ, new String(cv.getExpression()));
     }
 
 
-    if(doBulk || forceBulk){
+    if (doBulk || forceBulk)
+    {
 
       LongRectangle outTileBounds = tileBounds.toLongRectangle();
 
       // setup the output for the job
-      if(props.containsKey(MrGeoAccumuloConstants.MRGEO_ACC_KEY_WORKDIR)){
+      if (props.containsKey(MrGeoAccumuloConstants.MRGEO_ACC_KEY_WORKDIR))
+      {
         workDir = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_WORKDIR);
-        if(workDir != null){
+        if (workDir != null)
+        {
           workDir += File.separator;
         }
-      } else {
+      }
+      else
+      {
         workDir = "";
       }
       workDir += AccumuloMrsPyramidFileOutputFormat.class.getSimpleName() +
@@ -382,8 +410,7 @@ private void setupConfig(final Configuration conf, final Job job) throws DataPro
         }
         catch (IOException ioe)
         {
-          ioe.printStackTrace();
-          throw new DataProviderException("Problem creating output splits.txt for bulk ingest directory.");
+          throw new DataProviderException("Problem creating output splits.txt for bulk ingest directory.", ioe);
         }
 
         job.setOutputFormatClass(AccumuloMrsPyramidFileOutputFormat.class);
@@ -403,7 +430,9 @@ private void setupConfig(final Configuration conf, final Job job) throws DataPro
         conf.set("mapreduce.output.fileoutputformat.outputdir", outputDir.toString());
       }
 
-    } else {
+    }
+    else
+    {
       if (job != null)
       {
         log.info("Setting the output format of: " +
@@ -425,7 +454,9 @@ private void setupConfig(final Configuration conf, final Job job) throws DataPro
       job.setOutputValueClass(RasterWritable.class);
     }
 
-  } catch(IOException ioe){
+  }
+  catch (IOException ioe)
+  {
     throw new DataProviderException("Error running job setup", ioe);
   }
 
@@ -442,35 +473,40 @@ public void finalizeExternalSave(Configuration conf) throws DataProviderExceptio
 //  {
 //    performTeardown(conf);
 //  }
-
+@SuppressWarnings("squid:S2095") // hadoop FileSystem cannot be closed, or else subsequent uses will fail
 private void performTeardown(final Configuration conf) throws DataProviderException
 {
   String myJobType = conf.get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PREFIX + Integer.toString(zoomLevel));
 
 
-
   // TODO Auto-generated method stub
-  if(myJobType.equals(MrGeoAccumuloConstants.MRGEO_ACC_VALUE_JOB_BULK)){
+  if (myJobType.equals(MrGeoAccumuloConstants.MRGEO_ACC_VALUE_JOB_BULK))
+  {
     // do bulk ingest now
     Connector conn = AccumuloConnector.getConnector();
     FileSystem fs = null;
     PrintStream out = null;
 
-    if(workDir == null){
+    if (workDir == null)
+    {
       workDir = conf.get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_WORKDIR);
     }
 
-    try{
+    try
+    {
       log.info("Bulk ingest starting from working directory of " + workDir);
       fs = FileSystem.get(conf);
 
 
       Path working = new Path(workDir + File.separator, MrGeoAccumuloConstants.MRGEO_ACC_FILE_NAME_BULK_WORKING);
       Path completed = new Path(workDir + File.separator, MrGeoAccumuloConstants.MRGEO_ACC_FILE_NAME_BULK_DONE);
-      if(fs.exists(working) || fs.exists(completed)){
+      if (fs.exists(working) || fs.exists(completed))
+      {
         log.info("Bulk ingest completed already.");
         return;
-      } else {
+      }
+      else
+      {
         FSDataOutputStream fout = fs.create(working);
         fout.write(("zoom level = " + Integer.toString(zoomLevel) + "\n").getBytes());
         fout.close();
@@ -498,13 +534,13 @@ private void performTeardown(final Configuration conf) throws DataProviderExcept
       log.info("Setting work indication file.");
 
 
-
       // make sure there is a failures directory
       Path failures = new Path(workDir, "failures");
       fs.delete(failures, true);
       fs.mkdirs(new Path(workDir, "failures"));
 
-      if(! conn.tableOperations().exists(table)){
+      if (!conn.tableOperations().exists(table))
+      {
         conn.tableOperations().create(table, true);
         HashMap<String, Set<Text>> groups = new HashMap<String, Set<Text>>();
 //        for(int i = 1; i <= 18; i++){
@@ -535,7 +571,8 @@ private void performTeardown(final Configuration conf) throws DataProviderExcept
 } // end finalizeExternalSave
 
 
-public byte[] longToBytes(long x) {
+public byte[] longToBytes(long x)
+{
   ByteBuffer buffer = ByteBuffer.allocate(8);
   buffer.putLong(x);
   return buffer.array();

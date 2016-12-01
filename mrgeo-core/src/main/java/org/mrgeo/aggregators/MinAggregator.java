@@ -14,9 +14,6 @@
  *
  */
 
-/**
- *
- */
 package org.mrgeo.aggregators;
 
 import org.apache.commons.lang3.NotImplementedException;
@@ -33,24 +30,28 @@ public class MinAggregator implements Aggregator
 public double aggregate(double[] values, double nodata)
 {
   double min = Double.MAX_VALUE;
-  for (int i=0; i<values.length; i++)
+  for (double value : values)
   {
-    if (FloatUtils.isNotNodata(values[i], nodata))
-      min = Math.min(min, values[i]);
+    if (FloatUtils.isNotNodata(value, nodata))
+    {
+      min = Math.min(min, value);
+    }
   }
-  return (min == Double.MAX_VALUE) ? nodata : min;
+  return FloatUtils.isEqual(min, Double.MAX_VALUE) ? nodata : min;
 }
 
 @Override
 public float aggregate(float[] values, float nodata)
 {
   Float min = Float.MAX_VALUE;
-  for (int i=0; i<values.length; i++)
+  for (float value : values)
   {
-    if (FloatUtils.isNotNodata(values[i], nodata))
-      min = Math.min(min, values[i]);
+    if (FloatUtils.isNotNodata(value, nodata))
+    {
+      min = Math.min(min, value);
+    }
   }
-  return (min == Float.MAX_VALUE) ? nodata : min;
+  return FloatUtils.isEqual(min, Float.MAX_VALUE) ? nodata : min;
 }
 
 @Override

@@ -57,6 +57,7 @@ public class Application extends javax.ws.rs.core.Application
      *         is equivalent to returning an empty set.
      */
     @Override
+    @SuppressWarnings("squid:S1166") // Can't actually throw the Exceptions, so we'll just print them
     public Set<Object> getSingletons() {
         Set<Object> retval = new HashSet<Object>();
         Reflections reflections = new Reflections("org.mrgeo.resources");
@@ -72,7 +73,6 @@ public class Application extends javax.ws.rs.core.Application
                 System.out.println("Unable to access to instantiate " + clz.getSimpleName() + ": " + e.getMessage());
             } catch (Exception e) {
                 System.out.println("Error instantiating " + clz.getSimpleName() + ": " + e.getMessage());
-                e.printStackTrace();
             }
         }
         return retval;

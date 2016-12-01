@@ -179,6 +179,7 @@ private double parseNoData(String fromArg) throws NumberFormatException
 }
 
 @Override
+@SuppressWarnings("squid:S1166") // Exceptions caught and error message printed
 public int run(String[] args, Configuration conf, ProviderProperties providerProperties)
 {
   try
@@ -296,8 +297,8 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
       }
     }
 
-    quick = quick | line.hasOption("q");
-    local = local | line.hasOption("lc");
+    quick = quick || line.hasOption("q");
+    local = local || line.hasOption("lc");
 
     String protectionLevel = line.getOptionValue("pl");
 
@@ -367,7 +368,6 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
       }
       catch (Exception e)
       {
-        e.printStackTrace();
         log.error("IngestImage exited with error", e);
         return 1;
       }
@@ -390,7 +390,7 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
   }
   catch (Exception e)
   {
-    e.printStackTrace();
+    log.error("IngestImage exited with error", e);
   }
 
   return -1;

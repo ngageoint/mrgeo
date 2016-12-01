@@ -33,11 +33,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-/**
- * @author Steve Ingram
- *         Date: 10/27/13
- */
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // test code, not included in production
 public class ColorScaleManagerTest {
 
     @Before

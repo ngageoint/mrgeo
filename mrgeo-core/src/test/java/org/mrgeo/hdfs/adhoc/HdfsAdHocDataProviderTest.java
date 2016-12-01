@@ -36,6 +36,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 
+@SuppressWarnings("all") // test code, not included in production
 public class HdfsAdHocDataProviderTest extends LocalRunnerTest
 {
   private static ProviderProperties providerProperties = null;

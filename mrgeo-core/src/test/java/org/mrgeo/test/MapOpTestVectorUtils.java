@@ -35,6 +35,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("all") // test code, not included in production
 public class MapOpTestVectorUtils extends TestUtils
 {
 private static final Logger log = LoggerFactory.getLogger(MapOpTestVectorUtils.class);

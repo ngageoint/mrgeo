@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.Properties;
 
 public class MrGeoProperties {
+  @SuppressWarnings("squid:S2068") // Not a password!
   static final String MRGEO_ENCRYPTION_MASTER_PASSWORD_PROPERTY = "mrgeo.encryption.masterPassword";
   static Properties properties;
 
@@ -42,6 +43,7 @@ public class MrGeoProperties {
   } // end base constructor
 
 
+@SuppressWarnings("squid:S1166") // Exception caught and handled
   @SuppressFBWarnings(value = {"DE_MIGHT_IGNORE",
           "PATH_TRAVERSAL_IN"}, justification = "Ignored exception causes empty properties object, which is fine, false positive, user can't control the path")
   public static synchronized Properties getInstance() {

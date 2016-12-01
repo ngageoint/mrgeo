@@ -41,7 +41,7 @@ private static final Logger log = LoggerFactory.getLogger(PythonGateway.class);
 
 Queue<Integer> portQueue = null;
 
-public static Options createOptions()
+private static Options createOptions()
 {
   Options result = MrGeo.createOptions();
 
@@ -110,7 +110,7 @@ public int run(final String[] args, final Configuration conf,
   }
   catch (ParseException e)
   {
-    e.printStackTrace();
+    log.error("Exception Thrown {}", e);
     return -1;
   }
 }
@@ -133,12 +133,12 @@ private int remoteConnection(int listenPort)
   }
   catch (IOException e)
   {
-    log.error("Can not establish listening socket");
-    e.printStackTrace();
+    log.error("Can not establish listening socket {}", e);
     return -1;
   }
 }
 
+@SuppressWarnings("squid:S1313") // Hardcoded IP gets local hostname...
 private GatewayServer setupSingleServer(Socket clientSocket) throws IOException
 {
   // Start a GatewayServer on an ephemeral port, unless we have a port range
@@ -152,7 +152,7 @@ private GatewayServer setupSingleServer(Socket clientSocket) throws IOException
     }
     catch (NoSuchElementException e)
     {
-      throw new IOException("PythonGatewayServer is out of available ports, failing)");
+      throw new IOException("PythonGatewayServer is out of available ports, failing)", e);
     }
     try
     {
@@ -160,7 +160,7 @@ private GatewayServer setupSingleServer(Socket clientSocket) throws IOException
     }
     catch (NoSuchElementException e)
     {
-      throw new IOException("PythonGatewayServer is out of available ports, failing)");
+      throw new IOException("PythonGatewayServer is out of available ports, failing)", e);
     }
   }
 
@@ -207,7 +207,7 @@ private void setupThreadedServer(final Socket clientSocket) throws IOException
       catch (IOException e)
       {
         log.error("Error in thread: " + this.getName() + "(" + this.getId() + "), exiting");
-        e.printStackTrace();
+        log.error("Exception Thrown {}", e);
       }
     }
   }.start();

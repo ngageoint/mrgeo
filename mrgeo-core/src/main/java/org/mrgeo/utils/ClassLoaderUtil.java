@@ -20,6 +20,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.io.FilenameUtils;
 import org.jboss.vfs.VFS;
 import org.jboss.vfs.VirtualFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,6 +38,8 @@ import java.util.jar.JarFile;
 
 public class ClassLoaderUtil
 {
+private static final Logger log = LoggerFactory.getLogger(ClassLoaderUtil.class);
+
 private static class Thief extends ClassLoader
 {
   Thief(ClassLoader cl)
@@ -63,7 +67,7 @@ public static Collection<String> getMostJars()
   }
   catch (Exception e1)
   {
-    e1.printStackTrace();
+    log.error("Exception thrown {}", e1);
   }
 
   final TreeSet<String> result = new TreeSet<>();
@@ -95,7 +99,7 @@ public static Collection<String> getMostJars()
         }
         catch (IOException e)
         {
-          e.printStackTrace();
+          log.error("Exception Thrown {}", e);
         }
       }
       return true;
@@ -151,7 +155,7 @@ public static List<URL> loadVfs( URL resource ) throws IOException
     }
   } catch (URISyntaxException e) {
     System.out.println( "Problem reading resource '" + resource + "':\n " + e.getMessage() );
-    e.printStackTrace();
+    log.error("Exception Thrown {}", e);
   }
 
   return result;
@@ -213,56 +217,58 @@ public static List<URL> loadDirectory(String filePath) throws IOException
   return result;
 }
 
-
-public static void addLibraryPath(final String pathToAdd) throws Exception {
-  final Field usrPathsField = ClassLoader.class.getDeclaredField("usr_paths");
-
-  AccessController.doPrivileged(new PrivilegedAction<Object>()
+@SuppressWarnings("squid:S1166") // exceptions are caught and returned as false
+public static void addLibraryPath(final String pathToAdd) {
+  try
   {
-    public Boolean run()
+    final Field usrPathsField = ClassLoader.class.getDeclaredField("usr_paths");
+
+    AccessController.doPrivileged(new PrivilegedAction<Object>()
     {
-      try
+      public Boolean run()
       {
-        usrPathsField.setAccessible(true);
-
-        //get array of paths
-        final String[] paths = (String[]) usrPathsField.get(null);
-
-        //check if the path to add is already present
-        for (String path : paths)
+        try
         {
-          if (path.equals(pathToAdd))
+          usrPathsField.setAccessible(true);
+
+          //get array of paths
+          final String[] paths = (String[]) usrPathsField.get(null);
+
+          //check if the path to add is already present
+          for (String path : paths)
           {
-            return true;
+            if (path.equals(pathToAdd))
+            {
+              return true;
+            }
           }
+
+          //add the new path
+          final String[] newPaths = new String[paths.length + 1];
+          System.arraycopy(paths, 0, newPaths, 1, paths.length);
+          //final String[] newPaths = Arrays.copyOf(paths, paths.length + 1);
+          newPaths[0] = pathToAdd;
+          usrPathsField.set(null, newPaths);
+
+
+          System.setProperty("java.library.path", StringUtils.join(newPaths, ":"));
+          final Field sysPathsField = ClassLoader.class.getDeclaredField("sys_paths");
+          sysPathsField.setAccessible(true);
+          sysPathsField.set(null, null);
+
+
+          return true;
         }
-
-        //add the new path
-        final String[] newPaths = new String[paths.length + 1];
-        System.arraycopy(paths, 0, newPaths, 1, paths.length);
-        //final String[] newPaths = Arrays.copyOf(paths, paths.length + 1);
-        newPaths[0] = pathToAdd;
-        usrPathsField.set(null, newPaths);
-
-
-        System.setProperty("java.library.path", StringUtils.join(newPaths, ":"));
-        final Field sysPathsField = ClassLoader.class.getDeclaredField("sys_paths");
-        sysPathsField.setAccessible(true);
-        sysPathsField.set(null, null);
-
-
-        return true;
+        catch (IllegalAccessException | NoSuchFieldException ignored)
+        {
+          return false;
+        }
       }
-      catch (IllegalAccessException e)
-      {
-        return false;
-      }
-      catch (NoSuchFieldException e)
-      {
-        return false;
-      }
-    }
-  });
+    });
+  }
+  catch (NoSuchFieldException ignored)
+  {
+  }
 }
 
 private static String indent(int level)

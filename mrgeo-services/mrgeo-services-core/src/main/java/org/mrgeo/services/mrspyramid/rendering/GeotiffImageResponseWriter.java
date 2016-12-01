@@ -26,6 +26,8 @@ import org.mrgeo.services.ServletUtils;
 import org.mrgeo.utils.GDALJavaUtils;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.TMSUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
@@ -36,6 +38,7 @@ import java.util.Arrays;
 
 public class GeotiffImageResponseWriter extends TiffImageResponseWriter
 {
+private static final Logger log = LoggerFactory.getLogger(GeotiffImageResponseWriter.class);
 
 public GeotiffImageResponseWriter()
 {
@@ -76,16 +79,15 @@ public Response.ResponseBuilder write(final MrGeoRaster raster)
 
     return response;
   }
-  catch (final Exception e)
+  catch (IOException e)
   {
+    log.error("Exception thrown {}", e);
     if (e.getMessage() != null)
     {
       return Response.serverError().entity(e.getMessage());
     }
     return Response.serverError().entity("Internal Error");
-
   }
-
 }
 
 @Override
@@ -101,7 +103,7 @@ public void write(final MrGeoRaster raster, final HttpServletResponse response)
   }
   catch (final IOException e)
   {
-    throw new ServletException("Error writing raster");
+    throw new ServletException("Error writing raster", e);
   }
 }
 
@@ -128,6 +130,7 @@ public Response.ResponseBuilder write(final MrGeoRaster raster, final int tileCo
   }
   catch (final Exception e)
   {
+    log.error("Exception thrown {}", e);
     if (e.getMessage() != null)
     {
       return Response.serverError().entity(e.getMessage());
@@ -157,7 +160,7 @@ public void write(final MrGeoRaster raster, final int tileColumn, final int tile
   }
   catch (final IOException e)
   {
-    throw new ServletException("Error writing raster");
+    throw new ServletException("Error writing raster", e);
   }
 
 }
@@ -185,6 +188,7 @@ public Response.ResponseBuilder write(final MrGeoRaster raster, final String ima
   }
   catch (IOException e)
   {
+    log.error("Exception thrown {}", e);
     if (e.getMessage() != null)
     {
       return Response.serverError().entity(e.getMessage());
@@ -206,7 +210,7 @@ public void write(final MrGeoRaster raster, final String imageName, final Bounds
   }
   catch (final IOException e)
   {
-    throw new ServletException("Error writing raster");
+    throw new ServletException("Error writing raster", e);
   }
 
 }

@@ -20,65 +20,60 @@ import org.mrgeo.utils.FloatUtils;
 
 public final class Coord implements Cloneable, java.io.Serializable
 {
-  static final long serialVersionUID = 1L;
-  public double x;
-  public double y;
+static final long serialVersionUID = 1L;
+public double x;
+public double y;
 
-  /** Creates new Coord */
-  public Coord()
+/** Creates new Coord */
+public Coord()
+{
+  x = 0;
+  y = 0;
+}
+
+public Coord(double x, double y)
+{
+  this.x = x;
+  this.y = y;
+}
+
+@Override
+@SuppressWarnings("squid:S1166") // Exception caught and handled
+public Object clone()
+{
+  try
   {
-    x = 0;
-    y = 0;
+    return super.clone();
   }
-
-  public Coord(double x, double y)
+  catch (CloneNotSupportedException e)
   {
-    this.x = x;
-    this.y = y;
+    // note: we don't propagate this exception because Coord is final
+    throw new InternalError(e.toString());
   }
+}
 
-  @Override
-  public Object clone()
+
+@Override
+public int hashCode()
+{
+  return super.hashCode();
+}
+
+@Override
+public boolean equals(Object obj)
+{
+  if (obj instanceof Coord)
   {
-    try
-    {
-      return super.clone();
-    }
-    catch (CloneNotSupportedException e)
-    {
-      // note: we don't propagate this exception because Coord is final
-      throw new InternalError(e.toString());
-    }
+    Coord p = (Coord) obj;
+    if (FloatUtils.isEqual(p.x, x) && FloatUtils.isEqual(p.y, y))
+      return true;
   }
+  return false;
+}
 
-
-  @Override
-  public int hashCode()
-  {
-    return super.hashCode();
-  }
-
-  @Override
-  public boolean equals(Object obj)
-  {
-    if (obj != null)
-    {
-      try
-      {
-        Coord p = (Coord) obj;
-        if (FloatUtils.isEqual(p.x, x) && FloatUtils.isEqual(p.y, y))
-          return true;
-      }
-      catch (ClassCastException e)
-      {
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public String toString()
-  {
-    return x + "," + y;
-  }
+@Override
+public String toString()
+{
+  return x + "," + y;
+}
 }

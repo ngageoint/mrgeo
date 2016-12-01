@@ -26,6 +26,7 @@ import org.junit.experimental.categories.Category;
 import org.mrgeo.junit.UnitTest;
 
 
+@SuppressWarnings("all") // Test code, not included in production
 public class AccumuloConnectorTest
 {
 

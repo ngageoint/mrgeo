@@ -263,6 +263,7 @@ public void readSplits(InputStream stream) throws SplitException
   }
 }
 
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 public boolean isVersion2(Path splitsfile) throws IOException
 {
   if (!fileExists(splitsfile))

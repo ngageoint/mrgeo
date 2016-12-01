@@ -26,7 +26,7 @@ import java.util.Map;
 
 public class HdfsAdHocDataProviderFactory implements AdHocDataProviderFactory
 {
-  private static Configuration conf;
+  private static Configuration conf = null;
 
   @Override
   public boolean isValid()
@@ -35,11 +35,12 @@ public class HdfsAdHocDataProviderFactory implements AdHocDataProviderFactory
   }
 
   @Override
-  public void initialize(Configuration conf)
+  @SuppressWarnings("squid:S2696") // need to keep the conf static, but want to only set it with the object.  yuck!
+  public void initialize(Configuration config)
   {
-    if (this.conf == null)
+    if (conf == null)
     {
-      this.conf = conf;
+      conf = config;
     }
   }
 

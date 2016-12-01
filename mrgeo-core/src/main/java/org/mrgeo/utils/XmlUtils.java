@@ -50,7 +50,7 @@ public class XmlUtils
     }
     catch (ParserConfigurationException e)
     {
-      throw new IOException("Error creating document builder. (" + e.getMessage() + ")");
+      throw new IOException("Error creating document builder. {}", e);
     }
     return builder.newDocument();
   }

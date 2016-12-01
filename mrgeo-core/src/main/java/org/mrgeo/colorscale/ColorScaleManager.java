@@ -92,7 +92,7 @@ public class ColorScaleManager
   // colorScaleName, colorScaleJSON, pyramidPath, MrGeoProperties.getInstance());
   // }
 
-  public static ColorScale fromJSON(final String colorScaleJSON) throws Exception
+  public static ColorScale fromJSON(final String colorScaleJSON) throws ColorScale.ColorScaleException
   {
     ColorScale cs = null;
     if (colorScaleJSON != null)
@@ -185,6 +185,7 @@ public class ColorScaleManager
     }
   }
 
+  @SuppressWarnings("squid:S1166") // Exception caught and handled
   @SuppressFBWarnings(value = "WEAK_FILENAMEUTILS", justification = "Using adhoc provider, our class, for the filename")
   public static ColorScale[] getColorScaleList() throws IOException
   {
@@ -209,7 +210,7 @@ public class ColorScaleManager
 
           scales.add(scale);
         }
-        catch (IOException e)
+        catch (IOException ignored)
         {
           // no-op could be something other than a color scale in this directory
         }

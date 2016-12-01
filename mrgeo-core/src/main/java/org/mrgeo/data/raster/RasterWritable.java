@@ -40,14 +40,6 @@ private static final Logger log = LoggerFactory.getLogger(RasterWritable.class);
 
 private static final long serialVersionUID = 1L;
 
-public static long serializeTime = 0;
-public static long serializeCnt = 0;
-public static long deserializeTime = 0;
-public static long deserializeCnt = 0;
-
-private static final Object serializeSync = new Object();
-private static final Object deserializeSync = new Object();
-
 private byte[] bytes;
 
 
@@ -201,9 +193,6 @@ public static RasterWritable fromBytes(byte[] bytes)
 
 public static MrGeoRaster toMrGeoRaster(final RasterWritable writable) throws IOException
 {
-  long starttime = System.currentTimeMillis();
-  try
-  {
     int version = ByteArrayUtils.getByte(writable.bytes);
     if (version == 0)
     {
@@ -211,16 +200,6 @@ public static MrGeoRaster toMrGeoRaster(final RasterWritable writable) throws IO
       return RasterWritable.convertFromV2(writable.bytes);
     }
     return MrGeoRaster.createRaster(writable.bytes);
-  }
-  finally
-  {
-    synchronized (deserializeSync)
-    {
-      deserializeCnt++;
-      deserializeTime += (System.currentTimeMillis() - starttime);
-    }
-  }
-
 }
 
 public static MrGeoRaster toMrGeoRaster(final RasterWritable writable,
@@ -237,19 +216,7 @@ public static MrGeoRaster toMrGeoRaster(final RasterWritable writable,
 
 public static RasterWritable toWritable(MrGeoRaster raster) throws IOException
 {
-  long starttime = System.currentTimeMillis();
-  try
-  {
     return new RasterWritable(raster.data());
-  }
-  finally
-  {
-    synchronized (serializeSync)
-    {
-      serializeCnt++;
-      serializeTime += (System.currentTimeMillis() - starttime);
-    }
-  }
 }
 
 private static MrGeoRaster convertFromV2(byte[] data) throws MrGeoRaster.MrGeoRasterException

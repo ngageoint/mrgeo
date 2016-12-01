@@ -32,7 +32,7 @@ import org.mrgeo.utils.tms.TMSUtils;
 import java.io.File;
 import java.io.IOException;
 
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // test code, not included in production
 public class MrsImageTest extends LocalRunnerTest
 {
   private static final double epsilon = 0.000001;
@@ -41,7 +41,7 @@ public class MrsImageTest extends LocalRunnerTest
   private static String allonesName = "all-ones";
   private static String allOnes = Defs.INPUT + allonesName;
 
-  private MrsImage allOnesImage;
+  private MrsImage allOnesImage = null;
   private ProviderProperties providerProperties = null;
 
   @BeforeClass
@@ -61,7 +61,11 @@ public class MrsImageTest extends LocalRunnerTest
   @After
   public void tearDown() throws Exception
   {
-    allOnesImage.close();
+    if (allOnesImage != null)
+    {
+      allOnesImage.close();
+      allOnesImage = null;
+    }
   }
 
   @Test

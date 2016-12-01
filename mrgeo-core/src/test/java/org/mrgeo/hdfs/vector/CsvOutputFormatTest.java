@@ -32,6 +32,7 @@ import org.mrgeo.test.TestUtils;
 import java.io.File;
 
 @Ignore
+@SuppressWarnings("all") // test code, not included in production
 public class CsvOutputFormatTest
 {
   @Test

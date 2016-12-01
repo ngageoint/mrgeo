@@ -276,7 +276,7 @@ private boolean inRange(TileIdWritable key)
   return false;
 }
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "squid:S1166"}) // Splits.SplitException is caught and handled
 private void primeScanner(final long startTileId, final long endTileId)
 {
     /*

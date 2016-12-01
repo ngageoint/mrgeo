@@ -44,6 +44,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+@SuppressWarnings("all") // test code, not included in production
 public class HdfsMrsImageDataProviderFactoryTest extends LocalRunnerTest
 {
   HdfsMrsImageDataProviderFactory factory;

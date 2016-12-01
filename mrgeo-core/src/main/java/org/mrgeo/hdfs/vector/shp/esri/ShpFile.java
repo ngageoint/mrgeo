@@ -163,7 +163,7 @@ public class ShpFile
     // write data
     int filePos = 100;
     int pos = index.getOffset(i);
-    os.seek(pos * 2);
+    os.seek(pos * 2l);
     // loop
     for (int j = 0; j < index.getCurrentCacheSize(); j++)
     {

@@ -29,6 +29,7 @@ import java.util.Arrays;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 
+@SuppressWarnings("all") // test code, not included in production
 public class HdfsImageResultScannerTest {
 private static final Logger logger = LoggerFactory.getLogger(HdfsImageResultScannerTest.class);
 

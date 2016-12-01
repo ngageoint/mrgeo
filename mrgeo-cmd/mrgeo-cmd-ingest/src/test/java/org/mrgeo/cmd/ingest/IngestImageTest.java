@@ -46,7 +46,7 @@ import java.util.Properties;
  * @author jason.surratt
  * 
  */
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // Test code, not included in production
 public class IngestImageTest
 {
   @Rule public TestName testname = new TestName();

@@ -21,6 +21,7 @@ import java.util.Scanner;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
+@SuppressWarnings("all") // test code, not included in production
 public class FileSplitTest {
     private FileSplit subject;
 

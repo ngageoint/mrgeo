@@ -284,15 +284,15 @@ private static Logger log = LoggerFactory.getLogger(GeometryUtils.class);
     final double pbDotc = -lby * (ax - cx) + lbx * (ay - cy);
 
     // parallel?
-    if (pdDotb == 0)
+    if (FloatUtils.isEqual(pdDotb, 0.0))
     {
       // collinear?
-      if (pdDotc == 0)
+      if (FloatUtils.isEqual(pdDotc, 0.0))
       {
         final double v;
         final double w;
 
-        if (lbx != 0)
+        if (!FloatUtils.isEqual(lbx, 0.0))
         {
           v = (cx - ax) / lbx;
           w = ay + (lby * (cx - ax) / lbx);
@@ -438,7 +438,8 @@ private static Logger log = LoggerFactory.getLogger(GeometryUtils.class);
   }
 
 
-  static com.vividsolutions.jts.geom.Geometry intersect(
+@SuppressWarnings("squid:S1166") // Exception caught and handled
+static com.vividsolutions.jts.geom.Geometry intersect(
     final com.vividsolutions.jts.geom.Polygon jtsClip,
     final com.vividsolutions.jts.geom.Geometry jtsGeom)
   {
@@ -458,6 +459,7 @@ private static Logger log = LoggerFactory.getLogger(GeometryUtils.class);
       catch (final TopologyException e1)
       {
         log.error("JTS Topology problem: clip area: " + jtsClip.toString() + " geom: " + jtsGeom.toString() + " message: " + e1.getMessage());
+        log.error("Exception Thrown {}", e1);
 
         return new com.vividsolutions.jts.geom.GeometryFactory().createPoint((Coordinate)null);
       }

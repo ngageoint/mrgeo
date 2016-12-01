@@ -28,6 +28,7 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
+import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.ProtectionLevelUtils;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
@@ -37,6 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -88,8 +90,9 @@ public static Options createOptions()
   return result;
 }
 
-@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File used for reading script")
 @Override
+@SuppressWarnings("squid:S1166") // Exception caught and error message printed
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File used for reading script")
 public int run(String[] args, Configuration conf, final ProviderProperties providerProperties)
 {
   long starttime = System.currentTimeMillis();
@@ -180,10 +183,9 @@ public int run(String[] args, Configuration conf, final ProviderProperties provi
         }
       }
     }
-    catch (Exception e)
+    catch (IOException e)
     {
       System.out.println("Failure while running map algebra " + e.getMessage());
-      e.printStackTrace();
       return -1;
     }
 
@@ -192,27 +194,7 @@ public int run(String[] args, Configuration conf, final ProviderProperties provi
   finally
   {
     long elapsed = System.currentTimeMillis() - starttime;
-
     System.out.println("Elapsed time: " + time(elapsed));
-    System.out.println("Time Serializing (toWritable): " + time(RasterWritable.serializeTime) +
-        " (" + String.format("%.2f", 100.0 * (float) RasterWritable.serializeTime / elapsed) + "%)" +
-        " calls: " + RasterWritable.serializeCnt +
-        " avg time/call: " +
-        String.format("%dms", (long) ((double) RasterWritable.serializeTime / RasterWritable.serializeCnt)));
-    System.out.println("Time Deserializing (toRaster): " + time(RasterWritable.deserializeTime) +
-        " (" + String.format("%.2f", 100.0 * (float) RasterWritable.deserializeTime / elapsed) + "%)" +
-        " calls: " + RasterWritable.deserializeCnt +
-        " avg time/call: " +
-        String.format("%dms", (long) ((double) RasterWritable.deserializeTime / RasterWritable.deserializeCnt)));
-
-    long combinedCnt = RasterWritable.serializeCnt + RasterWritable.deserializeCnt;
-    long combinedTime = RasterWritable.serializeTime + RasterWritable.deserializeTime;
-
-    System.out.println("Combined time : " + time(combinedTime) +
-        " (" + String.format("%.2f", 100.0 * (float) combinedTime / elapsed) + "%)" +
-        " calls: " + combinedCnt +
-        " avg time/call: " +
-        String.format("%dms", (long) ((double) combinedTime / combinedCnt)));
   }
 }
 

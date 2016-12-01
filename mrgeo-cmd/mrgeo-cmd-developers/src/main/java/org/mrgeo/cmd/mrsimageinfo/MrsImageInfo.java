@@ -144,6 +144,7 @@ private static void printTileType(final MrsPyramidMetadata metadata, PrintStream
 }
 
 @Override
+@SuppressWarnings("squid:S1166") // DataProviderNotFound exception caught and message printed
 public int run(final String[] args, final Configuration conf,
     final ProviderProperties providerProperties)
 {
@@ -232,17 +233,15 @@ public int run(final String[] args, final Configuration conf,
   }
   catch (IOException e)
   {
-    e.printStackTrace();
+    log.error("Exception thrown {}", e);
   }
 
   return -1;
 }
 
-private void printFileInfo(final Path pfile, PrintStream out)
+private void printFileInfo(final Path pfile, PrintStream out) throws IOException
 {
   // TODO: The following is HDFS-sepcific; needs to be re-factored
-  try
-  {
     final FileSystem fs = pfile.getFileSystem(config);
     final FileStatus stat = fs.getFileStatus(pfile);
 
@@ -265,15 +264,11 @@ private void printFileInfo(final Path pfile, PrintStream out)
       out.print(" blk: " + human(stat.getBlockSize()));
       out.println(" repl: " + stat.getReplication());
     }
-  }
-  catch (final IOException e)
-  {
-    e.printStackTrace();
-  }
 }
 
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 private void printMetadata(final MrsPyramidMetadata metadata,
-    final ProviderProperties providerProperties, PrintStream out) throws DataProviderNotFound
+    final ProviderProperties providerProperties, PrintStream out) throws IOException
 {
   out.println("name: \"" + metadata.getPyramid() + "\"");
   if (verbose)

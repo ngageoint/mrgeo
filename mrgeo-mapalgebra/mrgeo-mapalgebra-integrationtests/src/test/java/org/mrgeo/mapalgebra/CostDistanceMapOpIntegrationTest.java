@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // Test code, not included in production
 public class CostDistanceMapOpIntegrationTest extends LocalRunnerTest
 {
   private static final Logger log = LoggerFactory.getLogger(CostDistanceMapOpIntegrationTest.class);

@@ -62,6 +62,61 @@ import java.util.zip.ZipOutputStream;
 public class KmlGenerator
 {
 
+public static class KmlGeneratorException extends java.lang.Exception
+{
+
+  /**
+   *
+   */
+  private static final long serialVersionUID = 1L;
+
+  /**
+   * Creates a new instance of <code>DbaseException</code> without detail
+   * message.
+   */
+  public KmlGeneratorException()
+  {
+  }
+
+  /**
+   * Constructs an instance of <code>DbaseException</code> with the specified
+   * detail message.
+   *
+   * @param msg
+   *          the detail message.
+   */
+  public KmlGeneratorException(String msg)
+  {
+    super(msg);
+  }
+
+  /**
+   * Constructs an instance of <code>DbaseException</code> with the specified
+   * detail message and throwable cause.
+   *
+   * @param msg
+   *          the detail message.
+   * @param throwable
+   *          the throwable cause.
+   */
+  public KmlGeneratorException(String msg, Throwable throwable)
+  {
+    super(msg, throwable);
+  }
+
+  /**
+   * Constructs an instance of <code>DbaseException</code> with the specified
+   * throwable cause.
+   *
+   * @param throwable
+   *          the throwable cause.
+   */
+  public KmlGeneratorException(Throwable throwable)
+  {
+    super(throwable);
+  }
+}
+
 private static class KMLErrorHandler implements ErrorHandler
 {
   // Validation errors
@@ -229,6 +284,7 @@ private static MrsImageDataProvider[] getPyramidFilesList(
 /*
  *
  */
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 private void addLayersToCapability(Element capability, Version kmlVersion,
     final ProviderProperties providerProperties) throws IOException
 {
@@ -290,7 +346,7 @@ private void addLayersToCapability(Element capability, Version kmlVersion,
         createTextElement(bb, "northBoundLatitude", String.valueOf(mp.getBounds().n));
       }
     }
-    catch (IOException e)
+    catch (IOException ignored)
     {
       // no op
     }
@@ -343,6 +399,7 @@ public Element createTextElement(Element parent, String tagName, String text)
   return e;
 }
 
+@SuppressWarnings("squid:S1148") // We _are_ printing the exception, to a printwriter!
 @SuppressFBWarnings(value = {"SERVLET_QUERY_STRING",
     "SERVLET_PARAMETER"}, justification = "1) QueryString only checked for not null, 2) SERVICE & REQUEST validated")
 // @GET
@@ -367,7 +424,7 @@ public void doGet(@Context HttpServletRequest request, @Context HttpServletRespo
 
       if (!serviceParam.toLowerCase().equals("kml"))
       {
-        throw new Exception("Unsupported service type was requested. (only KML is supported '"
+        throw new KmlGeneratorException("Unsupported service type was requested. (only KML is supported '"
             + serviceParam + "')");
       }
 
@@ -377,7 +434,14 @@ public void doGet(@Context HttpServletRequest request, @Context HttpServletRespo
         ProviderProperties providerProperties = new ProviderProperties(); // null;
         if (requestParam.toLowerCase().equals("getcapabilities"))
         {
-          getCapabilities(request, response, providerProperties);
+          try
+          {
+            getCapabilities(request, response, providerProperties);
+          }
+          catch (TransformerException | ParserConfigurationException e)
+          {
+            throw new KmlGeneratorException(e);
+          }
         }
         else if (requestParam.toLowerCase().equals("getkmlrootnode"))
         {
@@ -389,17 +453,17 @@ public void doGet(@Context HttpServletRequest request, @Context HttpServletRespo
         }
         else
         {
-          throw new Exception("No viable request made.");
+          throw new KmlGeneratorException("No viable request made.");
         }
       }
       else {
-        throw new Exception("No viable request made.");
+        throw new KmlGeneratorException("No viable request made.");
       }
     }
   }
-  catch (Exception e)
+  catch (KmlGeneratorException e)
   {
-    e.printStackTrace();
+    log.error("Exception thrown {}", e);
     try
     {
       Document doc;
@@ -427,7 +491,7 @@ public void doGet(@Context HttpServletRequest request, @Context HttpServletRespo
     catch (ParserConfigurationException | TransformerException e1)
     {
       throw new IOException("Exception while creating XML exception (ah, the irony)."
-          + e1.getLocalizedMessage());
+          + e1.getLocalizedMessage(), e1);
     }
 //    catch (Exception exception)
 //    {
@@ -449,7 +513,7 @@ public void doPost(HttpServletRequest request, HttpServletResponse response)
  */
 @SuppressFBWarnings(value = "SERVLET_PARAMETER", justification = "VERSION validated")
 private void getCapabilities(HttpServletRequest request, HttpServletResponse response,
-    final ProviderProperties providerProperties) throws Exception
+    final ProviderProperties providerProperties) throws ParserConfigurationException, IOException, TransformerException
 {
   Document doc;
   DocumentBuilderFactory dBF = DocumentBuilderFactory.newInstance();

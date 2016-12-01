@@ -32,6 +32,7 @@ import org.mrgeo.utils.HadoopUtils;
 import java.io.IOException;
 import java.io.OutputStream;
 
+@SuppressWarnings("all") // test code, not included in production
 public class HdfsAdHocDataProviderFactoryTest
 {
   HdfsAdHocDataProviderFactory factory;

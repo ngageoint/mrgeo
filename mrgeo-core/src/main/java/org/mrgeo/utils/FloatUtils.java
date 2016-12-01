@@ -31,7 +31,7 @@ static class Floater
     nan = bits >= 0x7f800001 || (bits >= 0xff800001 && bits <= 0xffffffff);
 
     neg = (bits >> 31) != 0;
-    exp = (bits >> 23) & 0xff - 127;
+    exp = (bits >> 23) & 0xff;
     mant = (exp == 0) ? (bits & 0x7fffff) << 1 : (bits & 0x7fffff) | 0x800000;
   }
 }
@@ -62,7 +62,7 @@ static class Doubler
 
 
     neg = (bits >> 63) != 0;
-    exp = (bits >> 52) & 0x7ffL - 1023;
+    exp = (bits >> 52) & 0x7ffL;
     mant = (exp == 0) ? (bits & 0x000fffffffffffffL) << 1 :
         (bits & 0x000fffffffffffffL) | 0x10000000000000L;
   }
@@ -89,7 +89,7 @@ public static boolean isEqual(float a, float b, int bitsprecision)
   if (fa.neg != fb.neg)
   {
     // unless they are zero! (0.0 and -0.0)
-    return (a == b);
+    return (fa.exp | fb.exp | fa.mant | fb.mant) == 0;
   }
   if (bitsprecision == 0)
   {
@@ -118,7 +118,7 @@ public static boolean isEqual(double a, double b, int bitsprecision)
   if (da.neg != db.neg)
   {
     // unless they are zero! (0.0 and -0.0)
-    return (a == b);
+    return (da.exp | db.exp | da.mant | db.mant) == 0;
   }
   if (bitsprecision == 0)
   {

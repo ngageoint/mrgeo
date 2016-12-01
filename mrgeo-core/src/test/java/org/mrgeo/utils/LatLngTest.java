@@ -21,7 +21,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.junit.UnitTest;
 
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // test code, not included in production
 public class LatLngTest 
 {
   private static final double EPSILON = 1e-5;

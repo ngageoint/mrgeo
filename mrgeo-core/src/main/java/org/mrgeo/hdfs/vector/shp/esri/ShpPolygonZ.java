@@ -54,6 +54,7 @@ public class ShpPolygonZ implements ShpData
   }
 
   @Override
+  @SuppressWarnings("squid:S00112") // I didn't write this code, so I'm not sure why it throws the RuntimeException.  Keeping it
   public JShape getShape(int i) throws IOException
   {
     try

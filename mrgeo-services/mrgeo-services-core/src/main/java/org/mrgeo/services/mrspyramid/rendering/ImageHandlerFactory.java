@@ -57,7 +57,8 @@ public class ImageHandlerFactory
 //  }
 
   @SuppressWarnings("unused")
-  public static Object getHandler(String imageFormat, final Class<?> handlerType) throws Exception
+  public static Object getHandler(String imageFormat, final Class<?> handlerType)
+      throws IllegalAccessException, InstantiationException
   {
 
     if (imageFormatHandlers == null || mimeTypeHandlers == null)
@@ -169,23 +170,10 @@ public class ImageHandlerFactory
         }
       }
     }
-    catch (final InstantiationException e)
+    catch (final InstantiationException | InvocationTargetException |
+        IllegalArgumentException | NoSuchMethodException | SecurityException | IllegalAccessException e)
     {
-    }
-    catch (final IllegalAccessException e)
-    {
-    }
-    catch (final SecurityException e)
-    {
-    }
-    catch (final NoSuchMethodException e)
-    {
-    }
-    catch (final IllegalArgumentException e)
-    {
-    }
-    catch (final InvocationTargetException e)
-    {
+      log.error("Exception thrown {}", e);
     }
   }
 
@@ -213,23 +201,10 @@ public class ImageHandlerFactory
         }
       }
     }
-    catch (final InstantiationException e)
+    catch (final InstantiationException | InvocationTargetException |
+        IllegalArgumentException | NoSuchMethodException | SecurityException | IllegalAccessException e)
     {
-    }
-    catch (final IllegalAccessException e)
-    {
-    }
-    catch (final SecurityException e)
-    {
-    }
-    catch (final NoSuchMethodException e)
-    {
-    }
-    catch (final IllegalArgumentException e)
-    {
-    }
-    catch (final InvocationTargetException e)
-    {
+      log.error("Exception thrown {}", e);
     }
   }
 

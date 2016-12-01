@@ -132,13 +132,14 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
   }
   catch (Exception e)
   {
-    e.printStackTrace();
+    log.error("Exception thrown {}", e);
   }
 
   return -1;
 }
 
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File() checking for existence")
+@SuppressWarnings("squid:S00112") // Passing on exception thrown from 3rd party API
 private Server startWebServer(int httpPort) throws Exception
 {
   System.out.println("Starting embedded web server on port " + httpPort);
@@ -192,6 +193,7 @@ private Server startWebServer(int httpPort) throws Exception
   return server;
 }
 
+@SuppressWarnings("squid:S00112") // Passing on exception thrown from 3rd party API
 private void runWebServer(int httpPort) throws Exception
 {
   Server server = startWebServer(httpPort);
@@ -207,6 +209,7 @@ private String getHostName()
   }
   catch (UnknownHostException e)
   {
+    log.error("Exception thrown {}", e);
     System.err.println("Unknown host");
   }
   return "localhost";

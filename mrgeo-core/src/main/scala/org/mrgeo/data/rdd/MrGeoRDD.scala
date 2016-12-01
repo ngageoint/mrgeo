@@ -20,23 +20,25 @@ import org.apache.spark.annotation.DeveloperApi
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{Partition, TaskContext}
+import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 
 import scala.reflect.ClassTag
 
 @SerialVersionUID(1L)
 class MrGeoRDD[K:ClassTag, V:ClassTag](parent: RDD[(K, V)])  extends RDD[(K, V)](parent) {
+  if (MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_AUTOPERSISTANCE, "true") == "true") {
+    AutoPersister.incrementRef(this)
+    walkTree(this)
 
-  AutoPersister.incrementRef(this)
-  walkTree(this)
-
-  if (log.isDebugEnabled()) {
-    logDebug("***************==")
-    //    Thread.currentThread().getStackTrace.foreach(st => {
-    //      logDebug(st.toString)
-    //    })
-    printDependencies(this)
-    ///logDebug(this.toDebugString)
-    logDebug("***************--")
+    if (log.isDebugEnabled()) {
+      logDebug("***************==")
+      //    Thread.currentThread().getStackTrace.foreach(st => {
+      //      logDebug(st.toString)
+      //    })
+      printDependencies(this)
+      ///logDebug(this.toDebugString)
+      logDebug("***************--")
+    }
   }
 
   private def walkTree(rdd: RDD[_], increment:Boolean = true): Boolean = {

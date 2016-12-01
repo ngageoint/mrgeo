@@ -18,6 +18,8 @@ package org.mrgeo.resources.mrspyramid;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -26,12 +28,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Providers;
-import java.io.IOException;
 
 
 @Path("/metadata")
 public class MetadataResource
 {
+private static final Logger log = LoggerFactory.getLogger(MetadataResource.class);
 
 @Context
 Providers providers;
@@ -51,11 +53,14 @@ public Response getMetadata(@PathParam("output") final String imgName)
   }
   catch (final NotFoundException e)
   {
+    log.error("Exception thrown {}", e);
     final String error = e.getMessage() != null ? e.getMessage() : "";
     return Response.status(Status.NOT_FOUND).entity(error).build();
   }
   catch (Exception e1)
   {
+    log.error("Exception thrown {}", e1);
+
     final String error = e1.getMessage() != null ? e1.getMessage() : "";
     return Response.serverError().entity(error).build();
   }

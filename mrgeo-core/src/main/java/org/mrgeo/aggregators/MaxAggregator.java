@@ -14,9 +14,6 @@
  *
  */
 
-/**
- *
- */
 package org.mrgeo.aggregators;
 
 import org.apache.commons.lang3.NotImplementedException;
@@ -33,28 +30,28 @@ public class MaxAggregator implements Aggregator
 public double aggregate(double[] values, double nodata)
 {
   double max = -Double.MAX_VALUE;
-  for (int i=0; i<values.length; i++)
+  for (double value : values)
   {
-    if (FloatUtils.isNotNodata(values[i], nodata))
+    if (FloatUtils.isNotNodata(value, nodata))
     {
-      max = Math.max(max, values[i]);
+      max = Math.max(max, value);
     }
   }
-  return (max == -Double.MAX_VALUE) ? nodata : max;
+  return FloatUtils.isEqual(max, -Double.MAX_VALUE) ? nodata : max;
 }
 
 @Override
 public float aggregate(float[] values, float nodata)
 {
   Float max = -Float.MAX_VALUE;
-  for (int i=0; i<values.length; i++)
+  for (float value : values)
   {
-    if (FloatUtils.isNotNodata(values[i], nodata))
+    if (FloatUtils.isNotNodata(value, nodata))
     {
-      max = Math.max(max, values[i]);
+      max = Math.max(max, value);
     }
   }
-  return (max == -Float.MAX_VALUE) ? nodata : max;
+  return FloatUtils.isEqual(max, -Float.MAX_VALUE) ? nodata : max;
 }
 
 @Override

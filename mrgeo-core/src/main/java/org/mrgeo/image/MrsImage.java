@@ -77,6 +77,7 @@ private MrsImage(MrsImageDataProvider provider, final int zoomlevel)
   }
 }
 
+@SuppressWarnings("squid:S1166") // Exceptions are ignored.  This is OK.
 public static MrsImage open(MrsImageDataProvider provider, final int zoomlevel) throws IOException
 {
   try
@@ -89,10 +90,9 @@ public static MrsImage open(MrsImageDataProvider provider, final int zoomlevel) 
       return new MrsImage(provider, zoomlevel);
     }
   }
-  // TODO this seems weird to catch and eat these here...
-  catch (final MrsImageException | NullPointerException e)
+  // This seems weird to catch and eat these here...
+  catch (final MrsImageException | NullPointerException ignored)
   {
-    // e.printStackTrace();
   }
 
   return null;
@@ -102,7 +102,7 @@ public static MrsImage open(MrsImageDataProvider provider, final int zoomlevel) 
 public static MrsImage open(final String name, final int zoomlevel,
     final ProviderProperties providerProperties) throws IOException
 {
-  if (name == null)
+  if (name == null || name.length() == 0)
   {
     throw new IOException("Unable to open image. Resource name is empty.");
   }
@@ -241,7 +241,7 @@ public MrsPyramidMetadata getMetadata()
     }
     catch (IOException e)
     {
-      log.error("Unable to read metadata for " + provider.getResourceName(), e);
+      log.error("Unable to read metadata for {} {}", provider.getResourceName(), e);
     }
   }
   return metadata;
@@ -518,6 +518,7 @@ public MrGeoRaster getRaster(final TileIdWritable[] tiles) throws MrGeoRaster.Mr
   return getRaster(tileids);
 }
 
+@SuppressWarnings("squid:S1166") // TileNotFoundException exceptions are caught and ignored.  This is OK
 public MrGeoRaster getRaster(final Tile[] tiles) throws MrGeoRaster.MrGeoRasterException
 {
   getMetadata(); // make sure metadata is loaded
@@ -584,9 +585,9 @@ public MrGeoRaster getRaster(final Tile[] tiles) throws MrGeoRaster.MrGeoRasterE
                         source, (int) (start.px - ul.px), (int) (start.py - ul.py));
       }
     }
-    catch (final TileNotFoundException e)
+    // bad tile - tile could be out of bounds - ignore it
+    catch (TileNotFoundException ignored)
     {
-      // bad tile - tile could be out of bounds - ignore it
     }
 
   }
@@ -655,7 +656,7 @@ public MrGeoRaster getRaster(final TileBounds tileBounds) throws MrGeoRaster.MrG
       }
       catch (IOException e)
       {
-        e.printStackTrace();
+        log.error("Exception thrown {}", e);
       }
     }
   }

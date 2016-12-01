@@ -21,6 +21,7 @@ import java.awt.image.DataBuffer;
 import java.io.IOException;
 import java.util.HashMap;
 
+@SuppressWarnings("all") // test code, not included in production
 public class IngestImageTest extends LocalRunnerTest
 {
 @Rule

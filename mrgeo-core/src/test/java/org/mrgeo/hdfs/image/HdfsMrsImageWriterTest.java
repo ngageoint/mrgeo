@@ -19,6 +19,7 @@ package org.mrgeo.hdfs.image;
 import org.junit.Before;
 import org.junit.Test;
 
+@SuppressWarnings("all") // test code, not included in production
 public class HdfsMrsImageWriterTest
 {
 

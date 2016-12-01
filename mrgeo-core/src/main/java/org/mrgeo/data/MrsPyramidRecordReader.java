@@ -69,9 +69,9 @@ public class MrsPyramidRecordReader extends RecordReader<TileIdWritable, RasterW
     {
       recordReader.initialize(initializeWithSplit, context);
     }
-    catch(Throwable t)
+    catch(Exception e)
     {
-      throw new IOException(t);
+      throw new IOException(e);
     }
     return recordReader;
   }

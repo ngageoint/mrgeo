@@ -33,7 +33,7 @@ import java.net.URLEncoder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // Test code, not included in production
 public class BadRequestTest extends WmsGeneratorTestAbstract
 {
 @SuppressWarnings("unused")

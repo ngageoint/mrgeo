@@ -16,12 +16,8 @@
 
 package org.mrgeo.services.mrspyramid.rendering;
 
-import org.mrgeo.data.DataProviderFactory;
-import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.image.MrsPyramid;
-import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.services.ServletUtils;
 import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
@@ -57,15 +53,14 @@ public abstract class ImageResponseWriterAbstract implements ImageResponseWriter
       writeToStream(raster, defaults, byteStream);
 
 
-      Response.ResponseBuilder response = Response.ok().entity(byteStream.toByteArray())
+      return Response.ok().entity(byteStream.toByteArray())
           .encoding(getResponseMimeType())
           .header("Content-type", getResponseMimeType());
-
-      return response;
 
     }
     catch (final Exception e)
     {
+      log.error("Exception thrown {}", e);
       if (e.getMessage() != null)
       {
         return Response.serverError().entity(e.getMessage());
@@ -92,7 +87,7 @@ public abstract class ImageResponseWriterAbstract implements ImageResponseWriter
     }
     catch (IOException e)
     {
-      throw new ServletException("Error writing raster");
+      throw new ServletException("Error writing raster", e);
     }
   }
 

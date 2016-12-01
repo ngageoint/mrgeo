@@ -245,7 +245,7 @@ private static void averageRaster(final WritableRaster raster, final Raster coun
 
         if (!Float.isNaN(v))
         {
-          if (c == 0.0)
+          if (FloatUtils.isEqual(c, 0.0))
           {
             v = Float.NaN;
           }

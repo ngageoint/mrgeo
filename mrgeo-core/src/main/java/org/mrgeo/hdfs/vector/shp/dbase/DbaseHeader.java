@@ -43,6 +43,7 @@ DbaseHeader()
 }
 
 @Override
+@SuppressWarnings("squid:S00112") // I didn't write this code, so I'm not sure why it throws the RuntimeException.  Keeping it
 public Object clone()
 {
   DbaseHeader hdr;
@@ -52,7 +53,7 @@ public Object clone()
   }
   catch (CloneNotSupportedException e)
   {
-    throw new RuntimeException("Class doesn't implement cloneable");
+    throw new RuntimeException("Class doesn't implement cloneable", e);
   }
   return hdr;
 }
@@ -92,7 +93,7 @@ public synchronized DbaseField getField(int i) throws DbaseException
   }
   catch (Exception e)
   {
-    throw new DbaseException("Field number invalid!");
+    throw new DbaseException("Field number invalid!", e);
   }
 }
 

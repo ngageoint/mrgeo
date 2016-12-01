@@ -33,7 +33,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.Text;
-import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.DataProviderFactory;
@@ -47,7 +46,6 @@ import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -255,7 +253,7 @@ public static void importDirectory(String workDir, String tableName, Configurati
     }
     catch (TableExistsException tee)
     {
-      tee.printStackTrace();
+      log.error("Exception thrown {}", tee);
     }
   }
   connector.tableOperations().importDirectory(tableName, workDir + "/files", workDir + "/failures", false);
@@ -275,6 +273,7 @@ public static void importDirectory(String workDir, String tableName, Configurati
  * @param auths is the authorizations to use when pulling metadata
  * @return the metadata object
  */
+@SuppressWarnings("squid:S1166") // Exceptions are caught and ignored.  This is OK
 public static MrsPyramidMetadata getMetadataFromTable(String table, Connector conn, String auths)
 {
   MrsPyramidMetadata retMeta = null;
@@ -304,15 +303,7 @@ public static MrsPyramidMetadata getMetadataFromTable(String table, Connector co
     }
 
   }
-  catch (TableNotFoundException tnfe)
-  {
-
-  }
-  catch (ClassNotFoundException cnfe)
-  {
-
-  }
-  catch (IOException ioe)
+  catch (TableNotFoundException | IOException | ClassNotFoundException ignored)
   {
 
   }
@@ -330,6 +321,7 @@ public static MrsPyramidMetadata getMetadataFromTable(String table, Connector co
  * @return the metadata object
  */
 @Deprecated
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 public static MrsPyramidMetadata buildMetadataFromTable(String table, Connector conn, String auths)
 {
   MrsPyramidMetadata retMeta = new MrsPyramidMetadata();
@@ -435,7 +427,7 @@ public static MrsPyramidMetadata buildMetadataFromTable(String table, Connector 
 
 
   }
-  catch (TableNotFoundException tnfe)
+  catch (TableNotFoundException ignored)
   {
 
   }
@@ -494,6 +486,7 @@ public static boolean storeMetadataIntoTable(String table, MrsPyramidMetadata me
  * @param metadata - the MrsImagePyramidMetadata object to be stored
  * @param conn     - the Accumulo connector to use
  */
+@SuppressWarnings("squid:S1166") // Exceptions are caught and returned as false
 public static boolean storeMetadataIntoTable(String table, MrsPyramidMetadata metadata, Connector conn,
     ColumnVisibility cViz)
 {
@@ -586,15 +579,7 @@ public static boolean storeMetadataIntoTable(String table, MrsPyramidMetadata me
     bw.flush();
     bw.close();
   }
-  catch (IOException ioe)
-  {
-    return false;
-  }
-  catch (MutationsRejectedException mre)
-  {
-    return false;
-  }
-  catch (TableNotFoundException tnfe)
+  catch (IOException | MutationsRejectedException | TableNotFoundException ignored)
   {
     return false;
   }
@@ -616,6 +601,7 @@ public static boolean storeMetadataIntoTable(String table, MrsPyramidMetadata me
  * @return
  */
 @Deprecated
+@SuppressWarnings("squid:S1166") // TableNotFoundException are caught and ignored.  This is OK
 public static RasterWritable getRaster(String table, long tid, int zl, Connector conn, String auths)
 {
   RasterWritable retRaster = null;
@@ -653,7 +639,7 @@ public static RasterWritable getRaster(String table, long tid, int zl, Connector
   }
   catch (IOException e)
   {
-    e.printStackTrace();
+    log.error("Exception thrown {}", e);
   }
 
   return retRaster;
@@ -687,16 +673,12 @@ public static Set<String> getListOfTables(Properties properties) throws DataProv
         props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER),
         token);
   }
-  catch (AccumuloSecurityException ase)
+  catch (AccumuloSecurityException | AccumuloException e)
   {
-    ase.printStackTrace();
+    log.error("Exception thrown {}", e);
     return null;
   }
-  catch (AccumuloException ae)
-  {
-    ae.printStackTrace();
-    return null;
-  } //catch (DataProviderException dpe) {
+  //catch (DataProviderException dpe) {
   //dpe.printStackTrace();
   //return null;
   //}
@@ -786,16 +768,12 @@ public static Hashtable<String, String> getGeoTables(Properties providerProperti
         props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER),
         token);
   }
-  catch (AccumuloSecurityException ase)
+  catch (AccumuloSecurityException | AccumuloException ase)
   {
-    ase.printStackTrace();
+    log.error("Exception thrown {}", ase);
     return null;
   }
-  catch (AccumuloException ae)
-  {
-    ae.printStackTrace();
-    return null;
-  } //catch (DataProviderException dpe) {
+  //catch (DataProviderException dpe) {
   //dpe.printStackTrace();
   //return null;
   //}
@@ -901,13 +879,9 @@ public static Hashtable<String, String> getGeoTables(String ignore, Authenticati
       scann.clearColumns();
 
     }
-    catch (TableNotFoundException tnfe)
-    {
-      tnfe.printStackTrace();
-    }
     catch (Exception e)
     {
-      e.printStackTrace();
+      log.error("Exception thrown {}", e);
     }
 
   } // end for loop
@@ -922,13 +896,14 @@ public static Hashtable<String, String> getGeoTables(String ignore, Authenticati
  * @param protectionLevel
  * @return
  */
+@SuppressWarnings({"squid:S1166", "squid:S1848"}) // BadArgumentException exception is caught and returned as false, Using object creation for valid check
 public static boolean validateProtectionLevel(final String protectionLevel)
 {
   try
   {
     new ColumnVisibility(protectionLevel);
   }
-  catch (BadArgumentException bae)
+  catch (BadArgumentException ignored)
   {
     return false;
   }

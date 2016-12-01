@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+@SuppressWarnings("all") // test code, not included in production
 public class DataProviderFactoryTest extends LocalRunnerTest
 {
   private static String all_ones;

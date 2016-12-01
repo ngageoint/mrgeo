@@ -76,6 +76,7 @@ public static Options createOptions()
 
 
 @Override
+@SuppressWarnings("squid:S1166") // Catching exceptions and logging error
 public int run(String[] args, final Configuration conf,
     final ProviderProperties providerProperties)
 {
@@ -164,7 +165,6 @@ public int run(String[] args, final Configuration conf,
 
     catch (Exception e)
     {
-      e.printStackTrace();
       log.error("BuildPyramid exited with error", e);
       return -1;
     }

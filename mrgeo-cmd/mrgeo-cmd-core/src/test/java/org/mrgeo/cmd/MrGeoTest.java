@@ -30,6 +30,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.security.Permission;
 
+@SuppressWarnings("all") // Test code, not included in production
 public class MrGeoTest extends LocalRunnerTest
 {
   @Rule

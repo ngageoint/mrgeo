@@ -48,7 +48,6 @@ private Properties props = null;
 
 //private Connector conn = null;
 
-@SuppressWarnings("unused")
 private static final Logger log = LoggerFactory.getLogger(ShowConfiguration.class);
 
 
@@ -59,8 +58,9 @@ private void initialize(Configuration conf)
     fs = FileSystem.get(conf);
     //fs = HadoopFileUtils.getFileSystem();
   }
-  catch (IOException ioe)
+  catch (IOException e)
   {
+    log.error("Exception thrown {}", e);
     System.out.println("Hadoop file system not available.");
   }
   props = MrGeoProperties.getInstance();
@@ -86,6 +86,7 @@ public String reportUser()
 } // end reportUser
 
 
+@SuppressWarnings("squid:S1166") // Exceptions caught and errors printed
 public String reportMrGeoSettingsProperties()
 {
   StringBuffer sb = new StringBuffer();
@@ -111,6 +112,7 @@ public String reportMrGeoSettingsProperties()
   return sb.toString();
 } // end getMrGeoSettingsProperties
 
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 public boolean isMrGeoSettingsPropertiesAvailable()
 {
   try (InputStream is = MrGeoProperties.class.getClass().getResourceAsStream(MrGeoConstants.MRGEO_SETTINGS))
@@ -124,6 +126,7 @@ public boolean isMrGeoSettingsPropertiesAvailable()
   return false;
 } // end isMrGeoSettingsPropertiesAvailable
 
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 public String reportMrGeoConfInfo()
 {
   StringBuilder sb = new StringBuilder();
@@ -170,8 +173,8 @@ public String reportMrGeoConfInfo()
   return sb.toString();
 } // end getMrGeoConfInfo
 
-
-public boolean isMrGeoConfAvailable()
+@SuppressWarnings("squid:S1166") // Exception caught and handled
+private boolean isMrGeoConfAvailable()
 {
 
   try
@@ -179,14 +182,14 @@ public boolean isMrGeoConfAvailable()
     MrGeoProperties.findMrGeoConf();
     return true;
   }
-  catch (IOException e)
+  catch (IOException ignored)
   {
-    e.printStackTrace();
   }
 
   return false;
 } // end isMrGeoConfAvailable
 
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 public boolean existsInHDFS(String p)
 {
   try
@@ -200,6 +203,7 @@ public boolean existsInHDFS(String p)
 
 } // end existsInHDFS
 
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 public String reportHDFSPath(String p)
 {
   StringBuffer sb = new StringBuffer();
@@ -274,7 +278,7 @@ public boolean isJobJarAvailable()
 
 public String reportJobJar()
 {
-  StringBuffer sb = new StringBuffer();
+  StringBuilder sb = new StringBuilder();
   String jj = props.getProperty(MrGeoConstants.MRGEO_JAR);
   sb.append("Jar for hadoop jobs ");
   if (jj == null)
@@ -283,7 +287,7 @@ public String reportJobJar()
     return sb.toString();
   }
 
-  sb.append(jj + " ");
+  sb.append(jj).append(" ");
   if (isJobJarAvailable())
   {
     sb.append(" Exists!\n");
@@ -296,178 +300,16 @@ public String reportJobJar()
 } // end reportJobJar
 
 
-//  public boolean isAccumuloUsed(){
-//    if(props.getProperty(MrGeoConstants.MRGEO_ACC_INST) != null &&
-//        props.getProperty(MrGeoConstants.MRGEO_ACC_ZOO) != null &&
-//        props.getProperty(MrGeoConstants.MRGEO_ACC_USER) != null &&
-//        props.getProperty(MrGeoConstants.MRGEO_ACC_PASSWORD) != null){
-//      return true;
-//    }
-//    return false;
-//    
-//  } // end isAccumuloUsed
-
-//  public String reportAccumulo(){
-//    StringBuffer sb = new StringBuffer();
-//    sb.append("Looking at Accumulo:\n");
-//    Instance inst = new ZooKeeperInstance(
-//        props.getProperty(MrGeoConstants.MRGEO_ACC_INST),
-//        props.getProperty(MrGeoConstants.MRGEO_ACC_ZOO)
-//        );
-//    
-//    Connector conn = null;
-//    try{
-//      conn = inst.getConnector(
-//          props.getProperty(MrGeoConstants.MRGEO_ACC_USER),
-//          props.getProperty(MrGeoConstants.MRGEO_ACC_PASSWORD).getBytes()
-//          );
-//      sb.append("\tSuccess connecting to accumulo with u/p = " +
-//          props.getProperty(MrGeoConstants.MRGEO_ACC_USER) + "/" +
-//          props.getProperty(MrGeoConstants.MRGEO_ACC_PASSWORD) + "\n");
-//      
-//    } catch(AccumuloException ae){
-//      sb.append("\tProblem connecting to Accumulo:\n");
-//      sb.append(ae.getMessage());
-//      
-//    } catch(AccumuloSecurityException ase){
-//      sb.append("\tProblem with security connecting to Accumulo:\n");
-//      sb.append(ase.getMessage());
-//    }   
-//    
-//    if(conn == null){
-//      return sb.toString();
-//    }
-//    
-//    // check on the table
-//    if(props.getProperty(MrGeoConstants.MRGEO_ACC_TABLE) != null){
-//      sb.append("Checking on table '" +
-//          props.getProperty(MrGeoConstants.MRGEO_ACC_TABLE) +
-//          "' -> ");
-//      if(conn.tableOperations().exists(props.getProperty(MrGeoConstants.MRGEO_ACC_TABLE))){
-//        sb.append("Exists!\n");
-//      } else {
-//        sb.append("Does not Exist!\n");
-//      }
-//      
-//    }
-////    SortedSet<String> tables = conn.tableOperations().list();
-////    sb.append("Tables:\n");
-////    
-////    for(String t : tables){
-////      sb.append("\t" + t + "\n");
-////      try{
-////        Iterable<Entry<String, String>> ent = conn.tableOperations().getProperties(t);
-////        Iterator<Entry<String, String>> ei = ent.iterator();
-////        while(ei.hasNext()){
-////          Entry<String, String> e = ei.next();
-////          sb.append("\t\t" + e.getKey() + " = " + e.getValue() + "\n");
-////        }
-////      } catch(AccumuloException ase){
-////        
-////      } catch(TableNotFoundException tnfe){
-////        
-////      }
-////    }
-//    
-//    return sb.toString();
-//  } // end reportAccumulo
-
-
-//  public void xmlHDFSReport(String startEl, XMLStreamWriter xml) throws XMLStreamException{
-//    if(props == null){
-//      initialize();
-//    }
-//    if(props != null && fs != null){
-//      
-//      if(props.getProperty(MrGeoConstants.MRGEO_HDFS_COLORSCALE) != null){
-//        xml.writeStartElement(startEl);
-//        xmlHDFSReport2(props.getProperty(MrGeoConstants.MRGEO_HDFS_COLORSCALE), xml);
-//        xml.writeEndElement();      
-//      }
-//      
-//      if(props.getProperty(MrGeoConstants.MRGEO_HDFS_IMAGE) != null){
-//        xml.writeStartElement(startEl);
-//        xmlHDFSReport2(props.getProperty(MrGeoConstants.MRGEO_HDFS_IMAGE), xml);
-//        xml.writeEndElement();      
-//      }
-//
-//      if(props.getProperty(MrGeoConstants.MRGEO_HDFS_KML) != null){
-//        xml.writeStartElement(startEl);
-//        xmlHDFSReport2(props.getProperty(MrGeoConstants.MRGEO_HDFS_KML), xml);
-//        xml.writeEndElement();      
-//      }
-//      
-//      if(props.getProperty(MrGeoConstants.MRGEO_HDFS_RESOURCE) != null){
-//        xml.writeStartElement(startEl);
-//        xmlHDFSReport2(props.getProperty(MrGeoConstants.MRGEO_HDFS_RESOURCE), xml);
-//        xml.writeEndElement();      
-//      }
-//      
-//      if(props.getProperty(MrGeoConstants.MRGEO_HDFS_SHAPE) != null){
-//        xml.writeStartElement(startEl);
-//        xmlHDFSReport2(props.getProperty(MrGeoConstants.MRGEO_HDFS_SHAPE), xml);
-//        xml.writeEndElement();      
-//      }
-//      
-//      if(props.getProperty(MrGeoConstants.MRGEO_HDFS_TSV) != null){
-//        xml.writeStartElement(startEl);
-//        xmlHDFSReport2(props.getProperty(MrGeoConstants.MRGEO_HDFS_TSV), xml);
-//        xml.writeEndElement();      
-//      }
-//      
-//      if(props.getProperty(MrGeoConstants.MRGEO_HDFS_VECTOR) != null){
-//        xml.writeStartElement(startEl);
-//        xmlHDFSReport2(props.getProperty(MrGeoConstants.MRGEO_HDFS_VECTOR), xml);
-//        xml.writeEndElement();      
-//      }
-//        
-//    } else {
-//      xml.writeStartElement(startEl);
-//      if(props == null){
-//        xml.writeAttribute("props", "null");
-//      }
-//      if(fs == null){
-//        xml.writeAttribute("fs", "null");
-//      }
-//      xml.writeEndElement();      
-//
-//    }
-//          
-//  } // end xmlReport
-//  
-//  private void xmlHDFSReport2(String p, XMLStreamWriter xml) throws XMLStreamException{
-//    xml.writeAttribute("fshome", fs.getHomeDirectory().toString());
-//    xml.writeAttribute("name", p);
-//    try{
-//      if(fs.exists(new Path(p))){
-//        FileStatus fstat;
-//        fstat = fs.getFileStatus(new Path(p));
-//        FsPermission fsperm = fstat.getPermission();
-//        xml.writeAttribute("status", "exits");
-//        xml.writeAttribute("user", fstat.getOwner());
-//        xml.writeAttribute("group", fstat.getGroup());
-//        xml.writeAttribute("u,g,w", fsperm.getUserAction() + "," + fsperm.getGroupAction() + "," + fsperm.getOtherAction());
-//      } else {
-//        xml.writeAttribute("status", "does not exist");
-//        return;
-//      }
-//        
-//    } catch(IOException ioe){
-//      xml.writeAttribute("status", ioe.getMessage());
-//    }
-//        
-//  } // end xmlReport
-
 
 public String buildReport()
 {
   StringBuffer sb = new StringBuffer();
 
-  sb.append("Environment information for MrGeo configuration:" + "\n\n");
+  sb.append("Environment information for MrGeo configuration:\n\n");
 
   // basics
-  sb.append(reportOS() + "\n");
-  sb.append(reportUser() + "\n");
+  sb.append(reportOS()).append("\n");
+  sb.append(reportUser()).append("\n");
 
   // check on JBoss settings
   if (isMrGeoSettingsPropertiesAvailable())
@@ -482,7 +324,7 @@ public String buildReport()
   // MrGeo info
   if (isMrGeoConfAvailable())
   {
-    sb.append(reportMrGeoConfInfo() + "\n");
+    sb.append(reportMrGeoConfInfo()).append("\n");
   }
 
   // HDFS checks

@@ -46,6 +46,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
+@SuppressWarnings("all") // test code, not included in production
 public class TestUtils
 {
 private static final double NON_NAN_NODATA_VALUE = -32767.0;

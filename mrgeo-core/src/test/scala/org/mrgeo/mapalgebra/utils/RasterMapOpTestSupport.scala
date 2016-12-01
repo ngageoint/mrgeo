@@ -10,6 +10,7 @@ import org.mrgeo.utils.tms.Bounds
 /**
   * Created by ericwood on 7/20/16.
   */
+@SuppressWarnings(Array("all")) // test code, not included in production
 trait RasterMapOpTestSupport {
   protected var rasterMapOpBuilder: RasterMapOpBuilder = _
   protected var sparkContext: Option[SparkContext] = None

@@ -129,6 +129,7 @@
     <maven-surefire.version>2.18.1</maven-surefire.version>
     <maven-war.version>2.6</maven-war.version>
     <scalatest.plugin.version>1.0</scalatest.plugin.version>
+    <sonar-maven-plugin.version>3.2</sonar-maven-plugin.version>
     <!-- encodings -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -658,6 +659,11 @@
               </goals>
             </execution>
           </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>sonar-maven-plugin</artifactId>
+          <version>${sonar-maven-plugin.version}</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>

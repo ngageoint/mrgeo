@@ -20,6 +20,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.aggregators.MeanAggregator;
 import org.mrgeo.buildpyramid.BuildPyramid;
 import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.ProtectionLevelUtils;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
@@ -72,9 +73,9 @@ public class MapAlgebraJob implements RunnableJob
         }
       }
     }
-    catch (Exception e)
+    catch (DataProviderNotFound | ProtectionLevelUtils.ProtectionLevelException e)
     {
-      _log.error("Exception occurred while processing mapalgebra job " + e.getMessage(), e);
+      _log.error("Exception occurred while processing mapalgebra job {}", e);
       jobResults.failed(e.getMessage());
     }
   }
