@@ -184,7 +184,7 @@ public double[] getDefaultValues()
   }
   catch (IOException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
   }
 
   return new double[]{-1.0};

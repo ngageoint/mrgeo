@@ -268,7 +268,7 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
   }
   catch (ParseException | IOException e)
   {
-    log.error("Exception Thrown {}", e);
+    log.error("Exception thrown", e);
   }
 
   return -1;

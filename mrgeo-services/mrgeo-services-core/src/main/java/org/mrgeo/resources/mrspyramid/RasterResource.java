@@ -279,12 +279,12 @@ public Response getImage(@PathParam("output") String imgName,
     }
   }
   catch (FileNotFoundException fnfe) {
-    log.error("Exception thrown {}", fnfe);
+    log.error("Exception thrown", fnfe);
     return Response.status(Status.NOT_FOUND).entity(fnfe.getMessage()).build();
   }
   catch (ImageRendererException | MrsPyramidServiceException | IOException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     return Response.serverError().entity(e.getMessage()).build();
   }
 }

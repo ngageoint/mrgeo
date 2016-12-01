@@ -30,6 +30,7 @@ import org.mrgeo.colorscale.ColorScale.ColorScaleException;
 import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
+import org.mrgeo.services.mrspyramid.MrsPyramidServiceException;
 import org.mrgeo.services.mrspyramid.rendering.ImageResponseWriter;
 import org.mrgeo.services.mrspyramid.rendering.PngImageResponseWriter;
 import org.mrgeo.test.TestUtils;
@@ -257,8 +258,9 @@ public void testGetColorScaleSwatch() throws Exception
 public void testGetColorScaleSwatchMissingColorScale() throws Exception
 {
   Mockito.when(service.createColorScaleSwatch(Mockito.anyString(), Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt())).thenAnswer(new Answer() {
-    public Object answer(InvocationOnMock invocation) {
-      throw new NotFoundException("Base path \"" + invocation.getArguments()[0] + "\" does not exist.");
+    public Object answer(InvocationOnMock invocation) throws MrsPyramidServiceException
+    {
+      throw new MrsPyramidServiceException("Base path \"" + invocation.getArguments()[0] + "\" does not exist.");
     }
   });
 

@@ -463,7 +463,7 @@ public void doGet(@Context HttpServletRequest request, @Context HttpServletRespo
   }
   catch (KmlGeneratorException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     try
     {
       Document doc;

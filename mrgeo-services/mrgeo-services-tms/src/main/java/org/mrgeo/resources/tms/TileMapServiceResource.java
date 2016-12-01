@@ -421,7 +421,7 @@ public Response getRootResource(@Context final HttpServletRequest hsr)
   }
   catch (final ParserConfigurationException ex)
   {
-    log.error("Exception thrown {}", ex);
+    log.error("Exception thrown", ex);
     return Response.status(Status.INTERNAL_SERVER_ERROR).entity(GENERAL_ERROR).build();
   }
 }
@@ -531,18 +531,18 @@ public Response getTile(@PathParam("version") final String version,
   }
   catch (final IllegalArgumentException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     return Response.status(Status.BAD_REQUEST).entity("Unsupported image format - " + format)
         .build();
   }
   catch (final IOException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     return Response.status(Status.NOT_FOUND).entity("Tile map not found - " + pyramid).build();
   }
   catch (final MrsImageException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     return Response.status(Status.NOT_FOUND).entity("Tile map not found - " + pyramid + ": " + z)
         .build();
   }
@@ -563,23 +563,23 @@ public Response getTile(@PathParam("version") final String version,
   }
   catch (final ColorScale.BadJSONException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     return Response.status(Status.NOT_FOUND).entity("Unable to parse color scale JSON").build();
 
   }
   catch (final ColorScale.BadSourceException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     return Response.status(Status.NOT_FOUND).entity("Unable to open color scale file").build();
   }
   catch (final ColorScale.BadXMLException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     return Response.status(Status.NOT_FOUND).entity("Unable to parse color scale XML").build();
   }
   catch (final ColorScale.ColorScaleException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     return Response.status(Status.NOT_FOUND).entity("Unable to open color scale").build();
   }
   catch (IllegalAccessException | ParserConfigurationException | InstantiationException | ImageRendererException e)
@@ -647,7 +647,7 @@ public Response getTileMap(@PathParam("version") final String version,
   }
   catch (final ParserConfigurationException ex)
   {
-    log.error("Exception thrown {}", ex);
+    log.error("Exception thrown", ex);
     return Response.status(Status.INTERNAL_SERVER_ERROR).entity(GENERAL_ERROR).build();
   }
 }
@@ -690,7 +690,7 @@ public Response getTileMapService(@PathParam("version") final String version,
   }
   catch (final ParserConfigurationException ex)
   {
-    log.error("Exception thrown {}", ex);
+    log.error("Exception thrown", ex);
     return Response.status(Status.INTERNAL_SERVER_ERROR).entity(GENERAL_ERROR).build();
   }
 }

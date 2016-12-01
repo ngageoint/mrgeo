@@ -121,7 +121,7 @@ static {
               }
               catch (ParserConfigurationException | IOException e)
               {
-                log.error("Exception thrown {}", e);
+                log.error("Exception thrown", e);
               }
             }
             Thread.sleep(sleeptime);
@@ -264,7 +264,7 @@ private Response describeCoverage(UriInfo uriInfo,
   }
   catch (TransformerException | IOException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     return writeError(Response.Status.BAD_REQUEST, e.getMessage());
   }
 }
@@ -318,7 +318,7 @@ private Response getCapabilities(UriInfo uriInfo, MultivaluedMap<String, String>
   }
   catch (InterruptedException | TransformerException | ParserConfigurationException | IOException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     return writeError(Response.Status.BAD_REQUEST, e.getMessage());
   }
 
@@ -409,7 +409,7 @@ private Response getCoverage(MultivaluedMap<String, String> allParams,
   }
   catch (Exception e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     return writeError(Response.Status.BAD_REQUEST, e.getMessage());
   }
 
@@ -446,7 +446,7 @@ private Response getCoverage(MultivaluedMap<String, String> allParams,
   }
   catch (Exception e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     return writeError(Response.Status.BAD_REQUEST, e.getMessage());
   }
 
@@ -574,7 +574,7 @@ private Bounds getBoundsParam(MultivaluedMap<String, String> allParams, String p
       }
       catch (NumberFormatException nfe)
       {
-        log.error("Exception thrown {}", nfe);
+        log.error("Exception thrown", nfe);
         throw new WcsGeneratorException("Invalid BBOX value: " + bboxComponents[index]);
       }
     }

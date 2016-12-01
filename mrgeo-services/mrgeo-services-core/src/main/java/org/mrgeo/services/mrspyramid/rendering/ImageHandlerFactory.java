@@ -173,7 +173,7 @@ public class ImageHandlerFactory
     catch (final InstantiationException | InvocationTargetException |
         IllegalArgumentException | NoSuchMethodException | SecurityException | IllegalAccessException e)
     {
-      log.error("Exception thrown {}", e);
+      log.error("Exception thrown", e);
     }
   }
 
@@ -204,7 +204,7 @@ public class ImageHandlerFactory
     catch (final InstantiationException | InvocationTargetException |
         IllegalArgumentException | NoSuchMethodException | SecurityException | IllegalAccessException e)
     {
-      log.error("Exception thrown {}", e);
+      log.error("Exception thrown", e);
     }
   }
 

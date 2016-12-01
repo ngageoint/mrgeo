@@ -103,7 +103,7 @@ public static void main(String[] args)
   }
   catch (Exception e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     System.exit(-1);
   }
 
@@ -239,7 +239,7 @@ public int run(String[] args) throws IOException
   }
   catch (InstantiationException | IllegalAccessException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     return -1;
   }
 

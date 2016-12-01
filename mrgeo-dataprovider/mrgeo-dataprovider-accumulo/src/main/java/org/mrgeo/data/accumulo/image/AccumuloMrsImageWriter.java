@@ -81,7 +81,7 @@ public AccumuloMrsImageWriter(AccumuloMrsImageDataProvider provider,
   }
   catch (DataProviderException | TableNotFoundException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
   }
 
   if (pl == null)

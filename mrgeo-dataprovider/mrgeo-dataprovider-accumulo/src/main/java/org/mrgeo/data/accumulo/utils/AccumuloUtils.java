@@ -253,7 +253,7 @@ public static void importDirectory(String workDir, String tableName, Configurati
     }
     catch (TableExistsException tee)
     {
-      log.error("Exception thrown {}", tee);
+      log.error("Exception thrown", tee);
     }
   }
   connector.tableOperations().importDirectory(tableName, workDir + "/files", workDir + "/failures", false);
@@ -639,7 +639,7 @@ public static RasterWritable getRaster(String table, long tid, int zl, Connector
   }
   catch (IOException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
   }
 
   return retRaster;
@@ -675,7 +675,7 @@ public static Set<String> getListOfTables(Properties properties) throws DataProv
   }
   catch (AccumuloSecurityException | AccumuloException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     return null;
   }
   //catch (DataProviderException dpe) {
@@ -770,7 +770,7 @@ public static Hashtable<String, String> getGeoTables(Properties providerProperti
   }
   catch (AccumuloSecurityException | AccumuloException ase)
   {
-    log.error("Exception thrown {}", ase);
+    log.error("Exception thrown", ase);
     return null;
   }
   //catch (DataProviderException dpe) {
@@ -881,7 +881,7 @@ public static Hashtable<String, String> getGeoTables(String ignore, Authenticati
     }
     catch (Exception e)
     {
-      log.error("Exception thrown {}", e);
+      log.error("Exception thrown", e);
     }
 
   } // end for loop

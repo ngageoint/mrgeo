@@ -370,7 +370,7 @@ public class GetCapabilitiesDocumentGenerator
         }
         catch (NullPointerException e)
         {
-          log.error("Exception thrown {}", e);
+          log.error("Exception thrown", e);
         }
       }
       catch (IOException e)

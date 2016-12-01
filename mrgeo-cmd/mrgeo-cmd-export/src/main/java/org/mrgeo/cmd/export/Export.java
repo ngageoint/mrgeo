@@ -190,7 +190,7 @@ private boolean saveSingleTile(final String output, final String pyramidName, fi
   }
   catch (IOException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
   }
   return false;
 }
@@ -217,7 +217,7 @@ private MrGeoRaster colorRaster(MrsImage image, String format, MrGeoRaster raste
   }
   catch (Exception e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
   }
 
   return raster;
@@ -287,7 +287,7 @@ private boolean saveMultipleTiles(String output, String pyramidName, String form
   }
   catch (IOException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
   }
   return false;
 }
@@ -529,7 +529,7 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
   }
   catch (ColorScale.ColorScaleException | IOException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
   }
 
   return -1;

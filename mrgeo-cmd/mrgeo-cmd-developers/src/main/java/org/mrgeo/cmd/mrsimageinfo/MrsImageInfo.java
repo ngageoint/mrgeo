@@ -233,7 +233,7 @@ public int run(final String[] args, final Configuration conf,
   }
   catch (IOException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
   }
 
   return -1;

@@ -115,7 +115,7 @@ public int run(String[] args, Configuration conf,
       }
       catch(IOException ioe)
       {
-        log.error("Exception thrown {}", ioe);
+        log.error("Exception thrown", ioe);
         return -1;
       }
     }
@@ -154,7 +154,7 @@ public int run(String[] args, Configuration conf,
     }
     catch(Exception e)
     {
-      log.error("Exception thrown {}", e);
+      log.error("Exception thrown", e);
       return -1;
     }
 

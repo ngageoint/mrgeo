@@ -270,7 +270,7 @@ public String getResourceName()
   }
   catch (ClassNotFoundException | IOException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
   }
 
   return null;

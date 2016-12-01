@@ -199,7 +199,7 @@ public AccumuloMrsImageReader(Properties props, AccumuloMrsImageDataProvider pro
     }
     catch (IOException | ClassNotFoundException e)
     {
-      log.error("Exception thrown {}", e);
+      log.error("Exception thrown", e);
     }
 
   }

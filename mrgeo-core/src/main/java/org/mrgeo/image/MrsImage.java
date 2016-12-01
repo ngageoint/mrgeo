@@ -656,7 +656,7 @@ public MrGeoRaster getRaster(final TileBounds tileBounds) throws MrGeoRaster.MrG
       }
       catch (IOException e)
       {
-        log.error("Exception thrown {}", e);
+        log.error("Exception thrown", e);
       }
     }
   }

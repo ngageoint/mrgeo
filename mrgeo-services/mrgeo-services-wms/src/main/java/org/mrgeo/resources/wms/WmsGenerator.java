@@ -383,7 +383,7 @@ public static class WmsGeneratorException extends IOException
     }
     catch (Exception e)
     {
-      log.error("Exception thrown {}", e);
+      log.error("Exception thrown", e);
       return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
     String format = getQueryParam(allParams, "format");
@@ -518,7 +518,7 @@ public static class WmsGeneratorException extends IOException
     }
     catch (Exception e)
     {
-      log.error("Exception thrown {}", e);
+      log.error("Exception thrown", e);
       return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
     String styles = getQueryParam(allParams, "styles");
@@ -542,7 +542,7 @@ public static class WmsGeneratorException extends IOException
     }
     catch (Exception e)
     {
-      log.error("Exception thrown {}", e);
+      log.error("Exception thrown", e);
       return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
     String format = getQueryParam(allParams, "format");
@@ -558,7 +558,7 @@ public static class WmsGeneratorException extends IOException
     }
     catch (Exception e)
     {
-      log.error("Exception thrown {}", e);
+      log.error("Exception thrown", e);
       return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
     try
@@ -663,7 +663,7 @@ public static class WmsGeneratorException extends IOException
     }
     catch (Exception e)
     {
-      log.error("Exception thrown {}", e);
+      log.error("Exception thrown", e);
       return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
     try
@@ -745,7 +745,7 @@ public static class WmsGeneratorException extends IOException
     }
     catch (IOException e)
     {
-      log.error("Exception thrown {}", e);
+      log.error("Exception thrown", e);
       return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
   }
@@ -815,7 +815,7 @@ public static class WmsGeneratorException extends IOException
     }
     catch (InterruptedException | ParserConfigurationException | IOException e)
     {
-      log.error("Exception thrown {}", e);
+      log.error("Exception thrown", e);
       return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
   }

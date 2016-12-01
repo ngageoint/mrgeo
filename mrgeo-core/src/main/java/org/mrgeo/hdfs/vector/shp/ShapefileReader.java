@@ -305,7 +305,7 @@ public WritableGeometry get(int index)
   }
   catch (Exception e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     return null;
   }
   String[] columns = shpFile.getDataColumns();
@@ -486,7 +486,7 @@ public void close()
     }
     catch (IOException e)
     {
-      log.error("Exception thrown {}", e);
+      log.error("Exception thrown", e);
     }
 
     shpFile = null;

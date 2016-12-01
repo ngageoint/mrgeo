@@ -353,7 +353,7 @@ private List loadRow(SeekableDataInput is, int i) throws IOException
     }
     catch (DbaseException e)
     {
-      log.error("Exception thrown {}", e);
+      log.error("Exception thrown", e);
     }
   }
   // return

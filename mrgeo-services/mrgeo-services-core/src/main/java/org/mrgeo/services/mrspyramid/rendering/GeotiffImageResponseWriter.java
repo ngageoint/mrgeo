@@ -81,7 +81,7 @@ public Response.ResponseBuilder write(final MrGeoRaster raster)
   }
   catch (IOException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     if (e.getMessage() != null)
     {
       return Response.serverError().entity(e.getMessage());
@@ -130,7 +130,7 @@ public Response.ResponseBuilder write(final MrGeoRaster raster, final int tileCo
   }
   catch (final Exception e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     if (e.getMessage() != null)
     {
       return Response.serverError().entity(e.getMessage());
@@ -188,7 +188,7 @@ public Response.ResponseBuilder write(final MrGeoRaster raster, final String ima
   }
   catch (IOException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     if (e.getMessage() != null)
     {
       return Response.serverError().entity(e.getMessage());

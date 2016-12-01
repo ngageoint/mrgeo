@@ -107,7 +107,7 @@ public int run(final String[] args, final Configuration conf,
   }
   catch (Exception e)
   {
-    log.error("Exception Thrown {}", e);
+    log.error("Exception thrown", e);
   }
 
   return -1;

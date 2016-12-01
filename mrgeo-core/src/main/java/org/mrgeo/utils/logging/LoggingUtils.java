@@ -83,7 +83,7 @@ public static void setLogLevel(final String className, final String level)
     catch (SecurityException | NoSuchMethodException | ClassNotFoundException |
         IllegalAccessException | IllegalArgumentException | InvocationTargetException e)
     {
-      log.error("Exception thrown {}", e);
+      log.error("Exception thrown", e);
     }
   }
   else
@@ -143,7 +143,7 @@ public static String getLogLevel(final String className)
     catch (ClassNotFoundException | SecurityException | IllegalArgumentException |
         NoSuchMethodException | IllegalAccessException | InvocationTargetException e)
     {
-      log.error("Exception thrown {}", e);
+      log.error("Exception thrown", e);
     }
   }
   else
@@ -186,7 +186,7 @@ public static void setDefaultLogLevel(final String level)
     catch (ClassNotFoundException | SecurityException |
         IllegalArgumentException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e)
     {
-      log.error("Exception thrown {}", e);
+      log.error("Exception thrown", e);
     }
   }
   else
@@ -301,7 +301,7 @@ public static void setLoggerToFile(final String file)
     catch (ClassNotFoundException | SecurityException | IllegalArgumentException |
         NoSuchMethodException | IllegalAccessException | InvocationTargetException | InstantiationException e)
     {
-      log.error("Exception thrown {}", e);
+      log.error("Exception thrown", e);
     }
 
   }
@@ -363,7 +363,7 @@ public static void setLoggerFormat(String pattern)
     catch (ClassNotFoundException | SecurityException | IllegalArgumentException |
         NoSuchMethodException | IllegalAccessException | InvocationTargetException | InstantiationException e)
     {
-      log.error("Exception thrown {}", e);
+      log.error("Exception thrown", e);
     }
   }
   else
@@ -420,7 +420,7 @@ private static String getSlf4jLevel(final Object levelEnum)
   catch (ClassNotFoundException | SecurityException | IllegalArgumentException |
       NoSuchMethodException | IllegalAccessException | InvocationTargetException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
   }
 
   return null;
@@ -439,7 +439,7 @@ private static Object getLog4JLevel(final String level)
   catch (ClassNotFoundException | SecurityException | IllegalArgumentException |
       NoSuchMethodException | IllegalAccessException | InvocationTargetException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
   }
 
   return null;
@@ -477,7 +477,7 @@ private static void initializeForReal()
     }
     catch (IllegalAccessException | InvocationTargetException | ClassNotFoundException | NoSuchMethodException e)
     {
-      log.error("Exception thrown {}", e);
+      log.error("Exception thrown", e);
     }
   }
   else
@@ -523,7 +523,7 @@ private static Object getRootLogger() throws ClassNotFoundException
   catch (ClassNotFoundException | InvocationTargetException | IllegalAccessException |
       IllegalArgumentException | NoSuchMethodException | SecurityException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
   }
 
   throw new ClassNotFoundException("Can't find root logger!");

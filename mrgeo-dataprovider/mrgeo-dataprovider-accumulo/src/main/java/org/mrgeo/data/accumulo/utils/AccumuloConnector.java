@@ -244,7 +244,7 @@ public static Map<String, String> getAccumuloPropertiesAsMap()
   }
   catch (DataProviderException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
   }
 
   return result;

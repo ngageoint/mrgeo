@@ -117,7 +117,7 @@ public MrGeoRaster createColorScaleSwatch(String name, String format, int width,
   }
   catch (Exception e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     throw new MrsPyramidServiceException("Error creating color scale " + name, e);
   }
 }

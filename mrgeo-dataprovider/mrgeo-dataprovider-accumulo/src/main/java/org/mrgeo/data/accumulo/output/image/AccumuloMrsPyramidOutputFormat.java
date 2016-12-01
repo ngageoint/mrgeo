@@ -201,7 +201,7 @@ private void initialize(JobContext context)
   catch (InstantiationException | IOException | ClassNotFoundException |
       AccumuloSecurityException | IllegalAccessException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
   }
 
 } // end initialize

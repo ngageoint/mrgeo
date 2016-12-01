@@ -67,7 +67,7 @@ public static Collection<String> getMostJars()
   }
   catch (Exception e1)
   {
-    log.error("Exception thrown {}", e1);
+    log.error("Exception thrown", e1);
   }
 
   final TreeSet<String> result = new TreeSet<>();
@@ -99,7 +99,7 @@ public static Collection<String> getMostJars()
         }
         catch (IOException e)
         {
-          log.error("Exception Thrown {}", e);
+          log.error("Exception thrown", e);
         }
       }
       return true;
@@ -155,7 +155,7 @@ public static List<URL> loadVfs( URL resource ) throws IOException
     }
   } catch (URISyntaxException e) {
     System.out.println( "Problem reading resource '" + resource + "':\n " + e.getMessage() );
-    log.error("Exception Thrown {}", e);
+    log.error("Exception thrown", e);
   }
 
   return result;

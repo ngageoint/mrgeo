@@ -160,7 +160,7 @@ private class GaussianCompositeContext implements CompositeContext
     }
     catch (NoninvertibleTransformException e)
     {
-      log.error("Exception thrown {}", e);
+      log.error("Exception thrown", e);
     }
 
     // calculate the lat/lon delta of the src point

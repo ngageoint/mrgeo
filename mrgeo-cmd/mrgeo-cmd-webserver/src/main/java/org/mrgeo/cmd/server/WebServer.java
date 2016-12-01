@@ -132,7 +132,7 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
   }
   catch (Exception e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
   }
 
   return -1;
@@ -209,7 +209,7 @@ private String getHostName()
   }
   catch (UnknownHostException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     System.err.println("Unknown host");
   }
   return "localhost";

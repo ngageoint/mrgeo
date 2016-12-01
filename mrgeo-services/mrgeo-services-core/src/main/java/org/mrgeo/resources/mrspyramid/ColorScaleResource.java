@@ -97,7 +97,7 @@ public Response getColorScaleSwatch(@PathParam("path") String colorScalePath,
   }
   catch (MrsPyramidServiceException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     return Response.status(Status.BAD_REQUEST).entity("Color scale file not found: " + colorScalePath).build();
   }
 }

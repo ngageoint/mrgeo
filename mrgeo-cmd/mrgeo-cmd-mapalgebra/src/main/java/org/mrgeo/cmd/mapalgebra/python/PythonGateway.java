@@ -110,7 +110,7 @@ public int run(final String[] args, final Configuration conf,
   }
   catch (ParseException e)
   {
-    log.error("Exception Thrown {}", e);
+    log.error("Exception thrown", e);
     return -1;
   }
 }
@@ -207,7 +207,7 @@ private void setupThreadedServer(final Socket clientSocket) throws IOException
       catch (IOException e)
       {
         log.error("Error in thread: " + this.getName() + "(" + this.getId() + "), exiting");
-        log.error("Exception Thrown {}", e);
+        log.error("Exception thrown", e);
       }
     }
   }.start();

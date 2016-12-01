@@ -459,7 +459,7 @@ static com.vividsolutions.jts.geom.Geometry intersect(
       catch (final TopologyException e1)
       {
         log.error("JTS Topology problem: clip area: " + jtsClip.toString() + " geom: " + jtsGeom.toString() + " message: " + e1.getMessage());
-        log.error("Exception Thrown {}", e1);
+        log.error("Exception thrown", e1);
 
         return new com.vividsolutions.jts.geom.GeometryFactory().createPoint((Coordinate)null);
       }

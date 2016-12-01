@@ -60,7 +60,7 @@ private void initialize(Configuration conf)
   }
   catch (IOException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     System.out.println("Hadoop file system not available.");
   }
   props = MrGeoProperties.getInstance();

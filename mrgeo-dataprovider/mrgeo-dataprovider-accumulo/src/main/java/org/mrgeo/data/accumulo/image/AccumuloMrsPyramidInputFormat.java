@@ -256,7 +256,7 @@ public static RecordReader<TileIdWritable, RasterWritable> makeRecordReader()
       }
       catch (InterruptedException ie)
       {
-        log.error("Exception thrown {}", ie);
+        log.error("Exception thrown", ie);
         return;
       }
       if (inSplit instanceof TiledInputSplit)
