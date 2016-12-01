@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <ServiceExceptionReport version="1.3.0">
-<ServiceException><![CDATA[Invalid SERVICE parameter. Should be set to "WMS"]]></ServiceException>
+  <ServiceException><![CDATA[Invalid SERVICE parameter. Should be set to "WMS"]]></ServiceException>
 </ServiceExceptionReport>
