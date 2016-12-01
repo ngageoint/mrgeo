@@ -29,6 +29,7 @@ import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
+import org.mrgeo.services.mrspyramid.rendering.ImageRendererException;
 import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.tms.Bounds;
 
@@ -170,7 +171,7 @@ private ColorScale createRainbowColorScale() throws ColorScaleException {
   return ColorScale.loadFromXML(new ByteArrayInputStream(colorScaleXml.getBytes()));
 }
 
-@Test(expected = DataProviderNotFound.class)
+@Test(expected = ImageRendererException.class)
 @Category(UnitTest.class)
 public void testGetRasterNonExistent() throws Exception
 {

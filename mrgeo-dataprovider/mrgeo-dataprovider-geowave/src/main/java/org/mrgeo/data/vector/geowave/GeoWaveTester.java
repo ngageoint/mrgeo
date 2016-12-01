@@ -121,6 +121,7 @@ public class GeoWaveTester
     {
     }
 
+    @SuppressWarnings("squid:S2095") // hadoop FileSystem cannot be closed, or else subsequent uses will fail
     public void run(String input, String output, ProviderProperties providerProperties)
     {
       try
