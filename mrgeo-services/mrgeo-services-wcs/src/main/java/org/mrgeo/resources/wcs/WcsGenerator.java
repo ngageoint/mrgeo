@@ -615,6 +615,7 @@ private String getCrsParam(MultivaluedMap<String, String> allParams)
 /*
  * Writes OGC spec error messages to the response
  */
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 private Response writeError(Response.Status httpStatus, final String msg)
 {
   try

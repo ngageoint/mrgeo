@@ -647,6 +647,7 @@ public Response getTileMap(@PathParam("version") final String version,
   }
   catch (final ParserConfigurationException ex)
   {
+    log.error("Exception thrown {}", ex);
     return Response.status(Status.INTERNAL_SERVER_ERROR).entity(GENERAL_ERROR).build();
   }
 }

@@ -383,6 +383,7 @@ public static class WmsGeneratorException extends IOException
     }
     catch (Exception e)
     {
+      log.error("Exception thrown {}", e);
       return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
     String format = getQueryParam(allParams, "format");
