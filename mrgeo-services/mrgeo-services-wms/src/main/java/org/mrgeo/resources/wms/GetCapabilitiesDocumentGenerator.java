@@ -25,6 +25,7 @@ import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.services.Version;
 import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;
 import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
+import org.mrgeo.utils.FloatUtils;
 import org.mrgeo.utils.LatLng;
 import org.mrgeo.utils.XmlUtils;
 import org.slf4j.Logger;
@@ -176,6 +177,7 @@ public class GetCapabilitiesDocumentGenerator
   /*
    * Adds data layers to the GetCapabilities response
    */
+  @SuppressWarnings("squid:S1166") // Exception caught and handled
   @SuppressFBWarnings(value = "SIC_INNER_SHOULD_BE_STATIC_ANON", justification = "Just a simple inline comparator")
   private void addLayersToCapability(Element capability, Version version,
       MrsImageDataProvider[] providers) throws InterruptedException, IOException
@@ -251,7 +253,7 @@ public class GetCapabilitiesDocumentGenerator
               {
                 double pixelWidth = image.getMetadata().getPixelWidth(image.getMaxZoomlevel());
 
-                if (pixelWidth != 0)
+                if (!FloatUtils.isEqual(pixelWidth, 0.0))
                 {
                   //pixel width in meters at the equator.
                   double pixelWidthInMeters =
@@ -368,7 +370,7 @@ public class GetCapabilitiesDocumentGenerator
         }
         catch (NullPointerException e)
         {
-          e.printStackTrace();
+          log.error("Exception thrown {}", e);
         }
       }
       catch (IOException e)

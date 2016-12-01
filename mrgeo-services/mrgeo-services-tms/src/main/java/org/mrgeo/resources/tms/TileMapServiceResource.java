@@ -35,10 +35,7 @@ import org.mrgeo.image.MrsImageException;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.services.Configuration;
 import org.mrgeo.services.SecurityUtils;
-import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;
-import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
-import org.mrgeo.services.mrspyramid.rendering.ImageResponseWriter;
-import org.mrgeo.services.mrspyramid.rendering.TiffImageRenderer;
+import org.mrgeo.services.mrspyramid.rendering.*;
 import org.mrgeo.services.tms.TmsService;
 import org.mrgeo.services.utils.RequestUtils;
 import org.mrgeo.utils.HadoopUtils;
@@ -128,8 +125,7 @@ private static synchronized void init()
   }
   catch (final IllegalStateException e)
   {
-    log.error(MrGeoConstants.MRGEO_HDFS_IMAGE + " must be specified in the MrGeo configuration file (" +
-        e.getMessage() + ")");
+    log.error(MrGeoConstants.MRGEO_HDFS_IMAGE + " must be specified in the MrGeo configuration file {}", e);
   }
 }
 
@@ -425,11 +421,13 @@ public Response getRootResource(@Context final HttpServletRequest hsr)
   }
   catch (final ParserConfigurationException ex)
   {
+    log.error("Exception thrown {}", ex);
     return Response.status(Status.INTERNAL_SERVER_ERROR).entity(GENERAL_ERROR).build();
   }
 }
 
 
+@SuppressWarnings("squid:S1166") // TileNotFoundException (only) caught and handled
 @SuppressFBWarnings(value = "JAXRS_ENDPOINT", justification = "verified")
 @GET
 @Produces("image/*")
@@ -491,13 +489,6 @@ public Response getTile(@PathParam("version") final String version,
     }
     else
     {
-//      Bounds b;
-//      b = calcBounds(0, 0, 1, pyramid, providerProperties, index);
-//      b = calcBounds(0, 0, 2, pyramid, providerProperties, index);
-//      b = calcBounds(0, 1, 2, pyramid, providerProperties, index);
-//      b = calcBounds(1, 0, 2, pyramid, providerProperties, index);
-//      b = calcBounds(1, 1, 2, pyramid, providerProperties, index);
-
       Bounds bounds = calcBounds(x, y, z, pyramid, providerProperties, index);
       bounds = RequestUtils.reprojectBounds(bounds, SRSs[index]);
 
@@ -534,59 +525,29 @@ public Response getTile(@PathParam("version") final String version,
           .getDefaultValues());
     }
 
-    // Apply mask if requested
-//      if (mask != null && !mask.isEmpty())
-//      {
-//        try
-//        {
-//          final MrsImagePyramidMetadata maskMetadata = service.getMetadata(mask);
-//
-//          final Raster maskRaster = renderer.renderImage(mask, x, y, z, props, driver);
-//          final WritableRaster wr = RasterUtils.makeRasterWritable(raster);
-//
-//          final int band = 0;
-//          final double nodata = maskMetadata.getDefaultValue(band);
-//
-//          for (int w = 0; w < maskRaster.getWidth(); w++)
-//          {
-//            for (int h = 0; h < maskRaster.getHeight(); h++)
-//            {
-//              final double maskPixel = maskRaster.getSampleDouble(w, h, band);
-//              if (maskPixel > maskMax || Double.compare(maskPixel, nodata) == 0)
-//              {
-//                wr.setSample(w, h, band, nodata);
-//              }
-//            }
-//          }
-//        }
-//        catch (final TileNotFoundException ex)
-//        {
-//          raster = RasterUtils.createEmptyRaster(raster.getWidth(), raster.getHeight(), raster
-//            .getNumBands(), raster.getTransferType(), 0);
-//        }
-//      }
-
     return ((ImageResponseWriter) ImageHandlerFactory.getHandler(format,
         ImageResponseWriter.class)).write(raster, renderer.getDefaultValues()).build();
 
   }
   catch (final IllegalArgumentException e)
   {
+    log.error("Exception thrown {}", e);
     return Response.status(Status.BAD_REQUEST).entity("Unsupported image format - " + format)
         .build();
   }
   catch (final IOException e)
   {
+    log.error("Exception thrown {}", e);
     return Response.status(Status.NOT_FOUND).entity("Tile map not found - " + pyramid).build();
   }
   catch (final MrsImageException e)
   {
+    log.error("Exception thrown {}", e);
     return Response.status(Status.NOT_FOUND).entity("Tile map not found - " + pyramid + ": " + z)
         .build();
   }
   catch (final TileNotFoundException e)
   {
-    // return Response.status(Status.NOT_FOUND).entity("Tile not found").build();
     try
     {
       final MrsPyramidMetadata metadata = service.getMetadata(pyramid);
@@ -594,7 +555,7 @@ public Response getTile(@PathParam("version") final String version,
       return createEmptyTile(((ImageResponseWriter) ImageHandlerFactory.getHandler(format,
           ImageResponseWriter.class)), metadata.getTilesize(), metadata.getTilesize());
     }
-    catch (final Exception e1)
+    catch (IllegalAccessException | MrGeoRaster.MrGeoRasterException | InstantiationException | ExecutionException e1)
     {
       log.error("Exception occurred creating blank tile " + pyramid + "/" + z + "/" + x + "/" +
           y + "." + format, e1);
@@ -602,22 +563,26 @@ public Response getTile(@PathParam("version") final String version,
   }
   catch (final ColorScale.BadJSONException e)
   {
+    log.error("Exception thrown {}", e);
     return Response.status(Status.NOT_FOUND).entity("Unable to parse color scale JSON").build();
 
   }
   catch (final ColorScale.BadSourceException e)
   {
+    log.error("Exception thrown {}", e);
     return Response.status(Status.NOT_FOUND).entity("Unable to open color scale file").build();
   }
   catch (final ColorScale.BadXMLException e)
   {
+    log.error("Exception thrown {}", e);
     return Response.status(Status.NOT_FOUND).entity("Unable to parse color scale XML").build();
   }
   catch (final ColorScale.ColorScaleException e)
   {
+    log.error("Exception thrown {}", e);
     return Response.status(Status.NOT_FOUND).entity("Unable to open color scale").build();
   }
-  catch (final Exception e)
+  catch (IllegalAccessException | ParserConfigurationException | InstantiationException | ImageRendererException e)
   {
     log.error("Exception occurred getting tile " + pyramid + "/" + z + "/" + x + "/" + y + "." +
         format, e);
@@ -724,44 +689,9 @@ public Response getTileMapService(@PathParam("version") final String version,
   }
   catch (final ParserConfigurationException ex)
   {
+    log.error("Exception thrown {}", ex);
     return Response.status(Status.INTERNAL_SERVER_ERROR).entity(GENERAL_ERROR).build();
   }
-}
-
-Response returnEmptyTile(final int width, final int height,
-    final String format) throws Exception
-{
-  //return an empty image
-  ImageResponseWriter writer = (ImageResponseWriter)ImageHandlerFactory.getHandler(format, ImageResponseWriter.class);
-  ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-  int bands;
-  double[] nodatas;
-  if (format.equalsIgnoreCase("jpg") || format.equalsIgnoreCase("jpeg") )
-  {
-    bands = 3;
-    nodatas = new double[]{0.0,0.0,0.0};
-  } else
-  {
-    bands = 4;
-    nodatas = new double[]{0.0,0.0,0.0,0.0};
-  }
-
-  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, bands, DataBuffer.TYPE_BYTE, nodatas);
-  writer.writeToStream(raster, nodatas, baos);
-  byte[] imageData = baos.toByteArray();
-  IOUtils.closeQuietly(baos);
-
-  final String type = mimeTypeMap.getContentType("output." + format);
-  return Response.ok()
-      .entity(imageData)
-      .header("Content-Type", type)
-      .build();
-
-  // A 404 - Not Found response may be the most appropriate, but results in pink tiles,
-  // maybe change that behavior on the OpenLayers client?
-  // return Response.status( Response.Status.NOT_FOUND).build();
-
 }
 
 }

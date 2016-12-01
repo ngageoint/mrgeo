@@ -26,6 +26,7 @@ import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.Version;
 import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;
 import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
+import org.mrgeo.services.mrspyramid.rendering.ImageRendererException;
 import org.mrgeo.services.mrspyramid.rendering.ImageResponseWriter;
 import org.mrgeo.services.utils.DocumentUtils;
 import org.mrgeo.services.wcs.DescribeCoverageDocumentGenerator;
@@ -55,8 +56,35 @@ import java.util.List;
 import java.util.Map;
 
 @Path("/wcs")
+@SuppressWarnings("squid:S2696") // The local statics are used in the singular case where we need a WCS cache, usually when using S3 and you need fast loading
 public class WcsGenerator
 {
+
+public static class WcsGeneratorException extends IOException
+{
+  private static final long serialVersionUID = 1L;
+
+  public WcsGeneratorException()
+  {
+    super();
+  }
+
+  public WcsGeneratorException(final String msg)
+  {
+    super(msg);
+  }
+
+  public WcsGeneratorException(final String msg, final Throwable cause)
+  {
+    super(msg, cause);
+  }
+
+  public WcsGeneratorException(final Throwable cause)
+  {
+    super(cause);
+  }
+}
+
 private static final Logger log = LoggerFactory.getLogger(WcsGenerator.class);
 
 private static final String WCS_VERSION = "1.1.0";
@@ -93,14 +121,14 @@ static {
               }
               catch (ParserConfigurationException | IOException e)
               {
-                e.printStackTrace();
+                log.error("Exception thrown {}", e);
               }
             }
             Thread.sleep(sleeptime);
           }
           catch (InterruptedException e)
           {
-            e.printStackTrace();
+            log.error("Thread Inturrupted...  stopping {}", e);
             stop = true;
           }
         }
@@ -236,6 +264,7 @@ private Response describeCoverage(UriInfo uriInfo,
   }
   catch (TransformerException | IOException e)
   {
+    log.error("Exception thrown {}", e);
     return writeError(Response.Status.BAD_REQUEST, e.getMessage());
   }
 }
@@ -289,6 +318,7 @@ private Response getCapabilities(UriInfo uriInfo, MultivaluedMap<String, String>
   }
   catch (InterruptedException | TransformerException | ParserConfigurationException | IOException e)
   {
+    log.error("Exception thrown {}", e);
     return writeError(Response.Status.BAD_REQUEST, e.getMessage());
   }
 
@@ -379,6 +409,7 @@ private Response getCoverage(MultivaluedMap<String, String> allParams,
   }
   catch (Exception e)
   {
+    log.error("Exception thrown {}", e);
     return writeError(Response.Status.BAD_REQUEST, e.getMessage());
   }
 
@@ -415,6 +446,7 @@ private Response getCoverage(MultivaluedMap<String, String> allParams,
   }
   catch (Exception e)
   {
+    log.error("Exception thrown {}", e);
     return writeError(Response.Status.BAD_REQUEST, e.getMessage());
   }
 
@@ -432,7 +464,7 @@ private Response getCoverage(MultivaluedMap<String, String> allParams,
     log.info("Building and returning response");
     return builder.build();
   }
-  catch (Exception e)
+  catch (IllegalAccessException | InstantiationException | ImageRendererException e)
   {
     log.error("Unable to render the image in getCoverage", e);
     return writeError(Response.Status.BAD_REQUEST, e.getMessage());
@@ -520,41 +552,42 @@ private int getQueryParamAsInt(MultivaluedMap<String, String> allParams,
 //}
 
 private Bounds getBoundsParam(MultivaluedMap<String, String> allParams, String paramName, Bounds bounds)
-    throws Exception
+    throws WcsGeneratorException
 {
-  String bbox = getQueryParam(allParams, paramName);
-  if (bbox == null)
-  {
-    throw new Exception("Missing required " + paramName.toUpperCase() + " parameter");
-  }
-  String[] bboxComponents = bbox.split(",");
-  if (!(bboxComponents.length == 5 || bboxComponents.length == 4))
-  {
-    throw new Exception("Invalid \" + paramName.toUpperCase() + \" parameter. Should contain minX, minY, maxX, maxY");
-  }
-
-  double[] bboxValues = new double[4];
-  for (int index=0; index < bboxComponents.length; index++)
-  {
-    try
+    String bbox = getQueryParam(allParams, paramName);
+    if (bbox == null)
     {
-      bboxValues[index] = Double.parseDouble(bboxComponents[index]);
+      throw new WcsGeneratorException("Missing required " + paramName.toUpperCase() + " parameter");
     }
-    catch (NumberFormatException nfe)
+    String[] bboxComponents = bbox.split(",");
+    if (!(bboxComponents.length == 5 || bboxComponents.length == 4))
     {
-      throw new Exception("Invalid BBOX value: " + bboxComponents[index]);
+      throw new WcsGeneratorException("Invalid \" + paramName.toUpperCase() + \" parameter. Should contain minX, minY, maxX, maxY");
     }
-  }
 
-  if (bounds == null)
-  {
-    return new Bounds(bboxValues[0], bboxValues[1], bboxValues[2], bboxValues[3]);
-  }
+    double[] bboxValues = new double[4];
+    for (int index = 0; index < bboxComponents.length; index++)
+    {
+      try
+      {
+        bboxValues[index] = Double.parseDouble(bboxComponents[index]);
+      }
+      catch (NumberFormatException nfe)
+      {
+        log.error("Exception thrown {}", nfe);
+        throw new WcsGeneratorException("Invalid BBOX value: " + bboxComponents[index]);
+      }
+    }
 
-  return bounds.expand(bboxValues[0], bboxValues[1], bboxValues[2], bboxValues[3]);
+    if (bounds == null)
+    {
+      return new Bounds(bboxValues[0], bboxValues[1], bboxValues[2], bboxValues[3]);
+    }
+
+    return bounds.expand(bboxValues[0], bboxValues[1], bboxValues[2], bboxValues[3]);
 }
 
-private String getCrsParam(MultivaluedMap<String, String> allParams) throws Exception
+private String getCrsParam(MultivaluedMap<String, String> allParams)
 {
   String crs = getQueryParam(allParams, "crs");
   if (crs == null || crs.isEmpty())
@@ -578,51 +611,6 @@ private String getCrsParam(MultivaluedMap<String, String> allParams) throws Exce
 }
 
 
-/*
- * Writes OGC spec error messages to the response
- */
-//private Response writeError(Response.Status httpStatus, final Exception e)
-//{
-//  try
-//  {
-//    Document doc;
-//    final DocumentBuilderFactory dBF = DocumentBuilderFactory.newInstance();
-//    final DocumentBuilder builder;
-//    builder = dBF.newDocumentBuilder();
-//    doc = builder.newDocument();
-//
-//    final Element ser = doc.createElement("ServiceExceptionReport");
-//    doc.appendChild(ser);
-//    ser.setAttribute("version", WCS_VERSION);
-//    final Element se = XmlUtils.createElement(ser, "ServiceException");
-//    String msg = e.getLocalizedMessage();
-//    if (msg == null || msg.isEmpty())
-//    {
-//      msg = e.getClass().getName();
-//    }
-//    final ByteArrayOutputStream strm = new ByteArrayOutputStream();
-//    e.printStackTrace(new PrintStream(strm));
-//    CDATASection msgNode = doc.createCDATASection(strm.toString());
-//    se.appendChild(msgNode);
-//    final ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
-//    final PrintWriter out = new PrintWriter(xmlStream);
-//    DocumentUtils.writeDocument(doc, version, WCS_SERVICE, out);
-//    out.close();
-//    return Response
-//        .status(httpStatus)
-//        .header("Content-Type", MediaType.TEXT_XML)
-//        .entity(xmlStream.toString())
-//        .build();
-//  }
-//  catch (ParserConfigurationException e1)
-//  {
-//  }
-//  catch (TransformerException e1)
-//  {
-//  }
-//  // Fallback in case there is an XML exception above
-//  return Response.status(httpStatus).entity(e.getLocalizedMessage()).build();
-//}
 
 /*
  * Writes OGC spec error messages to the response
@@ -658,44 +646,5 @@ private Response writeError(Response.Status httpStatus, final String msg)
   // Fallback in case there is an XML exception above
   return Response.status(httpStatus).entity(msg).build();
 }
-
-/*
- * Writes OGC spec error messages to the response
- */
-//private Response writeError(Response.Status httpStatus, final String code, final String msg)
-//{
-//  try
-//  {
-//    Document doc;
-//    final DocumentBuilderFactory dBF = DocumentBuilderFactory.newInstance();
-//    final DocumentBuilder builder = dBF.newDocumentBuilder();
-//    doc = builder.newDocument();
-//
-//    final Element ser = doc.createElement("ServiceExceptionReport");
-//    doc.appendChild(ser);
-//    ser.setAttribute("version", WCS_VERSION);
-//    final Element se = XmlUtils.createElement(ser, "ServiceException");
-//    se.setAttribute("code", code);
-//    CDATASection msgNode = doc.createCDATASection(msg);
-//    se.appendChild(msgNode);
-//    final ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
-//    final PrintWriter out = new PrintWriter(xmlStream);
-//    DocumentUtils.writeDocument(doc, version, WCS_SERVICE, out);
-//    out.close();
-//    return Response
-//        .status(httpStatus)
-//        .header("Content-Type", MediaType.TEXT_XML)
-//        .entity(xmlStream.toString())
-//        .build();
-//  }
-//  catch (ParserConfigurationException e1)
-//  {
-//  }
-//  catch (TransformerException e1)
-//  {
-//  }
-//  // Fallback in case there is an XML exception above
-//  return Response.status(httpStatus).entity(msg).build();
-//}
 
 }

@@ -72,7 +72,29 @@ public class WmsGenerator
 {
   private static final Logger log = LoggerFactory.getLogger(WmsGenerator.class);
 
-  //  private static Path basePath = null;
+public static class WmsGeneratorException extends IOException
+{
+  private static final long serialVersionUID = 1L;
+
+  public WmsGeneratorException()
+  {
+    super();
+  }
+  public WmsGeneratorException(final String msg)
+  {
+    super(msg);
+  }
+  public WmsGeneratorException(final String msg, final Throwable cause)
+  {
+    super(msg, cause);
+  }
+  public WmsGeneratorException(final Throwable cause)
+  {
+    super(cause);
+  }
+}
+
+//  private static Path basePath = null;
 //  private static Path colorScaleBasePath = null;
   // private static CoordinateReferenceSystem coordSys = null;
 
@@ -354,6 +376,7 @@ public class WmsGenerator
     }
     catch (Exception e)
     {
+      log.error("Exception thrown", e);
       return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
     Bounds bounds;
@@ -388,6 +411,7 @@ public class WmsGenerator
     }
     catch (Exception e)
     {
+      log.error("Exception thrown", e);
       return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
 
@@ -422,18 +446,17 @@ public class WmsGenerator
    * those settings.
    *
    */
-  private Bounds getBoundsParam(MultivaluedMap<String, String> allParams, String paramName)
-          throws Exception
+  private Bounds getBoundsParam(MultivaluedMap<String, String> allParams, String paramName) throws WmsGeneratorException
   {
     String bbox = getQueryParam(allParams, paramName);
     if (bbox == null)
     {
-      throw new Exception("Missing required BBOX parameter");
+      throw new WmsGeneratorException("Missing required BBOX parameter");
     }
     String[] bboxComponents = bbox.split(",");
     if (bboxComponents.length != 4)
     {
-      throw new Exception("Invalid BBOX parameter. Should contain minX, minY, maxX, maxY");
+      throw new WmsGeneratorException("Invalid BBOX parameter. Should contain minX, minY, maxX, maxY");
     }
     double[] bboxValues = new double[4];
     for (int index=0; index < bboxComponents.length; index++)
@@ -444,13 +467,13 @@ public class WmsGenerator
       }
       catch (NumberFormatException nfe)
       {
-        throw new Exception("Invalid BBOX value: " + bboxComponents[index]);
+        throw new WmsGeneratorException("Invalid BBOX value: " + bboxComponents[index]);
       }
     }
     return new Bounds(bboxValues[0], bboxValues[1], bboxValues[2], bboxValues[3]);
   }
 
-  private String getSrsParam(MultivaluedMap<String, String> allParams) throws Exception
+  private String getSrsParam(MultivaluedMap<String, String> allParams)
   {
     String srs = getQueryParam(allParams, "srs");
     if (srs == null || srs.isEmpty())
@@ -497,6 +520,7 @@ public class WmsGenerator
     }
     catch (Exception e)
     {
+      log.error("Exception thrown {}", e);
       return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
     String styles = getQueryParam(allParams, "styles");
@@ -520,6 +544,7 @@ public class WmsGenerator
     }
     catch (Exception e)
     {
+      log.error("Exception thrown {}", e);
       return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
     String format = getQueryParam(allParams, "format");
@@ -535,6 +560,7 @@ public class WmsGenerator
     }
     catch (Exception e)
     {
+      log.error("Exception thrown {}", e);
       return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
     try
@@ -558,24 +584,6 @@ public class WmsGenerator
     }
   }
 
-//  private static ColorScale getDefaultColorScale()
-//  {
-//    ColorScale cs = null;
-//    try
-//    {
-//      cs = ColorScaleManager.fromName("Default");
-//    }
-//    catch (ColorScaleException e)
-//    {
-//      // Do nothing - there may not be a Default color scale defined
-//    }
-//    if (cs == null)
-//    {
-//      cs = ColorScale.createDefault();
-//    }
-//    return cs;
-//  }
-
   /*
    * Returns a list of all MrsPyramid version 2 data in the home data directory
    */
@@ -595,39 +603,6 @@ public class WmsGenerator
     }
 
     return providers;
-//    Path basePath = new Path(HadoopUtils.getDefaultImageBaseDirectory());
-//    final FileSystem fileSystem = HadoopFileUtils.getFileSystem(basePath);
-//    // log.debug(HadoopFileUtils.getDefaultRoot().toString());
-//    // log.debug("basePath: {}", fileSystem.makeQualified(basePath).toString());
-//    FileStatus[] allFiles = fileSystem.listStatus(basePath);
-//    if (allFiles == null || allFiles.length == 0)
-//    {
-//      log.warn("Base path either doesn't exist or has no files. {}", basePath.toString());
-//      allFiles = new FileStatus[0];
-//    }
-//
-//    final LinkedList<FileStatus> files = new LinkedList<FileStatus>();
-//    for (final FileStatus f : allFiles)
-//    {
-//      if (f.isDir())
-//      {
-//        final Path metadataPath = new Path(f.getPath(), "metadata");
-//        if (fileSystem.exists(metadataPath))
-//        {
-//          log.debug("Using directory: {}", f.getPath().toString());
-//          files.add(f);
-//        }
-//        else
-//        {
-//          log.warn("Skipping directory: {}", f.getPath().toString());
-//        }
-//      }
-//      else
-//      {
-//        log.debug("Skipping file: {}", f.getPath().toString());
-//      }
-//    }
-//    return files;
   }
 
   /*
@@ -649,10 +624,6 @@ public class WmsGenerator
       return writeError(Response.Status.BAD_REQUEST, "Missing required LAYER parameter");
     }
     String style = getQueryParam(allParams, "style");
-//    if (style == null || style.isEmpty())
-//    {
-//      return writeError(Response.Status.BAD_REQUEST, "Missing required STYLE parameter");
-//    }
     String format = getQueryParam(allParams, "format");
     if (format == null)
     {
@@ -694,6 +665,7 @@ public class WmsGenerator
     }
     catch (Exception e)
     {
+      log.error("Exception thrown {}", e);
       return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
     try
@@ -716,31 +688,38 @@ public class WmsGenerator
   }
 
   private static MrGeoRaster colorRaster(String layer, String style, String imageFormat, ImageRenderer renderer,
-      MrGeoRaster result) throws Exception
+      MrGeoRaster result) throws WmsGeneratorException
   {
-    if (!(renderer instanceof TiffImageRenderer))
+    try
     {
-      log.debug("Applying color scale to image {} ...", layer);
-
-      ColorScale cs;
-      if (style != null && !style.equalsIgnoreCase("default"))
+      if (!(renderer instanceof TiffImageRenderer))
       {
-        cs = ColorScaleManager.fromName(style);
-        if (cs == null)
+        log.debug("Applying color scale to image {} ...", layer);
+
+        ColorScale cs;
+        if (style != null && !style.equalsIgnoreCase("default"))
         {
-          throw new IOException("Can not load style: " + style);
+          cs = ColorScaleManager.fromName(style);
+          if (cs == null)
+          {
+            throw new IOException("Can not load style: " + style);
+          }
         }
+        else
+        {
+          cs = ColorScale.createDefaultGrayScale();
+        }
+        result = ((ColorScaleApplier) ImageHandlerFactory.getHandler(imageFormat,
+            ColorScaleApplier.class)).applyColorScale(result, cs, renderer.getExtrema(), renderer.getDefaultValues());
+        log.debug("Color scale applied to image {}", layer);
       }
-      else
-      {
-        cs = ColorScale.createDefaultGrayScale();
-      }
-      result = ((ColorScaleApplier) ImageHandlerFactory.getHandler(imageFormat,
-          ColorScaleApplier.class)).applyColorScale(result, cs,renderer.getExtrema(), renderer.getDefaultValues());
-      log.debug("Color scale applied to image {}", layer);
-    }
 
-    return result;
+      return result;
+    }
+    catch (IllegalAccessException | IOException | ColorScale.ColorScaleException | InstantiationException e)
+    {
+      throw new WmsGeneratorException(e);
+    }
   }
 
   /*
@@ -768,6 +747,7 @@ public class WmsGenerator
     }
     catch (IOException e)
     {
+      log.error("Exception thrown {}", e);
       return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
   }
@@ -837,6 +817,7 @@ public class WmsGenerator
     }
     catch (InterruptedException | ParserConfigurationException | IOException e)
     {
+      log.error("Exception thrown {}", e);
       return writeError(Response.Status.BAD_REQUEST, e.getMessage());
     }
   }
@@ -844,6 +825,7 @@ public class WmsGenerator
   /*
    * Writes OGC spec error messages to the response
    */
+  @SuppressWarnings("squid:S1166") // Exception caught and handled
   private Response writeError(Response.Status httpStatus, final String msg)
   {
     try

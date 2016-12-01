@@ -158,7 +158,7 @@ public MrGeoRaster createColorScaleSwatch(ColorScale cs, String format, int widt
 
     return applier.applyColorScale(wr, cs, extrema, new double[]{-9999, 0});
   }
-  catch (Exception e)
+  catch (IllegalAccessException | InstantiationException | ColorScale.ColorScaleException | MrGeoRaster.MrGeoRasterException e)
   {
     throw new MrsPyramidServiceException("Error creating color scale swatch", e);
   }

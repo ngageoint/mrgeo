@@ -158,33 +158,5 @@ public void testMrsPyramidMetadataToTileMapXml()
   }
 
 }
-
-@Test
-@Category(UnitTest.class)
-public void testReturnEmptyTile()
-{
-  TileMapServiceResource tms = new TileMapServiceResource();
-  try {
-    Response resp = tms.returnEmptyTile(MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, "png");
-    assertEquals(Response.Status.OK.getStatusCode(), resp.getStatus());
-  } catch (IOException ex) {
-    log.error("IOException occurred", ex);
-    fail();
-  } catch (Exception e) {
-    log.error("Exception occurred", e);
-    fail();
-  }
-  try {
-    Response resp = tms.returnEmptyTile(MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, "jpg");
-    assertEquals(Response.Status.OK.getStatusCode(), resp.getStatus());
-  } catch (IOException ex) {
-    log.error("IOException occurred", ex);
-    fail();
-  } catch (Exception e) {
-    log.error("Exception occurred", e);
-    fail();
-  }
-
-}
 }
 
