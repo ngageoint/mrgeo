@@ -28,10 +28,7 @@ import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.Version;
-import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;
-import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
-import org.mrgeo.services.mrspyramid.rendering.ImageResponseWriter;
-import org.mrgeo.services.mrspyramid.rendering.TiffImageRenderer;
+import org.mrgeo.services.mrspyramid.rendering.*;
 import org.mrgeo.services.utils.DocumentUtils;
 import org.mrgeo.utils.LatLng;
 import org.mrgeo.utils.tms.Bounds;
@@ -431,7 +428,7 @@ public static class WmsGeneratorException extends IOException
               .write(result, layerNames[0], bounds);
       return setupCaching(builder, allParams).build();
     }
-    catch (Exception e)
+    catch (IllegalAccessException | InstantiationException | WmsGeneratorException | ImageRendererException e)
     {
       log.error("Unable to render the image in getTile", e);
       return writeError(Response.Status.BAD_REQUEST, e.getMessage());
@@ -577,7 +574,7 @@ public static class WmsGeneratorException extends IOException
               .write(result, layerNames[0], bounds);
       return setupCaching(builder, allParams).build();
     }
-    catch (Exception e)
+    catch (IllegalAccessException | InstantiationException | WmsGeneratorException | ImageRendererException e)
     {
       log.error("Unable to render the image in getMosaic", e);
       return writeError(Response.Status.BAD_REQUEST, e.getMessage());
@@ -680,7 +677,7 @@ public static class WmsGeneratorException extends IOException
                      MrsPyramid.open(layer, providerProperties));
       return setupCaching(builder, allParams).build();
     }
-    catch (Exception e)
+    catch (IOException | ImageRendererException | IllegalAccessException | InstantiationException e)
     {
       log.error("Unable to render the image in getTile", e);
       return writeError(Response.Status.BAD_REQUEST, e.getMessage());
