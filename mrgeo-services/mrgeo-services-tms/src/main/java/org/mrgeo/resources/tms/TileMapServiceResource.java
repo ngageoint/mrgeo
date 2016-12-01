@@ -535,7 +535,7 @@ public Response getTile(@PathParam("version") final String version,
     return Response.status(Status.BAD_REQUEST).entity("Unsupported image format - " + format)
         .build();
   }
-  catch (final IOException e)
+  catch (final IOException | ImageRendererException e)
   {
     log.error("Exception thrown", e);
     return Response.status(Status.NOT_FOUND).entity("Tile map not found - " + pyramid).build();
@@ -582,7 +582,7 @@ public Response getTile(@PathParam("version") final String version,
     log.error("Exception thrown", e);
     return Response.status(Status.NOT_FOUND).entity("Unable to open color scale").build();
   }
-  catch (IllegalAccessException | ParserConfigurationException | InstantiationException | ImageRendererException e)
+  catch (IllegalAccessException | ParserConfigurationException | InstantiationException  e)
   {
     log.error("Exception occurred getting tile " + pyramid + "/" + z + "/" + x + "/" + y + "." +
         format, e);

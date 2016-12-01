@@ -274,7 +274,7 @@ public void testGetColorScaleSwatchMissingColorScale() throws Exception
       .queryParam("height", "10")
       .request().get();
 
-  Assert.assertEquals("image/png", response.getHeaderString("Content-Type"));
+  Assert.assertNotSame("image/png", response.getHeaderString("Content-Type"));
   Assert.assertEquals(400, response.getStatus());
   Assert.assertEquals("Color scale file not found: " + path, response.readEntity(String.class));
 }

@@ -36,6 +36,7 @@ import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
+import org.mrgeo.services.mrspyramid.MrsPyramidServiceException;
 import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
 import org.mrgeo.services.mrspyramid.rendering.ImageResponseWriter;
 import org.mrgeo.utils.tms.Bounds;
@@ -160,9 +161,10 @@ public void testGetImageBadColorScaleName() throws Exception
   MrsPyramid pyramidMock = mock(MrsPyramid.class);
   when(service.getPyramid(anyString(), (ProviderProperties) any())).thenReturn(pyramidMock);
   when(service.getColorScaleFromName(anyString())).thenAnswer(new Answer() {
-    public Object answer(InvocationOnMock invocation) throws FileNotFoundException {
+    public Object answer(InvocationOnMock invocation) throws FileNotFoundException, MrsPyramidServiceException
+    {
       String builder = "File does not exist: " + "/mrgeo/color-scales/" + invocation.getArguments()[0] + ".xml";
-      throw new FileNotFoundException(builder);
+      throw new MrsPyramidServiceException(builder);
     }
   });
   when(service.renderKml(anyString(), (Bounds) any(), anyInt(), anyInt(), (ColorScale) any(), anyInt(), (ProviderProperties)anyObject()))
