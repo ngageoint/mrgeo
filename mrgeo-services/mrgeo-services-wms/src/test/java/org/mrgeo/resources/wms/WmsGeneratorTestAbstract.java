@@ -43,11 +43,24 @@ import org.mrgeo.services.utils.ImageTestUtils;
 import org.mrgeo.test.TestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.swing.text.Document;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -71,7 +84,7 @@ protected static ServletUnitClient webClient;
 
 // only set this to true to generate new baseline images after correcting tests; image comparison
 // tests won't be run when is set to true
-private final static boolean GEN_BASELINE_DATA_ONLY = true;
+private final static boolean GEN_BASELINE_DATA_ONLY = false;
 // bounds is completely outside of the image bounds
 final static String ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS =
     "160.312500,-12.656250,161.718750,-11.250000";
@@ -285,8 +298,52 @@ protected static void processXMLResponse(final Response response,
       final OutputStream outputStream = new FileOutputStream(new File(outputPath));
       try
       {
-        // log.debug(response.getText());
-        IOUtils.write(content, outputStream);
+        // Turn xml string into a document
+        org.w3c.dom.Document document = DocumentBuilderFactory.newInstance()
+            .newDocumentBuilder()
+            .parse(new InputSource(new ByteArrayInputStream(content.getBytes("utf-8"))));
+
+        // Remove whitespaces outside tags
+        XPath xPath = XPathFactory.newInstance().newXPath();
+        NodeList nodeList = (NodeList) xPath.evaluate("//text()[normalize-space()='']",
+            document,
+            XPathConstants.NODESET);
+
+        for (int i = 0; i < nodeList.getLength(); ++i) {
+          Node node = nodeList.item(i);
+          node.getParentNode().removeChild(node);
+        }
+
+        // Setup pretty print options
+        TransformerFactory transformerFactory = TransformerFactory.newInstance();
+        transformerFactory.setAttribute("indent-number", 2);
+        Transformer transformer = transformerFactory.newTransformer();
+        transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+
+        // Return pretty print xml string
+        StringWriter stringWriter = new StringWriter();
+        transformer.transform(new DOMSource(document), new StreamResult(stringWriter));
+
+
+        IOUtils.write(stringWriter.toString(), outputStream);
+      }
+      catch (TransformerConfigurationException e)
+      {
+        e.printStackTrace();
+      }
+      catch (TransformerException e)
+      {
+        e.printStackTrace();
+      }
+      catch (XPathExpressionException e)
+      {
+        e.printStackTrace();
+      }
+      catch (ParserConfigurationException e)
+      {
+        e.printStackTrace();
       }
       finally
       {
