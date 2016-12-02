@@ -26,26 +26,29 @@ import org.mrgeo.utils.tms.Tile;
 
 import java.io.IOException;
 
-public class FindHolesMapper extends Mapper<TileIdWritable, RasterWritable, LongWritable, LongWritable>{
+public class FindHolesMapper extends Mapper<TileIdWritable, RasterWritable, LongWritable, LongWritable>
+{
 
-	private int zoomlevel = -1;	
-	
+private int zoomlevel = -1;
 
-	public void setup(Context context) throws IOException, InterruptedException{
 
-		// get zoom level and bounds(tile space)
-		Configuration conf = context.getConfiguration();
-		zoomlevel = conf.getInt("zoom", -1);
-		
-	} // end setup
+public void setup(Context context) throws IOException, InterruptedException
+{
 
-	
-	public void map(TileIdWritable key, RasterWritable value, Context context) throws IOException, InterruptedException{
-		
-		Tile tile = TMSUtils.tileid(key.get(), zoomlevel);
-		context.write(new LongWritable(tile.ty), new LongWritable(tile.tx));
+  // get zoom level and bounds(tile space)
+  Configuration conf = context.getConfiguration();
+  zoomlevel = conf.getInt("zoom", -1);
 
-	} // end map
-	
-	
+} // end setup
+
+
+public void map(TileIdWritable key, RasterWritable value, Context context) throws IOException, InterruptedException
+{
+
+  Tile tile = TMSUtils.tileid(key.get(), zoomlevel);
+  context.write(new LongWritable(tile.ty), new LongWritable(tile.tx));
+
+} // end map
+
+
 } // end FindHolesMapper

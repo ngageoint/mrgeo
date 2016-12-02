@@ -56,46 +56,19 @@ import java.util.List;
 import java.util.Map;
 
 @Path("/wcs")
-@SuppressWarnings("squid:S2696") // The local statics are used in the singular case where we need a WCS cache, usually when using S3 and you need fast loading
+@SuppressWarnings("squid:S2696")
+// The local statics are used in the singular case where we need a WCS cache, usually when using S3 and you need fast loading
 public class WcsGenerator
 {
 
-public static class WcsGeneratorException extends IOException
-{
-  private static final long serialVersionUID = 1L;
-
-  public WcsGeneratorException()
-  {
-    super();
-  }
-
-  public WcsGeneratorException(final String msg)
-  {
-    super(msg);
-  }
-
-  public WcsGeneratorException(final String msg, final Throwable cause)
-  {
-    super(msg, cause);
-  }
-
-  public WcsGeneratorException(final Throwable cause)
-  {
-    super(cause);
-  }
-}
-
 private static final Logger log = LoggerFactory.getLogger(WcsGenerator.class);
-
 private static final String WCS_VERSION = "1.1.0";
 private static final String WCS_SERVICE = "wcs";
-
-private Version version = new Version(WCS_VERSION);
-
 private static Map<Version, Document> capabilities = new HashMap<>();
 private static UriInfo baseURI = null;
 
-static {
+static
+{
   if (MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_WCS_CAPABILITIES_CACHE, "true").equals("true"))
   {
     new Thread()
@@ -103,7 +76,8 @@ static {
       public void run()
       {
         long sleeptime = 60L * 1000L *
-            Integer.parseInt(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_WCS_CAPABILITIES_REFRESH, "5"));
+            Integer.parseInt(
+                MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_WCS_CAPABILITIES_REFRESH, "5"));
 
         boolean stop = false;
         while (!stop)
@@ -136,6 +110,51 @@ static {
     }.start();
   }
 
+}
+
+private Version version = new Version(WCS_VERSION);
+
+private static Document generateCapabilities(Version version, UriInfo uriInfo, ProviderProperties providerProperties)
+    throws IOException, ParserConfigurationException, InterruptedException
+{
+  final WcsCapabilities docGen = new WcsCapabilities();
+
+  // The following code re-builds the request URI to include in the GetCapabilities
+  // output. It sorts the parameters so that they are included in the URI in a
+  // predictable order. The reason for this is so that test cases can compare XML
+  // golden files against the XML generated here without worrying about parameters
+  // shifting locations in the URI.
+//  Set<String> keys = uriInfo.getQueryParameters().keySet();
+//  String[] sortedKeys = new String[keys.size()];
+//  keys.toArray(sortedKeys);
+//  Arrays.sort(sortedKeys);
+
+  UriBuilder builder = uriInfo.getBaseUriBuilder().path(uriInfo.getPath());
+
+  return docGen.generateDoc(version, builder.build().toString() + "?",
+      getPyramidFilesList(providerProperties));
+}
+
+/*
+ * Returns a list of all MrsPyramid version 2 data in the home data directory
+ */
+private static MrsImageDataProvider[] getPyramidFilesList(
+    final ProviderProperties providerProperties) throws IOException
+{
+  String[] images = DataProviderFactory.listImages(providerProperties);
+
+  Arrays.sort(images);
+
+  MrsImageDataProvider[] providers = new MrsImageDataProvider[images.length];
+
+  for (int i = 0; i < images.length; i++)
+  {
+    providers[i] = DataProviderFactory.getMrsImageDataProvider(images[i],
+        DataProviderFactory.AccessMode.READ,
+        providerProperties);
+  }
+
+  return providers;
 }
 
 @GET
@@ -206,11 +225,10 @@ private Response handleRequest(UriInfo uriInfo)
 /**
  * Returns the value for the specified paramName case-insensitively. If the
  * parameter does not exist, it returns null.
- *
- * */
+ */
 private String getQueryParam(MultivaluedMap<String, String> allParams, String paramName)
 {
-  for (Map.Entry<String, List<String> > es: allParams.entrySet())
+  for (Map.Entry<String, List<String>> es : allParams.entrySet())
   {
     if (es.getKey().equalsIgnoreCase(paramName))
     {
@@ -225,7 +243,7 @@ private String getQueryParam(MultivaluedMap<String, String> allParams, String pa
 }
 
 private Response describeCoverage(UriInfo uriInfo,
-    MultivaluedMap<String,String> allParams,
+    MultivaluedMap<String, String> allParams,
     final ProviderProperties providerProperties)
 {
   String versionStr = getQueryParam(allParams, "version", WCS_VERSION);
@@ -269,7 +287,6 @@ private Response describeCoverage(UriInfo uriInfo,
   }
 }
 
-
 private Response getCapabilities(UriInfo uriInfo, MultivaluedMap<String, String> allParams,
     ProviderProperties providerProperties)
 {
@@ -281,7 +298,7 @@ private Response getCapabilities(UriInfo uriInfo, MultivaluedMap<String, String>
   {
     String[] versions = acceptVersions.split(",");
 
-    for (String ver: versions)
+    for (String ver : versions)
     {
       if (version == null || version.isLess(ver))
       {
@@ -289,7 +306,8 @@ private Response getCapabilities(UriInfo uriInfo, MultivaluedMap<String, String>
       }
     }
   }
-  else {
+  else
+  {
     version = new Version(getQueryParam(allParams, "version", WCS_VERSION));
   }
 
@@ -324,50 +342,6 @@ private Response getCapabilities(UriInfo uriInfo, MultivaluedMap<String, String>
 
 
 //    return writeError(Response.Status.BAD_REQUEST, "Not Implemented");
-}
-
-private static Document generateCapabilities(Version version, UriInfo uriInfo, ProviderProperties providerProperties)
-    throws IOException, ParserConfigurationException, InterruptedException
-{
-  final WcsCapabilities docGen = new WcsCapabilities();
-
-  // The following code re-builds the request URI to include in the GetCapabilities
-  // output. It sorts the parameters so that they are included in the URI in a
-  // predictable order. The reason for this is so that test cases can compare XML
-  // golden files against the XML generated here without worrying about parameters
-  // shifting locations in the URI.
-//  Set<String> keys = uriInfo.getQueryParameters().keySet();
-//  String[] sortedKeys = new String[keys.size()];
-//  keys.toArray(sortedKeys);
-//  Arrays.sort(sortedKeys);
-
-  UriBuilder builder = uriInfo.getBaseUriBuilder().path(uriInfo.getPath());
-
-  return docGen.generateDoc(version, builder.build().toString() + "?",
-      getPyramidFilesList(providerProperties));
-}
-
-
-/*
- * Returns a list of all MrsPyramid version 2 data in the home data directory
- */
-private static MrsImageDataProvider[] getPyramidFilesList(
-    final ProviderProperties providerProperties) throws IOException
-{
-  String[] images = DataProviderFactory.listImages(providerProperties);
-
-  Arrays.sort(images);
-
-  MrsImageDataProvider[] providers = new MrsImageDataProvider[images.length];
-
-  for (int i = 0; i < images.length; i++)
-  {
-    providers[i] = DataProviderFactory.getMrsImageDataProvider(images[i],
-        DataProviderFactory.AccessMode.READ,
-        providerProperties);
-  }
-
-  return providers;
 }
 
 private Response getCoverage(MultivaluedMap<String, String> allParams,
@@ -474,7 +448,6 @@ private Response getCoverage(MultivaluedMap<String, String> allParams,
 /**
  * Returns the value for the specified paramName case-insensitively. If the
  * parameter does not exist, it returns defaultValue.
- *
  */
 
 private String getQueryParam(MultivaluedMap<String, String> allParams,
@@ -485,6 +458,29 @@ private String getQueryParam(MultivaluedMap<String, String> allParams,
   if (value != null)
   {
     return value;
+  }
+  return defaultValue;
+}
+
+/**
+ * Returns the int value for the specified paramName case-insensitively. If
+ * the parameter value exists, but is not an int, it throws a NumberFormatException.
+ * If it does not exist, it returns defaultValue.
+ */
+private int getQueryParamAsInt(MultivaluedMap<String, String> allParams,
+    String paramName,
+    int defaultValue)
+    throws NumberFormatException
+{
+  for (Map.Entry<String, List<String>> es : allParams.entrySet())
+  {
+    if (es.getKey().equalsIgnoreCase(paramName))
+    {
+      if (es.getValue().size() == 1)
+      {
+        return Integer.parseInt(es.getValue().get(0));
+      }
+    }
   }
   return defaultValue;
 }
@@ -506,31 +502,6 @@ private String getQueryParam(MultivaluedMap<String, String> allParams,
  * Returns the int value for the specified paramName case-insensitively. If
  * the parameter value exists, but is not an int, it throws a NumberFormatException.
  * If it does not exist, it returns defaultValue.
- *
- */
-private int getQueryParamAsInt(MultivaluedMap<String, String> allParams,
-    String paramName,
-    int defaultValue)
-    throws NumberFormatException
-{
-  for (Map.Entry<String, List<String> > es: allParams.entrySet())
-  {
-    if (es.getKey().equalsIgnoreCase(paramName))
-    {
-      if (es.getValue().size() == 1)
-      {
-        return Integer.parseInt(es.getValue().get(0));
-      }
-    }
-  }
-  return defaultValue;
-}
-
-/**
- * Returns the int value for the specified paramName case-insensitively. If
- * the parameter value exists, but is not an int, it throws a NumberFormatException.
- * If it does not exist, it returns defaultValue.
- *
  */
 //private double getQueryParamAsDouble(MultivaluedMap<String, String> allParams,
 //    String paramName,
@@ -550,41 +521,41 @@ private int getQueryParamAsInt(MultivaluedMap<String, String> allParams,
 //  }
 //  return defaultValue;
 //}
-
 private Bounds getBoundsParam(MultivaluedMap<String, String> allParams, String paramName, Bounds bounds)
     throws WcsGeneratorException
 {
-    String bbox = getQueryParam(allParams, paramName);
-    if (bbox == null)
-    {
-      throw new WcsGeneratorException("Missing required " + paramName.toUpperCase() + " parameter");
-    }
-    String[] bboxComponents = bbox.split(",");
-    if (!(bboxComponents.length == 5 || bboxComponents.length == 4))
-    {
-      throw new WcsGeneratorException("Invalid \" + paramName.toUpperCase() + \" parameter. Should contain minX, minY, maxX, maxY");
-    }
+  String bbox = getQueryParam(allParams, paramName);
+  if (bbox == null)
+  {
+    throw new WcsGeneratorException("Missing required " + paramName.toUpperCase() + " parameter");
+  }
+  String[] bboxComponents = bbox.split(",");
+  if (!(bboxComponents.length == 5 || bboxComponents.length == 4))
+  {
+    throw new WcsGeneratorException(
+        "Invalid \" + paramName.toUpperCase() + \" parameter. Should contain minX, minY, maxX, maxY");
+  }
 
-    double[] bboxValues = new double[4];
-    for (int index = 0; index < bboxComponents.length; index++)
+  double[] bboxValues = new double[4];
+  for (int index = 0; index < bboxComponents.length; index++)
+  {
+    try
     {
-      try
-      {
-        bboxValues[index] = Double.parseDouble(bboxComponents[index]);
-      }
-      catch (NumberFormatException nfe)
-      {
-        log.error("Exception thrown", nfe);
-        throw new WcsGeneratorException("Invalid BBOX value: " + bboxComponents[index]);
-      }
+      bboxValues[index] = Double.parseDouble(bboxComponents[index]);
     }
-
-    if (bounds == null)
+    catch (NumberFormatException nfe)
     {
-      return new Bounds(bboxValues[0], bboxValues[1], bboxValues[2], bboxValues[3]);
+      log.error("Exception thrown", nfe);
+      throw new WcsGeneratorException("Invalid BBOX value: " + bboxComponents[index]);
     }
+  }
 
-    return bounds.expand(bboxValues[0], bboxValues[1], bboxValues[2], bboxValues[3]);
+  if (bounds == null)
+  {
+    return new Bounds(bboxValues[0], bboxValues[1], bboxValues[2], bboxValues[3]);
+  }
+
+  return bounds.expand(bboxValues[0], bboxValues[1], bboxValues[2], bboxValues[3]);
 }
 
 private String getCrsParam(MultivaluedMap<String, String> allParams)
@@ -609,8 +580,6 @@ private String getCrsParam(MultivaluedMap<String, String> allParams)
     return crs;
   }
 }
-
-
 
 /*
  * Writes OGC spec error messages to the response
@@ -646,6 +615,31 @@ private Response writeError(Response.Status httpStatus, final String msg)
   }
   // Fallback in case there is an XML exception above
   return Response.status(httpStatus).entity(msg).build();
+}
+
+public static class WcsGeneratorException extends IOException
+{
+  private static final long serialVersionUID = 1L;
+
+  public WcsGeneratorException()
+  {
+    super();
+  }
+
+  public WcsGeneratorException(final String msg)
+  {
+    super(msg);
+  }
+
+  public WcsGeneratorException(final String msg, final Throwable cause)
+  {
+    super(msg, cause);
+  }
+
+  public WcsGeneratorException(final Throwable cause)
+  {
+    super(cause);
+  }
 }
 
 }

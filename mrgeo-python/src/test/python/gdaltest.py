@@ -30,9 +30,9 @@
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
 
-from osgeo import gdal, osr
 import math
 import numpy
+from osgeo import gdal, osr
 
 
 #######################################################
@@ -57,7 +57,6 @@ def compare_metadata(golden_md, test_md, id):
 #######################################################
 # Review and report on the actual image pixels that differ.
 def compare_image_pixels(test, golden_band, test_band):
-
     diffs = 0
     maxdiff = 0
     nandiff = 0
@@ -97,7 +96,8 @@ def compare_band(test, golden_band, new_band, id):
                      '  New:    ' + str(new_band.GetNoDataValue()))
 
     if not math.isnan(gn) and not math.isnan(nn):
-        test.assertEqual(golden_band.GetNoDataValue(), new_band.GetNoDataValue(), ('Band %s nodata values differ.\n' % id) +
+        test.assertEqual(golden_band.GetNoDataValue(), new_band.GetNoDataValue(),
+                         ('Band %s nodata values differ.\n' % id) +
                          '  Golden: ' + str(golden_band.GetNoDataValue()) + '\n' +
                          '  New:    ' + str(new_band.GetNoDataValue()))
 
@@ -124,11 +124,11 @@ def compare_band(test, golden_band, new_band, id):
                          new_band.GetOverview(i),
                          id + ' overview ' + str(i))
 
-    # Just like the Dataset, can't compare band metadata...
-    # Metadata
-    # compare_metadata(golden_band.GetMetadata(), new_band.GetMetadata(), 'Band ' + id)
+            # Just like the Dataset, can't compare band metadata...
+            # Metadata
+            # compare_metadata(golden_band.GetMetadata(), new_band.GetMetadata(), 'Band ' + id)
 
-    # TODO: Color Table, gain/bias, units, blocksize, mask, min/max
+            # TODO: Color Table, gain/bias, units, blocksize, mask, min/max
 
 
 #######################################################

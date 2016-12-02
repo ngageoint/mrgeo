@@ -25,6 +25,7 @@ import java.io.IOException;
  */
 public interface MrsPyramidMetadataReader
 {
-  public MrsPyramidMetadata read() throws IOException;
-  public MrsPyramidMetadata reload() throws IOException;
+public MrsPyramidMetadata read() throws IOException;
+
+public MrsPyramidMetadata reload() throws IOException;
 }

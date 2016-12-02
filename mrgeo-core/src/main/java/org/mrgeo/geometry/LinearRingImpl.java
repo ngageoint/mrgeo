@@ -29,7 +29,6 @@ import java.util.Map;
 
 /**
  * @author jason.surratt
- *
  */
 public class LinearRingImpl extends LineStringImpl implements WritableLinearRing
 {
@@ -106,13 +105,6 @@ public void read(DataInputStream stream) throws IOException
 {
   super.read(stream);
   closeRing();
-}
-
-private void readObject(ObjectInputStream stream) throws IOException
-{
-  DataInputStream dis = new DataInputStream(stream);
-  read(dis);
-  readAttributes(dis);
 }
 
 @Override
@@ -194,6 +186,13 @@ public LinearRing cw()
   }
 
   return reverse();
+}
+
+private void readObject(ObjectInputStream stream) throws IOException
+{
+  DataInputStream dis = new DataInputStream(stream);
+  read(dis);
+  readAttributes(dis);
 }
 
 

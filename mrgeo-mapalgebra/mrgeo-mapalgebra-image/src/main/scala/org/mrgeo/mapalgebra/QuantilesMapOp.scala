@@ -30,34 +30,25 @@ import scala.language.existentials
 
 
 object QuantilesMapOp extends MapOpRegistrar {
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("quantiles")
   }
 
-  def create(raster: RasterMapOp, numQuantiles: Int, fraction:Float = 1.0f) =
+  def create(raster:RasterMapOp, numQuantiles:Int, fraction:Float = 1.0f) =
     new QuantilesMapOp(Some(raster), Some(numQuantiles), Some(fraction))
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new QuantilesMapOp(node, variables)
 }
 
 class QuantilesMapOp extends RasterMapOp with Externalizable {
-  private var rasterRDD: Option[RasterRDD] = None
+  private var rasterRDD:Option[RasterRDD] = None
 
-  private var inputMapOp: Option[RasterMapOp] = None
-  private var numQuantiles: Option[Int] = None
-  private var fraction: Option[Float] = None
+  private var inputMapOp:Option[RasterMapOp] = None
+  private var numQuantiles:Option[Int] = None
+  private var fraction:Option[Float] = None
 
-  private[mapalgebra] def this(raster:Option[RasterMapOp], numQuantiles:Option[Int],
-                               fraction: Option[Float]) = {
-    this()
-
-    this.inputMapOp = raster
-    this.numQuantiles = numQuantiles
-    this.fraction = fraction
-  }
-
-  def this(node: ParserNode, variables: String => Option[ParserNode]) {
+  def this(node:ParserNode, variables:String => Option[ParserNode]) {
     this()
 
     if ((node.getNumChildren < 2) || (node.getNumChildren > 3)) {
@@ -85,11 +76,11 @@ class QuantilesMapOp extends RasterMapOp with Externalizable {
     }
   }
 
-  override def rdd(): Option[RasterRDD] = {
+  override def rdd():Option[RasterRDD] = {
     rasterRDD
   }
 
-  override def registerClasses(): Array[Class[_]] = {
+  override def registerClasses():Array[Class[_]] = {
     Array[Class[_]](classOf[Array[Double]],
       classOf[Array[Float]],
       classOf[Array[Int]],
@@ -99,44 +90,46 @@ class QuantilesMapOp extends RasterMapOp with Externalizable {
     )
   }
 
-  @SuppressFBWarnings(value = Array("RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"), justification = "implicits - false positivie")
-  override def execute(context: SparkContext): Boolean = {
+  @SuppressFBWarnings(value = Array("RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"),
+    justification = "implicits - false positivie")
+  override def execute(context:SparkContext):Boolean = {
 
     implicit val doubleOrdering = new Ordering[Double] {
-      override def compare(x: Double, y: Double): Int = x.compareTo(y)
+      override def compare(x:Double, y:Double):Int = x.compareTo(y)
     }
 
     implicit val floatOrdering = new Ordering[Float] {
-      override def compare(x: Float, y: Float): Int = x.compareTo(y)
+      override def compare(x:Float, y:Float):Int = x.compareTo(y)
     }
 
     implicit val intOrdering = new Ordering[Int] {
-      override def compare(x: Int, y: Int): Int = x.compareTo(y)
+      override def compare(x:Int, y:Int):Int = x.compareTo(y)
     }
 
     implicit val shortOrdering = new Ordering[Short] {
-      override def compare(x: Short, y: Short): Int = x.compareTo(y)
+      override def compare(x:Short, y:Short):Int = x.compareTo(y)
     }
 
     implicit val byteOrdering = new Ordering[Byte] {
-      override def compare(x: Byte, y: Byte): Int = x.compareTo(y)
+      override def compare(x:Byte, y:Byte):Int = x.compareTo(y)
     }
 
-    val input:RasterMapOp = inputMapOp getOrElse(throw new IOException("Input MapOp not valid!"))
-    val numberOfQuantiles = numQuantiles getOrElse(throw new IOException("numQuantiles not valid!"))
+    val input:RasterMapOp = inputMapOp getOrElse (throw new IOException("Input MapOp not valid!"))
+    val numberOfQuantiles = numQuantiles getOrElse (throw new IOException("numQuantiles not valid!"))
 
-    val meta = input.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
+    val meta = input.metadata() getOrElse
+               (throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
     rasterRDD = input.rdd()
-    val rdd = rasterRDD getOrElse(throw new IOException("Can't load RDD! Ouch! " + inputMapOp.getClass.getName))
+    val rdd = rasterRDD getOrElse (throw new IOException("Can't load RDD! Ouch! " + inputMapOp.getClass.getName))
     // No reason to calculate metadata like raster map ops that actually compute a raster. This
     // map op does not compute the raster output, it just uses the input raster. All we need to
     // do is update the metadata already computed for the input raster map op.
-//    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, meta.getDefaultValues,
-//      bounds = meta.getBounds, calcStats = false))
+    //    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, meta.getDefaultValues,
+    //      bounds = meta.getBounds, calcStats = false))
 
     // Compute the quantile values and save them to metadata
     val quantiles = Quantiles.compute(rdd, numberOfQuantiles, fraction, meta)
-    var b: Int = 0
+    var b:Int = 0
     while (b < quantiles.length) {
       meta.setQuantiles(b, quantiles(b))
       b += 1
@@ -145,15 +138,24 @@ class QuantilesMapOp extends RasterMapOp with Externalizable {
     true
   }
 
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = {
+  override def setup(job:JobArguments, conf:SparkConf):Boolean = {
     true
   }
 
-  override def teardown(job: JobArguments, conf: SparkConf): Boolean = {
+  override def teardown(job:JobArguments, conf:SparkConf):Boolean = {
     true
   }
 
-  override def readExternal(in: ObjectInput): Unit = {}
+  override def readExternal(in:ObjectInput):Unit = {}
 
-  override def writeExternal(out: ObjectOutput): Unit = {}
+  override def writeExternal(out:ObjectOutput):Unit = {}
+
+  private[mapalgebra] def this(raster:Option[RasterMapOp], numQuantiles:Option[Int],
+                               fraction:Option[Float]) = {
+    this()
+
+    this.inputMapOp = raster
+    this.numQuantiles = numQuantiles
+    this.fraction = fraction
+  }
 }

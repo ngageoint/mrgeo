@@ -29,36 +29,36 @@ import java.io.IOException;
  */
 public class JpegImageResponseWriter extends ImageResponseWriterAbstract
 {
-  private static final Logger log = LoggerFactory.getLogger(JpegImageResponseWriter.class);
+private static final Logger log = LoggerFactory.getLogger(JpegImageResponseWriter.class);
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.mrgeo.services.wms.ImageResponseWriter#getMimeType()
-   */
-  @Override
-  public String[] getMimeTypes()
-  {
-    return new String[] { "image/jpeg", "image/jpg" };
-  }
+/*
+ * (non-Javadoc)
+ *
+ * @see org.mrgeo.services.wms.ImageResponseWriter#getMimeType()
+ */
+@Override
+public String[] getMimeTypes()
+{
+  return new String[]{"image/jpeg", "image/jpg"};
+}
 
-  @Override
-  public String getResponseMimeType()
-  {
-    return "image/jpeg";
-  }
+@Override
+public String getResponseMimeType()
+{
+  return "image/jpeg";
+}
 
-  @Override
-  public String[] getWmsFormats()
-  {
-    return new String[] { "jpeg", "jpg" };
-  }
+@Override
+public String[] getWmsFormats()
+{
+  return new String[]{"jpeg", "jpg"};
+}
 
-  @Override
-  public void writeToStream(final MrGeoRaster raster, double[] defaults, final ByteArrayOutputStream byteStream)
+@Override
+public void writeToStream(final MrGeoRaster raster, double[] defaults, final ByteArrayOutputStream byteStream)
     throws IOException
-  {
-    GDALJavaUtils.saveRaster(raster.toDataset(null, defaults), byteStream, "jpeg");
-    byteStream.close();
-  }
+{
+  GDALJavaUtils.saveRaster(raster.toDataset(null, defaults), byteStream, "jpeg");
+  byteStream.close();
+}
 }

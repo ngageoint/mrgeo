@@ -40,91 +40,42 @@ import java.util.NoSuchElementException;
 /**
  * Reads a Shapefile as an InputStream (no seeking). This implementation does
  * not read the DBF at this time.
- *
+ * <p>
  * Limitations: The Shapefile may not contain "skipped" records as a result of
- * editing. The Shapefile may not have polygons with holes. There are probably 
+ * editing. The Shapefile may not have polygons with holes. There are probably
  * other scenarios that this Shapefile reader will not handle properly.
  *
  * @author jason.surratt
- *
  */
 @SuppressFBWarnings(value = "DESERIALIZATION_GADGET", justification = "verified read/writeObject")
 public class ShapefileReader implements GeometryInputStream, ShapefileGeometryCollection, Serializable
 {
-private static Logger log = LoggerFactory.getLogger(ShapefileReader.class);
-
-static class LocalIterator implements Iterator<WritableGeometry>
-{
-  private int currentIndex = 0;
-  private ShapefileReader parent;
-
-  public LocalIterator(ShapefileReader parent)
-  {
-    this.parent = parent;
-  }
-
-  @Override
-  public boolean hasNext()
-  {
-    return currentIndex < parent.size();
-  }
-
-  @Override
-  public WritableGeometry next()
-  {
-    if (currentIndex >= parent.size())
-    {
-      throw new NoSuchElementException("End of iterator");
-    }
-
-    return parent.get(currentIndex++);
-  }
-
-  @Override
-  public void remove()
-  {
-    throw new UnsupportedOperationException();
-  }
-}
-
-static class ReadOnlyLocalIterator implements Iterator<Geometry>
-{
-  private int currentIndex = 0;
-  private ShapefileReader parent;
-
-  public ReadOnlyLocalIterator(ShapefileReader parent)
-  {
-    this.parent = parent;
-  }
-
-  @Override
-  public boolean hasNext()
-  {
-    return currentIndex < parent.size();
-  }
-
-  @Override
-  public Geometry next()
-  {
-    if (currentIndex >= parent.size())
-    {
-      throw new NoSuchElementException("End of iterator");
-    }
-    return parent.get(currentIndex++);
-  }
-
-  @Override
-  public void remove()
-  {
-    throw new UnsupportedOperationException();
-  }
-}
-
-private enum Source {
-  FILE, HDFS, INVALID
-}
-
 private static final long serialVersionUID = 1L;
+private static Logger log = LoggerFactory.getLogger(ShapefileReader.class);
+transient int currentIndex = 0;
+// only one of these should be set at any time. If path is set, use Hadoop,
+// otherwise use
+// standard files.
+String fileName = null;
+transient ESRILayer shpFile;
+Source source = Source.INVALID;
+
+public ShapefileReader(Path path) throws IOException
+{
+  load(path);
+}
+
+/**
+ * Unfortunately Shapefiles require random access to multiple files. At this
+ * point we will assume that the files are on the local filesystem, not HDFS.
+ *
+ * @param shpFilename
+ * @throws IOException
+ */
+public ShapefileReader(String shpFilename) throws IOException
+{
+  load(shpFilename);
+}
 
 private static WritableGeometry convertToGeometry(JShape shape)
 {
@@ -239,7 +190,7 @@ private static WritablePolygon convertToPolygon(JPolygonZ poly)
     return null;
   }
   WritablePolygon result = GeometryFactory.createPolygon();
-  for (int part=0; part < poly.getPartCount(); part++)
+  for (int part = 0; part < poly.getPartCount(); part++)
   {
     WritableLinearRing ring = GeometryFactory.createLinearRing();
     int maxPointIndex = (part == poly.getPartCount() - 1) ? poly.getPointCount() : poly.getPart(part + 1);
@@ -259,34 +210,6 @@ private static WritablePolygon convertToPolygon(JPolygonZ poly)
   }
 
   return result;
-}
-
-transient int currentIndex = 0;
-
-// only one of these should be set at any time. If path is set, use Hadoop,
-// otherwise use
-// standard files.
-String fileName = null;
-
-transient ESRILayer shpFile;
-
-Source source = Source.INVALID;
-
-public ShapefileReader(Path path) throws IOException
-{
-  load(path);
-}
-
-/**
- * Unfortunately Shapefiles require random access to multiple files. At this
- * point we will assume that the files are on the local filesystem, not HDFS.
- *
- * @param shpFilename
- * @throws IOException
- */
-public ShapefileReader(String shpFilename) throws IOException
-{
-  load(shpFilename);
 }
 
 @Override
@@ -312,17 +235,17 @@ public WritableGeometry get(int index)
   for (int i = 0; i < attributes.size(); i++)
   {
     Object a = attributes.get(i);
-    if (a != null) {
+    if (a != null)
+    {
       g.setAttribute(columns[i], a.toString());
     }
-    else {
+    else
+    {
       g.setAttribute(columns[i], null);
     }
   }
   return g;
 }
-
-
 
 @Override
 public String getProjection()
@@ -350,6 +273,78 @@ public Iterator<WritableGeometry> iterator()
 public Iterator<Geometry> readOnlyIterator()
 {
   return new ReadOnlyLocalIterator(this);
+}
+
+/*
+ * (non-Javadoc)
+ *
+ * @see com.spadac.Geometry.GeometryInputStream#next()
+ */
+@Override
+public WritableGeometry next()
+{
+  if (currentIndex < shpFile.getNumRecords())
+  {
+    return get(currentIndex++);
+  }
+
+  throw new NoSuchElementException("End of iterator");
+}
+
+/*
+ * (non-Javadoc)
+ *
+ * @see java.util.Iterator#remove()
+ */
+@Override
+public void remove()
+{
+  throw new UnsupportedOperationException();
+}
+
+public void reset()
+{
+  currentIndex = 0;
+}
+
+@Override
+public int size()
+{
+  return shpFile.getCount();
+}
+
+@Override
+public void close()
+{
+  if (shpFile != null)
+  {
+    try
+    {
+      shpFile.close();
+    }
+    catch (IOException e)
+    {
+      log.error("Exception thrown", e);
+    }
+
+    shpFile = null;
+  }
+}
+
+@Override
+@SuppressWarnings("squid:S1166") // Exception caught and handled
+protected void finalize()
+{
+  if (shpFile != null)
+  {
+    try
+    {
+      shpFile.close();
+    }
+    catch (IOException e)
+    {
+    }
+  }
 }
 
 private void load(Path path) throws IOException
@@ -407,30 +402,14 @@ private void load(String shpFilename) throws IOException
   reset();
 }
 
-/*
- * (non-Javadoc)
- *
- * @see com.spadac.Geometry.GeometryInputStream#next()
- */
-@Override
-public WritableGeometry next()
-{
-  if (currentIndex < shpFile.getNumRecords())
-  {
-    return get(currentIndex++);
-  }
-
-  throw new NoSuchElementException("End of iterator");
-}
-
 private void writeObject(ObjectOutputStream out) throws IOException
 {
   out.writeUTF(fileName);
   out.writeInt(source.ordinal());
 }
 
-
-@SuppressFBWarnings(value = {"WEAK_FILENAMEUTILS", "PATH_TRAVERSAL_IN"}, justification = "Correctly filtered parameters")
+@SuppressFBWarnings(value = {"WEAK_FILENAMEUTILS",
+    "PATH_TRAVERSAL_IN"}, justification = "Correctly filtered parameters")
 private void readObject(ObjectInputStream in) throws ClassNotFoundException, IOException
 {
   fileName = in.readUTF();
@@ -453,59 +432,75 @@ private void readObject(ObjectInputStream in) throws ClassNotFoundException, IOE
   }
 }
 
-/*
- * (non-Javadoc)
- *
- * @see java.util.Iterator#remove()
- */
-@Override
-public void remove()
+private enum Source
 {
-  throw new UnsupportedOperationException();
+  FILE, HDFS, INVALID
 }
 
-public void reset()
+static class LocalIterator implements Iterator<WritableGeometry>
 {
-  currentIndex = 0;
-}
+  private int currentIndex = 0;
+  private ShapefileReader parent;
 
-@Override
-public int size()
-{
-  return shpFile.getCount();
-}
-
-@Override
-public void close()
-{
-  if (shpFile != null)
+  public LocalIterator(ShapefileReader parent)
   {
-    try
+    this.parent = parent;
+  }
+
+  @Override
+  public boolean hasNext()
+  {
+    return currentIndex < parent.size();
+  }
+
+  @Override
+  public WritableGeometry next()
+  {
+    if (currentIndex >= parent.size())
     {
-      shpFile.close();
-    }
-    catch (IOException e)
-    {
-      log.error("Exception thrown", e);
+      throw new NoSuchElementException("End of iterator");
     }
 
-    shpFile = null;
+    return parent.get(currentIndex++);
+  }
+
+  @Override
+  public void remove()
+  {
+    throw new UnsupportedOperationException();
   }
 }
 
-@Override
-@SuppressWarnings("squid:S1166") // Exception caught and handled
-protected void finalize()
+static class ReadOnlyLocalIterator implements Iterator<Geometry>
 {
-  if (shpFile != null)
+  private int currentIndex = 0;
+  private ShapefileReader parent;
+
+  public ReadOnlyLocalIterator(ShapefileReader parent)
   {
-    try
+    this.parent = parent;
+  }
+
+  @Override
+  public boolean hasNext()
+  {
+    return currentIndex < parent.size();
+  }
+
+  @Override
+  public Geometry next()
+  {
+    if (currentIndex >= parent.size())
     {
-      shpFile.close();
+      throw new NoSuchElementException("End of iterator");
     }
-    catch (IOException e)
-    {
-    }
+    return parent.get(currentIndex++);
+  }
+
+  @Override
+  public void remove()
+  {
+    throw new UnsupportedOperationException();
   }
 }
 }

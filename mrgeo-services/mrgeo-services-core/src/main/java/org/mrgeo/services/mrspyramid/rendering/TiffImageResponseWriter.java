@@ -29,37 +29,37 @@ import java.io.IOException;
  */
 public class TiffImageResponseWriter extends ImageResponseWriterAbstract
 {
-  @SuppressWarnings("unused")
-  private static final Logger log = LoggerFactory.getLogger(TiffImageResponseWriter.class);
+@SuppressWarnings("unused")
+private static final Logger log = LoggerFactory.getLogger(TiffImageResponseWriter.class);
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.mrgeo.services.wms.ImageResponseWriter#getMimeType()
-   */
-  @Override
-  public String[] getMimeTypes()
-  {
-    return new String[] { "image/tiff", "image/tif" };
-  }
+/*
+ * (non-Javadoc)
+ *
+ * @see org.mrgeo.services.wms.ImageResponseWriter#getMimeType()
+ */
+@Override
+public String[] getMimeTypes()
+{
+  return new String[]{"image/tiff", "image/tif"};
+}
 
-  @Override
-  public String getResponseMimeType()
-  {
-    return "image/tiff";
-  }
+@Override
+public String getResponseMimeType()
+{
+  return "image/tiff";
+}
 
-  @Override
-  public String[] getWmsFormats()
-  {
-    return new String[] { "tiff", "tif" };
-  }
+@Override
+public String[] getWmsFormats()
+{
+  return new String[]{"tiff", "tif"};
+}
 
 
-  @Override
-  public void writeToStream(MrGeoRaster raster, double[] defaults, ByteArrayOutputStream byteStream) throws IOException
-  {
-    GDALJavaUtils.saveRaster(raster.toDataset(null, defaults), byteStream, "Tiff");
-    byteStream.close();
-  }
+@Override
+public void writeToStream(MrGeoRaster raster, double[] defaults, ByteArrayOutputStream byteStream) throws IOException
+{
+  GDALJavaUtils.saveRaster(raster.toDataset(null, defaults), byteStream, "Tiff");
+  byteStream.close();
+}
 }

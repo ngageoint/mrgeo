@@ -42,109 +42,6 @@ private HdfsVectorDataProvider provider;
 private VectorReaderContext context;
 private Configuration conf;
 
-public static class HdfsFileReader implements LineProducer
-{
-  private BufferedReader reader;
-  private Path sourcePath;
-
-  public void initialize(Configuration conf, Path p) throws IOException
-  {
-    this.sourcePath = p;
-    InputStream is = HadoopFileUtils.open(conf, p);
-    reader = new BufferedReader(new InputStreamReader(is));
-  }
-
-  @Override
-  public void close() throws IOException
-  {
-    if (reader != null)
-    {
-      reader.close();
-    }
-  }
-
-  @Override
-  public String nextLine() throws IOException
-  {
-    return reader.readLine();
-  }
-
-  public String toString()
-  {
-    return (sourcePath != null) ? sourcePath.toString() : "unknown" ;
-  }
-}
-
-public static class FeatureIdRangeVisitor implements DelimitedReader.DelimitedReaderVisitor
-{
-  private long minFeatureId = -1;
-  private long maxFeatureId = -1;
-
-  /**
-   * Constructs a FeatureIdRangeVisitor which sets lower and upper bounds
-   * for acceptable features. The min/max feature id values passed in are
-   * inclusive. If either of the values are <= zero,
-   * it will not be checked. In other words, if the minFeatureId is <= 0, then
-   * there will be no minimum boundary on acceptable feature ids. Likewise,
-   * if maxFeatureId is <= 0, then there will be no upper boundary on
-   * acceptable feature ids.
-   *
-   * If both min and max feature id are <= 0, then this visitor will accept
-   * all features.
-   **/
-  public FeatureIdRangeVisitor(long minFeatureId, long maxFeatureId)
-  {
-    this.minFeatureId = minFeatureId;
-    this.maxFeatureId = maxFeatureId;
-  }
-
-  @Override
-  public boolean accept(long id, Geometry geometry)
-  {
-    boolean acceptable = true;
-    if (minFeatureId > 0)
-    {
-      acceptable = (id >= minFeatureId);
-    }
-    if (acceptable && maxFeatureId > 0)
-    {
-      acceptable = (id <= maxFeatureId);
-    }
-    return acceptable;
-  }
-
-  @Override
-  public boolean stopReading(long id, Geometry geometry)
-  {
-    return (maxFeatureId > 0 && id > maxFeatureId);
-  }
-}
-
-public static class BoundsVisitor implements DelimitedReader.DelimitedReaderVisitor
-{
-  private Bounds bounds;
-
-  public BoundsVisitor(Bounds bounds)
-  {
-    this.bounds = bounds;
-  }
-
-  @Override
-  public boolean accept(long id, Geometry geometry)
-  {
-    Bounds geomBounds = geometry.getBounds();
-    return geomBounds != null && geomBounds.intersects(bounds);
-  }
-
-  @Override
-  public boolean stopReading(long id, Geometry geometry)
-  {
-    // We must read all records since there is no ordering by geometry
-    // that would allow us to stop reading early.
-    return false;
-  }
-}
-
 public DelimitedVectorReader(HdfsVectorDataProvider dp,
     VectorReaderContext context,
     Configuration conf)
@@ -157,6 +54,64 @@ public DelimitedVectorReader(HdfsVectorDataProvider dp,
 @Override
 public void close()
 {
+}
+
+@Override
+public CloseableKVIterator<FeatureIdWritable, Geometry> get() throws IOException
+{
+  HdfsFileReader fileReader = new HdfsFileReader();
+  fileReader.initialize(conf, new Path(provider.getResolvedResourceName(true)));
+  DelimitedParser delimitedParser = getDelimitedParser();
+  return new DelimitedReader(fileReader, delimitedParser);
+}
+
+@Override
+public boolean exists(FeatureIdWritable featureId) throws IOException
+{
+  Geometry geometry = get(featureId);
+  return (geometry != null);
+}
+
+@Override
+public Geometry get(FeatureIdWritable featureId) throws IOException
+{
+  HdfsFileReader fileReader = new HdfsFileReader();
+  fileReader.initialize(conf, new Path(provider.getResolvedResourceName(true)));
+  DelimitedParser delimitedParser = getDelimitedParser();
+  FeatureIdRangeVisitor visitor = new FeatureIdRangeVisitor(featureId.get(), featureId.get());
+  DelimitedReader reader = new DelimitedReader(fileReader, delimitedParser, visitor);
+  if (reader.hasNext())
+  {
+    return reader.next();
+  }
+  return null;
+}
+
+@Override
+public CloseableKVIterator<FeatureIdWritable, Geometry> get(Bounds bounds) throws IOException
+{
+  HdfsFileReader fileReader = new HdfsFileReader();
+  fileReader.initialize(conf, new Path(provider.getResolvedResourceName(true)));
+  DelimitedParser delimitedParser = getDelimitedParser();
+  BoundsVisitor visitor = new BoundsVisitor(bounds);
+  return new DelimitedReader(fileReader, delimitedParser, visitor);
+}
+
+@Override
+public long count() throws IOException
+{
+  long featureCount = 0L;
+  try (CloseableKVIterator<FeatureIdWritable, Geometry> iter = get())
+  {
+    while (iter.hasNext())
+    {
+      if (iter.next() != null)
+      {
+        featureCount++;
+      }
+    }
+  }
+  return featureCount;
 }
 
 private DelimitedParser getDelimitedParser() throws IOException
@@ -268,61 +223,106 @@ private DelimitedParser getDelimitedParser() throws IOException
       xCol, yCol, geometryCol, delimiter, '\"', skipFirstLine);
 }
 
-@Override
-public CloseableKVIterator<FeatureIdWritable, Geometry> get() throws IOException
+public static class HdfsFileReader implements LineProducer
 {
-  HdfsFileReader fileReader = new HdfsFileReader();
-  fileReader.initialize(conf, new Path(provider.getResolvedResourceName(true)));
-  DelimitedParser delimitedParser = getDelimitedParser();
-  return new DelimitedReader(fileReader, delimitedParser);
-}
+  private BufferedReader reader;
+  private Path sourcePath;
 
-@Override
-public boolean exists(FeatureIdWritable featureId) throws IOException
-{
-  Geometry geometry = get(featureId);
-  return (geometry != null);
-}
-
-@Override
-public Geometry get(FeatureIdWritable featureId) throws IOException
-{
-  HdfsFileReader fileReader = new HdfsFileReader();
-  fileReader.initialize(conf, new Path(provider.getResolvedResourceName(true)));
-  DelimitedParser delimitedParser = getDelimitedParser();
-  FeatureIdRangeVisitor visitor = new FeatureIdRangeVisitor(featureId.get(), featureId.get());
-  DelimitedReader reader = new DelimitedReader(fileReader, delimitedParser, visitor);
-  if (reader.hasNext())
+  public void initialize(Configuration conf, Path p) throws IOException
   {
-    return reader.next();
+    this.sourcePath = p;
+    InputStream is = HadoopFileUtils.open(conf, p);
+    reader = new BufferedReader(new InputStreamReader(is));
   }
-  return null;
-}
 
-@Override
-public CloseableKVIterator<FeatureIdWritable, Geometry> get(Bounds bounds) throws IOException
-{
-  HdfsFileReader fileReader = new HdfsFileReader();
-  fileReader.initialize(conf, new Path(provider.getResolvedResourceName(true)));
-  DelimitedParser delimitedParser = getDelimitedParser();
-  BoundsVisitor visitor = new BoundsVisitor(bounds);
-  return new DelimitedReader(fileReader, delimitedParser, visitor);
-}
-
-@Override
-public long count() throws IOException
-{
-  long featureCount = 0L;
-  try (CloseableKVIterator<FeatureIdWritable, Geometry> iter = get())
+  @Override
+  public void close() throws IOException
   {
-    while (iter.hasNext())
+    if (reader != null)
     {
-      if (iter.next() != null)
-      {
-        featureCount++;
-      }
+      reader.close();
     }
   }
-  return featureCount;
+
+  @Override
+  public String nextLine() throws IOException
+  {
+    return reader.readLine();
+  }
+
+  public String toString()
+  {
+    return (sourcePath != null) ? sourcePath.toString() : "unknown";
+  }
+}
+
+public static class FeatureIdRangeVisitor implements DelimitedReader.DelimitedReaderVisitor
+{
+  private long minFeatureId = -1;
+  private long maxFeatureId = -1;
+
+  /**
+   * Constructs a FeatureIdRangeVisitor which sets lower and upper bounds
+   * for acceptable features. The min/max feature id values passed in are
+   * inclusive. If either of the values are <= zero,
+   * it will not be checked. In other words, if the minFeatureId is <= 0, then
+   * there will be no minimum boundary on acceptable feature ids. Likewise,
+   * if maxFeatureId is <= 0, then there will be no upper boundary on
+   * acceptable feature ids.
+   * <p>
+   * If both min and max feature id are <= 0, then this visitor will accept
+   * all features.
+   **/
+  public FeatureIdRangeVisitor(long minFeatureId, long maxFeatureId)
+  {
+    this.minFeatureId = minFeatureId;
+    this.maxFeatureId = maxFeatureId;
+  }
+
+  @Override
+  public boolean accept(long id, Geometry geometry)
+  {
+    boolean acceptable = true;
+    if (minFeatureId > 0)
+    {
+      acceptable = (id >= minFeatureId);
+    }
+    if (acceptable && maxFeatureId > 0)
+    {
+      acceptable = (id <= maxFeatureId);
+    }
+    return acceptable;
+  }
+
+  @Override
+  public boolean stopReading(long id, Geometry geometry)
+  {
+    return (maxFeatureId > 0 && id > maxFeatureId);
+  }
+}
+
+public static class BoundsVisitor implements DelimitedReader.DelimitedReaderVisitor
+{
+  private Bounds bounds;
+
+  public BoundsVisitor(Bounds bounds)
+  {
+    this.bounds = bounds;
+  }
+
+  @Override
+  public boolean accept(long id, Geometry geometry)
+  {
+    Bounds geomBounds = geometry.getBounds();
+    return geomBounds != null && geomBounds.intersects(bounds);
+  }
+
+  @Override
+  public boolean stopReading(long id, Geometry geometry)
+  {
+    // We must read all records since there is no ordering by geometry
+    // that would allow us to stop reading early.
+    return false;
+  }
 }
 }

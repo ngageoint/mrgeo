@@ -8,75 +8,12 @@ public class FloatUtils
 public static final double DOUBLE_EPSILON = 1.0;
 public static final float FLOAT_EPSILON = 1.0f;
 
-@SuppressFBWarnings(value = "URF_UNREAD_FIELD", justification = "external api")
-static class Floater
-{
-  private final int bits;
-
-  private final boolean inf;
-  private final boolean neginf;
-  private final boolean nan;
-
-  private final boolean neg;
-  private final int exp;
-  private final int mant;
-
-  public Floater(float f) {
-    bits = Float.floatToRawIntBits(f);
-
-    inf = bits == 0x7f800000;
-    neginf = bits == 0xff800000;
-
-    //nan = (bits >= 0x7f800001 && bits <= 0x7fffffff) || (bits >= 0xff800001 && bits <= 0xffffffff);
-    nan = bits >= 0x7f800001 || (bits >= 0xff800001 && bits <= 0xffffffff);
-
-    neg = (bits >> 31) != 0;
-    exp = (bits >> 23) & 0xff;
-    mant = (exp == 0) ? (bits & 0x7fffff) << 1 : (bits & 0x7fffff) | 0x800000;
-  }
-}
-
-@SuppressFBWarnings(value = "URF_UNREAD_FIELD", justification = "external api")
-static class Doubler
-{
-  private final long bits;
-
-  private final boolean inf;
-  private final boolean neginf;
-  private final boolean nan;
-
-  private final boolean neg;
-  private final long exp;
-  private final long mant;
-
-  public Doubler(double d) {
-    bits = Double.doubleToRawLongBits(d);
-
-    inf = bits == 0x7ff0000000000000L;
-    neginf = bits == 0xfff0000000000000L;
-
-//    nan = (bits >= 0x7ff0000000000001L && bits <= 0x7fffffffffffffffL) ||
-//        (bits >= 0xfff0000000000001L && bits <= 0xffffffffffffffffL);
-    nan = bits >= 0x7ff0000000000001L ||
-        (bits >= 0xfff0000000000001L && bits <= 0xffffffffffffffffL);
-
-
-    neg = (bits >> 63) != 0;
-    exp = (bits >> 52) & 0x7ffL;
-    mant = (exp == 0) ? (bits & 0x000fffffffffffffL) << 1 :
-        (bits & 0x000fffffffffffffL) | 0x10000000000000L;
-  }
-
-  long bits() { return bits; }
-  boolean negative() { return neg; }
-  long exp() { return exp; }
-  long mantissa() { return mant; }
-}
-
 public static boolean isEqual(float a, float b, int bitsprecision)
 {
-  if (bitsprecision >= 32 || bitsprecision < 0) {
-    if (bitsprecision == 32) {
+  if (bitsprecision >= 32 || bitsprecision < 0)
+  {
+    if (bitsprecision == 32)
+    {
       return true;
     }
     return false;
@@ -104,8 +41,10 @@ public static boolean isEqual(float a, float b, int bitsprecision)
 
 public static boolean isEqual(double a, double b, int bitsprecision)
 {
-  if (bitsprecision >= 64 || bitsprecision < 0) {
-    if (bitsprecision == 64) {
+  if (bitsprecision >= 64 || bitsprecision < 0)
+  {
+    if (bitsprecision == 64)
+    {
       return true;
     }
     return false;
@@ -147,13 +86,11 @@ public static boolean isEqual(float a, float b, float epsilon)
   return d <= epsilon && d >= -epsilon;
 }
 
-
 public static boolean isEqual(double a, double b, double epsilon)
 {
   double d = a - b;
   return d <= epsilon && d >= -epsilon;
 }
-
 
 public static boolean isNodata(double v, double nodata)
 {
@@ -165,7 +102,6 @@ public static boolean isNodata(double v, double nodata)
   return isEqual(v, nodata, 1);
 }
 
-
 public static boolean isNotNodata(double v, double nodata)
 {
   if (Double.isNaN(nodata))
@@ -175,7 +111,6 @@ public static boolean isNotNodata(double v, double nodata)
 
   return !isEqual(v, nodata, 1);
 }
-
 
 public static boolean isNodata(float v, float nodata)
 {
@@ -187,7 +122,6 @@ public static boolean isNodata(float v, float nodata)
   return isEqual(v, nodata, 1);
 }
 
-
 public static boolean isNotNodata(float v, float nodata)
 {
   if (Float.isNaN(nodata))
@@ -196,6 +130,88 @@ public static boolean isNotNodata(float v, float nodata)
   }
 
   return !isEqual(v, nodata, 1);
+}
+
+@SuppressFBWarnings(value = "URF_UNREAD_FIELD", justification = "external api")
+static class Floater
+{
+  private final int bits;
+
+  private final boolean inf;
+  private final boolean neginf;
+  private final boolean nan;
+
+  private final boolean neg;
+  private final int exp;
+  private final int mant;
+
+  public Floater(float f)
+  {
+    bits = Float.floatToRawIntBits(f);
+
+    inf = bits == 0x7f800000;
+    neginf = bits == 0xff800000;
+
+    //nan = (bits >= 0x7f800001 && bits <= 0x7fffffff) || (bits >= 0xff800001 && bits <= 0xffffffff);
+    nan = bits >= 0x7f800001 || (bits >= 0xff800001 && bits <= 0xffffffff);
+
+    neg = (bits >> 31) != 0;
+    exp = (bits >> 23) & 0xff;
+    mant = (exp == 0) ? (bits & 0x7fffff) << 1 : (bits & 0x7fffff) | 0x800000;
+  }
+}
+
+@SuppressFBWarnings(value = "URF_UNREAD_FIELD", justification = "external api")
+static class Doubler
+{
+  private final long bits;
+
+  private final boolean inf;
+  private final boolean neginf;
+  private final boolean nan;
+
+  private final boolean neg;
+  private final long exp;
+  private final long mant;
+
+  public Doubler(double d)
+  {
+    bits = Double.doubleToRawLongBits(d);
+
+    inf = bits == 0x7ff0000000000000L;
+    neginf = bits == 0xfff0000000000000L;
+
+//    nan = (bits >= 0x7ff0000000000001L && bits <= 0x7fffffffffffffffL) ||
+//        (bits >= 0xfff0000000000001L && bits <= 0xffffffffffffffffL);
+    nan = bits >= 0x7ff0000000000001L ||
+        (bits >= 0xfff0000000000001L && bits <= 0xffffffffffffffffL);
+
+
+    neg = (bits >> 63) != 0;
+    exp = (bits >> 52) & 0x7ffL;
+    mant = (exp == 0) ? (bits & 0x000fffffffffffffL) << 1 :
+        (bits & 0x000fffffffffffffL) | 0x10000000000000L;
+  }
+
+  long bits()
+  {
+    return bits;
+  }
+
+  boolean negative()
+  {
+    return neg;
+  }
+
+  long exp()
+  {
+    return exp;
+  }
+
+  long mantissa()
+  {
+    return mant;
+  }
 }
 
 }

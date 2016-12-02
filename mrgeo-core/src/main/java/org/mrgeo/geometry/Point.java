@@ -18,18 +18,20 @@ package org.mrgeo.geometry;
 
 /**
  * @author jason.surratt
- * 
  */
 
 public interface Point extends Geometry
 {
-  double getX();
-  double getY();
-  double getZ();
-  
-  long getGeohashBits();
-  String getGeohash();
-  
-  @Override
-  com.vividsolutions.jts.geom.Point toJTS();
+double getX();
+
+double getY();
+
+double getZ();
+
+long getGeohashBits();
+
+String getGeohash();
+
+@Override
+com.vividsolutions.jts.geom.Point toJTS();
 }

@@ -27,26 +27,26 @@ import java.util.List;
 
 public class SecurityUtils
 {
-  public static ProviderProperties getProviderProperties()
+public static ProviderProperties getProviderProperties()
+{
+  ProviderProperties providerProperties = null;
+  SecurityContext secCtx = SecurityContextHolder.getContext();
+  if (secCtx != null)
   {
-    ProviderProperties providerProperties = null;
-    SecurityContext secCtx = SecurityContextHolder.getContext();
-    if (secCtx != null)
+    Authentication a = secCtx.getAuthentication();
+    if (a != null)
     {
-      Authentication a = secCtx.getAuthentication();
-      if (a != null)
+      java.util.Collection<? extends GrantedAuthority> auths = a.getAuthorities();
+      List<String> roles = new ArrayList<String>(auths.size());
+      int i = 0;
+      for (GrantedAuthority auth : auths)
       {
-        java.util.Collection<? extends GrantedAuthority> auths = a.getAuthorities();
-        List<String> roles = new ArrayList<String>(auths.size());
-        int i = 0;
-        for (GrantedAuthority auth : auths)
-        {
-          roles.add(auth.getAuthority());
-          i++;
-        }
-        providerProperties = new ProviderProperties(a.getName(), roles);
+        roles.add(auth.getAuthority());
+        i++;
       }
+      providerProperties = new ProviderProperties(a.getName(), roles);
     }
-    return providerProperties;
   }
+  return providerProperties;
+}
 }

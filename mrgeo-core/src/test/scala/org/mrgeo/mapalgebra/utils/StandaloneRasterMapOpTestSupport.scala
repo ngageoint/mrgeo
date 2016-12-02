@@ -1,7 +1,6 @@
 package org.mrgeo.mapalgebra.utils
 
 
-
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.mrgeo.data.raster.MrGeoRaster
@@ -14,21 +13,21 @@ import org.mrgeo.utils.tms.Bounds
   */
 @SuppressWarnings(Array("all")) // test code, not included in production
 class StandaloneRasterMapOpTestSupport {
-  object RasterMapOpTestSupport$ extends RasterMapOpTestSupport {}
 
-  def useSparkContext(context: SparkContext) {
+  def useSparkContext(context:SparkContext) {
     RasterMapOpTestSupport$.useSparkContext(context)
   }
 
-  def stopSparkContext(): Unit = {
+  def stopSparkContext():Unit = {
     RasterMapOpTestSupport$.stopSparkContext
   }
 
-  def createRasterMapOp(tileIds: Array[Long], zoomLevel: Int = 1, tileSize: Int = 512, name: String = "",
-      imageNoData: Array[Double] = Array(),
-      imageInitialData: Array[Double] = Array()): RasterMapOp = {
+  def createRasterMapOp(tileIds:Array[Long], zoomLevel:Int = 1, tileSize:Int = 512, name:String = "",
+                        imageNoData:Array[Double] = Array(),
+                        imageInitialData:Array[Double] = Array()):RasterMapOp = {
     getImageInitialData(imageInitialData)
-    RasterMapOpTestSupport$.createRasterMapOp(tileIds, zoomLevel, tileSize, name, imageNoData, getImageInitialData(imageInitialData))
+    RasterMapOpTestSupport$
+        .createRasterMapOp(tileIds, zoomLevel, tileSize, name, imageNoData, getImageInitialData(imageInitialData))
   }
 
   /**
@@ -39,31 +38,31 @@ class StandaloneRasterMapOpTestSupport {
     * not closed.
     *
     */
-  def createRasterMapOpWithBounds(tileIds: Array[Long], zoomLevel: Int = 1, tileSize: Int = 512, name: String = "",
-      bounds: Bounds, imageNoData: Array[Double] = Array(),
-      imageInitialData: Array[Double] = Array()): RasterMapOp = {
+  def createRasterMapOpWithBounds(tileIds:Array[Long], zoomLevel:Int = 1, tileSize:Int = 512, name:String = "",
+                                  bounds:Bounds, imageNoData:Array[Double] = Array(),
+                                  imageInitialData:Array[Double] = Array()):RasterMapOp = {
     RasterMapOpTestSupport$.createRasterMapOpWithBounds(tileIds, zoomLevel, tileSize, bounds, name, imageNoData,
       getImageInitialData(imageInitialData))
   }
 
-  def getRDD(mapOp: RasterMapOp): RDD[_] = {
+  def getRDD(mapOp:RasterMapOp):RDD[_] = {
     mapOp.rdd().getOrElse(mapOp.context().emptyRDD)
   }
 
-  def verifySample(raster: MrGeoRaster, x: Int, y:Int, b: Int, expectedValue: AnyVal): Boolean = {
+  def verifySample(raster:MrGeoRaster, x:Int, y:Int, b:Int, expectedValue:AnyVal):Boolean = {
     raster.getPixelDouble(x, y, b) == expectedValue
   }
 
-  def verifySamples(raster: MrGeoRaster, x: Int, y:Int, widthRange: Int, heightRange: Int, b: Int,
-      expectedValue: AnyVal): Boolean = {
+  def verifySamples(raster:MrGeoRaster, x:Int, y:Int, widthRange:Int, heightRange:Int, b:Int,
+                    expectedValue:AnyVal):Boolean = {
 
     val expected = expectedValue match {
-    case b:Byte => b.toDouble
-    case c:Char => c.toDouble
-    case s:Short => s.toDouble
-    case i:Int => i.toDouble
-    case f:Float => f.toDouble
-    case d:Double => d.toDouble
+      case b:Byte => b.toDouble
+      case c:Char => c.toDouble
+      case s:Short => s.toDouble
+      case i:Int => i.toDouble
+      case f:Float => f.toDouble
+      case d:Double => d.toDouble
     }
 
     var xx = x
@@ -71,7 +70,8 @@ class StandaloneRasterMapOpTestSupport {
     while (yy < heightRange) {
       while (xx < widthRange) {
         if (!FloatUtils.isEqual(raster.getPixelDouble(xx, yy, b), expected)) {
-          println("px: " + xx + " py: " + yy + " b: " + b + " expected: " + expected + " actual: " + raster.getPixelDouble(x, y, b))
+          println("px: " + xx + " py: " + yy + " b: " + b + " expected: " + expected + " actual: " +
+                  raster.getPixelDouble(x, y, b))
           return false
         }
         xx += 1
@@ -81,13 +81,15 @@ class StandaloneRasterMapOpTestSupport {
     true
   }
 
-  protected def getImageInitialData(imageInitialData: Array[Double]): Option[Array[Double]] = {
-    val dataArray: Option[Array[Double]] = imageInitialData match {
-    case Array() => Some(Array(1.0))
-    case _ => Some(imageInitialData)
+  protected def getImageInitialData(imageInitialData:Array[Double]):Option[Array[Double]] = {
+    val dataArray:Option[Array[Double]] = imageInitialData match {
+      case Array() => Some(Array(1.0))
+      case _ => Some(imageInitialData)
     }
     dataArray
   }
+
+  object RasterMapOpTestSupport$ extends RasterMapOpTestSupport {}
 
 
 }

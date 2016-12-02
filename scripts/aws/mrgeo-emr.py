@@ -1,13 +1,12 @@
 #!/usr/bin/python
 
-import boto3
 import json
+
+import boto3
 import sys
-from datetime import datetime, timedelta
 import time
 import timeit
-import os
-import sys
+from datetime import datetime, timedelta
 
 
 # Pretty print a JSON object - for debugging
@@ -15,15 +14,16 @@ def pretty(d, indent=0):
     for key, value in d.iteritems():
         print '\t' * indent + str(key)
         if isinstance(value, dict):
-            pretty(value, indent+1)
+            pretty(value, indent + 1)
         else:
-            print '\t' * (indent+1) + str(value)
+            print '\t' * (indent + 1) + str(value)
+
 
 def get_instance_info(emr, cluster_id):
     info = emr.list_instance_groups(ClusterId=cluster_id)
 
-    master=[]
-    worker=[]
+    master = []
+    worker = []
     for instance in info['InstanceGroups']:
 
         if instance['InstanceGroupType'] == "MASTER":
@@ -45,23 +45,24 @@ if len(sys.argv) != 2:
 with open(sys.argv[1]) as configFile:
     config = json.load(configFile)
 
-emr_version=config["EmrVersion"]
-use_zone=config["zone"]
+emr_version = config["EmrVersion"]
+use_zone = config["zone"]
 zones = config["zones"]
-machine= "Linux/UNIX"
+machine = "Linux/UNIX"
 master_type = config["MasterType"]
 worker_type = config["WorkerType"]
 worker_nodes = int(config["WorkerNodes"])
-use_spot=int(config["Spot"])
-install_accumulo=int(config["InstallAccumulo"])
-key_name=config["Ec2KeyName"]
-log_uri=config['LogUri']
+use_spot = int(config["Spot"])
+install_accumulo = int(config["InstallAccumulo"])
+key_name = config["Ec2KeyName"]
+log_uri = config['LogUri']
 
 start_time = datetime.today()
 cluster_name = config["ClusterName"]
 
 if (len(cluster_name) <= 0):
-    cluster_name = config["ClusterPrefix"] + start_time.strftime('%Y-%m-%d-%I:%M:%S') + time.tzname[1] +"-" + worker_type + "-" + `worker_nodes`
+    cluster_name = config["ClusterPrefix"] + start_time.strftime('%Y-%m-%d-%I:%M:%S') + time.tzname[
+        1] + "-" + worker_type + "-" + `worker_nodes`
 
 emr = boto3.client("emr")
 
@@ -118,10 +119,10 @@ if (use_spot == 1):
         # The following call returns a list of one element that looks like:
         # [SpotPriceHistory(m3.xlarge):0.043500]
         price_result = ec2.describe_spot_price_history(StartTime=minute_ago.isoformat(),
-                                                       EndTime = curr_time.isoformat(),
-                                                       InstanceTypes = [worker_type],
-                                                       AvailabilityZone = zone_name,
-                                                       ProductDescriptions = [machine])
+                                                       EndTime=curr_time.isoformat(),
+                                                       InstanceTypes=[worker_type],
+                                                       AvailabilityZone=zone_name,
+                                                       ProductDescriptions=[machine])
 
         if len(price_result['SpotPriceHistory']) > 0:
             zone_spot_price = float(price_result['SpotPriceHistory'][0]['SpotPrice'])
@@ -168,34 +169,34 @@ for z in zones:
         subnet_id = z["subnetId"]
 
 job = {}
-job['Name']=cluster_name
-job['LogUri']=log_uri
-job['ReleaseLabel']=emr_version
-job['Instances']={
-              'InstanceGroups': instance_groups,
-              'Ec2KeyName': key_name,
-              'KeepJobFlowAliveWhenNoSteps': True,
-              'TerminationProtected': False,
-              'Ec2SubnetId': subnet_id
-          }
-job['Steps']=[install_mrgeo_step]
+job['Name'] = cluster_name
+job['LogUri'] = log_uri
+job['ReleaseLabel'] = emr_version
+job['Instances'] = {
+    'InstanceGroups': instance_groups,
+    'Ec2KeyName': key_name,
+    'KeepJobFlowAliveWhenNoSteps': True,
+    'TerminationProtected': False,
+    'Ec2SubnetId': subnet_id
+}
+job['Steps'] = [install_mrgeo_step]
 job['BootstrapActions'] = bootstrap_actions
-job['Applications']=[
-                 #                   {
-                 #                     "Name": "Hadoop"
-                 #                   }
-                 #                   ,
-                 {
-                     "Name": "Spark"
-                 }
-             ]
-job['Configurations']=[]
+job['Applications'] = [
+    #                   {
+    #                     "Name": "Hadoop"
+    #                   }
+    #                   ,
+    {
+        "Name": "Spark"
+    }
+]
+job['Configurations'] = []
 configs = job['Configurations']
 
 localConfigs = config['localConfiguration']
 
-yarnsite = {"Classification":"yarn-site",
-            "Properties":{
+yarnsite = {"Classification": "yarn-site",
+            "Properties": {
                 "yarn.nodemanager.pmem-check-enabled": "false",
                 "yarn.nodemanager.vmem-check-enabled": "false",
                 "yarn.scheduler.minimum-allocation-mb": "1024",
@@ -203,20 +204,20 @@ yarnsite = {"Classification":"yarn-site",
                 "yarn.nodemanager.aux-services": "spark_shuffle",
                 "yarn.scheduler.maximum-allocation-vcores": "10",
                 "yarn.nodemanager.aux-services.spark_shuffle.class": "org.apache.spark.network.yarn.YarnShuffleService"
-                },
+            },
             "Configurations": []
             }
 yarnsiteprops = yarnsite['Properties']
 if "yarn-site" in localConfigs:
     print(localConfigs['yarn-site'])
-    for k,v in localConfigs['yarn-site'].iteritems():
-      yarnsiteprops[k] = v
+    for k, v in localConfigs['yarn-site'].iteritems():
+        yarnsiteprops[k] = v
 configs.append(yarnsite)
 
 mapredsite = {"Classification": "mapred-site",
-              "Properties":{
-                  "yarn.app.mapreduce.am.resource.mb" : "1024"
-               },
+              "Properties": {
+                  "yarn.app.mapreduce.am.resource.mb": "1024"
+              },
               "Configurations": []
               }
 mapredsiteprops = mapredsite['Properties']
@@ -227,43 +228,41 @@ configs.append(mapredsite)
 
 # no core-site here, check the local config section
 if "core-site" in localConfigs:
-    coresite =  {"Classification": "core-site",
-                 "Properties": {},
-                 "Configurations": []
-                 }
+    coresite = {"Classification": "core-site",
+                "Properties": {},
+                "Configurations": []
+                }
     coresiteprops = coresite['Properties']
-    for k,v in localConfigs['core-site'].iteritems():
+    for k, v in localConfigs['core-site'].iteritems():
         coresiteprops[k] = v
     configs.append(coresite)
-
 
 sparkdefaults = {"Classification": "spark-defaults",
                  "Properties": {
                      "spark.yarn.jar": "/usr/lib/spark/lib/spark-assembly.jar",
                      "spark.network.timeout": "600",
                      "spark.driver.maxResultSize": "0",
-                     "spark.dynamicAllocation.enabled":"true",
-                     },
+                     "spark.dynamicAllocation.enabled": "true",
+                 },
                  "Configurations": []
                  }
 
 sparkdefaultsprops = sparkdefaults['Properties']
 if "spark-defaults" in localConfigs:
-    for k,v in localConfigs['spark-defaults'].iteritems():
+    for k, v in localConfigs['spark-defaults'].iteritems():
         sparkdefaultsprops[k] = v
 configs.append(sparkdefaults)
 
-
 hadoopenv = {"Classification": "hadoop-env",
-            "Properties": {},
+             "Properties": {},
              "Configurations": [{
                  "Classification": "export",
                  "Configurations": [],
                  "Properties": {
                      "JAVA_HOME": "/usr/lib/jvm/java-1.8.0"
-                     }
                  }
-                 ]
+             }
+             ]
              }
 configs.append(hadoopenv)
 
@@ -274,12 +273,11 @@ sparkenv = {"Classification": "spark-env",
                 "Configurations": [],
                 "Properties": {
                     "JAVA_HOME": "/usr/lib/jvm/java-1.8.0"
-                    }
                 }
-                ]
+            }
+            ]
             }
 configs.append(sparkenv)
-
 
 job['JobFlowRole'] = 'EMR_EC2_DefaultRole'
 job['ServiceRole'] = 'EMR_DefaultRole'
@@ -306,16 +304,18 @@ while (status['State'] != 'TERMINATED' and status['State'] != 'TERMINATED_WITH_E
     status = cluster_info['Cluster']['Status']
     if status['State'] != curr_state:
         curr_time = timeit.default_timer()
-        print('   ' + status['State'] + ' - ' + datetime.today().strftime('%I:%M:%S %p') + ' ' + curr_state + ' took {:.0f}'.format(curr_time - state_start_time) + ' sec')
+        print('   ' + status['State'] + ' - ' + datetime.today().strftime(
+            '%I:%M:%S %p') + ' ' + curr_state + ' took {:.0f}'.format(curr_time - state_start_time) + ' sec')
         curr_state = status['State']
         state_start_time = curr_time
     if master_count != master_info[2] or worker_count != worker_info[2]:
-        print('   Master node ' + str(master_info[2]) + '/' + str(master_info[1]) + ' Worker nodes ' + str(worker_info[2]) + '/' + str(worker_info[1]))
+        print('   Master node ' + str(master_info[2]) + '/' + str(master_info[1]) + ' Worker nodes ' + str(
+            worker_info[2]) + '/' + str(worker_info[1]))
         master_count = master_info[2]
         worker_count = worker_info[2]
 
     if status['State'] != 'WAITING':
-        time.sleep(5) # Wait before checking status again
+        time.sleep(5)  # Wait before checking status again
     else:
         time.sleep(30)
 

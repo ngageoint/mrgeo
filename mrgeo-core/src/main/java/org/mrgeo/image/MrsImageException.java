@@ -18,28 +18,29 @@ package org.mrgeo.image;
 
 public class MrsImageException extends RuntimeException
 {
-  private static final long serialVersionUID = 1L;
-  private final Exception origException;
+private static final long serialVersionUID = 1L;
+private final Exception origException;
 
-  public MrsImageException(final Exception e)
-  {
-    this.origException = e;
-    printStackTrace();
-  }
+public MrsImageException(final Exception e)
+{
+  this.origException = e;
+  printStackTrace();
+}
 
 public MrsImageException(final String msg)
 {
   final Exception e = new Exception(msg);
   this.origException = e;
 }
+
 public MrsImageException(final String msg, Exception e)
 {
   this.origException = e;
 }
 
-  @Override
-  public void printStackTrace()
-  {
-    origException.printStackTrace();
-  }
+@Override
+public void printStackTrace()
+{
+  origException.printStackTrace();
+}
 }

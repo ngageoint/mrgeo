@@ -18,132 +18,126 @@ package org.mrgeo.utils;
 
 /**
  * @author jason.surratt
- * 
  */
 public class LatLng
 {
-  double lat;
+/**
+ * This is the mean earth radius vs. the radius at the equator
+ */
+public final static double EARTH_RADIUS_MEAN = 6371009;
+/**
+ * This is the earth radius at the equator
+ */
+public final static double EARTH_RADIUS_EQUATOR = 6378137;
+/**
+ * While it is technically probably less correct, WMS uses the radius at the equator for its
+ * calculations.
+ */
+public final static double EARTH_RADIUS = EARTH_RADIUS_EQUATOR;
+public final static double METERS_PER_DEGREE = (EARTH_RADIUS * 2.0 * Math.PI) / 360.0;
+final static double EPSILON = 1.0 / EARTH_RADIUS_EQUATOR;
+double lat;
+double lng;
 
-  double lng;
+public LatLng()
+{
+  this.lat = Double.NaN;
+  this.lng = Double.NaN;
+}
 
-  /**
-   * This is the mean earth radius vs. the radius at the equator
-   */
-  public final static double EARTH_RADIUS_MEAN = 6371009;
+public LatLng(final double lat, final double lng)
+{
+  this.lat = lat;
+  this.lng = lng;
+}
 
-  /**
-   * This is the earth radius at the equator
-   */
-  public final static double EARTH_RADIUS_EQUATOR = 6378137;
-  final static double EPSILON = 1.0 / EARTH_RADIUS_EQUATOR;
+/**
+ * Calculate the great circle distance in meters. See
+ * http://en.wikipedia.org/wiki/Great_circle_distance for an explanation.
+ */
+public static double calculateGreatCircleDistance(final LatLng p1, final LatLng p2)
+{
 
-  /**
-   * While it is technically probably less correct, WMS uses the radius at the equator for its
-   * calculations.
-   */
-  public final static double EARTH_RADIUS = EARTH_RADIUS_EQUATOR;
-
-  public final static double METERS_PER_DEGREE = (EARTH_RADIUS * 2.0 * Math.PI) / 360.0;
-
-  public LatLng()
+  if (FloatUtils.isEqual(p1.getLat(), p2.getLat()) &&
+      FloatUtils.isEqual(p1.getLng(), p2.getLng()))
   {
-    this.lat = Double.NaN;
-    this.lng = Double.NaN;
+    return 0.0;
   }
-
-  public LatLng(final double lat, final double lng)
-  {
-    this.lat = lat;
-    this.lng = lng;
-  }
-
-  /**
-   * Calculate the great circle distance in meters. See
-   * http://en.wikipedia.org/wiki/Great_circle_distance for an explanation.
-   */
-  public static double calculateGreatCircleDistance(final LatLng p1, final LatLng p2)
-  {
-
-    if (FloatUtils.isEqual(p1.getLat(), p2.getLat()) &&
-        FloatUtils.isEqual(p1.getLng(), p2.getLng()))
-    {
-      return 0.0;
-    }
-    final double dsigma = Math.acos(Math.cos(p1.getLatAsRadians()) *
+  final double dsigma = Math.acos(Math.cos(p1.getLatAsRadians()) *
       Math.cos(p2.getLatAsRadians()) * Math.cos(p1.getLngAsRadians() - p2.getLngAsRadians()) +
       Math.sin(p1.getLatAsRadians()) * Math.sin(p2.getLatAsRadians()));
-    return dsigma * EARTH_RADIUS;
-  }
+  return dsigma * EARTH_RADIUS;
+}
 
-  public static LatLng calculateCartesianDestinationPoint(LatLng startPoint,
-                                                          double distanceInMeters,
-                                                          double bearing)
-  {
-    double distanceInDegrees = distanceInMeters / METERS_PER_DEGREE;
-    double polarAngle = (450.0 - bearing) % 360.0;
-    double polarAngleInRad = Math.toRadians(polarAngle);
-    double lat = startPoint.getLat() + distanceInDegrees * Math.sin(polarAngleInRad);
-    double lon = startPoint.getLng() + distanceInDegrees * Math.cos(polarAngleInRad);
-    // Limit to world bounds
-    lat = Math.max(-90.0, Math.min(90.0, lat));
-    lon = Math.max(-180.0, Math.min(180.0, lon));
-    return new LatLng(lat, lon);
-  }
+public static LatLng calculateCartesianDestinationPoint(LatLng startPoint,
+    double distanceInMeters,
+    double bearing)
+{
+  double distanceInDegrees = distanceInMeters / METERS_PER_DEGREE;
+  double polarAngle = (450.0 - bearing) % 360.0;
+  double polarAngleInRad = Math.toRadians(polarAngle);
+  double lat = startPoint.getLat() + distanceInDegrees * Math.sin(polarAngleInRad);
+  double lon = startPoint.getLng() + distanceInDegrees * Math.cos(polarAngleInRad);
+  // Limit to world bounds
+  lat = Math.max(-90.0, Math.min(90.0, lat));
+  lon = Math.max(-180.0, Math.min(180.0, lon));
+  return new LatLng(lat, lon);
+}
 
-  public double getLat()
-  {
-    return lat;
-  }
+public double getLat()
+{
+  return lat;
+}
 
-  public double getLng()
-  {
-    return lng;
-  }
+public void setLat(final double lat)
+{
+  this.lat = lat;
+}
 
-  public void setLat(final double lat)
-  {
-    this.lat = lat;
-  }
+public double getLng()
+{
+  return lng;
+}
 
-  public void setLng(final double lng)
-  {
-    this.lng = lng;
-  }
+public void setLng(final double lng)
+{
+  this.lng = lng;
+}
 
-  public void setX(final double x)
-  {
-    lng = x;
-  }
+@Override
+public String toString()
+{
+  return String.format("x: %f, y: %f", getX(), getY());
+}
 
-  public void setY(final double y)
-  {
-    lat = y;
-  }
+double getLatAsRadians()
+{
+  return lat / 180.0 * Math.PI;
+}
 
-  @Override
-  public String toString()
-  {
-    return String.format("x: %f, y: %f", getX(), getY());
-  }
+double getLngAsRadians()
+{
+  return lng / 180.0 * Math.PI;
+}
 
-  double getLatAsRadians()
-  {
-    return lat / 180.0 * Math.PI;
-  }
+double getX()
+{
+  return lng;
+}
 
-  double getLngAsRadians()
-  {
-    return lng / 180.0 * Math.PI;
-  }
+public void setX(final double x)
+{
+  lng = x;
+}
 
-  double getX()
-  {
-    return lng;
-  }
+double getY()
+{
+  return lat;
+}
 
-  double getY()
-  {
-    return lat;
-  }
+public void setY(final double y)
+{
+  lat = y;
+}
 
 }

@@ -49,7 +49,7 @@ public Response getMetadata(@PathParam("output") final String imgName)
   try
   {
     getService();
-    return Response.status(Status.OK).entity( service.getMetadata(imgName) ).build();
+    return Response.status(Status.OK).entity(service.getMetadata(imgName)).build();
   }
   catch (final NotFoundException e)
   {
@@ -73,7 +73,9 @@ private void getService()
     ContextResolver<MrsPyramidService> resolver =
         providers.getContextResolver(MrsPyramidService.class, MediaType.WILDCARD_TYPE);
     if (resolver != null)
+    {
       service = resolver.getContext(MrsPyramidService.class);
+    }
   }
 }
 

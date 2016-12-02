@@ -34,17 +34,29 @@ public Version(String str)
 public int compareTo(Version other)
 {
   if (other.major < major)
+  {
     return 1;
+  }
   if (other.major > major)
+  {
     return -1;
+  }
   if (other.minor < minor)
+  {
     return 1;
+  }
   if (other.minor > minor)
+  {
     return -1;
+  }
   if (other.micro < micro)
+  {
     return 1;
+  }
   if (other.micro > micro)
+  {
     return -1;
+  }
   return 0;
 }
 
@@ -96,7 +108,7 @@ public boolean equals(Object obj)
   {
     return false;
   }
-  return compareTo((Version)obj) == 0;
+  return compareTo((Version) obj) == 0;
 }
 
 @Override

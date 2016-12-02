@@ -27,8 +27,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Enumeration;
-import java.util.LinkedList;
-import java.util.List;
 
 public class LoggingUtils
 {
@@ -72,7 +70,7 @@ public static void setLogLevel(final String className, final String level)
       Method getLogger = log4jLoggerFactory.getMethod("getLogger", String.class);
       Object logger = getLogger.invoke(null, className);
 
-      Method setLevel = logger.getClass().getMethod("setLevel",  levelClass);
+      Method setLevel = logger.getClass().getMethod("setLevel", levelClass);
 
       Object levelEnum = getLog4JLevel(level);
 
@@ -88,7 +86,8 @@ public static void setLogLevel(final String className, final String level)
   }
   else
   {
-    throw new UnsupportedOperationException("Only the Log4J & slf4j SimpleLogger is supported for logging, found: " + loggerClassName);
+    throw new UnsupportedOperationException(
+        "Only the Log4J & slf4j SimpleLogger is supported for logging, found: " + loggerClassName);
   }
 }
 
@@ -126,7 +125,7 @@ public static String getLogLevel(final String className)
       Method getLogger = log4jLoggerFactory.getMethod("getLogger", String.class);
       Object logger = getLogger.invoke(null, className);
 
-      Method getLevel = logger.getClass().getMethod("getLevel",  (Class<?>[])null);
+      Method getLevel = logger.getClass().getMethod("getLevel", (Class<?>[]) null);
 
       Object levelEnum = getLevel.invoke(logger);
       if (levelEnum != null)
@@ -148,12 +147,17 @@ public static String getLogLevel(final String className)
   }
   else
   {
-    throw new UnsupportedOperationException("Only the Log4J & slf4j SimpleLogger is supported for logging, found: " + loggerClassName);
+    throw new UnsupportedOperationException(
+        "Only the Log4J & slf4j SimpleLogger is supported for logging, found: " + loggerClassName);
   }
 
   return level == null ? OFF : level;
 }
 
+public static String getDefaultLogLevel()
+{
+  return defaultLevel;
+}
 
 public static void setDefaultLogLevel(final String level)
 {
@@ -174,7 +178,7 @@ public static void setDefaultLogLevel(final String level)
       Object logger = getRootLogger();
       Class<?> levelClass = Class.forName("org.apache.log4j.Level");
 
-      Method setLevel = logger.getClass().getMethod("setLevel",  levelClass);
+      Method setLevel = logger.getClass().getMethod("setLevel", levelClass);
 
       Object levelEnum = getLog4JLevel(level);
 
@@ -191,19 +195,16 @@ public static void setDefaultLogLevel(final String level)
   }
   else
   {
-    throw new UnsupportedOperationException("Only the Log4J & slf4j SimpleLogger is supported for logging.  Additional loggers can easily be added");
+    throw new UnsupportedOperationException(
+        "Only the Log4J & slf4j SimpleLogger is supported for logging.  Additional loggers can easily be added");
   }
-}
-
-public static String getDefaultLogLevel()
-{
-  return defaultLevel;
 }
 
 public static void setLoggerToStdOut()
 {
   setLoggerToFile("System.out");
 }
+
 public static void setLoggerToStdErr()
 {
   setLoggerToFile("System.err");
@@ -211,16 +212,24 @@ public static void setLoggerToStdErr()
 
 public static void redirect()
 {
-  System.setOut(new PrintStream(System.out){
+  System.setOut(new PrintStream(System.out)
+  {
     @Override
     @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS", justification = "CRLF Neutralized")
-    public void print(String s){ log.info(s.replaceAll("(\\r|\\n)", ""));}
+    public void print(String s)
+    {
+      log.info(s.replaceAll("(\\r|\\n)", ""));
+    }
   });
 
-  System.setErr(new PrintStream(System.err){
+  System.setErr(new PrintStream(System.err)
+  {
     @Override
     @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS", justification = "CRLF Neutralized")
-    public void print(String s){ log.error(s.replaceAll("(\\r|\\n)", ""));}
+    public void print(String s)
+    {
+      log.error(s.replaceAll("(\\r|\\n)", ""));
+    }
   });
 
 }
@@ -252,7 +261,8 @@ public static void setLoggerToFile(final String file)
         Method getLayout = appender.getClass().getMethod("getLayout");
         layout = getLayout.invoke(appender);
 
-        if (appender.getClass().getSimpleName().equalsIgnoreCase("FileAppender")) {
+        if (appender.getClass().getSimpleName().equalsIgnoreCase("FileAppender"))
+        {
           fileappender = appender;
           break;
         }
@@ -307,7 +317,8 @@ public static void setLoggerToFile(final String file)
   }
   else
   {
-    throw new UnsupportedOperationException("Only the slf4j SimpleLogger is supported for logging.  Additional loggers can easily be added");
+    throw new UnsupportedOperationException(
+        "Only the slf4j SimpleLogger is supported for logging.  Additional loggers can easily be added");
   }
 }
 
@@ -335,7 +346,7 @@ public static void setLoggerFormat(String pattern)
     try
     {
       Class<?> log4jLoggerFactory = Class.forName("org.apache.log4j.Logger");
-      Method getLogger = log4jLoggerFactory.getMethod("getRootLogger", (Class<?>[])null);
+      Method getLogger = log4jLoggerFactory.getMethod("getRootLogger", (Class<?>[]) null);
       Object logger = getLogger.invoke(null);
 
       Method allAppendersCall = logger.getClass().getMethod("getAllAppenders");
@@ -368,7 +379,8 @@ public static void setLoggerFormat(String pattern)
   }
   else
   {
-    throw new UnsupportedOperationException("Only the log4j slf4j SimpleLogger is supported for logging.  Additional loggers can easily be added");
+    throw new UnsupportedOperationException(
+        "Only the log4j slf4j SimpleLogger is supported for logging.  Additional loggers can easily be added");
   }
 }
 
@@ -407,12 +419,17 @@ public static boolean finer(String level, String compareTo)
   return false;
 }
 
+public static void initialize()
+{
+  // No need to do anything - just need to invoke static initializer when class is loaded
+}
+
 private static String getSlf4jLevel(final Object levelEnum)
 {
   try
   {
     Class<?> levelClass = Class.forName("org.apache.log4j.Level");
-    Method toLevel = levelClass.getMethod("toString",  ( Class<?>[])null);
+    Method toLevel = levelClass.getMethod("toString", (Class<?>[]) null);
 
     return (String) toLevel.invoke(null, levelEnum);
 
@@ -431,7 +448,7 @@ private static Object getLog4JLevel(final String level)
   try
   {
     Class<?> levelClass = Class.forName("org.apache.log4j.Level");
-    Method toLevel = levelClass.getMethod("toLevel",  String.class);
+    Method toLevel = levelClass.getMethod("toLevel", String.class);
 
     return toLevel.invoke(null, level);
 
@@ -461,7 +478,7 @@ private static void initializeForReal()
       Object rootlogger = getRootLogger();
       Method getAppenders = rootlogger.getClass().getMethod("getAllAppenders");
 
-      Enumeration appenders = (Enumeration)getAppenders.invoke(rootlogger);
+      Enumeration appenders = (Enumeration) getAppenders.invoke(rootlogger);
       if (!appenders.hasMoreElements())
       {
         Class<?> basicConfiguratorClass = Class.forName("org.apache.log4j.BasicConfigurator");
@@ -472,7 +489,7 @@ private static void initializeForReal()
         System.err.println("LoggingUtils: Initializing log4j logger to use a basic configuration:");
       }
 
-      appenders = (Enumeration)getAppenders.invoke(rootlogger);
+      appenders = (Enumeration) getAppenders.invoke(rootlogger);
       wrapAppenders(rootlogger, appenders);
     }
     catch (IllegalAccessException | InvocationTargetException | ClassNotFoundException | NoSuchMethodException e)
@@ -492,14 +509,14 @@ private static void wrapAppenders(Object rootlogger, Enumeration appenders)
   RootLogger rl;
   if (rootlogger instanceof RootLogger)
   {
-    rl = (RootLogger)rootlogger;
+    rl = (RootLogger) rootlogger;
 
     while (appenders.hasMoreElements())
     {
       Object next = appenders.nextElement();
       if (next instanceof Appender)
       {
-        Appender app = (Appender)next;
+        Appender app = (Appender) next;
 
         Appender wrapped = new Log4JAppenderWrapper(app);
         rl.removeAppender(app);
@@ -516,7 +533,7 @@ private static Object getRootLogger() throws ClassNotFoundException
   {
     Class<?> log4jLoggerFactory = Class.forName("org.apache.log4j.Logger");
 
-    Method getLogger = log4jLoggerFactory.getMethod("getRootLogger", (Class<?>[])null);
+    Method getLogger = log4jLoggerFactory.getMethod("getRootLogger", (Class<?>[]) null);
 
     return getLogger.invoke(null);
   }
@@ -529,8 +546,4 @@ private static Object getRootLogger() throws ClassNotFoundException
   throw new ClassNotFoundException("Can't find root logger!");
 
 }
-
-  public static void initialize() {
-    // No need to do anything - just need to invoke static initializer when class is loaded
-  }
 }

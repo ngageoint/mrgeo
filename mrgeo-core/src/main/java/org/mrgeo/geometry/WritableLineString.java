@@ -20,13 +20,14 @@ import java.util.Collection;
 
 /**
  * @author jason.surratt
- * 
  */
 public interface WritableLineString extends LineString, WritableGeometry
 {
-  public void addPoint(Point p);
-  public void addPoint(double x, double y);
-  public void setPoints(Collection<Point> points);
-  
-  void fromJTS(com.vividsolutions.jts.geom.LineString jtsLine);
+public void addPoint(Point p);
+
+public void addPoint(double x, double y);
+
+public void setPoints(Collection<Point> points);
+
+void fromJTS(com.vividsolutions.jts.geom.LineString jtsLine);
 }

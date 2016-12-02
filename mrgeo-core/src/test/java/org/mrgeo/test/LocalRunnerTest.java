@@ -29,46 +29,47 @@ import org.mrgeo.utils.logging.LoggingUtils;
 import java.io.IOException;
 
 @SuppressWarnings("all") // test code, not included in production
-public class LocalRunnerTest {
+public class LocalRunnerTest
+{
 
-  @Rule
-  public TestName testname = new TestName();
+@Rule
+public TestName testname = new TestName();
 
-  protected Configuration conf = null;
+protected Configuration conf = null;
 
-  @BeforeClass
-  public static void initJobJar() throws IOException
-  {
-    // by default, turn logging to ERROR
-    LoggingUtils.setDefaultLogLevel(LoggingUtils.ERROR);
-    TestUtils.setJarLocation();
-  }
+@BeforeClass
+public static void initJobJar() throws IOException
+{
+  // by default, turn logging to ERROR
+  LoggingUtils.setDefaultLogLevel(LoggingUtils.ERROR);
+  TestUtils.setJarLocation();
+}
 
-  @Before
-  public void initLocalRunner() throws IOException
+@Before
+public void initLocalRunner() throws IOException
+{
+  conf = HadoopUtils.createConfiguration();
+  HadoopUtils.setupLocalRunner(conf);
+
+  DataProviderFactory.invalidateCache();
+}
+
+protected Configuration getConfiguration()
+{
+  if (conf == null)
   {
     conf = HadoopUtils.createConfiguration();
-    HadoopUtils.setupLocalRunner(conf);
-
-    DataProviderFactory.invalidateCache();
   }
+  return conf;
+}
 
-  protected Configuration getConfiguration()
-  {
-    if (conf == null)
-    {
-      conf = HadoopUtils.createConfiguration();
-    }
-    return conf;
-  }
+protected ProviderProperties getProviderProperties()
+{
+  return null;
+}
 
-  protected ProviderProperties getProviderProperties()
-  {
-    return null;
-  }
-
-  protected String getProtectionLevel()
-  {
-    return "";
-  }
+protected String getProtectionLevel()
+{
+  return "";
+}
 }

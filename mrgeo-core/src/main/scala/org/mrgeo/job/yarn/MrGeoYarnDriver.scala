@@ -34,7 +34,7 @@ object MrGeoYarnDriver {
 
 class MrGeoYarnDriver {
 
-  def run (job:JobArguments, cl:ClassLoader, conf:SparkConf) = {
+  def run(job:JobArguments, cl:ClassLoader, conf:SparkConf) = {
     // need to get initialize spark.deploy.yarn... by reflection, because it is package private
     // to org.apache.spark
 
@@ -68,7 +68,7 @@ class MrGeoYarnDriver {
   }
 
   @SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "Using File to strip path from a file")
-  def toYarnArgs(job:JobArguments, cl:ClassLoader, conf:SparkConf) :Array[String] = {
+  def toYarnArgs(job:JobArguments, cl:ClassLoader, conf:SparkConf):Array[String] = {
     val args = new ArrayBuffer[String]()
 
     //        "  --jar JAR_PATH             Path to your application's JAR file (required in yarn-cluster mode)\n" +
@@ -94,8 +94,8 @@ class MrGeoYarnDriver {
     //    conf.set("spark.yarn.jar", sparkJar)
     //    conf.set("spark.yarn.jar", "/home/hadoop/spark/lib/spark-assembly-1.3.1-hadoop2.4.0.jar")
 
-    val driverClass = MrGeoYarnJob.getClass.getName.replaceAll("\\$","")
-    val driverJar =  SparkUtils.jarForClass(driverClass, cl)
+    val driverClass = MrGeoYarnJob.getClass.getName.replaceAll("\\$", "")
+    val driverJar = SparkUtils.jarForClass(driverClass, cl)
 
     args += "--class"
     args += driverClass
@@ -162,9 +162,15 @@ class MrGeoYarnDriver {
     // put the params into a file that we'll send along to the driver...
     var length:Int = 0
     job.params.foreach(p => {
-      length += 12 +       // 12 for the other text needed in the args
-          p._1.length +
-          { if (p._2 != null) { p._2.length } else 4 } // length of "null"
+      length += 12 + // 12 for the other text needed in the args
+                p._1.length + {
+                  if (p._2 != null) {
+                    p._2.length
+                  }
+                  else {
+                    4
+                  }
+                } // length of "null"
     })
 
     // 100K is kinda arbitrary, but it's a nice pretty number

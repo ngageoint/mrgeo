@@ -23,23 +23,23 @@ import org.mrgeo.hdfs.tile.FileSplit;
 /**
  * SequenceFileInputFormat, when given a path to a directory containing a mapfile "data" and
  * "index", should correctly pick out data, and process it, just as it would with sequence files.
- * However, it isn't. In particular, it is also other files like index or splits, and naturally 
+ * However, it isn't. In particular, it is also other files like index or splits, and naturally
  * chokes. As a workaround, we provide this PathFilter, which explicitly excludes index files.
  * Future releases of hadoop may not need this workaround.
- * 
- * This class is package private, since only the input formats use it 
+ * <p>
+ * This class is package private, since only the input formats use it
  */
 public class MapFileFilter implements PathFilter
 {
-  @Override
-  public boolean accept(final Path path)
-  {
-    String name = path.getName();
-    return !(name.equals("index") ||
-        name.equals(FileSplit.SPLIT_FILE) ||
-        name.equals(FileSplit.OLD_SPLIT_FILE) ||
-        name.equals("_SUCCESS") ||    // these are sometimes created by hadoop
-        name.endsWith("$folder$"));   // these are automatically created in S3, yuck!
+@Override
+public boolean accept(final Path path)
+{
+  String name = path.getName();
+  return !(name.equals("index") ||
+      name.equals(FileSplit.SPLIT_FILE) ||
+      name.equals(FileSplit.OLD_SPLIT_FILE) ||
+      name.equals("_SUCCESS") ||    // these are sometimes created by hadoop
+      name.endsWith("$folder$"));   // these are automatically created in S3, yuck!
 
-  }
+}
 }

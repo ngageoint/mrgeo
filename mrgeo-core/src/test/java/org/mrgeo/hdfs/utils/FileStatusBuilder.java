@@ -9,25 +9,29 @@ import static org.mockito.Mockito.when;
 /**
  * Created by ericwood on 6/22/16.
  */
-public class FileStatusBuilder {
-    private FileStatus fileStatus;
-    private Path path;
+public class FileStatusBuilder
+{
+private FileStatus fileStatus;
+private Path path;
 
-    public FileStatusBuilder() {
-        this.fileStatus = mock(FileStatus.class);
-    }
+public FileStatusBuilder()
+{
+  this.fileStatus = mock(FileStatus.class);
+}
 
-    public FileStatusBuilder path(Path path) {
-        this.path = path;
+public FileStatusBuilder path(Path path)
+{
+  this.path = path;
 
-        return this;
-    }
+  return this;
+}
 
-    public FileStatus build() {
-        when(fileStatus.getPath()).thenReturn(path);
+public FileStatus build()
+{
+  when(fileStatus.getPath()).thenReturn(path);
 
-        return fileStatus;
-    }
+  return fileStatus;
+}
 
 
 }

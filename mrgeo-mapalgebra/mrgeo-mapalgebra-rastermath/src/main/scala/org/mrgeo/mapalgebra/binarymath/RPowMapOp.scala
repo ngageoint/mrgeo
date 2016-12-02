@@ -16,16 +16,15 @@
 
 package org.mrgeo.mapalgebra.binarymath
 
-import java.awt.image.DataBuffer
-
-import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
+import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object RPowMapOp extends MapOpRegistrar {
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("rpow")
   }
+
   def create(const:Double, raster:RasterMapOp):MapOp = {
     new PowMapOp(Some(raster), Some(const), true)
   }
@@ -34,7 +33,7 @@ object RPowMapOp extends MapOpRegistrar {
     new PowMapOp(Some(rasterA), Some(rasterB))
   }
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new PowMapOp(node, variables)
 }
 

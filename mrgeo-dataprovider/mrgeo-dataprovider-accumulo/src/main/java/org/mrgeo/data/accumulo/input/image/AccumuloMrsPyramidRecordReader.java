@@ -27,50 +27,48 @@ import java.io.IOException;
 public class AccumuloMrsPyramidRecordReader extends RecordReader<TileIdWritable, RasterWritable>
 {
 
-  @Override
-  public void close() throws IOException
-  {
-    // TODO Auto-generated method stub
-    
-  }
+@Override
+public void close() throws IOException
+{
+  // TODO Auto-generated method stub
 
-  @Override
-  public TileIdWritable getCurrentKey() throws IOException, InterruptedException
-  {
-    // TODO Auto-generated method stub
-    return null;
-  }
+}
 
-  @Override
-  public RasterWritable getCurrentValue() throws IOException, InterruptedException
-  {
-    // TODO Auto-generated method stub
-    return null;
-  }
+@Override
+public TileIdWritable getCurrentKey() throws IOException, InterruptedException
+{
+  // TODO Auto-generated method stub
+  return null;
+}
 
-  @Override
-  public float getProgress() throws IOException, InterruptedException
-  {
-    // TODO Auto-generated method stub
-    return 0;
-  }
+@Override
+public RasterWritable getCurrentValue() throws IOException, InterruptedException
+{
+  // TODO Auto-generated method stub
+  return null;
+}
 
-  @Override
-  public void initialize(InputSplit arg0, TaskAttemptContext arg1) throws IOException,
-      InterruptedException
-  {
-    // TODO Auto-generated method stub
-    
-  }
+@Override
+public float getProgress() throws IOException, InterruptedException
+{
+  // TODO Auto-generated method stub
+  return 0;
+}
 
-  @Override
-  public boolean nextKeyValue() throws IOException, InterruptedException
-  {
-    // TODO Auto-generated method stub
-    return false;
-  }
+@Override
+public void initialize(InputSplit arg0, TaskAttemptContext arg1) throws IOException,
+    InterruptedException
+{
+  // TODO Auto-generated method stub
 
+}
 
+@Override
+public boolean nextKeyValue() throws IOException, InterruptedException
+{
+  // TODO Auto-generated method stub
+  return false;
+}
 
 
 } // end AccumuloMrsPyramidRecordReader

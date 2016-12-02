@@ -6,8 +6,8 @@ from threading import Lock
 from py4j.java_gateway import java_import
 
 import constants
-import mapopgenerator
 import java_gateway
+import mapopgenerator
 from rastermapop import RasterMapOp
 from vectormapop import VectorMapOp
 
@@ -56,7 +56,6 @@ class MrGeo(object):
 
     def _create_job(self):
         if not self._job:
-
             jvm = self._get_jvm()
             java_import(jvm, "org.mrgeo.job.*")
 
@@ -140,7 +139,8 @@ class MrGeo(object):
         java_gateway.set_field(job, "jars",
                                jvm.StringUtils.concatUnique(
                                    jvm.DependencyLoader.getAndCopyDependencies("org.mrgeo.mapalgebra.MapAlgebra", None),
-                                   jvm.DependencyLoader.getAndCopyDependencies(jvm.MapOpFactory.getMapOpClassNames(), None)))
+                                   jvm.DependencyLoader.getAndCopyDependencies(jvm.MapOpFactory.getMapOpClassNames(),
+                                                                               None)))
 
         conf = jvm.MrGeoDriver.prepareJob(job)
 
@@ -184,7 +184,7 @@ class MrGeo(object):
             if self.sparkContext:
                 self.sparkContext.stop()
                 self.sparkContext = None
-            # self._job = None
+                # self._job = None
 
         self._started = False
 
@@ -234,7 +234,6 @@ class MrGeo(object):
 
         mapop = jvm.MrsPyramidMapOp.apply(dp)
         mapop.context(self.sparkContext)
-
 
         return RasterMapOp(mapop=mapop, gateway=self.gateway, context=self.sparkContext, job=self._job)
 

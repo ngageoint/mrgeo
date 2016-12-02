@@ -40,7 +40,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.InvocationTargetException;
@@ -54,11 +53,9 @@ public class AccumuloMrsPyramidMetadataReader implements MrsPyramidMetadataReade
 {
 
 private static final Logger log = LoggerFactory.getLogger(AccumuloMrsPyramidMetadataReader.class);
-
-private MrsPyramidMetadata metadata = null;
 private final AccumuloMrsImageDataProvider dataProvider;
 private final String name;
-
+private MrsPyramidMetadata metadata = null;
 private Connector conn = null;
 private Authorizations auths = null;
 private ColumnVisibility cv = null;

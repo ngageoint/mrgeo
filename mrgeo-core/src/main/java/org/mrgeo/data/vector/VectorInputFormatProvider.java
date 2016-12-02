@@ -26,59 +26,60 @@ import org.mrgeo.geometry.Geometry;
 
 public abstract class VectorInputFormatProvider
 {
-  private VectorInputFormatContext context;
+private VectorInputFormatContext context;
 
-  public VectorInputFormatProvider(VectorInputFormatContext context)
-  {
-    this.context = context;
-  }
-  /**
-   * Returns an instance of an InputFormat for the data provider that
-   * is responsible for translating the keys and values from the native
-   * InputFormat to FeatureIdWritable keys and Geometry values.
-   * 
-   * @return
-   */
-  public abstract InputFormat<FeatureIdWritable, Geometry> getInputFormat(String input);
+public VectorInputFormatProvider(VectorInputFormatContext context)
+{
+  this.context = context;
+}
 
-  /**
-   * For performing all Hadoop job setup required to use this data source
-   * as an InputFormat for a Hadoop map/reduce job, including the input
-   * format format class.
-   * 
-   * @param job
-   */
-  public void setupJob(final Job job,
-      final ProviderProperties providerProperties) throws DataProviderException
-  {
-    setup(job.getConfiguration(), providerProperties);
-  }
+/**
+ * Returns an instance of an InputFormat for the data provider that
+ * is responsible for translating the keys and values from the native
+ * InputFormat to FeatureIdWritable keys and Geometry values.
+ *
+ * @return
+ */
+public abstract InputFormat<FeatureIdWritable, Geometry> getInputFormat(String input);
 
-  public Configuration setupSparkJob(final Configuration conf,
-                                     final ProviderProperties providerProperties) throws DataProviderException
-  {
-    setup(conf, providerProperties);
-    return conf;
-  }
+/**
+ * For performing all Hadoop job setup required to use this data source
+ * as an InputFormat for a Hadoop map/reduce job, including the input
+ * format format class.
+ *
+ * @param job
+ */
+public void setupJob(final Job job,
+    final ProviderProperties providerProperties) throws DataProviderException
+{
+  setup(job.getConfiguration(), providerProperties);
+}
 
-  private void setup(final Configuration conf, final ProviderProperties providerProperties)
-  {
-    DataProviderFactory.saveProviderPropertiesToConfig(providerProperties,
-                                                       conf);
-    context.save(conf);
-  }
+public Configuration setupSparkJob(final Configuration conf,
+    final ProviderProperties providerProperties) throws DataProviderException
+{
+  setup(conf, providerProperties);
+  return conf;
+}
 
-  /**
-   * Perform any processing required after the map/reduce has completed.
-   * 
-   * @param job
-   */
-  public void teardown(final Job job) throws DataProviderException
-  {
-  }
+/**
+ * Perform any processing required after the map/reduce has completed.
+ *
+ * @param job
+ */
+public void teardown(final Job job) throws DataProviderException
+{
+}
 
-  protected VectorInputFormatContext getContext()
-  {
-    return context;
-  }
+protected VectorInputFormatContext getContext()
+{
+  return context;
+}
+
+private void setup(final Configuration conf, final ProviderProperties providerProperties)
+{
+  DataProviderFactory.saveProviderPropertiesToConfig(providerProperties,
+      conf);
+  context.save(conf);
+}
 }

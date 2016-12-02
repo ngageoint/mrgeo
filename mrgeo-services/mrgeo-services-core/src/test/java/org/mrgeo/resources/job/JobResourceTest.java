@@ -17,11 +17,6 @@
 package org.mrgeo.resources.job;
 
 import org.glassfish.jersey.test.JerseyTest;
-import org.mockito.Mockito;
-import org.mrgeo.job.JobTestManager;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.Context;
 
 @SuppressWarnings("all") // Test code, not included in production
 public class JobResourceTest extends JerseyTest
@@ -43,11 +38,11 @@ public class JobResourceTest extends JerseyTest
 //           return new FilteringInMemoryTestContainerFactory();
 //       }
 
-  @Override
-  public void setUp() throws Exception
-  {
-    // TODO Auto-generated method stub
-    super.setUp();
+@Override
+public void setUp() throws Exception
+{
+  // TODO Auto-generated method stub
+  super.setUp();
 
 //     Mockito.reset(requestMock);
 //
@@ -66,15 +61,15 @@ public class JobResourceTest extends JerseyTest
 //
 //    }
 
-  }
+}
 
-  @Override
-  public void tearDown() throws Exception
-  {
-    // TODO Auto-generated method stub
-    super.tearDown();
+@Override
+public void tearDown() throws Exception
+{
+  // TODO Auto-generated method stub
+  super.tearDown();
 //    JobTestManager.reset();
-  }
+}
 
 //  @Test
 //  @Category(UnitTest.class)

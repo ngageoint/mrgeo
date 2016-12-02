@@ -91,8 +91,10 @@ static public boolean isValidWktGeometry(final String wktGeometry)
   String fixedWktGeometry = wktGeometryFixer(wktGeometry);
   if (fixedWktGeometry.toUpperCase().contains("POINT") || fixedWktGeometry.toUpperCase().contains("LINESTRING")
       || fixedWktGeometry.toUpperCase().contains("LINEARRING") || fixedWktGeometry.toUpperCase().contains("POLYGON")
-      || fixedWktGeometry.toUpperCase().contains("MULTIPOINT") || fixedWktGeometry.toUpperCase().contains("MULTILINESTRING")
-      || fixedWktGeometry.toUpperCase().contains("MULTIPOLYGON") || fixedWktGeometry.toUpperCase().contains("GEOMETRYCOLLECTION"))
+      || fixedWktGeometry.toUpperCase().contains("MULTIPOINT") ||
+      fixedWktGeometry.toUpperCase().contains("MULTILINESTRING")
+      || fixedWktGeometry.toUpperCase().contains("MULTIPOLYGON") ||
+      fixedWktGeometry.toUpperCase().contains("GEOMETRYCOLLECTION"))
   {
     try
     {
@@ -131,7 +133,7 @@ static private String parsePoints(String geometryStr, String geometryType)
 
   if (geometryType.toLowerCase().contains("polygon"))
   {
-    if (!pointsArray[0].trim().equalsIgnoreCase(pointsArray[pointsArray.length-1].trim()))
+    if (!pointsArray[0].trim().equalsIgnoreCase(pointsArray[pointsArray.length - 1].trim()))
     {
       geometry.append(",").append(pointsArray[0]); //close the polygon
     }

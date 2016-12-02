@@ -26,17 +26,56 @@ import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.{MapAlgebra, MapOp}
 import org.mrgeo.publisher.MrGeoPublisherFactory
+
 import scala.collection.JavaConverters._
 
 
 class SaveRasterMapOp extends RasterMapOp with Externalizable {
 
-  private var rasterRDD: Option[RasterRDD] = None
-  private var input: Option[RasterMapOp] = None
+  var providerProperties:ProviderProperties = null
+  private var rasterRDD:Option[RasterRDD] = None
+  private var input:Option[RasterMapOp] = None
   private var output:String = null
-  private var publishImage: Boolean = false
+  private var publishImage:Boolean = false
 
-  private[mapalgebra] def this(inputMapOp:Option[RasterMapOp], name:String, publishImage: Boolean = false) = {
+  override def rdd():Option[RasterRDD] = rasterRDD
+
+  override def execute(context:SparkContext):Boolean = {
+    input match {
+      case Some(pyramid) =>
+
+        rasterRDD = pyramid.rdd()
+        val meta = new MrsPyramidMetadata(
+          pyramid.metadata() getOrElse
+          (throw new IOException("Can't load metadata! Ouch! " + pyramid.getClass.getName)))
+
+        // set the pyramid name to the output
+        meta.setPyramid(output)
+        metadata(meta)
+
+        pyramid.save(output, providerProperties, context)
+        if (publishImage) {
+          MrGeoPublisherFactory.getAllPublishers.asScala.foreach(_.publishImage(output, meta))
+        }
+
+      case None => throw new IOException("Error saving raster")
+    }
+
+    true
+  }
+
+  override def setup(job:JobArguments, conf:SparkConf):Boolean = {
+    providerProperties = ProviderProperties.fromDelimitedString(job.getSetting(MapAlgebra.ProviderProperties, ""))
+    true
+  }
+
+  override def teardown(job:JobArguments, conf:SparkConf):Boolean = true
+
+  override def readExternal(in:ObjectInput):Unit = {}
+
+  override def writeExternal(out:ObjectOutput):Unit = {}
+
+  private[mapalgebra] def this(inputMapOp:Option[RasterMapOp], name:String, publishImage:Boolean = false) = {
     this()
 
     input = inputMapOp
@@ -45,7 +84,7 @@ class SaveRasterMapOp extends RasterMapOp with Externalizable {
 
   }
 
-  private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
+  private[mapalgebra] def this(node:ParserNode, variables:String => Option[ParserNode]) = {
     this()
 
     if (node.getNumChildren < 2) {
@@ -54,8 +93,8 @@ class SaveRasterMapOp extends RasterMapOp with Externalizable {
 
     input = RasterMapOp.decodeToRaster(node.getChild(0), variables)
     output = MapOp.decodeString(node.getChild(1)) match {
-    case Some(s) => s
-    case _ => throw new ParserException("Error decoding String")
+      case Some(s) => s
+      case _ => throw new ParserException("Error decoding String")
     }
     if (node.getNumChildren == 3) {
       MapOp.decodeBoolean(node.getChild(2)) match {
@@ -65,40 +104,5 @@ class SaveRasterMapOp extends RasterMapOp with Externalizable {
     }
 
   }
-
-  override def rdd(): Option[RasterRDD] = rasterRDD
-
-  override def execute(context: SparkContext): Boolean = {
-    input match {
-    case Some(pyramid) =>
-
-      rasterRDD = pyramid.rdd()
-      val meta = new MrsPyramidMetadata(pyramid.metadata() getOrElse (throw new IOException("Can't load metadata! Ouch! " + pyramid.getClass.getName)))
-
-      // set the pyramid name to the output
-      meta.setPyramid(output)
-      metadata(meta)
-
-      pyramid.save(output, providerProperties, context)
-      if (publishImage) {
-        MrGeoPublisherFactory.getAllPublishers.asScala.foreach(_.publishImage(output, meta))
-      }
-
-    case None => throw new IOException("Error saving raster")
-    }
-
-    true
-  }
-
-  var providerProperties:ProviderProperties = null
-
-  override def setup(job: JobArguments, conf:SparkConf): Boolean = {
-    providerProperties = ProviderProperties.fromDelimitedString(job.getSetting(MapAlgebra.ProviderProperties, ""))
-    true
-  }
-
-  override def teardown(job: JobArguments, conf:SparkConf): Boolean = true
-  override def readExternal(in: ObjectInput): Unit = {}
-  override def writeExternal(out: ObjectOutput): Unit = {}
 
 }

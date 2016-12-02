@@ -17,7 +17,6 @@
 package org.mrgeo.resources.tms;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.apache.commons.io.IOUtils;
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.colorscale.applier.ColorScaleApplier;
@@ -62,7 +61,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.dom.DOMSource;
 import java.awt.image.DataBuffer;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -82,14 +80,15 @@ private static final Logger log = LoggerFactory.getLogger(TileMapServiceResource
 private static final MimetypesFileTypeMap mimeTypeMap = new MimetypesFileTypeMap();
 private static final String VERSION = "1.0.0";
 private static final String GENERAL_ERROR = "An error occurred in Tile Map Service";
-
-private String imageBaseDir = HadoopUtils.getDefaultImageBaseDirectory();
+static Properties props;
 //public static String KML_VERSION = "http://www.opengis.net/kml/2.2";
 //public static String KML_EXTENSIONS = "http://www.google.com/kml/ext/2.2";
 //public static String KML_MIME_TYPE = "application/vnd.google-earth.kml+xml";
 
-private int WGS84 = 0;
-private int WEBMERCATOR = 1;
+static
+{
+  init();
+}
 
 private final String[] profiles = {"global-geodetic", "global-mercator"};
 private final String[] SRSs = {"EPSG:4326", "EPSG:3857"};
@@ -97,19 +96,13 @@ private final Bounds[] limits = {Bounds.WORLD, new Bounds(-180.0, -85.051129, 18
 //private final double[] tileXmult = {0.5, 0.5};
 //private final double[] tileYmult = {1.0, 0.5};
 private final double[] tilezOffset = {0.0, -1.0};
-
 @Context
 Providers providers;
-
 @Context
 TmsService service;
-
-static Properties props;
-
-static
-{
-  init();
-}
+private String imageBaseDir = HadoopUtils.getDefaultImageBaseDirectory();
+private int WGS84 = 0;
+private int WEBMERCATOR = 1;
 
 private static synchronized void init()
 {
@@ -129,285 +122,6 @@ private static synchronized void init()
   }
 }
 
-
-private Response createEmptyTile(final ImageResponseWriter writer, final int width,
-    final int height) throws MrGeoRaster.MrGeoRasterException
-{
-  // return an empty image
-  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, 4, DataBuffer.TYPE_BYTE);
-  raster.fill(0);
-
-  return writer.write(raster).build();
-}
-
-Document mrsPyramidMetadataToTileMapXml(final String raster, final String profilename, final String url,
-    final MrsPyramidMetadata mpm) throws ParserConfigurationException
-{
-
-  int index = -1;
-  for (int i = 0; i < profiles.length; i++)
-  {
-    if (profilename.equals(profiles[i]))
-    {
-      index = i;
-      break;
-    }
-  }
-
-  if (index < 0)
-  {
-    throw new ParserConfigurationException("Bad profile name: " + profilename);
-  }
-
-  double maxPixelsize = TMSUtils.resolution(1, mpm.getTilesize());
-
-  Bounds bounds = mpm.getBounds();
-  WritablePoint origin = GeometryFactory.createPoint(Bounds.WORLD.w, Bounds.WORLD.s);
-
-  // need to reproject values?
-  if (index != WGS84) {
-
-    String srs = SRSs[index];
-    bounds = RequestUtils.reprojectBounds(bounds, srs);
-
-    Reprojector reprojector = Reprojector.createFromCode(SRSs[WGS84], srs);
-
-    origin = GeometryFactory.createPoint(limits[index].w, limits[index].s);
-    reprojector.filter(origin);
-
-    WritablePoint pt = GeometryFactory.createPoint(maxPixelsize, 0);
-    reprojector.filter(pt);
-
-    maxPixelsize = pt.getX();
-  }
-
-    /*
-     * String tileMap = "<?xml version='1.0' encoding='UTF-8' ?>" +
-     * "<TileMap version='1.0.0' tilemapservice='http://localhost/mrgeo-services/api/tms/1.0.0'>" +
-     * "  <Title>AfPk Elevation V2</Title>" + "  <Abstract>A test of V2 MrsPyramid.</Abstract>"
-     * + "  <SRS>EPSG:4326</SRS>" + "  <BoundingBox minx='68' miny='33' maxx='72' maxy='35' />" +
-     * "  <Origin x='68' y='33' />" +
-     * "  <TileFormat width='512' height='512' mime-type='image/tiff' extension='tif' />" +
-     * "  <TileSets profile='global-geodetic'>" +
-     * "    <TileSet href='http://localhost/mrgeo-services/api/tms/1.0.0/AfPkElevationV2/1' units-per-pixel='0.3515625' order='1' />"
-     * +
-     * "    <TileSet href='http://localhost/mrgeo-services/api/tms/1.0.0/AfPkElevationV2/2' units-per-pixel='0.17578125' order='2' />"
-     * +
-     * "    <TileSet href='http://localhost/mrgeo-services/api/tms/1.0.0/AfPkElevationV2/3' units-per-pixel='0.08789063' order='3' />"
-     * +
-     * "    <TileSet href='http://localhost/mrgeo-services/api/tms/1.0.0/AfPkElevationV2/4' units-per-pixel='0.08789063' order='4' />"
-     * +
-     * "    <TileSet href='http://localhost/mrgeo-services/api/tms/1.0.0/AfPkElevationV2/5' units-per-pixel='0.08789063' order='5' />"
-     * +
-     * "    <TileSet href='http://localhost/mrgeo-services/api/tms/1.0.0/AfPkElevationV2/6' units-per-pixel='0.08789063' order='6' />"
-     * +
-     * "    <TileSet href='http://localhost/mrgeo-services/api/tms/1.0.0/AfPkElevationV2/7' units-per-pixel='0.08789063' order='7' />"
-     * +
-     * "    <TileSet href='http://localhost/mrgeo-services/api/tms/1.0.0/AfPkElevationV2/8' units-per-pixel='0.08789063' order='8' />"
-     * +
-     * "    <TileSet href='http://localhost/mrgeo-services/api/tms/1.0.0/AfPkElevationV2/9' units-per-pixel='0.08789063' order='9' />"
-     * +
-     * "    <TileSet href='http://localhost/mrgeo-services/api/tms/1.0.0/AfPkElevationV2/10' units-per-pixel='0.08789063' order='10' />"
-     * + "  </TileSets>" + "</TileMap>";
-     */
-
-  final DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-  final DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-
-
-  // root elements
-  final Document doc = docBuilder.newDocument();
-  final Element rootElement = doc.createElement("TileMap");
-  doc.appendChild(rootElement);
-  final Attr v = doc.createAttribute("version");
-  v.setValue(VERSION);
-  rootElement.setAttributeNode(v);
-  final Attr tilemapservice = doc.createAttribute("tilemapservice");
-  String root = url.substring(0, url.lastIndexOf("/" + raster));
-  tilemapservice.setValue(normalizeUrl(root));
-  rootElement.setAttributeNode(tilemapservice);
-
-  // child elements
-  final Element title = doc.createElement("Title");
-  title.setTextContent(raster);
-  rootElement.appendChild(title);
-
-  final Element abst = doc.createElement("Abstract");
-  abst.setTextContent("");
-  rootElement.appendChild(abst);
-
-  final Element srs = doc.createElement("SRS");
-  srs.setTextContent(SRSs[index]);
-  rootElement.appendChild(srs);
-
-  final Element bbox = doc.createElement("BoundingBox");
-  rootElement.appendChild(bbox);
-  final Attr minx = doc.createAttribute("minx");
-  minx.setValue(String.valueOf(bounds.w));
-  bbox.setAttributeNode(minx);
-  final Attr miny = doc.createAttribute("miny");
-  miny.setValue(String.valueOf(bounds.s));
-  bbox.setAttributeNode(miny);
-  final Attr maxx = doc.createAttribute("maxx");
-  maxx.setValue(String.valueOf(bounds.e));
-  bbox.setAttributeNode(maxx);
-  final Attr maxy = doc.createAttribute("maxy");
-  maxy.setValue(String.valueOf(bounds.n));
-  bbox.setAttributeNode(maxy);
-
-  final Element orign = doc.createElement("Origin");
-  rootElement.appendChild(orign);
-  final Attr x = doc.createAttribute("x");
-  x.setValue(String.valueOf(origin.getX()));
-  orign.setAttributeNode(x);
-  final Attr y = doc.createAttribute("y");
-  y.setValue(String.valueOf(origin.getY()));
-  orign.setAttributeNode(y);
-
-  final Element tileformat = doc.createElement("TileFormat");
-  rootElement.appendChild(tileformat);
-  final Attr w = doc.createAttribute("width");
-  w.setValue(String.valueOf(mpm.getTilesize()));
-  tileformat.setAttributeNode(w);
-  final Attr h = doc.createAttribute("height");
-  h.setValue(String.valueOf(mpm.getTilesize()));
-  tileformat.setAttributeNode(h);
-  final Attr mt = doc.createAttribute("mime-type");
-  mt.setValue("image/tiff");
-  tileformat.setAttributeNode(mt);
-  final Attr ext = doc.createAttribute("extension");
-  ext.setValue("tif");
-  tileformat.setAttributeNode(ext);
-
-  final Element tilesets = doc.createElement("TileSets");
-  rootElement.appendChild(tilesets);
-
-  final Attr profile = doc.createAttribute("profile");
-  profile.setValue(profiles[index]);
-  tilesets.setAttributeNode(profile);
-
-  for (int i = 0; i < mpm.getMaxZoomLevel(); i++)
-  {
-    final Element tileset = doc.createElement("TileSet");
-    tilesets.appendChild(tileset);
-    final Attr href = doc.createAttribute("href");
-    href.setValue(normalizeUrl(normalizeUrl(url)) + "/" + (i + 1));
-    tileset.setAttributeNode(href);
-    final Attr upp = doc.createAttribute("units-per-pixel");
-    upp.setValue(String.valueOf(maxPixelsize / Math.pow(2, i)));
-    tileset.setAttributeNode(upp);
-    final Attr order = doc.createAttribute("order");
-    order.setValue(String.valueOf(i));
-    tileset.setAttributeNode(order);
-  }
-
-  return doc;
-}
-
-
-
-Document mrsPyramidToTileMapServiceXml(final String url,
-    final List<String> pyramidNames) throws ParserConfigurationException,
-    DOMException, UnsupportedEncodingException
-{
-    /*
-     * String tileMapService = "<?xml version='1.0' encoding='UTF-8' ?>" +
-     * "<TileMapService version='1.0.0' services='http://localhost/mrgeo-services/api/tms/'>" +
-     * "  <Title>Example Tile Map Service</Title>" +
-     * "  <Abstract>This is a longer description of the example tiling map service.</Abstract>" +
-     * "  <TileMaps>" + "    <TileMap " + "      title='AfPk Elevation V2' " +
-     * "      srs='EPSG:4326' " + "      profile='global-geodetic' " +
-     * "      href='http:///localhost/mrgeo-services/api/tms/1.0.0/AfPkElevationV2' />" +
-     * "  </TileMaps>" + "</TileMapService>";
-     */
-
-  final DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-  final DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-
-  // root elements
-  final Document doc = docBuilder.newDocument();
-  final Element rootElement = doc.createElement("TileMapService");
-  doc.appendChild(rootElement);
-  final Attr v = doc.createAttribute("version");
-  v.setValue(VERSION);
-  rootElement.setAttributeNode(v);
-  final Attr service = doc.createAttribute("services");
-  service.setValue(normalizeUrl(normalizeUrl(url).replace(VERSION, "")));
-  rootElement.setAttributeNode(service);
-
-  // child elements
-  final Element title = doc.createElement("Title");
-  title.setTextContent("Tile Map Service");
-  rootElement.appendChild(title);
-
-  final Element abst = doc.createElement("Abstract");
-  abst.setTextContent("MrGeo MrsPyramid rasters available as TMS");
-  rootElement.appendChild(abst);
-
-  final Element tilesets = doc.createElement("TileMaps");
-  rootElement.appendChild(tilesets);
-
-  Collections.sort(pyramidNames);
-  for (int i = 0; i < profiles.length; i++)
-  {
-    for (final String pyramid : pyramidNames)
-    {
-      final String profilename = profiles[i];
-      final Element tileset = doc.createElement("TileMap");
-      tilesets.appendChild(tileset);
-      final Attr href = doc.createAttribute("href");
-      href.setValue(normalizeUrl(url) + "/" + URLEncoder.encode(pyramid, "UTF-8") + "/" + URLEncoder.encode(profilename, "UTF-8"));
-      tileset.setAttributeNode(href);
-      final Attr maptitle = doc.createAttribute("title");
-      maptitle.setValue(pyramid);
-      tileset.setAttributeNode(maptitle);
-      final Attr srs = doc.createAttribute("srs");
-      srs.setValue(SRSs[i]);
-      tileset.setAttributeNode(srs);
-      final Attr profile = doc.createAttribute("profile");
-      profile.setValue(profilename);
-      tileset.setAttributeNode(profile);
-    }
-  }
-
-  return doc;
-}
-
-String normalizeUrl(final String url)
-{
-  String newUrl;
-  newUrl = (url.lastIndexOf("/") == url.length() - 1) ? url.substring(0, url.length() - 1) : url;
-  return newUrl;
-}
-
-Document rootResourceXml(final String url) throws ParserConfigurationException
-{
-    /*
-     * <?xml version="1.0" encoding="UTF-8" ?> <Services> <TileMapService
-     * title="MrGeo Tile Map Service" version="1.0.0"
-     * href="http://localhost:8080/mrgeo-services/api/tms/1.0.0" /> </Services>
-     */
-
-  final DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-  final DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-  final Document doc = docBuilder.newDocument();
-  final Element rootElement = doc.createElement("Services");
-  doc.appendChild(rootElement);
-  final Element tms = doc.createElement("TileMapService");
-  rootElement.appendChild(tms);
-  final Attr title = doc.createAttribute("title");
-  title.setValue("MrGeo Tile Map Service");
-  tms.setAttributeNode(title);
-  final Attr v = doc.createAttribute("version");
-  v.setValue(VERSION);
-  tms.setAttributeNode(v);
-  final Attr href = doc.createAttribute("href");
-  href.setValue(normalizeUrl(url) + "/" + VERSION);
-  tms.setAttributeNode(href);
-
-  return doc;
-}
-
 @GET
 @Produces("text/xml")
 public Response getRootResource(@Context final HttpServletRequest hsr)
@@ -425,7 +139,6 @@ public Response getRootResource(@Context final HttpServletRequest hsr)
     return Response.status(Status.INTERNAL_SERVER_ERROR).entity(GENERAL_ERROR).build();
   }
 }
-
 
 @SuppressWarnings("squid:S1166") // TileNotFoundException (only) caught and handled
 @SuppressFBWarnings(value = "JAXRS_ENDPOINT", justification = "verified")
@@ -582,7 +295,7 @@ public Response getTile(@PathParam("version") final String version,
     log.error("Exception thrown", e);
     return Response.status(Status.NOT_FOUND).entity("Unable to open color scale").build();
   }
-  catch (IllegalAccessException | ParserConfigurationException | InstantiationException  e)
+  catch (IllegalAccessException | ParserConfigurationException | InstantiationException e)
   {
     log.error("Exception occurred getting tile " + pyramid + "/" + z + "/" + x + "/" + y + "." +
         format, e);
@@ -590,34 +303,6 @@ public Response getTile(@PathParam("version") final String version,
 
   return Response.status(Status.INTERNAL_SERVER_ERROR).entity(GENERAL_ERROR).build();
 }
-
-private Bounds calcBounds(Integer x, Integer y, Integer z, String pyramid, ProviderProperties providerProperties, int profile)
-    throws IOException
-{
-  MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(pyramid,
-      DataProviderFactory.AccessMode.READ, providerProperties);
-  MrsPyramidMetadataReader r = dp.getMetadataReader();
-
-  final MrsPyramidMetadata metadata = r.read();
-
-  double tilesize = metadata.getTilesize();
-
-  double zoom = z + tilezOffset[profile];
-  Bounds world = limits[profile];
-
-  double resh = world.height() / tilesize / Math.pow(2.0, zoom);
-  double resw = world.width() / tilesize / Math.pow(2.0, zoom);
-
-  double multh = tilesize * resh;
-  double multw = tilesize * resw;
-
-  return new Bounds(x * multw + world.w, // left/west (lon, x)
-      y * multh + world.s, // lower/south (lat, y)
-      (x + 1) * multw + world.w, // right/east (lon, x)
-      (y + 1) * multh + world.s); // upper/north (lat, y)
-
-}
-
 
 @SuppressFBWarnings(value = "JAXRS_ENDPOINT", justification = "verified")
 @GET
@@ -652,19 +337,6 @@ public Response getTileMap(@PathParam("version") final String version,
   }
 }
 
-private void getService()
-{
-  if (service == null)
-  {
-    ContextResolver<TmsService> resolver =
-        providers.getContextResolver(TmsService.class, MediaType.WILDCARD_TYPE);
-    if (resolver != null)
-    {
-      service = resolver.getContext(TmsService.class);
-    }
-  }
-}
-
 @SuppressFBWarnings(value = "JAXRS_ENDPOINT", justification = "verified")
 @GET
 @Produces("text/xml")
@@ -692,6 +364,325 @@ public Response getTileMapService(@PathParam("version") final String version,
   {
     log.error("Exception thrown", ex);
     return Response.status(Status.INTERNAL_SERVER_ERROR).entity(GENERAL_ERROR).build();
+  }
+}
+
+Document mrsPyramidMetadataToTileMapXml(final String raster, final String profilename, final String url,
+    final MrsPyramidMetadata mpm) throws ParserConfigurationException
+{
+
+  int index = -1;
+  for (int i = 0; i < profiles.length; i++)
+  {
+    if (profilename.equals(profiles[i]))
+    {
+      index = i;
+      break;
+    }
+  }
+
+  if (index < 0)
+  {
+    throw new ParserConfigurationException("Bad profile name: " + profilename);
+  }
+
+  double maxPixelsize = TMSUtils.resolution(1, mpm.getTilesize());
+
+  Bounds bounds = mpm.getBounds();
+  WritablePoint origin = GeometryFactory.createPoint(Bounds.WORLD.w, Bounds.WORLD.s);
+
+  // need to reproject values?
+  if (index != WGS84)
+  {
+
+    String srs = SRSs[index];
+    bounds = RequestUtils.reprojectBounds(bounds, srs);
+
+    Reprojector reprojector = Reprojector.createFromCode(SRSs[WGS84], srs);
+
+    origin = GeometryFactory.createPoint(limits[index].w, limits[index].s);
+    reprojector.filter(origin);
+
+    WritablePoint pt = GeometryFactory.createPoint(maxPixelsize, 0);
+    reprojector.filter(pt);
+
+    maxPixelsize = pt.getX();
+  }
+
+    /*
+     * String tileMap = "<?xml version='1.0' encoding='UTF-8' ?>" +
+     * "<TileMap version='1.0.0' tilemapservice='http://localhost/mrgeo-services/api/tms/1.0.0'>" +
+     * "  <Title>AfPk Elevation V2</Title>" + "  <Abstract>A test of V2 MrsPyramid.</Abstract>"
+     * + "  <SRS>EPSG:4326</SRS>" + "  <BoundingBox minx='68' miny='33' maxx='72' maxy='35' />" +
+     * "  <Origin x='68' y='33' />" +
+     * "  <TileFormat width='512' height='512' mime-type='image/tiff' extension='tif' />" +
+     * "  <TileSets profile='global-geodetic'>" +
+     * "    <TileSet href='http://localhost/mrgeo-services/api/tms/1.0.0/AfPkElevationV2/1' units-per-pixel='0.3515625' order='1' />"
+     * +
+     * "    <TileSet href='http://localhost/mrgeo-services/api/tms/1.0.0/AfPkElevationV2/2' units-per-pixel='0.17578125' order='2' />"
+     * +
+     * "    <TileSet href='http://localhost/mrgeo-services/api/tms/1.0.0/AfPkElevationV2/3' units-per-pixel='0.08789063' order='3' />"
+     * +
+     * "    <TileSet href='http://localhost/mrgeo-services/api/tms/1.0.0/AfPkElevationV2/4' units-per-pixel='0.08789063' order='4' />"
+     * +
+     * "    <TileSet href='http://localhost/mrgeo-services/api/tms/1.0.0/AfPkElevationV2/5' units-per-pixel='0.08789063' order='5' />"
+     * +
+     * "    <TileSet href='http://localhost/mrgeo-services/api/tms/1.0.0/AfPkElevationV2/6' units-per-pixel='0.08789063' order='6' />"
+     * +
+     * "    <TileSet href='http://localhost/mrgeo-services/api/tms/1.0.0/AfPkElevationV2/7' units-per-pixel='0.08789063' order='7' />"
+     * +
+     * "    <TileSet href='http://localhost/mrgeo-services/api/tms/1.0.0/AfPkElevationV2/8' units-per-pixel='0.08789063' order='8' />"
+     * +
+     * "    <TileSet href='http://localhost/mrgeo-services/api/tms/1.0.0/AfPkElevationV2/9' units-per-pixel='0.08789063' order='9' />"
+     * +
+     * "    <TileSet href='http://localhost/mrgeo-services/api/tms/1.0.0/AfPkElevationV2/10' units-per-pixel='0.08789063' order='10' />"
+     * + "  </TileSets>" + "</TileMap>";
+     */
+
+  final DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+  final DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+
+
+  // root elements
+  final Document doc = docBuilder.newDocument();
+  final Element rootElement = doc.createElement("TileMap");
+  doc.appendChild(rootElement);
+  final Attr v = doc.createAttribute("version");
+  v.setValue(VERSION);
+  rootElement.setAttributeNode(v);
+  final Attr tilemapservice = doc.createAttribute("tilemapservice");
+  String root = url.substring(0, url.lastIndexOf("/" + raster));
+  tilemapservice.setValue(normalizeUrl(root));
+  rootElement.setAttributeNode(tilemapservice);
+
+  // child elements
+  final Element title = doc.createElement("Title");
+  title.setTextContent(raster);
+  rootElement.appendChild(title);
+
+  final Element abst = doc.createElement("Abstract");
+  abst.setTextContent("");
+  rootElement.appendChild(abst);
+
+  final Element srs = doc.createElement("SRS");
+  srs.setTextContent(SRSs[index]);
+  rootElement.appendChild(srs);
+
+  final Element bbox = doc.createElement("BoundingBox");
+  rootElement.appendChild(bbox);
+  final Attr minx = doc.createAttribute("minx");
+  minx.setValue(String.valueOf(bounds.w));
+  bbox.setAttributeNode(minx);
+  final Attr miny = doc.createAttribute("miny");
+  miny.setValue(String.valueOf(bounds.s));
+  bbox.setAttributeNode(miny);
+  final Attr maxx = doc.createAttribute("maxx");
+  maxx.setValue(String.valueOf(bounds.e));
+  bbox.setAttributeNode(maxx);
+  final Attr maxy = doc.createAttribute("maxy");
+  maxy.setValue(String.valueOf(bounds.n));
+  bbox.setAttributeNode(maxy);
+
+  final Element orign = doc.createElement("Origin");
+  rootElement.appendChild(orign);
+  final Attr x = doc.createAttribute("x");
+  x.setValue(String.valueOf(origin.getX()));
+  orign.setAttributeNode(x);
+  final Attr y = doc.createAttribute("y");
+  y.setValue(String.valueOf(origin.getY()));
+  orign.setAttributeNode(y);
+
+  final Element tileformat = doc.createElement("TileFormat");
+  rootElement.appendChild(tileformat);
+  final Attr w = doc.createAttribute("width");
+  w.setValue(String.valueOf(mpm.getTilesize()));
+  tileformat.setAttributeNode(w);
+  final Attr h = doc.createAttribute("height");
+  h.setValue(String.valueOf(mpm.getTilesize()));
+  tileformat.setAttributeNode(h);
+  final Attr mt = doc.createAttribute("mime-type");
+  mt.setValue("image/tiff");
+  tileformat.setAttributeNode(mt);
+  final Attr ext = doc.createAttribute("extension");
+  ext.setValue("tif");
+  tileformat.setAttributeNode(ext);
+
+  final Element tilesets = doc.createElement("TileSets");
+  rootElement.appendChild(tilesets);
+
+  final Attr profile = doc.createAttribute("profile");
+  profile.setValue(profiles[index]);
+  tilesets.setAttributeNode(profile);
+
+  for (int i = 0; i < mpm.getMaxZoomLevel(); i++)
+  {
+    final Element tileset = doc.createElement("TileSet");
+    tilesets.appendChild(tileset);
+    final Attr href = doc.createAttribute("href");
+    href.setValue(normalizeUrl(normalizeUrl(url)) + "/" + (i + 1));
+    tileset.setAttributeNode(href);
+    final Attr upp = doc.createAttribute("units-per-pixel");
+    upp.setValue(String.valueOf(maxPixelsize / Math.pow(2, i)));
+    tileset.setAttributeNode(upp);
+    final Attr order = doc.createAttribute("order");
+    order.setValue(String.valueOf(i));
+    tileset.setAttributeNode(order);
+  }
+
+  return doc;
+}
+
+Document mrsPyramidToTileMapServiceXml(final String url,
+    final List<String> pyramidNames) throws ParserConfigurationException,
+    DOMException, UnsupportedEncodingException
+{
+    /*
+     * String tileMapService = "<?xml version='1.0' encoding='UTF-8' ?>" +
+     * "<TileMapService version='1.0.0' services='http://localhost/mrgeo-services/api/tms/'>" +
+     * "  <Title>Example Tile Map Service</Title>" +
+     * "  <Abstract>This is a longer description of the example tiling map service.</Abstract>" +
+     * "  <TileMaps>" + "    <TileMap " + "      title='AfPk Elevation V2' " +
+     * "      srs='EPSG:4326' " + "      profile='global-geodetic' " +
+     * "      href='http:///localhost/mrgeo-services/api/tms/1.0.0/AfPkElevationV2' />" +
+     * "  </TileMaps>" + "</TileMapService>";
+     */
+
+  final DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+  final DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+
+  // root elements
+  final Document doc = docBuilder.newDocument();
+  final Element rootElement = doc.createElement("TileMapService");
+  doc.appendChild(rootElement);
+  final Attr v = doc.createAttribute("version");
+  v.setValue(VERSION);
+  rootElement.setAttributeNode(v);
+  final Attr service = doc.createAttribute("services");
+  service.setValue(normalizeUrl(normalizeUrl(url).replace(VERSION, "")));
+  rootElement.setAttributeNode(service);
+
+  // child elements
+  final Element title = doc.createElement("Title");
+  title.setTextContent("Tile Map Service");
+  rootElement.appendChild(title);
+
+  final Element abst = doc.createElement("Abstract");
+  abst.setTextContent("MrGeo MrsPyramid rasters available as TMS");
+  rootElement.appendChild(abst);
+
+  final Element tilesets = doc.createElement("TileMaps");
+  rootElement.appendChild(tilesets);
+
+  Collections.sort(pyramidNames);
+  for (int i = 0; i < profiles.length; i++)
+  {
+    for (final String pyramid : pyramidNames)
+    {
+      final String profilename = profiles[i];
+      final Element tileset = doc.createElement("TileMap");
+      tilesets.appendChild(tileset);
+      final Attr href = doc.createAttribute("href");
+      href.setValue(normalizeUrl(url) + "/" + URLEncoder.encode(pyramid, "UTF-8") + "/" +
+          URLEncoder.encode(profilename, "UTF-8"));
+      tileset.setAttributeNode(href);
+      final Attr maptitle = doc.createAttribute("title");
+      maptitle.setValue(pyramid);
+      tileset.setAttributeNode(maptitle);
+      final Attr srs = doc.createAttribute("srs");
+      srs.setValue(SRSs[i]);
+      tileset.setAttributeNode(srs);
+      final Attr profile = doc.createAttribute("profile");
+      profile.setValue(profilename);
+      tileset.setAttributeNode(profile);
+    }
+  }
+
+  return doc;
+}
+
+String normalizeUrl(final String url)
+{
+  String newUrl;
+  newUrl = (url.lastIndexOf("/") == url.length() - 1) ? url.substring(0, url.length() - 1) : url;
+  return newUrl;
+}
+
+Document rootResourceXml(final String url) throws ParserConfigurationException
+{
+    /*
+     * <?xml version="1.0" encoding="UTF-8" ?> <Services> <TileMapService
+     * title="MrGeo Tile Map Service" version="1.0.0"
+     * href="http://localhost:8080/mrgeo-services/api/tms/1.0.0" /> </Services>
+     */
+
+  final DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+  final DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+  final Document doc = docBuilder.newDocument();
+  final Element rootElement = doc.createElement("Services");
+  doc.appendChild(rootElement);
+  final Element tms = doc.createElement("TileMapService");
+  rootElement.appendChild(tms);
+  final Attr title = doc.createAttribute("title");
+  title.setValue("MrGeo Tile Map Service");
+  tms.setAttributeNode(title);
+  final Attr v = doc.createAttribute("version");
+  v.setValue(VERSION);
+  tms.setAttributeNode(v);
+  final Attr href = doc.createAttribute("href");
+  href.setValue(normalizeUrl(url) + "/" + VERSION);
+  tms.setAttributeNode(href);
+
+  return doc;
+}
+
+private Response createEmptyTile(final ImageResponseWriter writer, final int width,
+    final int height) throws MrGeoRaster.MrGeoRasterException
+{
+  // return an empty image
+  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, 4, DataBuffer.TYPE_BYTE);
+  raster.fill(0);
+
+  return writer.write(raster).build();
+}
+
+private Bounds calcBounds(Integer x, Integer y, Integer z, String pyramid, ProviderProperties providerProperties,
+    int profile)
+    throws IOException
+{
+  MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(pyramid,
+      DataProviderFactory.AccessMode.READ, providerProperties);
+  MrsPyramidMetadataReader r = dp.getMetadataReader();
+
+  final MrsPyramidMetadata metadata = r.read();
+
+  double tilesize = metadata.getTilesize();
+
+  double zoom = z + tilezOffset[profile];
+  Bounds world = limits[profile];
+
+  double resh = world.height() / tilesize / Math.pow(2.0, zoom);
+  double resw = world.width() / tilesize / Math.pow(2.0, zoom);
+
+  double multh = tilesize * resh;
+  double multw = tilesize * resw;
+
+  return new Bounds(x * multw + world.w, // left/west (lon, x)
+      y * multh + world.s, // lower/south (lat, y)
+      (x + 1) * multw + world.w, // right/east (lon, x)
+      (y + 1) * multh + world.s); // upper/north (lat, y)
+
+}
+
+private void getService()
+{
+  if (service == null)
+  {
+    ContextResolver<TmsService> resolver =
+        providers.getContextResolver(TmsService.class, MediaType.WILDCARD_TYPE);
+    if (resolver != null)
+    {
+      service = resolver.getContext(TmsService.class);
+    }
   }
 }
 

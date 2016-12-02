@@ -16,11 +16,8 @@
 
 package org.mrgeo.services;
 
-import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.Properties;
 
 /**
@@ -29,9 +26,19 @@ import java.util.Properties;
 public class Configuration
 {
 private static Configuration instance = null;
+private Properties properties;
+
+/**
+ * Private constructor to comply with Singleton Pattern
+ */
+private Configuration()
+{
+  properties = MrGeoProperties.getInstance();
+}
 
 /**
  * Made Configuration not throw a checked exception
+ *
  * @return Configuration
  */
 public static synchronized Configuration getInstance()
@@ -41,16 +48,6 @@ public static synchronized Configuration getInstance()
     instance = new Configuration();
   }
   return instance;
-}
-
-private Properties properties;
-
-/**
- * Private constructor to comply with Singleton Pattern
- */
-private Configuration()
-{
-  properties = MrGeoProperties.getInstance();
 }
 
 public Properties getProperties()

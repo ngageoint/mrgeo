@@ -1,7 +1,9 @@
-from py4j.java_gateway import java_import
-from pymrgeo.rastermapop import RasterMapOp
-from unittest import TestCase
 from functools import partial
+from unittest import TestCase
+
+from py4j.java_gateway import java_import
+
+from pymrgeo.rastermapop import RasterMapOp
 
 
 class RasterMapOpTestSupport(TestCase):

@@ -17,8 +17,6 @@
 package org.mrgeo.services.utils;
 
 import com.google.common.io.ByteStreams;
-import com.meterware.httpunit.WebResponse;
-import org.glassfish.jersey.client.ClientResponse;
 import org.junit.Assert;
 import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.test.TestUtils;
@@ -35,23 +33,23 @@ import static org.junit.Assert.assertTrue;
 @SuppressWarnings("all") // Test code, not included in production
 public class ImageTestUtils
 {
-  private static final Logger log = LoggerFactory.getLogger(ImageTestUtils.class);
+private static final Logger log = LoggerFactory.getLogger(ImageTestUtils.class);
 
-  public static void outputImageMatchesBaseline(final Response response,
+public static void outputImageMatchesBaseline(final Response response,
     final String baselineImage) throws IOException
-  {
-    final File baseline = new File(baselineImage);
+{
+  final File baseline = new File(baselineImage);
 
-    assertTrue(baseline.exists());
+  assertTrue(baseline.exists());
 
-    log.debug("Response content length: " + response.getLength());
+  log.debug("Response content length: " + response.getLength());
 
-    MrGeoRaster raster = MrGeoRaster.fromDataset(GDALUtils.open(response.readEntity(InputStream.class)));
-    Assert.assertNotNull("Test Image: not loaded, could not read stream", raster);
+  MrGeoRaster raster = MrGeoRaster.fromDataset(GDALUtils.open(response.readEntity(InputStream.class)));
+  Assert.assertNotNull("Test Image: not loaded, could not read stream", raster);
 
-    TestUtils.compareRasters(baseline, raster);
-  }
-  
+  TestUtils.compareRasters(baseline, raster);
+}
+
 //  public static void outputImageMatchesBaseline(final ClientResponse response,
 //    final String baselineImage) throws IOException
 //  {
@@ -73,18 +71,18 @@ public class ImageTestUtils
 //    writeBaselineImage(response.getEntityInputStream(), path);
 //  }
 
-  public static void writeBaselineImage(final InputStream stream, final String path)
+public static void writeBaselineImage(final InputStream stream, final String path)
     throws IOException
-  {
-    final OutputStream outputStream = new FileOutputStream(new File(path));
-    ByteStreams.copy(stream, outputStream);
-    outputStream.close();
+{
+  final OutputStream outputStream = new FileOutputStream(new File(path));
+  ByteStreams.copy(stream, outputStream);
+  outputStream.close();
 
-  }
+}
 
-  public static void writeBaselineImage(final Response response, final String path)
+public static void writeBaselineImage(final Response response, final String path)
     throws IOException
-  {
-    writeBaselineImage(response.readEntity(InputStream.class), path);
-  }
+{
+  writeBaselineImage(response.readEntity(InputStream.class), path);
+}
 }

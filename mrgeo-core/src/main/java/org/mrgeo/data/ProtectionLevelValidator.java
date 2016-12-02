@@ -18,12 +18,12 @@ package org.mrgeo.data;
 
 public interface ProtectionLevelValidator
 {
-  /**
-   * Returns true if the protection level passed in is a properly formatted
-   * protection level.
-   * 
-   * @param protectionLevel
-   * @return
-   */
-  public boolean validateProtectionLevel(String protectionLevel);
+/**
+ * Returns true if the protection level passed in is a properly formatted
+ * protection level.
+ *
+ * @param protectionLevel
+ * @return
+ */
+public boolean validateProtectionLevel(String protectionLevel);
 }

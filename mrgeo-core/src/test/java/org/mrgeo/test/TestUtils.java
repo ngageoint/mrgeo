@@ -30,14 +30,10 @@ import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.MrsPyramidMetadata;
-import org.mrgeo.job.JobCancelledException;
-import org.mrgeo.job.JobFailedException;
-import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.utils.FileUtils;
 import org.mrgeo.utils.GDALJavaUtils;
 import org.mrgeo.utils.GDALUtils;
 import org.mrgeo.utils.tms.Bounds;
-import org.mrgeo.utils.tms.TMSUtils;
 
 import java.awt.image.DataBuffer;
 import java.io.*;
@@ -74,33 +70,6 @@ public TestUtils(final Class<?> testClass) throws IOException
 
 }
 
-private static String readPath(Path p) throws IOException
-{
-  FileSystem fs = HadoopFileUtils.getFileSystem(p);
-  try (FSDataInputStream fdis = fs.open(p))
-  {
-    FileStatus stat = fs.getFileStatus(p);
-
-    byte[] baselineBuffer = new byte[(int) stat.getLen()];
-    fdis.readFully(baselineBuffer);
-    return new String(baselineBuffer);
-  }
-}
-
-private static String readFile(File f) throws IOException
-{
-  byte[] baselineBuffer = new byte[(int) f.length()];
-  int read = 0;
-  try (FileInputStream s = new FileInputStream(f))
-  {
-    while (read < f.length())
-    {
-      read = s.read(baselineBuffer);
-    }
-  }
-  return new String(baselineBuffer);
-}
-
 public static MrsPyramidMetadata readImageMetadata(String filename) throws
     IOException
 {
@@ -113,23 +82,6 @@ public static MrsPyramidMetadata readImageMetadata(String filename) throws
 public static String calculateHash(File f) throws IOException
 {
   return calculateHash(readFile(f));
-}
-
-private static String calculateHash(String s)
-{
-  MessageDigest digest;
-  try
-  {
-    digest = MessageDigest.getInstance("MD5");
-  }
-  catch (NoSuchAlgorithmException e)
-  {
-    e.printStackTrace();
-    return "error";
-  }
-
-  digest.update(s.getBytes(), 0, s.getBytes().length);
-  return new BigInteger(1, digest.digest()).toString(16);
 }
 
 public static String calculateHash(Path p) throws IOException
@@ -216,45 +168,11 @@ public static Path composeInputHdfs(Class<?> c, boolean overwrite) throws IOExce
   return result;
 }
 
-private static Path composeInputHdfs(Class<?> c) throws IOException
-{
-  return composeInputHdfs(c, false);
-}
-
-private static String packageName(Class<?> c)
-{
-  String name = c.getName();
-  int li = name.lastIndexOf(".");
-  return name.substring(0, li);
-}
-
 public static void compareRasters(File r1, MrGeoRaster r2) throws IOException
 {
   Dataset d = GDALUtils.open(r1.getCanonicalPath());
   MrGeoRaster r = MrGeoRaster.fromDataset(d);
   compareRasters(r, null, r2, null);
-}
-
-public void compareRasters(String testName) throws IOException
-{
-  final MrsPyramid pyramid = MrsPyramid.open(new Path(outputHdfs, testName).toString(),
-      (ProviderProperties)null);
-  MrsPyramidMetadata meta = pyramid.getMetadata();
-
-  try (MrsImage image = pyramid.getImage(meta.getMaxZoomLevel()))
-  {
-    MrGeoRaster raster = image.getRaster();
-    final File baselineTif = new File(new File(inputLocal), testName + ".tif");
-    compareRasters(baselineTif, raster);
-  }
-
-}
-
-static void compareRasters(File r1, ValueTranslator t1, MrGeoRaster r2, ValueTranslator t2) throws IOException
-{
-  Dataset d = GDALUtils.open(r1.getCanonicalPath());
-  MrGeoRaster r = MrGeoRaster.fromDataset(d);
-  compareRasters(r, t1, r2, t2);
 }
 
 public static void compareRasters(MrGeoRaster r1, MrGeoRaster r2)
@@ -310,20 +228,6 @@ public static void compareRasters(MrGeoRaster r1, ValueTranslator r1Translator,
   }
 }
 
-public void compareRasterToConstant(String testName, double constant) throws IOException
-{
-  final MrsPyramid pyramid = MrsPyramid.open(new Path(outputHdfs, testName).toString(),
-      (ProviderProperties)null);
-  MrsPyramidMetadata meta = pyramid.getMetadata();
-
-  try (MrsImage image = pyramid.getImage(meta.getMaxZoomLevel()))
-  {
-    MrGeoRaster raster = image.getRaster();
-    compareRasterToConstant(raster, constant, meta.getDefaultValueDouble(0));
-  }
-
-}
-
 public static void compareRasterToConstant(MrGeoRaster raster, double constant, double nodata)
 {
   int dataType = raster.datatype();
@@ -360,12 +264,12 @@ public static void compareNumberedRaster(MrGeoRaster raster)
     {
       int pixelId = getPixelId(x, y, raster.width());
 
-      Assert.assertEquals("Bad pixel px: " + x + " py: " + y +  " expected: " + pixelId + " actual: " +  raster.getPixelDouble(x, y, 0),
+      Assert.assertEquals(
+          "Bad pixel px: " + x + " py: " + y + " expected: " + pixelId + " actual: " + raster.getPixelDouble(x, y, 0),
           pixelId, raster.getPixelDouble(x, y, 0), 1e-8);
     }
   }
 }
-
 
 public static MrGeoRaster createConstRaster(int width, int height, int datatype, double c)
     throws MrGeoRaster.MrGeoRasterException
@@ -571,6 +475,13 @@ public static void compareTextFiles(String f1, String f2, boolean ignorewhitespa
 
 }
 
+static void compareRasters(File r1, ValueTranslator t1, MrGeoRaster r2, ValueTranslator t2) throws IOException
+{
+  Dataset d = GDALUtils.open(r1.getCanonicalPath());
+  MrGeoRaster r = MrGeoRaster.fromDataset(d);
+  compareRasters(r, t1, r2, t2);
+}
+
 static void setJarLocation() throws IOException
 {
   File working = new File(Defs.CWD);
@@ -586,9 +497,94 @@ static void setJarLocation() throws IOException
 
 }
 
+private static String readPath(Path p) throws IOException
+{
+  FileSystem fs = HadoopFileUtils.getFileSystem(p);
+  try (FSDataInputStream fdis = fs.open(p))
+  {
+    FileStatus stat = fs.getFileStatus(p);
+
+    byte[] baselineBuffer = new byte[(int) stat.getLen()];
+    fdis.readFully(baselineBuffer);
+    return new String(baselineBuffer);
+  }
+}
+
+private static String readFile(File f) throws IOException
+{
+  byte[] baselineBuffer = new byte[(int) f.length()];
+  int read = 0;
+  try (FileInputStream s = new FileInputStream(f))
+  {
+    while (read < f.length())
+    {
+      read = s.read(baselineBuffer);
+    }
+  }
+  return new String(baselineBuffer);
+}
+
+private static String calculateHash(String s)
+{
+  MessageDigest digest;
+  try
+  {
+    digest = MessageDigest.getInstance("MD5");
+  }
+  catch (NoSuchAlgorithmException e)
+  {
+    e.printStackTrace();
+    return "error";
+  }
+
+  digest.update(s.getBytes(), 0, s.getBytes().length);
+  return new BigInteger(1, digest.digest()).toString(16);
+}
+
+private static Path composeInputHdfs(Class<?> c) throws IOException
+{
+  return composeInputHdfs(c, false);
+}
+
+private static String packageName(Class<?> c)
+{
+  String name = c.getName();
+  int li = name.lastIndexOf(".");
+  return name.substring(0, li);
+}
+
 private static int getPixelId(int x, int y, int width)
 {
   return x + (y * width);
+}
+
+public void compareRasters(String testName) throws IOException
+{
+  final MrsPyramid pyramid = MrsPyramid.open(new Path(outputHdfs, testName).toString(),
+      (ProviderProperties) null);
+  MrsPyramidMetadata meta = pyramid.getMetadata();
+
+  try (MrsImage image = pyramid.getImage(meta.getMaxZoomLevel()))
+  {
+    MrGeoRaster raster = image.getRaster();
+    final File baselineTif = new File(new File(inputLocal), testName + ".tif");
+    compareRasters(baselineTif, raster);
+  }
+
+}
+
+public void compareRasterToConstant(String testName, double constant) throws IOException
+{
+  final MrsPyramid pyramid = MrsPyramid.open(new Path(outputHdfs, testName).toString(),
+      (ProviderProperties) null);
+  MrsPyramidMetadata meta = pyramid.getMetadata();
+
+  try (MrsImage image = pyramid.getImage(meta.getMaxZoomLevel()))
+  {
+    MrGeoRaster raster = image.getRaster();
+    compareRasterToConstant(raster, constant, meta.getDefaultValueDouble(0));
+  }
+
 }
 
 public Path getInputHdfs()
@@ -619,11 +615,6 @@ public Path getOutputHdfs()
 public Path getOutputHdfsFor(final String fileName)
 {
   return new Path(outputHdfs, fileName);
-}
-
-String getOutputLocal()
-{
-  return outputLocal;
 }
 
 public String getOutputLocalFor(final String filename)
@@ -664,7 +655,6 @@ public void compareRasters(String testName, MrGeoRaster r2, String format) throw
   baselineTif = new File(new File(inputLocal), testName + ext);
   compareRasters(baselineTif, r2);
 }
-
 
 public void compareRasters(String testName, ValueTranslator t1, MrGeoRaster r2, ValueTranslator t2) throws IOException
 {
@@ -718,7 +708,7 @@ public void saveBaselineTif(final String testName,
     throws IOException
 {
   final MrsPyramid pyramid = MrsPyramid.open(new Path(outputHdfs, testName).toString(),
-      (ProviderProperties)null);
+      (ProviderProperties) null);
   MrsPyramidMetadata meta = pyramid.getMetadata();
 
   try (MrsImage image = pyramid.getImage(meta.getMaxZoomLevel()))
@@ -737,7 +727,7 @@ public void saveBaselineTif(final String testName)
     throws IOException
 {
   final MrsPyramid pyramid = MrsPyramid.open(new Path(outputHdfs, testName).toString(),
-      (ProviderProperties)null);
+      (ProviderProperties) null);
   MrsPyramidMetadata meta = pyramid.getMetadata();
 
   try (MrsImage image = pyramid.getImage(meta.getMaxZoomLevel()))
@@ -750,6 +740,11 @@ public void saveBaselineTif(final String testName)
         baselineTif.getCanonicalPath(), meta.getDefaultValuesDouble()[0]);
   }
 
+}
+
+String getOutputLocal()
+{
+  return outputLocal;
 }
 
 

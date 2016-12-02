@@ -19,7 +19,6 @@ package org.mrgeo.resources.serviceproviders;
 import org.mrgeo.services.Configuration;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
 
-import javax.ws.rs.core.Context;
 import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Provider;
 

@@ -31,13 +31,11 @@ public interface ImageRenderer
 
 /**
  * Returns the default value used in the source raster data
- *
  */
 double[] getDefaultValues();
 
 /**
  * Returns the minimum/maximum raster values from the source data
- *
  */
 double[] getExtrema();
 
@@ -48,7 +46,6 @@ String[] getMimeTypes();
 
 /**
  * Returns the WMS format types for the image renderer
- *
  */
 String[] getWmsFormats();
 
@@ -60,14 +57,10 @@ boolean outputIsTransparent();
 /**
  * GetMap implementation
  *
- * @param pyramidName
- *          name of the source data layer
- * @param bounds
- *          requested bounds
- * @param width
- *          requested image width
- * @param height
- *          requested image height
+ * @param pyramidName name of the source data layer
+ * @param bounds      requested bounds
+ * @param width       requested image width
+ * @param height      requested image height
  * @return rendered image
  */
 MrGeoRaster renderImage(String pyramidName, Bounds bounds, int width, int height, ProviderProperties providerProperties,
@@ -79,14 +72,10 @@ MrGeoRaster renderImage(String pyramidName, Bounds bounds, ProviderProperties pr
 /**
  * GetTile implementation
  *
- * @param pyramidName
- *          name of the source data layer
- * @param tileColumn
- *          x tile coordinate
- * @param tileRow
- *          y tile coordinate
- * @param scale
- *          requested image resolution
+ * @param pyramidName name of the source data layer
+ * @param tileColumn  x tile coordinate
+ * @param tileRow     y tile coordinate
+ * @param scale       requested image resolution
  * @return rendered image
  */
 MrGeoRaster renderImage(String pyramidName, int tileColumn, int tileRow, double scale,

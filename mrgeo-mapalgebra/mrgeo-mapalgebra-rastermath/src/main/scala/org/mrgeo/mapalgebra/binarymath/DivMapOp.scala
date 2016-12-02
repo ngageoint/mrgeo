@@ -21,9 +21,10 @@ import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object DivMapOp extends MapOpRegistrar {
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("div", "/")
   }
+
   def create(raster:RasterMapOp, const:Double):MapOp = {
     new DivMapOp(Some(raster), Some(const))
   }
@@ -37,25 +38,25 @@ object DivMapOp extends MapOpRegistrar {
     new DivMapOp(Some(rasterA), Some(rasterB))
   }
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new DivMapOp(node, variables)
 }
 
 class DivMapOp extends RawBinaryMathMapOp {
 
-  private[binarymath] def this(raster: Option[RasterMapOp], paramB:Option[Any], reverse: Boolean = false) = {
+  private[binarymath] def this(raster:Option[RasterMapOp], paramB:Option[Any], reverse:Boolean = false) = {
     this()
 
     if (reverse) {
       varB = raster
 
       paramB match {
-        case Some(rasterB: RasterMapOp) => varA = Some(rasterB)
-        case Some(double: Double) => constA = Some(double)
-        case Some(int: Int) => constA = Some(int.toDouble)
-        case Some(long: Long) => constA = Some(long.toDouble)
-        case Some(float: Float) => constA = Some(float.toDouble)
-        case Some(short: Short) => constA = Some(short.toDouble)
+        case Some(rasterB:RasterMapOp) => varA = Some(rasterB)
+        case Some(double:Double) => constA = Some(double)
+        case Some(int:Int) => constA = Some(int.toDouble)
+        case Some(long:Long) => constA = Some(long.toDouble)
+        case Some(float:Float) => constA = Some(float.toDouble)
+        case Some(short:Short) => constA = Some(short.toDouble)
         case _ => throw new ParserException(paramB + "\" is not a raster or constant")
       }
     }
@@ -63,21 +64,21 @@ class DivMapOp extends RawBinaryMathMapOp {
       varA = raster
 
       paramB match {
-        case Some(rasterB: RasterMapOp) => varB = Some(rasterB)
-        case Some(double: Double) => constB = Some(double)
-        case Some(int: Int) => constB = Some(int.toDouble)
-        case Some(long: Long) => constB = Some(long.toDouble)
-        case Some(float: Float) => constB = Some(float.toDouble)
-        case Some(short: Short) => constB = Some(short.toDouble)
+        case Some(rasterB:RasterMapOp) => varB = Some(rasterB)
+        case Some(double:Double) => constB = Some(double)
+        case Some(int:Int) => constB = Some(int.toDouble)
+        case Some(long:Long) => constB = Some(long.toDouble)
+        case Some(float:Float) => constB = Some(float.toDouble)
+        case Some(short:Short) => constB = Some(short.toDouble)
         case _ => throw new ParserException(paramB + "\" is not a raster or constant")
       }
     }
   }
 
-  private[binarymath] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
+  private[binarymath] def this(node:ParserNode, variables:String => Option[ParserNode]) = {
     this()
     initialize(node, variables)
   }
 
-  override private[binarymath] def function(a: Double, b: Double): Double = a / b
+  override private[binarymath] def function(a:Double, b:Double):Double = a / b
 }

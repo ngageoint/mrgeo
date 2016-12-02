@@ -20,25 +20,25 @@ import java.io.IOException;
 
 public class DataProviderException extends IOException
 {
-  private static final long serialVersionUID = 1L;
+private static final long serialVersionUID = 1L;
 
-  public DataProviderException()
-  {
-    super();
-  }
+public DataProviderException()
+{
+  super();
+}
 
-  public DataProviderException(final String msg)
-  {
-    super(msg);
-  }
+public DataProviderException(final String msg)
+{
+  super(msg);
+}
 
-  public DataProviderException(final String msg, final Throwable cause)
-  {
-    super(msg, cause);
-  }
+public DataProviderException(final String msg, final Throwable cause)
+{
+  super(msg, cause);
+}
 
-  public DataProviderException(final Throwable cause)
-  {
-    super(cause);
-  }
+public DataProviderException(final Throwable cause)
+{
+  super(cause);
+}
 }

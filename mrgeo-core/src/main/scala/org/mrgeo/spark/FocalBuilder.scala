@@ -16,8 +16,8 @@
 
 package org.mrgeo.spark
 
-import org.apache.spark.rdd.{PairRDDFunctions, RDD}
 import org.apache.spark.SparkContext
+import org.apache.spark.rdd.{PairRDDFunctions, RDD}
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.utils.Logging
@@ -28,7 +28,8 @@ import scala.collection.mutable.ListBuffer
 object FocalBuilder extends Logging {
 
   def create(tiles:RDD[(TileIdWritable, RasterWritable)],
-      bufferX:Int, bufferY:Int, bounds:Bounds, zoom:Int, nodatas:Array[Double], context:SparkContext):RDD[(TileIdWritable, RasterWritable)] = {
+             bufferX:Int, bufferY:Int, bounds:Bounds, zoom:Int, nodatas:Array[Double],
+             context:SparkContext):RDD[(TileIdWritable, RasterWritable)] = {
 
     val sample = RasterWritable.toMrGeoRaster(tiles.first()._2)
 
@@ -58,9 +59,9 @@ object FocalBuilder extends Logging {
       val srcW = src.width()
       val srcH = src.height()
 
-      var y: Int = -offsetY
+      var y:Int = -offsetY
       while (y <= offsetY) {
-        var x: Int = -offsetX
+        var x:Int = -offsetX
         while (x <= offsetX) {
           val to = new Tile(from.tx + x, from.ty + y)
           if (to.ty >= minY && to.ty <= maxY && to.tx >= minX && to.tx <= maxX) {
@@ -102,7 +103,9 @@ object FocalBuilder extends Logging {
 
             val piece = src.clip(srcX, srcY, width, height)
 
-            pieces.append((new TileIdWritable(TMSUtils.tileid(to.tx, to.ty, zoom)), (dstX, dstY, width, height, RasterWritable.toWritable(piece))))
+            pieces.append(
+              (new TileIdWritable(TMSUtils.tileid(to.tx, to.ty, zoom)), (dstX, dstY, width, height, RasterWritable
+                  .toWritable(piece))))
           }
           x += 1
         }

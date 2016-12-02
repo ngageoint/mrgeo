@@ -17,23 +17,22 @@
 package org.mrgeo.hdfs.input.image;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.*;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
+import org.mrgeo.data.image.ImageInputFormatContext;
 import org.mrgeo.data.image.MrsPyramidMetadataReader;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.data.image.ImageInputFormatContext;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
 import org.mrgeo.hdfs.input.MapFileFilter;
 import org.mrgeo.image.MrsPyramid;
-import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 import org.mrgeo.image.MrsPyramidMetadata;
+import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.TMSUtils;
-import org.mrgeo.utils.tms.TileBounds;
 import org.mrgeo.utils.tms.Tile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,10 +42,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class HdfsMrsPyramidInputFormat extends InputFormat<TileIdWritable,RasterWritable>
+public class HdfsMrsPyramidInputFormat extends InputFormat<TileIdWritable, RasterWritable>
 {
 private static Logger log = LoggerFactory.getLogger(HdfsMrsPyramidInputFormat.class);
-  private String input;
+private String input;
 
 /**
  * This constructor should only be used by the Hadoop framework on the data
@@ -60,15 +59,7 @@ public HdfsMrsPyramidInputFormat()
 
 public HdfsMrsPyramidInputFormat(final String input)
 {
-    this.input = input;
-}
-
-@Override
-public RecordReader<TileIdWritable, RasterWritable> createRecordReader(final InputSplit split,
-    final TaskAttemptContext context)
-    throws IOException
-{
-  return new HdfsMrsPyramidRecordReader();
+  this.input = input;
 }
 
 public static String getZoomName(final HdfsMrsImageDataProvider dp,
@@ -89,6 +80,25 @@ public static String getZoomName(final HdfsMrsImageDataProvider dp,
     log.error("Error getting zoom name", e);
   }
   return null;
+}
+
+public static void setInputInfo(final Job job, final String inputWithZoom) throws IOException
+{
+//    job.setInputFormatClass(HdfsMrsPyramidInputFormat.class);
+
+  //final String scannedInput = inputs.get(0);
+  //FileInputFormat.addInputPath(job, new Path(scannedInput));
+
+  FileInputFormat.addInputPath(job, new Path(inputWithZoom));
+  FileInputFormat.setInputPathFilter(job, MapFileFilter.class);
+}
+
+@Override
+public RecordReader<TileIdWritable, RasterWritable> createRecordReader(final InputSplit split,
+    final TaskAttemptContext context)
+    throws IOException
+{
+  return new HdfsMrsPyramidRecordReader();
 }
 
 @Override
@@ -151,7 +161,7 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
       else
       {
         result.add(new TiledInputSplit(new FileSplit(dataFile, 0, 0, null), startTileId, endTileId,
-                                       zoom, metadata.getTilesize()));
+            zoom, metadata.getTilesize()));
       }
     }
     else
@@ -159,7 +169,7 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
       // If no bounds were specified by the caller, then we include
       // all splits.
       result.add(new TiledInputSplit(new FileSplit(dataFile, 0, 0, null),
-                                     startTileId, endTileId, zoom, metadata.getTilesize()));
+          startTileId, endTileId, zoom, metadata.getTilesize()));
     }
   }
 
@@ -186,24 +196,14 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
   return result;
 }
 
-  public static void setInputInfo(final Job job, final String inputWithZoom) throws IOException
+protected HdfsMrsImageDataProvider createHdfsMrsImageDataProvider(Configuration config)
 {
-//    job.setInputFormatClass(HdfsMrsPyramidInputFormat.class);
-
-  //final String scannedInput = inputs.get(0);
-  //FileInputFormat.addInputPath(job, new Path(scannedInput));
-
-  FileInputFormat.addInputPath(job, new Path(inputWithZoom));
-  FileInputFormat.setInputPathFilter(job, MapFileFilter.class);
+  return new HdfsMrsImageDataProvider(config, input, null);
 }
 
-
-  protected HdfsMrsImageDataProvider createHdfsMrsImageDataProvider(Configuration config) {
-    return new HdfsMrsImageDataProvider(config, input, null);
-  }
-
-  protected org.mrgeo.hdfs.tile.FileSplit createFileSplit() {
-    return new org.mrgeo.hdfs.tile.FileSplit();
-  }
+protected org.mrgeo.hdfs.tile.FileSplit createFileSplit()
+{
+  return new org.mrgeo.hdfs.tile.FileSplit();
+}
 
 }

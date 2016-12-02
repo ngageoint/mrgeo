@@ -24,225 +24,229 @@ public class TileBounds implements Serializable
 {
 private static final long serialVersionUID = 1L;
 
-  public long n;
-  public long s;
-  public long e;
-  public long w;
+public long n;
+public long s;
+public long e;
+public long w;
 
-  public TileBounds(final long tx, final long ty)
+public TileBounds(final long tx, final long ty)
+{
+  this.n = ty;
+  this.s = ty;
+  this.e = tx;
+  this.w = tx;
+}
+
+public TileBounds(final long w, final long s, final long e, final long n)
+{
+  this.n = n;
+  this.s = s;
+  this.e = e;
+  this.w = w;
+}
+
+public TileBounds(final Tile t)
+{
+  this.n = t.ty;
+  this.s = t.ty;
+  this.e = t.tx;
+  this.w = t.tx;
+}
+
+public static TileBounds convertFromLongRectangle(final LongRectangle rectangle)
+{
+  return new TileBounds(rectangle.getMinX(), rectangle.getMinY(), rectangle.getMaxX(),
+      rectangle.getMaxY());
+}
+
+public static LongRectangle convertToLongRectangle(final TileBounds bounds)
+{
+  return new LongRectangle(bounds.w, bounds.s, bounds.e, bounds.n);
+}
+
+public static TileBounds fromCommaString(String str)
+{
+  String[] split = str.split(",");
+
+  long w = Long.parseLong(split[0]);
+  long s = Long.parseLong(split[1]);
+  long e = Long.parseLong(split[2]);
+  long n = Long.parseLong(split[3]);
+
+  return new TileBounds(w, s, e, n);
+}
+
+public long width()
+{
+  return e - w + 1;
+}
+
+public long height()
+{
+  return n - s + 1;
+}
+
+public LongRectangle toLongRectangle()
+{
+  return new LongRectangle(w, s, e, n);
+}
+
+public void expand(final long tx, final long ty)
+{
+  if (n < ty)
   {
-    this.n = ty;
-    this.s = ty;
-    this.e = tx;
-    this.w = tx;
+    n = ty;
   }
-
-  public TileBounds(final long w, final long s, final long e, final long n)
+  if (s > ty)
   {
-    this.n = n;
-    this.s = s;
-    this.e = e;
-    this.w = w;
+    s = ty;
   }
 
-  public TileBounds(final Tile t)
+  if (w > tx)
   {
-    this.n = t.ty;
-    this.s = t.ty;
-    this.e = t.tx;
-    this.w = t.tx;
+    w = tx;
   }
 
-  public long width()
+  if (e < tx)
   {
-    return e - w + 1;
+    e = tx;
   }
 
-  public long height()
+}
+
+public void expand(final long west, final long south, final long east, final long north)
+{
+  if (n < north)
   {
-    return n - s + 1;
+    n = north;
   }
-
-  public LongRectangle toLongRectangle()
+  if (s > south)
   {
-    return new LongRectangle(w, s, e, n);
+    s = south;
   }
 
-  public static TileBounds convertFromLongRectangle(final LongRectangle rectangle)
+  if (w > west)
   {
-    return new TileBounds(rectangle.getMinX(), rectangle.getMinY(), rectangle.getMaxX(),
-        rectangle.getMaxY());
+    w = west;
   }
 
-  public static LongRectangle convertToLongRectangle(final TileBounds bounds)
+  if (e < east)
   {
-    return new LongRectangle(bounds.w, bounds.s, bounds.e, bounds.n);
+    e = east;
   }
 
-  public void expand(final long tx, final long ty)
+}
+
+public void expand(final Tile t)
+{
+  if (n < t.ty)
   {
-    if (n < ty)
-    {
-      n = ty;
-    }
-    if (s > ty)
-    {
-      s = ty;
-    }
-
-    if (w > tx)
-    {
-      w = tx;
-    }
-
-    if (e < tx)
-    {
-      e = tx;
-    }
-
+    n = t.ty;
   }
-
-  public void expand(final long west, final long south, final long east, final long north)
+  if (s > t.ty)
   {
-    if (n < north)
-    {
-      n = north;
-    }
-    if (s > south)
-    {
-      s = south;
-    }
-
-    if (w > west)
-    {
-      w = west;
-    }
-
-    if (e < east)
-    {
-      e = east;
-    }
-
+    s = t.ty;
   }
 
-  public void expand(final Tile t)
+  if (w > t.tx)
   {
-    if (n < t.ty)
-    {
-      n = t.ty;
-    }
-    if (s > t.ty)
-    {
-      s = t.ty;
-    }
-
-    if (w > t.tx)
-    {
-      w = t.tx;
-    }
-
-    if (e < t.tx)
-    {
-      e = t.tx;
-    }
-
+    w = t.tx;
   }
 
-  public void expand(final TileBounds b)
+  if (e < t.tx)
   {
-    if (n < b.n)
-    {
-      n = b.n;
-    }
-    if (s > b.s)
-    {
-      s = b.s;
-    }
-
-    if (w > b.w)
-    {
-      w = b.w;
-    }
-
-    if (e < b.e)
-    {
-      e = b.e;
-    }
+    e = t.tx;
   }
 
-  @Override
-  public String toString()
+}
+
+public void expand(final TileBounds b)
+{
+  if (n < b.n)
   {
-    return "TileBounds [w=" + w + ", s=" + s + ", e=" + e + ", n=" + n + "]";
+    n = b.n;
   }
-
-  public String toCommaString()
+  if (s > b.s)
   {
-    return w + "," + s + "," + e + "," + n;
+    s = b.s;
   }
 
-  public static TileBounds fromCommaString(String str) {
-    String[] split = str.split(",");
-
-    long w = Long.parseLong(split[0]);
-    long s = Long.parseLong(split[1]);
-    long e = Long.parseLong(split[2]);
-    long n = Long.parseLong(split[3]);
-
-    return new TileBounds(w, s, e, n);
-  }
-
-  public boolean contains(final long tx, final long ty) {
-    return contains(new Tile(tx, ty), true);
-  }
-
-  public boolean contains(final long tx, final long ty, final boolean includeAdjacent) {
-    return contains(new Tile(tx, ty), includeAdjacent);
-  }
-
-  public boolean contains(final Tile tile) {
-    return contains(tile, true);
-  }
-
-  public boolean contains(final Tile tile, final boolean includeAdjacent) {
-    if (includeAdjacent)
-    {
-      return (tile.tx >= w && tile.ty >= s && tile.tx <= e && tile.ty <= n);
-    }
-    else
-    {
-      return (tile.tx > w && tile.ty > s && tile.tx < e && tile.ty < n);
-    }
-  }
-
-  public TileBounds intersection(final TileBounds b)
+  if (w > b.w)
   {
-    return intersection(b, true);
+    w = b.w;
   }
 
-  /**
-   * If the two boundaries are adjacent, this would return true iff includeAdjacent is true
-   *
-   */
-  public TileBounds intersection(final TileBounds b, final boolean includeAdjacent)
+  if (e < b.e)
   {
+    e = b.e;
+  }
+}
 
-    final TileBounds
-        intersectBounds = new TileBounds(Math.max(this.w, b.w), Math.max(this.s, b.s), Math
-        .min(this.e, b.e), Math.min(this.n, b.n));
-    if (includeAdjacent)
-    {
-      if (intersectBounds.w <= intersectBounds.e && intersectBounds.s <= intersectBounds.n)
-      {
-        return intersectBounds;
-      }
-    }
-    else if (intersectBounds.w < intersectBounds.e && intersectBounds.s < intersectBounds.n)
+@Override
+public String toString()
+{
+  return "TileBounds [w=" + w + ", s=" + s + ", e=" + e + ", n=" + n + "]";
+}
+
+public String toCommaString()
+{
+  return w + "," + s + "," + e + "," + n;
+}
+
+public boolean contains(final long tx, final long ty)
+{
+  return contains(new Tile(tx, ty), true);
+}
+
+public boolean contains(final long tx, final long ty, final boolean includeAdjacent)
+{
+  return contains(new Tile(tx, ty), includeAdjacent);
+}
+
+public boolean contains(final Tile tile)
+{
+  return contains(tile, true);
+}
+
+public boolean contains(final Tile tile, final boolean includeAdjacent)
+{
+  if (includeAdjacent)
+  {
+    return (tile.tx >= w && tile.ty >= s && tile.tx <= e && tile.ty <= n);
+  }
+  else
+  {
+    return (tile.tx > w && tile.ty > s && tile.tx < e && tile.ty < n);
+  }
+}
+
+public TileBounds intersection(final TileBounds b)
+{
+  return intersection(b, true);
+}
+
+/**
+ * If the two boundaries are adjacent, this would return true iff includeAdjacent is true
+ */
+public TileBounds intersection(final TileBounds b, final boolean includeAdjacent)
+{
+
+  final TileBounds
+      intersectBounds = new TileBounds(Math.max(this.w, b.w), Math.max(this.s, b.s), Math
+      .min(this.e, b.e), Math.min(this.n, b.n));
+  if (includeAdjacent)
+  {
+    if (intersectBounds.w <= intersectBounds.e && intersectBounds.s <= intersectBounds.n)
     {
       return intersectBounds;
     }
-
-    return null;
   }
+  else if (intersectBounds.w < intersectBounds.e && intersectBounds.s < intersectBounds.n)
+  {
+    return intersectBounds;
+  }
+
+  return null;
+}
 
 }

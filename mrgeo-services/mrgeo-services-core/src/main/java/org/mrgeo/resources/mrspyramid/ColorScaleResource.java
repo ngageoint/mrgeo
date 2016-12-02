@@ -31,7 +31,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Providers;
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -50,9 +49,10 @@ Providers providers;
 
 @Context
 MrsPyramidService service;
+
 /**
  * Recursively returns all MrGeo color scale files in the file system.
- *
+ * <p>
  * I was unable to return GenericEntity<List<String>> as JSON, so returning a class with a
  * string list member variable here instead.
  *
@@ -76,7 +76,6 @@ public ColorScaleList get() throws MrsPyramidServiceException
 /**
  * This is a poorly differentiated REST path, it really should have been /swatch to separate
  * it in namespace from the above. As is, only the query param separates these two.
- *
  */
 @SuppressFBWarnings(value = "JAXRS_ENDPOINT", justification = "verified")
 @GET
@@ -87,7 +86,8 @@ public Response getColorScaleSwatch(@PathParam("path") String colorScalePath,
     @DefaultValue("20") @QueryParam("height") int height
 )
 {
-  try {
+  try
+  {
     getService();
 
     String format = "png";
@@ -114,7 +114,8 @@ public Response getColorScaleLegend(@PathParam("name") String name,
     @DefaultValue("") @QueryParam("units") String units
 )
 {
-  try {
+  try
+  {
     getService();
 
     ColorScale cs = service.getColorScaleFromName(name);
@@ -124,7 +125,8 @@ public Response getColorScaleLegend(@PathParam("name") String name,
     String floatStyle;
     int offset;
     StringBuilder textStyle = new StringBuilder();
-    if (width > height) {
+    if (width > height)
+    {
       String rotate = "90deg";
       String origin = "left top;";
       position = "left";
@@ -151,11 +153,13 @@ public Response getColorScaleLegend(@PathParam("name") String name,
           .append("transform: rotate(").append(rotate).append(");")
           .append("transform-origin: ").append(origin);
       offset = -(fontSize);
-    } else {
+    }
+    else
+    {
       position = "top";
       dimension = height;
       floatStyle = "float:left;";
-      offset = (fontSize/2);
+      offset = (fontSize / 2);
     }
 
 //          String relativePath = "../";
@@ -166,43 +170,58 @@ public Response getColorScaleLegend(@PathParam("name") String name,
     StringBuilder html = new StringBuilder();
 
     html.append("<div>");
-    html.append("<div style='").append(floatStyle).append(" width:").append(width).append("; height:").append(height).append(";'>")
+    html.append("<div style='").append(floatStyle).append(" width:").append(width).append("; height:").append(height)
+        .append(";'>")
         .append("<img src='")
 //                  .append(relativePath)
         .append(name)
         .append("?width=").append(width).append("&amp;height=").append(height)
         .append("' alt='color scale'/>")
         .append("</div>");
-    html.append("<div style='position:relative; font:").append(fontSize).append("px arial,sans-serif; ").append(floatStyle).append(" width:").append(width).append("; height:").append(width).append(";'>");
+    html.append("<div style='position:relative; font:").append(fontSize).append("px arial,sans-serif; ")
+        .append(floatStyle).append(" width:").append(width).append("; height:").append(width).append(";'>");
     //This adds value markers in a linear fashion for the same number of color breaks
     int numBreaks = cs.keySet().size();
-    Double deltaValue = (max-min) / numBreaks;
+    Double deltaValue = (max - min) / numBreaks;
     int deltaPixel = dimension / numBreaks;
-    if (units.equalsIgnoreCase("likelihood")) {
+    if (units.equalsIgnoreCase("likelihood"))
+    {
       String top;
       String bottom;
-      if (width > height) {
+      if (width > height)
+      {
         top = "Lower Likelihood";
         bottom = "Higher Likelihood";
         offset = fontSize;
-      } else {
+      }
+      else
+      {
         top = "Higher Likelihood";
         bottom = "Lower Likelihood";
-        offset = (fontSize*2);
+        offset = (fontSize * 2);
       }
 
-      html.append("<div style='width:").append(deltaPixel).append("; position:absolute; ").append(position).append(":0;'>")
+      html.append("<div style='width:").append(deltaPixel).append("; position:absolute; ").append(position)
+          .append(":0;'>")
           .append(top)
           .append("</div>")
-          .append("<div style='width:").append(deltaPixel).append("; position:absolute; ").append(position).append(":").append(dimension-offset).append(";'>")
+          .append("<div style='width:").append(deltaPixel).append("; position:absolute; ").append(position).append(":")
+          .append(dimension - offset).append(";'>")
           .append(bottom)
           .append("</div>");
-    } else {
-      for (int i=0; i<=numBreaks; i++) {
-        html.append("<div style='").append(textStyle.toString()).append("position:absolute; ").append(position).append(":").append((deltaPixel * i) - offset).append(";'>");
-        if (width > height) {
+    }
+    else
+    {
+      for (int i = 0; i <= numBreaks; i++)
+      {
+        html.append("<div style='").append(textStyle.toString()).append("position:absolute; ").append(position)
+            .append(":").append((deltaPixel * i) - offset).append(";'>");
+        if (width > height)
+        {
           html.append(service.formatValue(min + (deltaValue * i), units));
-        } else {
+        }
+        else
+        {
           html.append(service.formatValue(max - (deltaValue * i), units));
         }
         html.append("</div>");
@@ -229,7 +248,9 @@ private void getService()
     ContextResolver<MrsPyramidService> resolver =
         providers.getContextResolver(MrsPyramidService.class, MediaType.WILDCARD_TYPE);
     if (resolver != null)
+    {
       service = resolver.getContext(MrsPyramidService.class);
+    }
   }
 }
 

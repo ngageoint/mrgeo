@@ -4,14 +4,12 @@
 # Inspired by: http://effbot.org/zone/python-code-generator.htm
 #
 from __future__ import print_function
-import string
 
+import string
 import sys
-import traceback
 
 
 class CodeGenerator(object):
-
     def __len__(self):
         return len(self._code)
 
@@ -44,7 +42,7 @@ class CodeGenerator(object):
         try:
             compiled = {}
             exec compile(code, method_name + ".py", "exec") in compiled
-            #exec self.generate() in compiled
+            # exec self.generate() in compiled
             return compiled
         except SyntaxError as se:
             ex_cls, ex, tb = sys.exc_info()

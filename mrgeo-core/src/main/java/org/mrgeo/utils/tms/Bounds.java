@@ -16,22 +16,18 @@
 
 package org.mrgeo.utils.tms;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.vividsolutions.jts.geom.Envelope;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import java.io.*;
+import java.io.Serializable;
 import java.util.Map;
 
 public class Bounds implements Serializable, Cloneable
 {
-private static final long serialVersionUID = 1L;
-
 public static final Bounds WORLD = new Bounds(-180, -90, 180, 90);
-
+private static final long serialVersionUID = 1L;
 final public double w;
 final public double s;
 final public double n;
@@ -97,20 +93,6 @@ public Bounds(Map<String, Object> delegate)
   this.w = w;
 }
 
-@Override
-@SuppressFBWarnings(value = "CN_IDIOM_NO_SUPER_CALL", justification = "No super.clone() to call")
-public Bounds clone()
-{
-  return new Bounds(w, s, e, n);
-}
-
-
-
-public Envelope toEnvelope()
-{
-  return new Envelope(w, e, s, n);
-}
-
 @JsonIgnore
 public static Bounds combine(Bounds... bounds)
 {
@@ -129,6 +111,30 @@ public static Bounds combine(Bounds... bounds)
   return answer;
 }
 
+@JsonIgnore
+public static Bounds fromCommaString(String str)
+{
+  String[] split = str.split(",");
+
+  double w = Double.parseDouble(split[0]);
+  double s = Double.parseDouble(split[1]);
+  double e = Double.parseDouble(split[2]);
+  double n = Double.parseDouble(split[3]);
+
+  return new Bounds(w, s, e, n);
+}
+
+@Override
+@SuppressFBWarnings(value = "CN_IDIOM_NO_SUPER_CALL", justification = "No super.clone() to call")
+public Bounds clone()
+{
+  return new Bounds(w, s, e, n);
+}
+
+public Envelope toEnvelope()
+{
+  return new Envelope(w, e, s, n);
+}
 
 public boolean contains(final Bounds b)
 {
@@ -305,19 +311,6 @@ public String toString()
 public String toCommaString()
 {
   return w + "," + s + "," + e + "," + n;
-}
-
-@JsonIgnore
-public static Bounds fromCommaString(String str)
-{
-  String[] split = str.split(",");
-
-  double w = Double.parseDouble(split[0]);
-  double s = Double.parseDouble(split[1]);
-  double e = Double.parseDouble(split[2]);
-  double n = Double.parseDouble(split[3]);
-
-  return new Bounds(w, s, e, n);
 }
 
 public Bounds union(final Bounds b)

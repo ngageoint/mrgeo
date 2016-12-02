@@ -4,9 +4,9 @@ import java.awt.image.DataBuffer
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
-import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
-import org.mrgeo.data.raster.{MrGeoRaster, RasterUtils, RasterWritable}
+import org.apache.spark.{SparkConf, SparkContext}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.JobArguments
@@ -17,23 +17,23 @@ import org.mrgeo.utils.tms.TMSUtils
 import org.mrgeo.utils.{LatLng, SparkUtils}
 
 object Slope8MapOp extends MapOpRegistrar {
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("slope8", "directionalslope", "dirslope")
   }
 
-  def create(raster:RasterMapOp, units:String="rad"):MapOp = {
+  def create(raster:RasterMapOp, units:String = "rad"):MapOp = {
     new Slope8MapOp(Some(raster), units, true)
   }
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new Slope8MapOp(node, true, variables)
 }
 
 // Dummy class definition to allow the python reflection to find the Slope mapop
 class Slope8MapOp extends RasterMapOp with Externalizable {
 
-  final val DEG_2_RAD: Double = 0.0174532925
-  final val RAD_2_DEG: Double = 57.2957795
+  final val DEG_2_RAD:Double = 0.0174532925
+  final val RAD_2_DEG:Double = 57.2957795
   final val TWO_PI:Double = 2 * Math.PI
   final val THREE_PI_OVER_2:Double = (3.0 * Math.PI) / 2
 
@@ -43,20 +43,67 @@ class Slope8MapOp extends RasterMapOp with Externalizable {
 
   private var rasterRDD:Option[RasterRDD] = None
 
+  override def rdd():Option[RasterRDD] = rasterRDD
+
+  override def setup(job:JobArguments, conf:SparkConf):Boolean = {
+    true
+  }
+
+  override def execute(context:SparkContext):Boolean = {
+    val input:RasterMapOp = inputMapOp getOrElse (throw new IOException("Input MapOp not valid!"))
+
+    val meta = input.metadata() getOrElse
+               (throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
+    val rdd = input.rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + inputMapOp.getClass.getName))
+
+    val zoom = meta.getMaxZoomLevel
+    val tilesize = meta.getTilesize
+
+    val tb = TMSUtils.boundsToTile(meta.getBounds, zoom, tilesize)
+
+    val nodatas = meta.getDefaultValuesNumber
+
+    val bufferX = 1
+    val bufferY = 1
+
+    val tiles = FocalBuilder.create(rdd, bufferX, bufferY, meta.getBounds, zoom, nodatas, context)
+
+    rasterRDD =
+        Some(RasterRDD(calculate(tiles, bufferX, bufferY, nodatas(0).doubleValue(), zoom, tilesize)))
+
+
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, Array.fill(8)(Double.NaN),
+      bounds = meta.getBounds, calcStats = false))
+
+    true
+  }
+
+  override def teardown(job:JobArguments, conf:SparkConf):Boolean = {
+    true
+  }
+
+  override def readExternal(in:ObjectInput):Unit = {
+    units = in.readUTF()
+  }
+
+  override def writeExternal(out:ObjectOutput):Unit = {
+    out.writeUTF(units)
+  }
+
   private[mapalgebra] def this(inputMapOp:Option[RasterMapOp], units:String, isSlope:Boolean) = {
     this()
 
     this.inputMapOp = inputMapOp
 
     if (!(units.equalsIgnoreCase("deg") || units.equalsIgnoreCase("rad") || units.equalsIgnoreCase("gradient") ||
-        units.equalsIgnoreCase("percent"))) {
+          units.equalsIgnoreCase("percent"))) {
       throw new ParserException("units must be \"deg\", \"rad\", \"gradient\", or \"percent\".")
     }
     this.units = units
 
   }
 
-  private[mapalgebra] def this(node:ParserNode, isSlope:Boolean, variables: String => Option[ParserNode]) = {
+  private[mapalgebra] def this(node:ParserNode, isSlope:Boolean, variables:String => Option[ParserNode]) = {
     this()
 
     if (node.getNumChildren < 1) {
@@ -70,25 +117,20 @@ class Slope8MapOp extends RasterMapOp with Externalizable {
 
     if (node.getNumChildren == 2) {
       units = MapOp.decodeString(node.getChild(1)) match {
-      case Some(s) => s
-      case _ => throw new ParserException("Error decoding string")
+        case Some(s) => s
+        case _ => throw new ParserException("Error decoding string")
       }
 
       if (!(units.equalsIgnoreCase("deg") || units.equalsIgnoreCase("rad") || units.equalsIgnoreCase("gradient") ||
-          units.equalsIgnoreCase("percent"))) {
+            units.equalsIgnoreCase("percent"))) {
         throw new ParserException("units must be \"deg\", \"rad\", \"gradient\", or \"percent\".")
       }
 
     }
   }
 
-  override def rdd(): Option[RasterRDD] = rasterRDD
-
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = {
-    true
-  }
-
-  private def calculate(tiles:RDD[(TileIdWritable, RasterWritable)], bufferX:Int, bufferY: Int, nodata:Double, zoom:Int, tilesize:Int) = {
+  private def calculate(tiles:RDD[(TileIdWritable, RasterWritable)], bufferX:Int, bufferY:Int, nodata:Double,
+                        zoom:Int, tilesize:Int) = {
 
     tiles.map(tile => {
 
@@ -116,14 +158,19 @@ class Slope8MapOp extends RasterMapOp with Externalizable {
       val in_br = 8
 
 
-      val dist =  TMSUtils.resolution(zoom, tilesize) * LatLng.METERS_PER_DEGREE
+      val dist = TMSUtils.resolution(zoom, tilesize) * LatLng.METERS_PER_DEGREE
       val diagdist = Math.sqrt(2.0 * dist * dist)
 
       //val up = new Vector3d(0, 0, 1.0)  // z (up) direction
 
-      def isnodata(v:Double, nodata:Double):Boolean = if (nodata.isNaN) v.isNaN  else v == nodata
+      def isnodata(v:Double, nodata:Double):Boolean = if (nodata.isNaN) {
+        v.isNaN
+      }
+      else {
+        v == nodata
+      }
 
-      def calculateOffsets(x: Int, y: Int): Array[(Double, Double)] = {
+      def calculateOffsets(x:Int, y:Int):Array[(Double, Double)] = {
         val vectors = Array.ofDim[(Double, Double)](8)
 
         // if the origin pixel is nodata, the vectors are nodata
@@ -140,9 +187,9 @@ class Slope8MapOp extends RasterMapOp with Externalizable {
         // get the elevations of the 3x3 grid of elevations, if a neighbor is nodata, make the elevation
         // the same as the origin, this makes the slopes a little prettier
         var ndx = 0
-        var dy: Int = y - 1
+        var dy:Int = y - 1
         while (dy <= y + 1) {
-          var dx: Int = x - 1
+          var dx:Int = x - 1
           while (dx <= x + 1) {
             // just skip the center
             if (ndx != in_c) {
@@ -222,8 +269,9 @@ class Slope8MapOp extends RasterMapOp with Externalizable {
         vectors
       }
 
-      @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
-      def calculateAngle(offset: (Double, Double)): Float = {
+      @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"),
+        justification = "Scala generated code")
+      def calculateAngle(offset:(Double, Double)):Float = {
         if (offset._1.isNaN || offset._1 == 0.0) {
           return Float.NaN
         }
@@ -242,10 +290,10 @@ class Slope8MapOp extends RasterMapOp with Externalizable {
         }
 
         units match {
-        case "deg"  => (theta * RAD_2_DEG).toFloat
-        case "rad" => theta.toFloat
-        case "percent" => (Math.tan(theta) * 100.0).toFloat
-        case _ => Math.tan(theta).toFloat
+          case "deg" => (theta * RAD_2_DEG).toFloat
+          case "rad" => theta.toFloat
+          case "percent" => (Math.tan(theta) * 100.0).toFloat
+          case _ => Math.tan(theta).toFloat
         }
       }
 
@@ -254,9 +302,9 @@ class Slope8MapOp extends RasterMapOp with Externalizable {
 
       val answer = MrGeoRaster.createEmptyRaster(width, height, 8, DataBuffer.TYPE_FLOAT) // , Float.NaN)
 
-      var y: Int = 0
+      var y:Int = 0
       while (y < height) {
-        var x: Int = 0
+        var x:Int = 0
         while (x < width) {
           val vectors = calculateOffsets(x + bufferX, y + bufferY)
 
@@ -272,47 +320,6 @@ class Slope8MapOp extends RasterMapOp with Externalizable {
 
       (new TileIdWritable(tile._1), RasterWritable.toWritable(answer))
     })
-  }
-
-
-  override def execute(context: SparkContext): Boolean = {
-    val input:RasterMapOp = inputMapOp getOrElse(throw new IOException("Input MapOp not valid!"))
-
-    val meta = input.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
-    val rdd = input.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + inputMapOp.getClass.getName))
-
-    val zoom = meta.getMaxZoomLevel
-    val tilesize = meta.getTilesize
-
-    val tb = TMSUtils.boundsToTile(meta.getBounds, zoom, tilesize)
-
-    val nodatas = meta.getDefaultValuesNumber
-
-    val bufferX = 1
-    val bufferY = 1
-
-    val tiles = FocalBuilder.create(rdd, bufferX, bufferY, meta.getBounds, zoom, nodatas, context)
-
-    rasterRDD =
-        Some(RasterRDD(calculate(tiles, bufferX, bufferY, nodatas(0).doubleValue(), zoom, tilesize)))
-
-
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, Array.fill(8)(Double.NaN),
-      bounds = meta.getBounds, calcStats = false))
-
-    true
-  }
-
-  override def teardown(job: JobArguments, conf: SparkConf): Boolean = {
-    true
-  }
-
-  override def readExternal(in: ObjectInput): Unit = {
-    units = in.readUTF()
-  }
-
-  override def writeExternal(out: ObjectOutput): Unit = {
-    out.writeUTF(units)
   }
 
 }

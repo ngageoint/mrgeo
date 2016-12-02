@@ -25,33 +25,33 @@ import org.slf4j.LoggerFactory;
  */
 public class JpegImageRenderer extends ImageRendererAbstract
 {
-  @SuppressWarnings("unused")
-  private static final Logger log = LoggerFactory.getLogger(JpegImageRenderer.class);
+@SuppressWarnings("unused")
+private static final Logger log = LoggerFactory.getLogger(JpegImageRenderer.class);
 
-  public JpegImageRenderer()
-  {
-    super();
-  }
+public JpegImageRenderer()
+{
+  super();
+}
 
-  public JpegImageRenderer(final SpatialReference srs)
-  {
-    super(srs);
-  }
+public JpegImageRenderer(final SpatialReference srs)
+{
+  super(srs);
+}
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.mrgeo.services.wms.ImageRenderer#getMimeType()
-   */
-  @Override
-  public String[] getMimeTypes()
-  {
-    return new String[] { "image/jpeg", "image/jpg" };
-  }
+/*
+ * (non-Javadoc)
+ *
+ * @see org.mrgeo.services.wms.ImageRenderer#getMimeType()
+ */
+@Override
+public String[] getMimeTypes()
+{
+  return new String[]{"image/jpeg", "image/jpg"};
+}
 
-  @Override
-  public String[] getWmsFormats()
-  {
-    return new String[] { "jpeg", "jpg" };
-  }
+@Override
+public String[] getWmsFormats()
+{
+  return new String[]{"jpeg", "jpg"};
+}
 }

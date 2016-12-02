@@ -29,10 +29,10 @@ import javax.ws.rs.core.Response;
  */
 public interface RasterResponseBuilder
 {
-  String getFormatSuffix();
+String getFormatSuffix();
 
-  String getMimeType();
+String getMimeType();
 
-  Response getResponse(String pyrName, Bounds bounds, int width, int height, ColorScale cs,
+Response getResponse(String pyrName, Bounds bounds, int width, int height, ColorScale cs,
     String requestUrl, int zoomLevel, ProviderProperties providerProperties);
 }

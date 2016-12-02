@@ -30,23 +30,23 @@ import javax.ws.rs.core.Response;
 @SuppressWarnings("all") // Test code, not included in production
 public class MissingPyramidsTest extends WmsGeneratorTestAbstract
 {
-  @SuppressWarnings("unused")
-  private static final Logger log =
-      LoggerFactory.getLogger(MissingPyramidsTest.class);
+@SuppressWarnings("unused")
+private static final Logger log =
+    LoggerFactory.getLogger(MissingPyramidsTest.class);
 
-  @BeforeClass
-  public static void setUpForJUnit()
+@BeforeClass
+public static void setUpForJUnit()
+{
+  try
   {
-    try
-    {
-      baselineInput = TestUtils.composeInputDir(MissingPyramidsTest.class);
-      WmsGeneratorTestAbstract.setUpForJUnit();
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-    }
+    baselineInput = TestUtils.composeInputDir(MissingPyramidsTest.class);
+    WmsGeneratorTestAbstract.setUpForJUnit();
   }
+  catch (Exception e)
+  {
+    e.printStackTrace();
+  }
+}
 
   /*
    * These should return an empty image, since we don't support missing zoom levels above what
@@ -55,283 +55,62 @@ public class MissingPyramidsTest extends WmsGeneratorTestAbstract
    * this test.
    */
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMapPngNonExistingZoomLevelAboveWithoutPyramids() throws Exception
-  {
-    String contentType = "image/png";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmap")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid")
-        .queryParam("FORMAT", contentType)
-        //pyramid only has a single zoom level = 10; pass in zoom level = 8
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .request().get();
+@Test
+@Category(IntegrationTest.class)
+public void testGetMapPngNonExistingZoomLevelAboveWithoutPyramids() throws Exception
+{
+  String contentType = "image/png";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmap")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid")
+      .queryParam("FORMAT", contentType)
+      //pyramid only has a single zoom level = 10; pass in zoom level = 8
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+      .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .request().get();
 
-    processImageResponse(response, contentType, "png");
-  }
+  processImageResponse(response, contentType, "png");
+}
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMapJpgNonExistingZoomLevelAboveWithoutPyramids() throws Exception
-  {
-    String contentType = "image/jpeg";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmap")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid")
-        .queryParam("FORMAT", contentType)
-        //pyramid only has a single zoom level = 10; pass in zoom level = 8
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .request().get();
+@Test
+@Category(IntegrationTest.class)
+public void testGetMapJpgNonExistingZoomLevelAboveWithoutPyramids() throws Exception
+{
+  String contentType = "image/jpeg";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmap")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid")
+      .queryParam("FORMAT", contentType)
+      //pyramid only has a single zoom level = 10; pass in zoom level = 8
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+      .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .request().get();
 
-    processImageResponse(response, contentType, "jpg");
-  }
+  processImageResponse(response, contentType, "jpg");
+}
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMapTifNonExistingZoomLevelAboveWithoutPyramids() throws Exception
-  {
-    String contentType = "image/tiff";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmap")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid")
-        .queryParam("FORMAT", contentType)
-        //pyramid only has a single zoom level = 10; pass in zoom level = 8
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .request().get();
+@Test
+@Category(IntegrationTest.class)
+public void testGetMapTifNonExistingZoomLevelAboveWithoutPyramids() throws Exception
+{
+  String contentType = "image/tiff";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmap")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid")
+      .queryParam("FORMAT", contentType)
+      //pyramid only has a single zoom level = 10; pass in zoom level = 8
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+      .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .request().get();
 
-    processImageResponse(response, contentType, "tif");
-  }
-
-  /*
-   * These should return an empty image, since we don't support missing zoom levels above what
-   * exists in MrsPyramid yet.  "Extra metadata" implies that the levels described in the file don't
-   * reflect what raster images actually exist in the pyramid.
-   */
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMapPngNonExistingZoomLevelAboveWithoutPyramidsExtraMetadata() throws Exception
-  {
-    String contentType = "image/png";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmap")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid-extra-metadata")
-        .queryParam("FORMAT", contentType)
-        //pyramid only has a single zoom level = 10; pass in zoom level = 8
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .request().get();
-
-    processImageResponse(response, contentType, "png");
-  }
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMapJpgNonExistingZoomLevelAboveWithoutPyramidsExtraMetadata() throws Exception
-  {
-    String contentType = "image/jpeg";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmap")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid-extra-metadata")
-        .queryParam("FORMAT", contentType)
-        //pyramid only has a single zoom level = 10; pass in zoom level = 8
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .request().get();
-
-    processImageResponse(response, contentType, "jpg");
-  }
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMapTifNonExistingZoomLevelAboveWithoutPyramidsExtraMetadata() throws Exception
-  {
-    String contentType = "image/tiff";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmap")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid-extra-metadata")
-        .queryParam("FORMAT", contentType)
-        //pyramid only has a single zoom level = 10; pass in zoom level = 8
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .request().get();
-
-    processImageResponse(response, contentType, "tif");
-  }
-
-  /*
-   * These should return the highest res available image resampled to the requested bounds.
-   */
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMapPngNonExistingZoomLevelBelowWithoutPyramids() throws Exception
-  {
-    String contentType = "image/png";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmap")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid")
-        .queryParam("FORMAT", contentType)
-        //pyramid only has a single zoom level = 10; pass in zoom level = 11
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
-        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .request().get();
-
-    processImageResponse(response, contentType, "png");
-  }
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMapJpgNonExistingZoomLevelBelowWithoutPyramids() throws Exception
-  {
-    String contentType = "image/jpeg";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmap")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid")
-        .queryParam("FORMAT", contentType)
-        //pyramid only has a single zoom level = 10; pass in zoom level = 11
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
-        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .request().get();
-
-    processImageResponse(response, contentType, "jpeg");
-  }
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMapTifNonExistingZoomLevelBelowWithoutPyramids() throws Exception
-  {
-    String contentType = "image/tiff";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmap")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid")
-        .queryParam("FORMAT", contentType)
-        //pyramid only has a single zoom level = 10; pass in zoom level = 11
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
-        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .request().get();
-
-    processImageResponse(response, contentType, "tif");
-  }
-
-  /*
-   * These should return the highest res available image resampled to the requested bounds.
-   * "Extra metadata" implies that the levels described in the file don't reflect what raster images
-   * actually exist in the pyramid.
-   */
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMapPngNonExistingZoomLevelBelowWithoutPyramidsExtraMetadata() throws Exception
-  {
-    String contentType = "image/png";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmap")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid-extra-metadata")
-        .queryParam("FORMAT", contentType)
-        //pyramid only has a single zoom level = 10; pass in zoom level = 11
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
-        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .request().get();
-
-    processImageResponse(response, contentType, "png");
-  }
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMapJpgNonExistingZoomLevelBelowWithoutPyramidsExtraMetadata() throws Exception
-  {
-    String contentType = "image/jpeg";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmap")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid-extra-metadata")
-        .queryParam("FORMAT", contentType)
-        //pyramid only has a single zoom level = 10; pass in zoom level = 11
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
-        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .request().get();
-
-    processImageResponse(response, contentType, "jpg");
-  }
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMapTifNonExistingZoomLevelBelowWithoutPyramidsExtraMetadata() throws Exception
-  {
-    String contentType = "image/tiff";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmap")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid-extra-metadata")
-        .queryParam("FORMAT", contentType)
-        //pyramid only has a single zoom level = 10; pass in zoom level = 11
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
-        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .request().get();
-
-    processImageResponse(response, contentType, "tif");
-  }
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMosaicJpgNonExistingZoomLevelAboveWithoutPyramids() throws Exception
-  {
-    String contentType = "image/jpeg";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmosaic")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid")
-        .queryParam("FORMAT", contentType)
-        //pyramid only has a single zoom level = 10; pass in zoom level = 8
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-        .request().get();
-
-    processImageResponse(response, contentType, "jpg");
-  }
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMosaicTifNonExistingZoomLevelAboveWithoutPyramids() throws Exception
-  {
-    String contentType = "image/tiff";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmosaic")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid")
-        .queryParam("FORMAT", contentType)
-        //pyramid only has a single zoom level = 10; pass in zoom level = 8
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-        .request().get();
-
-    processImageResponse(response, contentType, "tif");
-  }
+  processImageResponse(response, contentType, "tif");
+}
 
   /*
    * These should return an empty image, since we don't support missing zoom levels above what
@@ -339,135 +118,123 @@ public class MissingPyramidsTest extends WmsGeneratorTestAbstract
    * reflect what raster images actually exist in the pyramid.
    */
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMosaicPngNonExistingZoomLevelAboveWithoutPyramidsExtraMetadata()
-      throws Exception
-  {
-    String contentType = "image/png";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmosaic")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid-extra-metadata")
-        .queryParam("FORMAT", contentType)
-        //pyramid only has a single zoom level = 10; pass in zoom level = 8
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-        .request().get();
+@Test
+@Category(IntegrationTest.class)
+public void testGetMapPngNonExistingZoomLevelAboveWithoutPyramidsExtraMetadata() throws Exception
+{
+  String contentType = "image/png";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmap")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid-extra-metadata")
+      .queryParam("FORMAT", contentType)
+      //pyramid only has a single zoom level = 10; pass in zoom level = 8
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+      .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .request().get();
 
-    processImageResponse(response, contentType, "png");
-  }
+  processImageResponse(response, contentType, "png");
+}
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMosaicJpgNonExistingZoomLevelAboveWithoutPyramidsExtraMetadata()
-      throws Exception
-  {
-    String contentType = "image/jpeg";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmosaic")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid-extra-metadata")
-        .queryParam("FORMAT", contentType)
-        //pyramid only has a single zoom level = 10; pass in zoom level = 8
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-        .request().get();
+@Test
+@Category(IntegrationTest.class)
+public void testGetMapJpgNonExistingZoomLevelAboveWithoutPyramidsExtraMetadata() throws Exception
+{
+  String contentType = "image/jpeg";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmap")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid-extra-metadata")
+      .queryParam("FORMAT", contentType)
+      //pyramid only has a single zoom level = 10; pass in zoom level = 8
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+      .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .request().get();
 
-    processImageResponse(response, contentType, "jpg");
-  }
+  processImageResponse(response, contentType, "jpg");
+}
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMosaicTifNonExistingZoomLevelAboveWithoutPyramidsExtraMetadata()
-      throws Exception
-  {
-    String contentType = "image/tiff";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmosaic")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid-extra-metadata")
-        .queryParam("FORMAT", contentType)
-        //pyramid only has a single zoom level = 10; pass in zoom level = 8
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-        .request().get();
+@Test
+@Category(IntegrationTest.class)
+public void testGetMapTifNonExistingZoomLevelAboveWithoutPyramidsExtraMetadata() throws Exception
+{
+  String contentType = "image/tiff";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmap")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid-extra-metadata")
+      .queryParam("FORMAT", contentType)
+      //pyramid only has a single zoom level = 10; pass in zoom level = 8
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+      .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .request().get();
 
-    processImageResponse(response, contentType, "tif");
-  }
-
-  /*
-   * These should return the highest res available image resampled to the requested bounds.
-   */
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMosaicPngNonExistingZoomLevelBelowWithPyramids() throws Exception
-  {
-    String contentType = "image/png";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmosaic")
-        .queryParam("LAYERS", "IslandsElevation-v2")
-        .queryParam("FORMAT", contentType)
-        //pyramid only goes up to zoom level = 10; pass in zoom level = 11
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
-        .request().get();
-
-    processImageResponse(response, contentType, "png");
-  }
+  processImageResponse(response, contentType, "tif");
+}
 
   /*
    * These should return the highest res available image resampled to the requested bounds.
    */
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMosaicPngNonExistingZoomLevelBelowWithoutPyramids() throws Exception
-  {
-    String contentType = "image/png";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmosaic")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid")
-        .queryParam("FORMAT", contentType)
-        //pyramid only has a single zoom level = 10; pass in zoom level = 11
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
-        .request().get();
+@Test
+@Category(IntegrationTest.class)
+public void testGetMapPngNonExistingZoomLevelBelowWithoutPyramids() throws Exception
+{
+  String contentType = "image/png";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmap")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid")
+      .queryParam("FORMAT", contentType)
+      //pyramid only has a single zoom level = 10; pass in zoom level = 11
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
+      .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .request().get();
 
-    processImageResponse(response, contentType, "png");
-  }
+  processImageResponse(response, contentType, "png");
+}
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMosaicJpgNonExistingZoomLevelBelowWithoutPyramids() throws Exception
-  {
-    String contentType = "image/jpeg";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmosaic")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid")
-        .queryParam("FORMAT", contentType)
-        //pyramid only has a single zoom level = 10; pass in zoom level = 11
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
-        .request().get();
+@Test
+@Category(IntegrationTest.class)
+public void testGetMapJpgNonExistingZoomLevelBelowWithoutPyramids() throws Exception
+{
+  String contentType = "image/jpeg";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmap")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid")
+      .queryParam("FORMAT", contentType)
+      //pyramid only has a single zoom level = 10; pass in zoom level = 11
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
+      .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .request().get();
 
-    processImageResponse(response, contentType, "jpeg");
-  }
+  processImageResponse(response, contentType, "jpeg");
+}
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMosaicTifNonExistingZoomLevelBelowWithoutPyramids() throws Exception
-  {
-    String contentType = "image/tiff";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmosaic")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid")
-        .queryParam("FORMAT", contentType)
-        //pyramid only has a single zoom level = 10; pass in zoom level = 11
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
-        .request().get();
+@Test
+@Category(IntegrationTest.class)
+public void testGetMapTifNonExistingZoomLevelBelowWithoutPyramids() throws Exception
+{
+  String contentType = "image/tiff";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmap")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid")
+      .queryParam("FORMAT", contentType)
+      //pyramid only has a single zoom level = 10; pass in zoom level = 11
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
+      .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .request().get();
 
-    processImageResponse(response, contentType, "tif");
-  }
+  processImageResponse(response, contentType, "tif");
+}
 
   /*
    * These should return the highest res available image resampled to the requested bounds.
@@ -475,56 +242,289 @@ public class MissingPyramidsTest extends WmsGeneratorTestAbstract
    * actually exist in the pyramid.
    */
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMosaicPngNonExistingZoomLevelBelowWithoutPyramidsExtraMetadata() throws Exception
-  {
-    String contentType = "image/png";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmosaic")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid-extra-metadata")
-        .queryParam("FORMAT", contentType)
-        //pyramid only has a single zoom level = 10; pass in zoom level = 11
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
-        .request().get();
+@Test
+@Category(IntegrationTest.class)
+public void testGetMapPngNonExistingZoomLevelBelowWithoutPyramidsExtraMetadata() throws Exception
+{
+  String contentType = "image/png";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmap")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid-extra-metadata")
+      .queryParam("FORMAT", contentType)
+      //pyramid only has a single zoom level = 10; pass in zoom level = 11
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
+      .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .request().get();
 
-    processImageResponse(response, contentType, "png");
-  }
+  processImageResponse(response, contentType, "png");
+}
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMosaicJpgNonExistingZoomLevelBelowWithoutPyramidsExtraMetadata() throws Exception
-  {
-    String contentType = "image/jpeg";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmosaic")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid-extra-metadata")
-        .queryParam("FORMAT", contentType)
-        //pyramid only has a single zoom level = 10; pass in zoom level = 11
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
-        .request().get();
+@Test
+@Category(IntegrationTest.class)
+public void testGetMapJpgNonExistingZoomLevelBelowWithoutPyramidsExtraMetadata() throws Exception
+{
+  String contentType = "image/jpeg";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmap")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid-extra-metadata")
+      .queryParam("FORMAT", contentType)
+      //pyramid only has a single zoom level = 10; pass in zoom level = 11
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
+      .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .request().get();
 
-    processImageResponse(response, contentType, "jpg");
-  }
+  processImageResponse(response, contentType, "jpg");
+}
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMosaicTifNonExistingZoomLevelBelowWithoutPyramidsExtraMetadata() throws Exception
-  {
-    String contentType = "image/tiff";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmosaic")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid-extra-metadata")
-        .queryParam("FORMAT", contentType)
-        //pyramid only has a single zoom level = 10; pass in zoom level = 11
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
-        .request().get();
+@Test
+@Category(IntegrationTest.class)
+public void testGetMapTifNonExistingZoomLevelBelowWithoutPyramidsExtraMetadata() throws Exception
+{
+  String contentType = "image/tiff";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmap")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid-extra-metadata")
+      .queryParam("FORMAT", contentType)
+      //pyramid only has a single zoom level = 10; pass in zoom level = 11
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
+      .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .request().get();
 
-    processImageResponse(response, contentType, "tif");
-  }
+  processImageResponse(response, contentType, "tif");
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void testGetMosaicJpgNonExistingZoomLevelAboveWithoutPyramids() throws Exception
+{
+  String contentType = "image/jpeg";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmosaic")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid")
+      .queryParam("FORMAT", contentType)
+      //pyramid only has a single zoom level = 10; pass in zoom level = 8
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+      .request().get();
+
+  processImageResponse(response, contentType, "jpg");
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void testGetMosaicTifNonExistingZoomLevelAboveWithoutPyramids() throws Exception
+{
+  String contentType = "image/tiff";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmosaic")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid")
+      .queryParam("FORMAT", contentType)
+      //pyramid only has a single zoom level = 10; pass in zoom level = 8
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+      .request().get();
+
+  processImageResponse(response, contentType, "tif");
+}
+
+  /*
+   * These should return an empty image, since we don't support missing zoom levels above what
+   * exists in MrsPyramid yet.  "Extra metadata" implies that the levels described in the file don't
+   * reflect what raster images actually exist in the pyramid.
+   */
+
+@Test
+@Category(IntegrationTest.class)
+public void testGetMosaicPngNonExistingZoomLevelAboveWithoutPyramidsExtraMetadata()
+    throws Exception
+{
+  String contentType = "image/png";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmosaic")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid-extra-metadata")
+      .queryParam("FORMAT", contentType)
+      //pyramid only has a single zoom level = 10; pass in zoom level = 8
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+      .request().get();
+
+  processImageResponse(response, contentType, "png");
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void testGetMosaicJpgNonExistingZoomLevelAboveWithoutPyramidsExtraMetadata()
+    throws Exception
+{
+  String contentType = "image/jpeg";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmosaic")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid-extra-metadata")
+      .queryParam("FORMAT", contentType)
+      //pyramid only has a single zoom level = 10; pass in zoom level = 8
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+      .request().get();
+
+  processImageResponse(response, contentType, "jpg");
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void testGetMosaicTifNonExistingZoomLevelAboveWithoutPyramidsExtraMetadata()
+    throws Exception
+{
+  String contentType = "image/tiff";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmosaic")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid-extra-metadata")
+      .queryParam("FORMAT", contentType)
+      //pyramid only has a single zoom level = 10; pass in zoom level = 8
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+      .request().get();
+
+  processImageResponse(response, contentType, "tif");
+}
+
+  /*
+   * These should return the highest res available image resampled to the requested bounds.
+   */
+
+@Test
+@Category(IntegrationTest.class)
+public void testGetMosaicPngNonExistingZoomLevelBelowWithPyramids() throws Exception
+{
+  String contentType = "image/png";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmosaic")
+      .queryParam("LAYERS", "IslandsElevation-v2")
+      .queryParam("FORMAT", contentType)
+      //pyramid only goes up to zoom level = 10; pass in zoom level = 11
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
+      .request().get();
+
+  processImageResponse(response, contentType, "png");
+}
+
+  /*
+   * These should return the highest res available image resampled to the requested bounds.
+   */
+
+@Test
+@Category(IntegrationTest.class)
+public void testGetMosaicPngNonExistingZoomLevelBelowWithoutPyramids() throws Exception
+{
+  String contentType = "image/png";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmosaic")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid")
+      .queryParam("FORMAT", contentType)
+      //pyramid only has a single zoom level = 10; pass in zoom level = 11
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
+      .request().get();
+
+  processImageResponse(response, contentType, "png");
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void testGetMosaicJpgNonExistingZoomLevelBelowWithoutPyramids() throws Exception
+{
+  String contentType = "image/jpeg";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmosaic")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid")
+      .queryParam("FORMAT", contentType)
+      //pyramid only has a single zoom level = 10; pass in zoom level = 11
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
+      .request().get();
+
+  processImageResponse(response, contentType, "jpeg");
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void testGetMosaicTifNonExistingZoomLevelBelowWithoutPyramids() throws Exception
+{
+  String contentType = "image/tiff";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmosaic")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid")
+      .queryParam("FORMAT", contentType)
+      //pyramid only has a single zoom level = 10; pass in zoom level = 11
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
+      .request().get();
+
+  processImageResponse(response, contentType, "tif");
+}
+
+  /*
+   * These should return the highest res available image resampled to the requested bounds.
+   * "Extra metadata" implies that the levels described in the file don't reflect what raster images
+   * actually exist in the pyramid.
+   */
+
+@Test
+@Category(IntegrationTest.class)
+public void testGetMosaicPngNonExistingZoomLevelBelowWithoutPyramidsExtraMetadata() throws Exception
+{
+  String contentType = "image/png";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmosaic")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid-extra-metadata")
+      .queryParam("FORMAT", contentType)
+      //pyramid only has a single zoom level = 10; pass in zoom level = 11
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
+      .request().get();
+
+  processImageResponse(response, contentType, "png");
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void testGetMosaicJpgNonExistingZoomLevelBelowWithoutPyramidsExtraMetadata() throws Exception
+{
+  String contentType = "image/jpeg";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmosaic")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid-extra-metadata")
+      .queryParam("FORMAT", contentType)
+      //pyramid only has a single zoom level = 10; pass in zoom level = 11
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
+      .request().get();
+
+  processImageResponse(response, contentType, "jpg");
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void testGetMosaicTifNonExistingZoomLevelBelowWithoutPyramidsExtraMetadata() throws Exception
+{
+  String contentType = "image/tiff";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmosaic")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid-extra-metadata")
+      .queryParam("FORMAT", contentType)
+      //pyramid only has a single zoom level = 10; pass in zoom level = 11
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL)
+      .request().get();
+
+  processImageResponse(response, contentType, "tif");
+}
 
   /*
    * These should return an empty image, since we don't support missing zoom levels above what
@@ -533,20 +533,20 @@ public class MissingPyramidsTest extends WmsGeneratorTestAbstract
    * this test.
    */
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMosaicPngNonExistingZoomLevelAboveWithoutPyramids() throws Exception
-  {
-    String contentType = "image/png";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmosaic")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid")
-        .queryParam("FORMAT", "image/png")
-        //pyramid only has a single zoom level = 10; pass in zoom level = 8
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-        .request().get();
+@Test
+@Category(IntegrationTest.class)
+public void testGetMosaicPngNonExistingZoomLevelAboveWithoutPyramids() throws Exception
+{
+  String contentType = "image/png";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmosaic")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-pyramid")
+      .queryParam("FORMAT", "image/png")
+      //pyramid only has a single zoom level = 10; pass in zoom level = 8
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+      .request().get();
 
-    processImageResponse(response, contentType, "png");
-  }
+  processImageResponse(response, contentType, "png");
+}
 }

@@ -37,34 +37,40 @@ import java.util.concurrent.TimeUnit;
  *         Date: 11/1/13
  */
 @Singleton
-public class TmsService {
+public class TmsService
+{
 
-    private LoadingCache<String, MrsPyramidMetadata> metadataCache;
+private LoadingCache<String, MrsPyramidMetadata> metadataCache;
 
-    public TmsService() {
-        metadataCache = CacheBuilder.newBuilder()
-                .maximumSize(1000)
-                .expireAfterAccess(10, TimeUnit.MINUTES)
-                .build(
-                        new CacheLoader<String, MrsPyramidMetadata>() {
-                            @Override
-                            public MrsPyramidMetadata load(String raster) throws Exception {
-                                return getPyramid(raster).getMetadata();
-                            }
-                        });
-    }
+public TmsService()
+{
+  metadataCache = CacheBuilder.newBuilder()
+      .maximumSize(1000)
+      .expireAfterAccess(10, TimeUnit.MINUTES)
+      .build(
+          new CacheLoader<String, MrsPyramidMetadata>()
+          {
+            @Override
+            public MrsPyramidMetadata load(String raster) throws Exception
+            {
+              return getPyramid(raster).getMetadata();
+            }
+          });
+}
 
-    @SuppressWarnings("static-method")
-    public MrsPyramid getPyramid(String raster) throws IOException {
-        return MrsPyramid.open(raster, (ProviderProperties)null);
-    }
+@SuppressWarnings("static-method")
+public MrsPyramid getPyramid(String raster) throws IOException
+{
+  return MrsPyramid.open(raster, (ProviderProperties) null);
+}
 
-    public MrsPyramidMetadata getMetadata(String raster) throws ExecutionException {
-        return metadataCache.get(raster);
-    }
+public MrsPyramidMetadata getMetadata(String raster) throws ExecutionException
+{
+  return metadataCache.get(raster);
+}
 
-    public List<String> listImages() throws IOException
-    {
-      return Arrays.asList(DataProviderFactory.listImages(SecurityUtils.getProviderProperties()));
-    }
+public List<String> listImages() throws IOException
+{
+  return Arrays.asList(DataProviderFactory.listImages(SecurityUtils.getProviderProperties()));
+}
 }

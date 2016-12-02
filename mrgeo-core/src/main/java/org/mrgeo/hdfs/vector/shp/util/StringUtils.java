@@ -18,7 +18,6 @@ package org.mrgeo.hdfs.vector.shp.util;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import java.util.Random;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
@@ -28,7 +27,9 @@ public class StringUtils
 public static String capitalizeFirst(String str)
 {
   if (str == null)
+  {
     return null;
+  }
   if (str.length() > 1)
   {
     return str.substring(0, 1).toUpperCase() + str.substring(1);
@@ -46,11 +47,15 @@ public static String capitalizeFirst(String str)
 public static String center(String str, int length)
 {
   if (str == null)
+  {
     return pad(length);
+  }
   int len = str.length();
   int diff = length - len;
   if (diff <= 0)
+  {
     return str;
+  }
   int left = diff / 2;
   int right = diff - left;
   String temp = "";
@@ -63,27 +68,12 @@ public static String getLeft(String str, int length)
   return getLeft(str, length, false);
 }
 
-static String getLeft(String str, int length, boolean indicator)
-{
-  if (length < 0)
-    return str;
-  if (str == null)
-    return null;
-  if (str.length() > length)
-  {
-    if (indicator && length > 3)
-    {
-      return str.substring(0, length - 3) + "...";
-    }
-    return str.substring(0, length);
-  }
-  return str;
-}
-
 public static String getPaddedLeft(String str, int length)
 {
   if (str == null)
+  {
     return null;
+  }
   String temp = "";
   if (str.length() > length)
   {
@@ -97,7 +87,9 @@ public static String getPaddedLeft(String str, int length)
 public static String getTableFormat(String str, int length)
 {
   if (str == null)
+  {
     return pad("<null>", length);
+  }
   String temp = getLeft(str, length, true);
   return pad(temp, length);
 }
@@ -105,9 +97,13 @@ public static String getTableFormat(String str, int length)
 public static String insert(String str, int pos, String insertion)
 {
   if (str == null)
+  {
     return null;
+  }
   if (insertion == null)
+  {
     return str;
+  }
   StringBuffer result = new StringBuffer();
   result.append(str);
   result.insert(pos, insertion);
@@ -119,55 +115,22 @@ public static Object[] pack(String str)
   return pack(str, ",");
 }
 
-static Object[] pack(String str, String separator)
-{
-  StringTokenizer st = new StringTokenizer(str, separator);
-  Object[] temp = new Object[st.countTokens()];
-  int i = 0;
-  while (st.hasMoreTokens())
-  {
-    temp[i++] = st.nextToken();
-  }
-  return temp;
-}
-
-static String pad(int length)
-{
-  return pad("", length, ' ');
-}
-
-static String pad(int length, char padding)
-{
-  return pad("", length, padding);
-}
-
 public static String pad(String str, int length)
 {
   return pad(str, length, ' ');
 }
 
-static String pad(String str, int length, char padding)
-{
-  if (str == null)
-    return null;
-  StringBuffer result = new StringBuffer();
-  result.append(str);
-  if (result.length() < length)
-  {
-    int n = length - result.length();
-    for (int i = 0; i < n; i++)
-      result.append(padding);
-  }
-  return result.toString();
-}
-
 public static String removeExtraInnerSpaces(String str)
 {
   if (str == null)
+  {
     return null;
+  }
   String temp = "" + str;
   while (temp.indexOf("  ") != -1)
+  {
     temp = replace(temp, "  ", " ");
+  }
   return temp;
 }
 
@@ -179,7 +142,9 @@ public static String removeInnerSpaces(String str)
 public static String replace(String str, String pattern, String replace)
 {
   if (str == null)
+  {
     return null;
+  }
   int s = 0;
   int e = 0;
   StringBuffer result = new StringBuffer();
@@ -197,7 +162,9 @@ public static String replace(String str, String pattern, String replace)
 public static String[] split(String str, String delimiter)
 {
   if (str == null)
+  {
     return null;
+  }
   String[] temp = null;
   if (delimiter == null || delimiter.length() == 0)
   {
@@ -228,7 +195,9 @@ public static String[] split(String str, String delimiter)
 public static String trimExtended(String str)
 {
   if (str == null)
+  {
     return null;
+  }
   StringBuffer result = new StringBuffer();
   str = str.trim();
   int s = 0;
@@ -245,9 +214,13 @@ public static String trimExtended(String str)
 public static String trimLeft(String str, int length)
 {
   if (str == null)
+  {
     return null;
+  }
   if (str.length() <= length)
+  {
     return "";
+  }
   StringBuffer result = new StringBuffer();
   result.append(str.substring(str.length() - length));
   return result.toString();
@@ -256,13 +229,81 @@ public static String trimLeft(String str, int length)
 public static String trimRight(String str, int length)
 {
   if (str == null)
+  {
     return null;
+  }
   if (str.length() <= length)
+  {
     return "";
+  }
   if (length <= 0)
+  {
     return "" + str;
+  }
   StringBuffer result = new StringBuffer();
   result.append(str.substring(0, str.length() - length));
+  return result.toString();
+}
+
+static String getLeft(String str, int length, boolean indicator)
+{
+  if (length < 0)
+  {
+    return str;
+  }
+  if (str == null)
+  {
+    return null;
+  }
+  if (str.length() > length)
+  {
+    if (indicator && length > 3)
+    {
+      return str.substring(0, length - 3) + "...";
+    }
+    return str.substring(0, length);
+  }
+  return str;
+}
+
+static Object[] pack(String str, String separator)
+{
+  StringTokenizer st = new StringTokenizer(str, separator);
+  Object[] temp = new Object[st.countTokens()];
+  int i = 0;
+  while (st.hasMoreTokens())
+  {
+    temp[i++] = st.nextToken();
+  }
+  return temp;
+}
+
+static String pad(int length)
+{
+  return pad("", length, ' ');
+}
+
+static String pad(int length, char padding)
+{
+  return pad("", length, padding);
+}
+
+static String pad(String str, int length, char padding)
+{
+  if (str == null)
+  {
+    return null;
+  }
+  StringBuffer result = new StringBuffer();
+  result.append(str);
+  if (result.length() < length)
+  {
+    int n = length - result.length();
+    for (int i = 0; i < n; i++)
+    {
+      result.append(padding);
+    }
+  }
   return result.toString();
 }
 }

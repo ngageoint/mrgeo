@@ -33,7 +33,6 @@ import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.image.*;
 import org.mrgeo.data.raster.RasterWritable;
-import org.mrgeo.data.image.MrsImageWriter;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.utils.Base64Utils;
 import org.mrgeo.utils.StringUtils;
@@ -57,30 +56,24 @@ import java.util.Properties;
  * ----cq: [string value of tile id]<br>
  * ------vis: [what is passed]<br>
  * --------value: [bytes of raster]<br>
- *
  */
 public class AccumuloMrsImageDataProvider extends MrsImageDataProvider
 {
 
+// logging
+private static Logger log = LoggerFactory.getLogger(AccumuloMrsImageDataProvider.class);
 // the classes that are used for metadata
 private AccumuloMrsPyramidMetadataReader metaReader = null;
 private MrsPyramidMetadataWriter metaWriter = null;
-
 // table we are connecting to for data
 private String table;
-
 // The following should store the original resource name and any Accumulo
 // property settings required to access that resource. Internally, this
 // data provider should make use of the resolved resource name. It should
 // never use this property directly, but instead call
 private String resolvedResourceName;
-
 // output controller
 private AccumuloMrsPyramidOutputFormatProvider outFormatProvider = null;
-
-// logging
-private static Logger log = LoggerFactory.getLogger(AccumuloMrsImageDataProvider.class);
-
 // properties coming in from the queries and command line arguments
 private Properties queryProps;
 
@@ -97,7 +90,7 @@ private String pl; // protection level
  * Base constructor for the provider.
  *
  * @param resourceName - the table being utilized.  The input may be encoded or may not be.
- * The encoded resource name has all the information needed to connect to Accumulo.
+ *                     The encoded resource name has all the information needed to connect to Accumulo.
  */
 public AccumuloMrsImageDataProvider(final String resourceName)
 {
@@ -108,14 +101,18 @@ public AccumuloMrsImageDataProvider(final String resourceName)
   // getResolvedResourceName().
   boolean nameIsResolved = resourceName.startsWith(MrGeoAccumuloConstants.MRGEO_ACC_ENCODED_PREFIX);
 
-  if (nameIsResolved){
+  if (nameIsResolved)
+  {
     resolvedResourceName = resourceName;
-  } else {
+  }
+  else
+  {
     setResourceName(resourceName);
   }
 
   // initialize the query properties if needed
-  if(queryProps == null){
+  if (queryProps == null)
+  {
     queryProps = new Properties();
   }
 
@@ -129,12 +126,13 @@ public AccumuloMrsImageDataProvider(final String resourceName)
 /**
  * This constructor is used for WMS/TMS queries
  *
- * @param props has properties from the query.  This will include authorizations for scans
+ * @param props        has properties from the query.  This will include authorizations for scans
  * @param resourceName is the name of the table to use.  It is possible that there is encoded
- * information in the resourceName.  The encoded information will have all the information
- * needed to connect to Accumulo.
+ *                     information in the resourceName.  The encoded information will have all the information
+ *                     needed to connect to Accumulo.
  */
-public AccumuloMrsImageDataProvider(ProviderProperties props, String resourceName) {
+public AccumuloMrsImageDataProvider(ProviderProperties props, String resourceName)
+{
   super();
 
   this.providerProperties = props;
@@ -142,25 +140,30 @@ public AccumuloMrsImageDataProvider(ProviderProperties props, String resourceNam
   boolean nameIsResolved = resourceName.startsWith(MrGeoAccumuloConstants.MRGEO_ACC_ENCODED_PREFIX);
 
   // get the name of the resource we are using
-  if (nameIsResolved) {
+  if (nameIsResolved)
+  {
     resolvedResourceName = resourceName;
-  } else {
+  }
+  else
+  {
     setResourceName(resourceName);
   }
 
   // it is possible that we are being called for the first time
-  if (queryProps == null) {
+  if (queryProps == null)
+  {
     queryProps = new Properties();
   }
-	  
+
 	  /* 
-	   * get the authorizations for reading from Accumulo
+     * get the authorizations for reading from Accumulo
 	   */
   // set the default of no authorizations
   String auths = null;// = MrGeoAccumuloConstants.MRGEO_ACC_NOAUTHS;
 
   // check for auths in the query
-  if(props != null){
+  if (props != null)
+  {
     List<String> roles = props.getRoles();
     if (roles != null && roles.size() > 0)
     {
@@ -169,15 +172,19 @@ public AccumuloMrsImageDataProvider(ProviderProperties props, String resourceNam
   }
 
   // set the authorizations in the query properties
-  if(auths != null){
+  if (auths != null)
+  {
     queryProps.setProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS, auths);
   }
 
   // get the connection information
-  if(props != null) {
+  if (props != null)
+  {
     Properties p = AccumuloUtils.providerPropertiesToProperties(props);
     queryProps.putAll(p);
-  } else {
+  }
+  else
+  {
     // ???????
     try
     {
@@ -203,42 +210,6 @@ public Configuration setupSparkJob(final Configuration conf) throws DataProvider
 {
   setupConfig(conf);
   return conf;
-}
-
-private void setupConfig(final Configuration conf) throws DataProviderException
-{
-  Properties props = AccumuloConnector.getAccumuloProperties();
-  conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE,
-      props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE));
-  conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS,
-      props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS));
-  // username and password
-  conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER,
-      props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER));
-
-  // make sure the password is set with Base64Encoding
-  //String pw = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD);
-  String isEnc = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PWENCODED64, "false");
-
-  if (isEnc.equalsIgnoreCase("true"))
-  {
-    conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD,
-        props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD));
-  }
-  else
-  {
-    try
-    {
-      String s = Base64Utils.encodeObject(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD));
-
-      conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD, s);
-      conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PWENCODED64, "true");
-    }
-    catch (IOException e)
-    {
-      throw new DataProviderException("Error Base64 encoding", e);
-    }
-  }
 }
 
 /**
@@ -276,7 +247,6 @@ public String getResourceName()
   return null;
 } // end getResourceName
 
-
 @Override
 public String getSimpleResourceName() throws IOException
 {
@@ -292,31 +262,33 @@ public String getSimpleResourceName() throws IOException
  *
  * @return The encoded elements used to connect to Accumulo.
  */
-public String getResolvedName() throws DataProviderException {
-  if (resolvedResourceName == null){
+public String getResolvedName() throws DataProviderException
+{
+  if (resolvedResourceName == null)
+  {
     resolvedResourceName = AccumuloConnector.encodeAccumuloProperties(this.getResourceName());
   }
   return resolvedResourceName;
 } // end getResolvedName
 
-
 /**
  * Used for retrieving the name of the table in use.
+ *
  * @return The name of table being used.
  */
-public String getTable(){
-  if(table == null){
+public String getTable()
+{
+  if (table == null)
+  {
     table = this.getResourceName();
   }
   return table;
 } // end getTable
 
-
 /**
  * This will return the class that handles the input classes for a map reduce job.
  *
  * @param context - is the image context for the input for the job.
- *
  * @return An instance of AccumuloMrsPyramidInputFormatProvider is returned.
  */
 @Override
@@ -325,12 +297,10 @@ public MrsImageInputFormatProvider getImageInputFormatProvider(ImageInputFormatC
   return new AccumuloMrsPyramidInputFormatProvider(context);
 } // end getImageInputFormatProvider
 
-
 /**
  * This will return the class that handles the classes for output for a map reduce job.
  *
  * @param context - is the image context for the output of the job.
- *
  * @return An instance of AccumuloMrsPyramidOutputFormatProvider.
  */
 @Override
@@ -338,7 +308,6 @@ public MrsImageOutputFormatProvider getTiledOutputFormatProvider(ImageOutputForm
 {
   return new AccumuloMrsPyramidOutputFormatProvider(this, context, cv);
 } // end getTiledOutputFormatProvider
-
 
 /**
  * Delete is not implemented.  Administration of what is in Accumulo
@@ -352,7 +321,6 @@ public void delete()
   log.info("Asked to delete the resource " + table + ".  Not deleting anything!!!");
   //throw new NotImplementedException();
 } // end delete
-
 
 /**
  * Delete is not implemented.  Administration of what is in Accumulo
@@ -369,7 +337,6 @@ public void delete(int zoomLevel)
   //throw new NotImplementedException();
 } // end delete
 
-
 /**
  * Move is not implemented.  dministration of what is in Accumulo
  * is not handled in this code base.  It is left to the Data Administrator
@@ -384,7 +351,6 @@ public void move(final String toResource)
   throw new NotImplementedException("move() not implemented");
 } // end move
 
-
 @Override
 public boolean validateProtectionLevel(final String protectionLevel)
 {
@@ -393,33 +359,37 @@ public boolean validateProtectionLevel(final String protectionLevel)
 
 /**
  * The class that provides reading metadata from the Accumulo table is returned.
+ *
  * @param context - is the context of what is to be read.
  * @return An instance of AccumuloMrsPyramidMetadataReader that is able to read from Accumulo.
  */
 @Override
 public MrsPyramidMetadataReader getMetadataReader(
-    MrsPyramidMetadataReaderContext context){
+    MrsPyramidMetadataReaderContext context)
+{
 
   //TODO: get Authorizations for reading from the context
 
   // check if the metadata reader has been created
-  if(metaReader == null){
+  if (metaReader == null)
+  {
     metaReader = new AccumuloMrsPyramidMetadataReader(this, context);
   }
 
   return metaReader;
 } // end getMetadataReader
 
-
 /**
  * This class will return the class that write the metadata information to
  * the Accumulo table.
+ *
  * @param context - is the context of what is to be written.
  * @return An instance of AccumuloMrsPyramidMetadataWriter that is able to write to Accumulo.
  */
 @Override
 public MrsPyramidMetadataWriter getMetadataWriter(
-    MrsPyramidMetadataWriterContext context){
+    MrsPyramidMetadataWriterContext context)
+{
 
   // check to see if the metadata writer exists already
   if (metaWriter == null)
@@ -442,9 +412,9 @@ public MrsPyramidMetadataWriter getMetadataWriter(
   return metaWriter;
 } // end getMetadataWriter
 
-
 /**
  * This is the method to get a tile reader for Accumulo.
+ *
  * @param context - is the context for reading tiles.
  * @return An instance of AccumuloMrsImageReader is returned.
  * @throws IOException if there is a problem connecting to or reading from Accumulo.
@@ -456,9 +426,9 @@ public MrsImageReader getMrsTileReader(MrsPyramidReaderContext context)
   return new AccumuloMrsImageReader(queryProps, this, context);
 } // end getMrsTileReader
 
-
 /**
  * This is the method to get a tile writer for Accumulo.
+ *
  * @param context - is the context for writing tiles.
  * @return An instance of AccumuloMrsImageWriter.
  */
@@ -469,9 +439,9 @@ public MrsImageWriter getMrsTileWriter(MrsPyramidWriterContext context) throws I
   return new AccumuloMrsImageWriter(this, context, context.getProtectionLevel());
 } // end getMrsTileWriter
 
-
 /**
  * This will instantiate a record reader that can be used in a map reduce job.
+ *
  * @return An instance of a RecordReader that can pull from Accumulo and prepare the correct keys and values.
  */
 @Override
@@ -481,7 +451,6 @@ public RecordReader<TileIdWritable, RasterWritable> getRecordReader()
 
   return AccumuloMrsPyramidInputFormat.makeRecordReader();
 } // end getRecordReader
-
 
 /**
  * This is not implemented at this time.
@@ -493,29 +462,69 @@ public RecordWriter<TileIdWritable, RasterWritable> getRecordWriter()
   return null;
 } // end getRecordWriter
 
-
 /**
- *
  * @return the column visibility of this instance
  */
-public ColumnVisibility getColumnVisibility(){
+public ColumnVisibility getColumnVisibility()
+{
 
-  if(cv != null){
+  if (cv != null)
+  {
     return cv;
   }
 
   // set the cv if needed
-  if(pl != null){
+  if (pl != null)
+  {
     cv = new ColumnVisibility(pl);
-  } else {
+  }
+  else
+  {
     cv = new ColumnVisibility();
   }
 
   return cv;
 } // end getColumnVisibility
 
-public Properties getQueryProperties(){
+public Properties getQueryProperties()
+{
   return queryProps;
+}
+
+private void setupConfig(final Configuration conf) throws DataProviderException
+{
+  Properties props = AccumuloConnector.getAccumuloProperties();
+  conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE,
+      props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE));
+  conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS,
+      props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS));
+  // username and password
+  conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER,
+      props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER));
+
+  // make sure the password is set with Base64Encoding
+  //String pw = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD);
+  String isEnc = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PWENCODED64, "false");
+
+  if (isEnc.equalsIgnoreCase("true"))
+  {
+    conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD,
+        props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD));
+  }
+  else
+  {
+    try
+    {
+      String s = Base64Utils.encodeObject(props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD));
+
+      conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD, s);
+      conf.set(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PWENCODED64, "true");
+    }
+    catch (IOException e)
+    {
+      throw new DataProviderException("Error Base64 encoding", e);
+    }
+  }
 }
 
 

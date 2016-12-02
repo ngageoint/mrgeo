@@ -1,19 +1,19 @@
 package org.mrgeo.mapalgebra.binarymath
 
 import org.apache.spark.SparkContext
-import org.mrgeo.data.raster.RasterUtils
 import org.mrgeo.mapalgebra.parser.ParserException
 
 abstract class BitwiseBinaryMathMapOp extends RawBinaryMathMapOp {
 
-  val EPSILON: Double = 1e-12
+  val EPSILON:Double = 1e-12
 
-  override def execute(context: SparkContext): Boolean = {
+  override def execute(context:SparkContext):Boolean = {
     varA match {
       case Some(a) => {
         val metadata = a.metadata().getOrElse(throw new ParserException("Uh oh - no metadata available"))
         if (metadata.isFloatingPoint) {
-          log.warn("Using a floating point raster like " + metadata.getPyramid + " is not recommended for bitwise operators")
+          log.warn(
+            "Using a floating point raster like " + metadata.getPyramid + " is not recommended for bitwise operators")
         }
       }
       case None => {}
@@ -31,7 +31,8 @@ abstract class BitwiseBinaryMathMapOp extends RawBinaryMathMapOp {
       case Some(b) => {
         val metadata = b.metadata().getOrElse(throw new ParserException("Uh oh - no metadata available"))
         if (metadata.isFloatingPoint) {
-          log.warn("Using a floating point raster like " + metadata.getPyramid + " is not recommended for bitwise operators")
+          log.warn(
+            "Using a floating point raster like " + metadata.getPyramid + " is not recommended for bitwise operators")
         }
       }
       case None => {}

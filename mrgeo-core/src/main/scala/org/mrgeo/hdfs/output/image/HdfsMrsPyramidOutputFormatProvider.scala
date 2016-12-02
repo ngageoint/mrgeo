@@ -22,8 +22,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.io.{SequenceFile, Writable, WritableComparable}
-import org.apache.hadoop.mapreduce.{Job, OutputFormat}
 import org.apache.hadoop.mapreduce.lib.output.{FileOutputFormat, SequenceFileOutputFormat}
+import org.apache.hadoop.mapreduce.{Job, OutputFormat}
 import org.apache.spark.rdd.PairRDDFunctions
 import org.mrgeo.data.DataProviderException
 import org.mrgeo.data.image.{ImageOutputFormatContext, MrsImageOutputFormatProvider}
@@ -36,31 +36,27 @@ import org.mrgeo.hdfs.utils.HadoopFileUtils
 
 
 @SuppressFBWarnings(value = Array("NM_FIELD_NAMING_CONVENTION"), justification = "PartitionType is Enumeration")
-class HdfsMrsPyramidOutputFormatProvider(context: ImageOutputFormatContext) extends MrsImageOutputFormatProvider(context) {
+class HdfsMrsPyramidOutputFormatProvider(context:ImageOutputFormatContext) extends MrsImageOutputFormatProvider(
+  context) {
 
-  @SerialVersionUID(1L)
-  private[image] object PartitionType extends Enumeration {
-    val ROW, BLOCKSIZE = Value
-  }
+  private[image] var provider:HdfsMrsImageDataProvider = null
+  private[image] var partitioner:PartitionType.Value = null
 
-  private[image] var provider: HdfsMrsImageDataProvider = null
-  private[image] var partitioner: PartitionType.Value = null
-
-  def this(provider: HdfsMrsImageDataProvider, context: ImageOutputFormatContext) {
+  def this(provider:HdfsMrsImageDataProvider, context:ImageOutputFormatContext) {
     this(context)
 
     this.provider = provider
     partitioner = PartitionType.BLOCKSIZE
   }
 
-  def setInfo(conf: Configuration, job: Job) {
+  def setInfo(conf:Configuration, job:Job) {
     conf.set("io.map.index.interval", "1")
     if (job != null) {
       SequenceFileOutputFormat.setOutputCompressionType(job, SequenceFile.CompressionType.RECORD)
     }
   }
 
-  def setOutputInfo(conf: Configuration, job: Job, output: String) {
+  def setOutputInfo(conf:Configuration, job:Job, output:String) {
     setInfo(conf, job)
     if (job != null) {
       FileOutputFormat.setOutputPath(job, new Path(output))
@@ -71,17 +67,17 @@ class HdfsMrsPyramidOutputFormatProvider(context: ImageOutputFormatContext) exte
     }
   }
 
-  override def save(raster: RasterRDD, conf:Configuration): Unit = {
+  override def save(raster:RasterRDD, conf:Configuration):Unit = {
 
     implicit val tileIdOrdering = new Ordering[TileIdWritable] {
-      override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
+      override def compare(x:TileIdWritable, y:TileIdWritable):Int = x.compareTo(y)
     }
 
-    val outputWithZoom: String = provider.getResolvedResourceName(false) + "/" + context.getZoomLevel
-    val outputPath: Path = new Path(outputWithZoom)
+    val outputWithZoom:String = provider.getResolvedResourceName(false) + "/" + context.getZoomLevel
+    val outputPath:Path = new Path(outputWithZoom)
 
     val jobconf = try {
-      val fs: FileSystem = HadoopFileUtils.getFileSystem(conf, outputPath)
+      val fs:FileSystem = HadoopFileUtils.getFileSystem(conf, outputPath)
 
       if (fs.exists(outputPath)) {
         fs.delete(outputPath, true)
@@ -102,7 +98,7 @@ class HdfsMrsPyramidOutputFormatProvider(context: ImageOutputFormatContext) exte
       Job.getInstance(super.setupOutput(conf)).getConfiguration
     }
     catch {
-      case e: IOException =>
+      case e:IOException =>
         throw new DataProviderException("Error running spark job setup", e)
     }
 
@@ -125,34 +121,41 @@ class HdfsMrsPyramidOutputFormatProvider(context: ImageOutputFormatContext) exte
     sparkPartitioner.writeSplits(sorted, context.getOutput, context.getZoomLevel, jobconf)
   }
 
-  override def finalizeExternalSave(conf: Configuration): Unit = {
+  override def finalizeExternalSave(conf:Configuration):Unit = {
     try {
-      val imagePath: String = provider.getResolvedResourceName(true)
-      val outputWithZoom: Path = new Path(imagePath + "/" + context.getZoomLevel)
-      val split: FileSplit = new FileSplit
+      val imagePath:String = provider.getResolvedResourceName(true)
+      val outputWithZoom:Path = new Path(imagePath + "/" + context.getZoomLevel)
+      val split:FileSplit = new FileSplit
       split.generateSplits(outputWithZoom, conf)
       split.writeSplits(outputWithZoom)
     }
     catch {
-      case e: IOException => {
+      case e:IOException => {
         throw new DataProviderException("Error in finalizeExternalSave", e)
       }
     }
   }
 
-  override def validateProtectionLevel(protectionLevel: String): Boolean = true
+  override def validateProtectionLevel(protectionLevel:String):Boolean = true
 
-  @SuppressFBWarnings(value = Array("DB_DUPLICATE_BRANCHES"), justification = "For now, BlockSizePartitioner is default")
+  override protected def getOutputFormat:OutputFormat[WritableComparable[_], Writable] = new HdfsMrsPyramidOutputFormat
+
+  @SuppressFBWarnings(value = Array("DB_DUPLICATE_BRANCHES"),
+    justification = "For now, BlockSizePartitioner is default")
   private def getSparkPartitioner:FileSplitPartitioner = {
     partitioner match {
-    case PartitionType.ROW =>
-      new RowPartitioner(context.getBounds, context.getZoomLevel, context.getTileSize)
-    case PartitionType.BLOCKSIZE =>
-      new BlockSizePartitioner()
-    case _ =>
-      new BlockSizePartitioner()
+      case PartitionType.ROW =>
+        new RowPartitioner(context.getBounds, context.getZoomLevel, context.getTileSize)
+      case PartitionType.BLOCKSIZE =>
+        new BlockSizePartitioner()
+      case _ =>
+        new BlockSizePartitioner()
     }
   }
 
-  override protected def getOutputFormat: OutputFormat[WritableComparable[_], Writable] = new HdfsMrsPyramidOutputFormat
+  @SerialVersionUID(1L)
+  private[image] object PartitionType extends Enumeration {
+    val ROW, BLOCKSIZE = Value
+  }
+
 }

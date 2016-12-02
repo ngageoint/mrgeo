@@ -23,89 +23,91 @@ import java.util.*;
 
 public class StringUtils
 {
-  /**
-   * Joins an array of doubles into a string with the given delimiter.
-   * 
-   * There has got to be a better way. :(
-   * 
-   * @param tokens
-   * @param delimiter
-   * @return
-   */
-  public static String join(final double[] tokens, final String delimiter)
+/**
+ * Joins an array of doubles into a string with the given delimiter.
+ * <p>
+ * There has got to be a better way. :(
+ *
+ * @param tokens
+ * @param delimiter
+ * @return
+ */
+public static String join(final double[] tokens, final String delimiter)
+{
+  StringBuffer buffer = new StringBuffer(String.valueOf(tokens[0]));
+  for (int i = 1; i < tokens.length; i++)
   {
-    StringBuffer buffer = new StringBuffer(String.valueOf(tokens[0]));
-    for (int i = 1; i < tokens.length; i++)
-    {
-      buffer.append(delimiter).append(String.valueOf(tokens[i]));
-    }
-    return buffer.toString();
+    buffer.append(delimiter).append(String.valueOf(tokens[i]));
   }
+  return buffer.toString();
+}
 
-  public static String join(final int[] tokens, final String delimiter)
+public static String join(final int[] tokens, final String delimiter)
+{
+  StringBuffer buffer = new StringBuffer(String.valueOf(tokens[0]));
+  for (int i = 1; i < tokens.length; i++)
   {
-    StringBuffer buffer = new StringBuffer(String.valueOf(tokens[0]));
-    for (int i = 1; i < tokens.length; i++)
-    {
-      buffer.append(delimiter).append(String.valueOf(tokens[i]));
-    }
-    return buffer.toString();
+    buffer.append(delimiter).append(String.valueOf(tokens[i]));
   }
+  return buffer.toString();
+}
 
-  public static <T> String join(final T[] tokens, final String delimiter)
+public static <T> String join(final T[] tokens, final String delimiter)
+{
+  StringBuffer buffer = new StringBuffer(tokens[0].toString());
+  for (int i = 1; i < tokens.length; i++)
   {
-    StringBuffer buffer = new StringBuffer(tokens[0].toString());
-    for (int i = 1; i < tokens.length; i++)
-    {
-      buffer.append(delimiter).append(String.valueOf(tokens[i]));
-    }
-    return buffer.toString();
+    buffer.append(delimiter).append(String.valueOf(tokens[i]));
   }
+  return buffer.toString();
+}
 
-  public static String join(final Iterable<? extends Object> tokens, final String delimiter)
+public static String join(final Iterable<? extends Object> tokens, final String delimiter)
+{
+  Iterator<? extends Object> oIter;
+  if (tokens == null || (!(oIter = tokens.iterator()).hasNext()))
   {
-    Iterator<? extends Object> oIter;
-    if (tokens == null || (!(oIter = tokens.iterator()).hasNext()))
-      return "";
-    StringBuilder oBuilder = new StringBuilder(String.valueOf(oIter.next()));
-    while (oIter.hasNext())
-    {
-      oBuilder.append(delimiter).append(oIter.next());
-    }
-    return oBuilder.toString();
+    return "";
   }
-  
-  public static String repeat(String s, int times)
+  StringBuilder oBuilder = new StringBuilder(String.valueOf(oIter.next()));
+  while (oIter.hasNext())
   {
-    StringBuffer buf = new StringBuffer();
-    for (int i = 0; i < times; i++)
-    {
-      buf.append(s);
-    }
-    return buf.toString();
+    oBuilder.append(delimiter).append(oIter.next());
   }
+  return oBuilder.toString();
+}
 
-  public static String toString(final Map<?, ?> tokens)
+public static String repeat(String s, int times)
+{
+  StringBuffer buf = new StringBuffer();
+  for (int i = 0; i < times; i++)
   {
-    StringBuilder buf = new StringBuilder("{ ");
-    String comma = "";
-    for (Map.Entry<?, ?> e : tokens.entrySet())
-    {
-      buf.append(comma + e.getKey() + ":" + e.getValue());
-      comma = ", ";
-    }
-    return buf.toString();
+    buf.append(s);
   }
-  
-  public static <T extends Enum<T>> List<String> enumToStringList(Class<T> enumType)
+  return buf.toString();
+}
+
+public static String toString(final Map<?, ?> tokens)
+{
+  StringBuilder buf = new StringBuilder("{ ");
+  String comma = "";
+  for (Map.Entry<?, ?> e : tokens.entrySet())
   {
-    List<String> values = new ArrayList<String>();
-    for (T c : enumType.getEnumConstants())
-    {
-      values.add(c.name());
-    }
-    return values;
+    buf.append(comma + e.getKey() + ":" + e.getValue());
+    comma = ", ";
   }
+  return buf.toString();
+}
+
+public static <T extends Enum<T>> List<String> enumToStringList(Class<T> enumType)
+{
+  List<String> values = new ArrayList<String>();
+  for (T c : enumType.getEnumConstants())
+  {
+    values.add(c.name());
+  }
+  return values;
+}
 
 // This is a shim for concatenating string arrays, It was created because py4j couldn't
 // resulve the classes for the ArrayUtils.addAll()

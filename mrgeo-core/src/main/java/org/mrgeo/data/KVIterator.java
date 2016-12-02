@@ -20,7 +20,7 @@ import java.util.Iterator;
 
 public interface KVIterator<K, V> extends Iterator<V>
 {
-  public K currentKey();
+public K currentKey();
 
-  public V currentValue();
+public V currentValue();
 }

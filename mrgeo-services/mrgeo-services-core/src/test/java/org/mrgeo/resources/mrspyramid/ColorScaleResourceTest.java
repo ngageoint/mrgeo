@@ -37,7 +37,6 @@ import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.GDALUtils;
 import org.w3c.dom.Document;
 
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 import javax.xml.parsers.DocumentBuilder;
@@ -56,25 +55,7 @@ import static org.junit.Assert.assertTrue;
 public class ColorScaleResourceTest extends JerseyTest
 {
 private MrsPyramidService service;
-
-@Override
-protected Application configure()
-{
-  service = Mockito.mock(MrsPyramidService.class);
-
-  ResourceConfig config = new ResourceConfig();
-  config.register(ColorScaleResource.class);
-  config.register(new AbstractBinder()
-  {
-    @Override
-    protected void configure()
-    {
-      bind(service).to(MrsPyramidService.class);
-    }
-  });
-  return config;
-}
-
+private String input = TestUtils.composeInputDir(ColorScaleResourceTest.class);
 
 @Override
 public void setUp() throws Exception
@@ -85,11 +66,13 @@ public void setUp() throws Exception
 
 @Test
 @Category(UnitTest.class)
-public void testGetAll() throws Exception {
+public void testGetAll() throws Exception
+{
   List<String> retvals = new ArrayList<>();
   retvals.add("/mrgeo/test-files/output/org.mrgeo.resources.mrspyramid/ColorScaleResourceTest/rainbow-transparent.xml");
   retvals.add("/mrgeo/test-files/output/org.mrgeo.resources.mrspyramid/ColorScaleResourceTest/rainbow.xml");
-  retvals.add("/mrgeo/test-files/output/org.mrgeo.resources.mrspyramid/ColorScaleResourceTest/dir1/brewer-green-log.xml");
+  retvals
+      .add("/mrgeo/test-files/output/org.mrgeo.resources.mrspyramid/ColorScaleResourceTest/dir1/brewer-green-log.xml");
   retvals.add("/mrgeo/test-files/output/org.mrgeo.resources.mrspyramid/ColorScaleResourceTest/dir1/Default.xml");
   retvals.add("/mrgeo/test-files/output/org.mrgeo.resources.mrspyramid/ColorScaleResourceTest/dir1/rainbow.xml");
 
@@ -114,28 +97,14 @@ public void testGetAll() throws Exception {
       "/mrgeo/test-files/output/org.mrgeo.resources.mrspyramid/ColorScaleResourceTest/dir1/rainbow.xml"));
 }
 
-private ColorScale createRainbowColorScale() throws ColorScaleException {
-  String colorScaleXml = "<ColorMap name=\"Rainbow\">\n" +
-      "  <Scaling>MinMax</Scaling> <!-- Could also be Absolute -->\n" +
-      "  <ReliefShading>0</ReliefShading>\n" +
-      "  <Interpolate>1</Interpolate>\n" +
-      "  <NullColor color=\"0,0,0\" opacity=\"0\"/>\n" +
-      "  <Color value=\"0.0\" color=\"0,0,127\" opacity=\"255\"/>\n" +
-      "  <Color value=\"0.2\" color=\"0,0,255\"/> <!-- if not specified an opacity defaults to 255 -->\n" +
-      "  <Color value=\"0.4\" color=\"0,255,255\"/>\n" +
-      "  <Color value=\"0.6\" color=\"0,255,0\"/>\n" +
-      "  <Color value=\"0.8\" color=\"255,255,0\"/>\n" +
-      "  <Color value=\"1.0\" color=\"255,0,0\"/>\n" +
-      "</ColorMap>";
-  return ColorScale.loadFromXML(new ByteArrayInputStream(colorScaleXml.getBytes()));
-}
-
 @Test
 @Category(UnitTest.class)
-public void testGetColorScaleLegendVertical() throws Exception {
-  Mockito.when(service.getColorScaleFromName(Mockito.anyString())).thenReturn( createRainbowColorScale() );
+public void testGetColorScaleLegendVertical() throws Exception
+{
+  Mockito.when(service.getColorScaleFromName(Mockito.anyString())).thenReturn(createRainbowColorScale());
 
-  Response response = target("colorscales/legend/mrgeo/test-files/output/org.mrgeo.resources.mrspyramid/ColorScaleResourceTest/rainbow.xml")
+  Response response = target(
+      "colorscales/legend/mrgeo/test-files/output/org.mrgeo.resources.mrspyramid/ColorScaleResourceTest/rainbow.xml")
       .queryParam("max", "1000")
       .request().get();
 
@@ -147,20 +116,23 @@ public void testGetColorScaleLegendVertical() throws Exception {
 
   Assert.assertEquals(1, doc.getElementsByTagName("img").getLength());
   Assert.assertTrue(doc.getElementsByTagName("div").getLength() > 1);
-  Assert.assertEquals("mrgeo/test-files/output/org.mrgeo.resources.mrspyramid/ColorScaleResourceTest/rainbow.xml?width=20&height=200",
+  Assert.assertEquals(
+      "mrgeo/test-files/output/org.mrgeo.resources.mrspyramid/ColorScaleResourceTest/rainbow.xml?width=20&height=200",
       doc.getElementsByTagName("img").item(0).getAttributes().getNamedItem("src").getTextContent());
 }
 
 @Test
 @Category(UnitTest.class)
-public void testGetColorScaleLegendVerticalLikelihood() throws Exception {
-  Mockito.when(service.getColorScaleFromName(Mockito.anyString())).thenReturn( createRainbowColorScale() );
+public void testGetColorScaleLegendVerticalLikelihood() throws Exception
+{
+  Mockito.when(service.getColorScaleFromName(Mockito.anyString())).thenReturn(createRainbowColorScale());
 
-  Response response = target("colorscales/legend//mrgeo/test-files/output/org.mrgeo.resources.mrspyramid/ColorScaleResourceTest/rainbow.xml")
-      .queryParam("width","15")
-      .queryParam("height","180")
-      .queryParam("max","0.08")
-      .queryParam("units","likelihood")
+  Response response = target(
+      "colorscales/legend//mrgeo/test-files/output/org.mrgeo.resources.mrspyramid/ColorScaleResourceTest/rainbow.xml")
+      .queryParam("width", "15")
+      .queryParam("height", "180")
+      .queryParam("max", "0.08")
+      .queryParam("units", "likelihood")
       .request().get();
 
   Assert.assertEquals("text/html", response.getHeaderString("Content-Type"));
@@ -171,21 +143,24 @@ public void testGetColorScaleLegendVerticalLikelihood() throws Exception {
 
   Assert.assertEquals(doc.getElementsByTagName("img").getLength(), 1);
   Assert.assertTrue(doc.getElementsByTagName("div").getLength() > 1);
-  Assert.assertEquals("/mrgeo/test-files/output/org.mrgeo.resources.mrspyramid/ColorScaleResourceTest/rainbow.xml?width=15&height=180",
+  Assert.assertEquals(
+      "/mrgeo/test-files/output/org.mrgeo.resources.mrspyramid/ColorScaleResourceTest/rainbow.xml?width=15&height=180",
       doc.getElementsByTagName("img").item(0).getAttributes().getNamedItem("src").getTextContent());
 }
 
 @Test
 @Category(UnitTest.class)
-public void testGetColorScaleLegendHorizontal() throws Exception {
-  Mockito.when(service.getColorScaleFromName(Mockito.anyString())).thenReturn( createRainbowColorScale() );
+public void testGetColorScaleLegendHorizontal() throws Exception
+{
+  Mockito.when(service.getColorScaleFromName(Mockito.anyString())).thenReturn(createRainbowColorScale());
 
-  Response response = target("colorscales/legend/mrgeo/test-files/output/org.mrgeo.resources.mrspyramid/ColorScaleResourceTest/rainbow.xml")
-      .queryParam("min","0")
-      .queryParam("max","1000")
-      .queryParam("units","meters")
-      .queryParam("width","250")
-      .queryParam("height","10")
+  Response response = target(
+      "colorscales/legend/mrgeo/test-files/output/org.mrgeo.resources.mrspyramid/ColorScaleResourceTest/rainbow.xml")
+      .queryParam("min", "0")
+      .queryParam("max", "1000")
+      .queryParam("units", "meters")
+      .queryParam("width", "250")
+      .queryParam("height", "10")
       .request().get();
 
   Assert.assertEquals("text/html", response.getHeaderString("Content-Type"));
@@ -200,15 +175,17 @@ public void testGetColorScaleLegendHorizontal() throws Exception {
 
 @Test
 @Category(UnitTest.class)
-public void testGetColorScaleLegendHorizontalLikelihood() throws Exception {
-  Mockito.when(service.getColorScaleFromName(Mockito.anyString())).thenReturn( createRainbowColorScale() );
+public void testGetColorScaleLegendHorizontalLikelihood() throws Exception
+{
+  Mockito.when(service.getColorScaleFromName(Mockito.anyString())).thenReturn(createRainbowColorScale());
 
-  Response response = target("colorscales/legend/mrgeo/test-files/output/org.mrgeo.resources.mrspyramid/ColorScaleResourceTest/rainbow.xml")
-      .queryParam("min","0")
-      .queryParam("max","1.0")
-      .queryParam("units","likelihood")
-      .queryParam("width","200")
-      .queryParam("height","10")
+  Response response = target(
+      "colorscales/legend/mrgeo/test-files/output/org.mrgeo.resources.mrspyramid/ColorScaleResourceTest/rainbow.xml")
+      .queryParam("min", "0")
+      .queryParam("max", "1.0")
+      .queryParam("units", "likelihood")
+      .queryParam("width", "200")
+      .queryParam("height", "10")
       .request().get();
 
   Assert.assertEquals("text/html", response.getHeaderString("Content-Type"));
@@ -220,27 +197,22 @@ public void testGetColorScaleLegendHorizontalLikelihood() throws Exception {
   Assert.assertEquals(doc.getElementsByTagName("img").getLength(), 1);
   Assert.assertTrue(doc.getElementsByTagName("div").getLength() > 1);
 }
-
-private MrGeoRaster getRaster(String dir, String file) throws IOException {
-  return MrGeoRaster.fromDataset(GDALUtils.open(new File(dir, file).getCanonicalPath()));
-}
-
-private String input = TestUtils.composeInputDir(ColorScaleResourceTest.class);
 
 @Test
 @Category(UnitTest.class)
 public void testGetColorScaleSwatch() throws Exception
 {
   Mockito.when(service.createColorScaleSwatch(Mockito.anyString(), Mockito.anyString(),
-      Mockito.anyInt(), Mockito.anyInt())).thenReturn(getRaster(input, "colorswatch.png") );
+      Mockito.anyInt(), Mockito.anyInt())).thenReturn(getRaster(input, "colorswatch.png"));
 
   ImageResponseWriter writer = new PngImageResponseWriter();
   Mockito.when(service.getImageResponseWriter(Mockito.anyString())).thenReturn(writer);
 
-  Response response = target("colorscales/mrgeo/test-files/output/org.mrgeo.resources.mrspyramid/ColorScaleResourceTest/rainbow.xml")
-      .queryParam("width", "100")
-      .queryParam("height", "10")
-      .request().get();
+  Response response =
+      target("colorscales/mrgeo/test-files/output/org.mrgeo.resources.mrspyramid/ColorScaleResourceTest/rainbow.xml")
+          .queryParam("width", "100")
+          .queryParam("height", "10")
+          .request().get();
 
   Assert.assertEquals("image/png", response.getHeaderString("Content-Type"));
 
@@ -257,12 +229,15 @@ public void testGetColorScaleSwatch() throws Exception
 @Category(UnitTest.class)
 public void testGetColorScaleSwatchMissingColorScale() throws Exception
 {
-  Mockito.when(service.createColorScaleSwatch(Mockito.anyString(), Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt())).thenAnswer(new Answer() {
-    public Object answer(InvocationOnMock invocation) throws MrsPyramidServiceException
-    {
-      throw new MrsPyramidServiceException("Base path \"" + invocation.getArguments()[0] + "\" does not exist.");
-    }
-  });
+  Mockito.when(
+      service.createColorScaleSwatch(Mockito.anyString(), Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt()))
+      .thenAnswer(new Answer()
+      {
+        public Object answer(InvocationOnMock invocation) throws MrsPyramidServiceException
+        {
+          throw new MrsPyramidServiceException("Base path \"" + invocation.getArguments()[0] + "\" does not exist.");
+        }
+      });
 
   ImageResponseWriter writer = new PngImageResponseWriter();
   Mockito.when(service.getImageResponseWriter(Mockito.anyString())).thenReturn(writer);
@@ -277,5 +252,45 @@ public void testGetColorScaleSwatchMissingColorScale() throws Exception
   Assert.assertNotSame("image/png", response.getHeaderString("Content-Type"));
   Assert.assertEquals(400, response.getStatus());
   Assert.assertEquals("Color scale file not found: " + path, response.readEntity(String.class));
+}
+
+@Override
+protected Application configure()
+{
+  service = Mockito.mock(MrsPyramidService.class);
+
+  ResourceConfig config = new ResourceConfig();
+  config.register(ColorScaleResource.class);
+  config.register(new AbstractBinder()
+  {
+    @Override
+    protected void configure()
+    {
+      bind(service).to(MrsPyramidService.class);
+    }
+  });
+  return config;
+}
+
+private ColorScale createRainbowColorScale() throws ColorScaleException
+{
+  String colorScaleXml = "<ColorMap name=\"Rainbow\">\n" +
+      "  <Scaling>MinMax</Scaling> <!-- Could also be Absolute -->\n" +
+      "  <ReliefShading>0</ReliefShading>\n" +
+      "  <Interpolate>1</Interpolate>\n" +
+      "  <NullColor color=\"0,0,0\" opacity=\"0\"/>\n" +
+      "  <Color value=\"0.0\" color=\"0,0,127\" opacity=\"255\"/>\n" +
+      "  <Color value=\"0.2\" color=\"0,0,255\"/> <!-- if not specified an opacity defaults to 255 -->\n" +
+      "  <Color value=\"0.4\" color=\"0,255,255\"/>\n" +
+      "  <Color value=\"0.6\" color=\"0,255,0\"/>\n" +
+      "  <Color value=\"0.8\" color=\"255,255,0\"/>\n" +
+      "  <Color value=\"1.0\" color=\"255,0,0\"/>\n" +
+      "</ColorMap>";
+  return ColorScale.loadFromXML(new ByteArrayInputStream(colorScaleXml.getBytes()));
+}
+
+private MrGeoRaster getRaster(String dir, String file) throws IOException
+{
+  return MrGeoRaster.fromDataset(GDALUtils.open(new File(dir, file).getCanonicalPath()));
 }
 }

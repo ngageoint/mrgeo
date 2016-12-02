@@ -157,32 +157,6 @@ public static String getAccumuloPropertiesLocation()
   return null;
 }
 
-public static void setAccumuloProperties(Map<String, String> props)
-{
-  accumuloProperties = new Properties();
-
-  if (!copyProp(props, accumuloProperties, MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE) ||
-      !copyProp(props, accumuloProperties, MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER) ||
-      !copyProp(props, accumuloProperties, MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD) ||
-      !copyProp(props, accumuloProperties, MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS))
-  {
-    // one of the properties doesn't exist, so accumulo is invalid!
-    accumuloProperties = null;
-  }
-}
-
-private static boolean copyProp(Map<String, String> src, Properties dst, String key)
-{
-  String value = src.get(key);
-  if (value != null)
-  {
-    dst.setProperty(key, value);
-    return true;
-  }
-
-  return false;
-}
-
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File must be valid accumulo properties")
 public static synchronized Properties getAccumuloProperties() throws DataProviderException
 {
@@ -228,6 +202,20 @@ public static synchronized Properties getAccumuloProperties() throws DataProvide
   }
   return accumuloProperties;
 } // end getAccumuloProperties
+
+public static void setAccumuloProperties(Map<String, String> props)
+{
+  accumuloProperties = new Properties();
+
+  if (!copyProp(props, accumuloProperties, MrGeoAccumuloConstants.MRGEO_ACC_KEY_INSTANCE) ||
+      !copyProp(props, accumuloProperties, MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER) ||
+      !copyProp(props, accumuloProperties, MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD) ||
+      !copyProp(props, accumuloProperties, MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS))
+  {
+    // one of the properties doesn't exist, so accumulo is invalid!
+    accumuloProperties = null;
+  }
+}
 
 public static Map<String, String> getAccumuloPropertiesAsMap()
 {
@@ -401,7 +389,6 @@ public static String getReadAuthorizations(String curAuths) throws DataProviderE
 
 } // end getReadAuthorizations
 
-
 @SuppressWarnings("squid:S1166") // Exception caught and handled
 public static boolean deleteTable(String table) throws DataProviderException
 {
@@ -417,7 +404,6 @@ public static boolean deleteTable(String table) throws DataProviderException
   }
   return false;
 } // end deleteTable
-
 
 public static void main(String args[]) throws Exception
 {
@@ -446,5 +432,17 @@ public static void main(String args[]) throws Exception
   // }
 
 } // end main
+
+private static boolean copyProp(Map<String, String> src, Properties dst, String key)
+{
+  String value = src.get(key);
+  if (value != null)
+  {
+    dst.setProperty(key, value);
+    return true;
+  }
+
+  return false;
+}
 
 } // end AccumuloConnector

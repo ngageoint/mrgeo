@@ -18,15 +18,15 @@ package org.mrgeo.mapalgebra.parser;
 
 public class ParserConstantNode extends ParserNode
 {
-  private Object value;
+private Object value;
 
-  public Object getValue()
-  {
-    return value;
-  }
-  
-  public void setValue(Object value)
-  {
-    this.value = value;
-  }
+public Object getValue()
+{
+  return value;
+}
+
+public void setValue(Object value)
+{
+  this.value = value;
+}
 }

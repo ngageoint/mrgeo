@@ -29,42 +29,42 @@ import java.io.IOException;
 
 public class ShapefileVectorReader implements VectorReader
 {
-  public ShapefileVectorReader(VectorDataProvider provider, VectorReaderContext context, Configuration conf)
-  {
-  }
+public ShapefileVectorReader(VectorDataProvider provider, VectorReaderContext context, Configuration conf)
+{
+}
 
-  @Override
-  public void close()
-  {
-  }
+@Override
+public void close()
+{
+}
 
-  @Override
-  public CloseableKVIterator<FeatureIdWritable, Geometry> get() throws IOException
-  {
-    return null;
-  }
+@Override
+public CloseableKVIterator<FeatureIdWritable, Geometry> get() throws IOException
+{
+  return null;
+}
 
-  @Override
-  public boolean exists(FeatureIdWritable featureId) throws IOException
-  {
-    return false;
-  }
+@Override
+public boolean exists(FeatureIdWritable featureId) throws IOException
+{
+  return false;
+}
 
-  @Override
-  public Geometry get(FeatureIdWritable featureId) throws IOException
-  {
-    return null;
-  }
+@Override
+public Geometry get(FeatureIdWritable featureId) throws IOException
+{
+  return null;
+}
 
-  @Override
-  public CloseableKVIterator<FeatureIdWritable, Geometry> get(Bounds bounds) throws IOException
-  {
-    return null;
-  }
+@Override
+public CloseableKVIterator<FeatureIdWritable, Geometry> get(Bounds bounds) throws IOException
+{
+  return null;
+}
 
-  @Override
-  public long count() throws IOException
-  {
-    return 0;
-  }
+@Override
+public long count() throws IOException
+{
+  return 0;
+}
 }

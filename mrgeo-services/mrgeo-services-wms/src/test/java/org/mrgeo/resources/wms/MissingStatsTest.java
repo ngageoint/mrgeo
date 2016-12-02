@@ -30,33 +30,54 @@ import javax.ws.rs.core.Response;
 @SuppressWarnings("all") // Test code, not included in production
 public class MissingStatsTest extends WmsGeneratorTestAbstract
 {
-  @SuppressWarnings("unused")
-  private static final Logger log = LoggerFactory.getLogger(MissingStatsTest.class);
+@SuppressWarnings("unused")
+private static final Logger log = LoggerFactory.getLogger(MissingStatsTest.class);
 
-  @BeforeClass
-  public static void setUpForJUnit()
+@BeforeClass
+public static void setUpForJUnit()
+{
+  try
   {
-    try
-    {
-      baselineInput = TestUtils.composeInputDir(MissingStatsTest.class);
-      WmsGeneratorTestAbstract.setUpForJUnit();
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-    }
+    baselineInput = TestUtils.composeInputDir(MissingStatsTest.class);
+    WmsGeneratorTestAbstract.setUpForJUnit();
   }
+  catch (Exception e)
+  {
+    e.printStackTrace();
+  }
+}
 
   /*
    * If no stats have been calculated on an image, a default range of 0.0 to 1.0 is used for the
    * extrema during color scale application.
    */
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMapPngNoStats() throws Exception
+@Test
+@Category(IntegrationTest.class)
+public void testGetMapPngNoStats() throws Exception
+{
+  String contentType = "image/png";
+
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmap")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-stats")
+      .queryParam("FORMAT", contentType)
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+      .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .request().get();
+
+  processImageResponse(response, contentType, "png");
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void testGetMapJpgNoStats() throws Exception
+{
+  try
   {
-    String contentType = "image/png";
+    String contentType = "image/jpeg";
 
     Response response = target("wms")
         .queryParam("SERVICE", "WMS")
@@ -68,168 +89,147 @@ public class MissingStatsTest extends WmsGeneratorTestAbstract
         .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
         .request().get();
 
-    processImageResponse(response, contentType, "png");
+    processImageResponse(response, contentType, "jpg");
   }
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMapJpgNoStats() throws Exception
+  catch (Exception e)
   {
-    try
-    {
-      String contentType = "image/jpeg";
-
-      Response response = target("wms")
-          .queryParam("SERVICE", "WMS")
-          .queryParam("REQUEST", "getmap")
-          .queryParam("LAYERS", "IslandsElevation-v2-no-stats")
-          .queryParam("FORMAT", contentType)
-          .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-          .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-          .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-          .request().get();
-
-      processImageResponse(response, contentType, "jpg");
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-      throw e;
-    }
+    e.printStackTrace();
+    throw e;
   }
+}
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMapTifNoStats() throws Exception
-  {
-    String contentType = "image/tiff";
+@Test
+@Category(IntegrationTest.class)
+public void testGetMapTifNoStats() throws Exception
+{
+  String contentType = "image/tiff";
 
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmap")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-stats")
-        .queryParam("FORMAT", contentType)
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .request().get();
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmap")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-stats")
+      .queryParam("FORMAT", contentType)
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+      .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .request().get();
 
-    processImageResponse(response, contentType, "tif");
-  }
+  processImageResponse(response, contentType, "tif");
+}
 
   /*
    * If no stats have been calculated on an image, a default range of 0.0 to 1.0 is used for the
    * extrema during color scale application.
    */
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMosaicPngNoStats() throws Exception
-  {
-    String contentType = "image/png";
+@Test
+@Category(IntegrationTest.class)
+public void testGetMosaicPngNoStats() throws Exception
+{
+  String contentType = "image/png";
 
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmosaic")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-stats")
-        .queryParam("FORMAT", contentType)
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-        .request().get();
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmosaic")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-stats")
+      .queryParam("FORMAT", contentType)
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+      .request().get();
 
-    processImageResponse(response, contentType, "png");
-  }
+  processImageResponse(response, contentType, "png");
+}
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMosaicJpgNoStats() throws Exception
-  {
-    String contentType = "image/jpeg";
+@Test
+@Category(IntegrationTest.class)
+public void testGetMosaicJpgNoStats() throws Exception
+{
+  String contentType = "image/jpeg";
 
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmosaic")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-stats")
-        .queryParam("FORMAT", contentType)
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-        .request().get();
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmosaic")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-stats")
+      .queryParam("FORMAT", contentType)
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+      .request().get();
 
-    processImageResponse(response, contentType, "jpg");
-  }
+  processImageResponse(response, contentType, "jpg");
+}
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMosaicTifNoStats() throws Exception
-  {
-    String contentType = "image/tiff";
+@Test
+@Category(IntegrationTest.class)
+public void testGetMosaicTifNoStats() throws Exception
+{
+  String contentType = "image/tiff";
 
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmosaic")
-        .queryParam("LAYERS", "IslandsElevation-v2-no-stats")
-        .queryParam("FORMAT", contentType)
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-        .request().get();
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmosaic")
+      .queryParam("LAYERS", "IslandsElevation-v2-no-stats")
+      .queryParam("FORMAT", contentType)
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+      .request().get();
 
-    processImageResponse(response, contentType, "tif");
-  }
+  processImageResponse(response, contentType, "tif");
+}
 
   /*
    * If no stats have been calculated on an image, a default range of 0.0 to 1.0 is used for the
    * extrema during color scale application.
    */
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetTilePngNoStats() throws Exception
-  {
-    String contentType = "image/png";
+@Test
+@Category(IntegrationTest.class)
+public void testGetTilePngNoStats() throws Exception
+{
+  String contentType = "image/png";
 
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "gettile")
-        .queryParam("LAYER", "IslandsElevation-v2-no-stats")
-        .queryParam("FORMAT", contentType)
-        .queryParam("TILEROW", "56")
-        .queryParam("TILECOL", "242")
-        .queryParam("SCALE", "0.0027465820") // zoom level 8
-        .request().get();
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "gettile")
+      .queryParam("LAYER", "IslandsElevation-v2-no-stats")
+      .queryParam("FORMAT", contentType)
+      .queryParam("TILEROW", "56")
+      .queryParam("TILECOL", "242")
+      .queryParam("SCALE", "0.0027465820") // zoom level 8
+      .request().get();
 
-    processImageResponse(response, contentType, "png");
-  }
+  processImageResponse(response, contentType, "png");
+}
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetTileJpgNoStats() throws Exception
-  {
-    String contentType = "image/jpeg";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "gettile")
-        .queryParam("LAYER", "IslandsElevation-v2-no-stats")
-        .queryParam("FORMAT", contentType)
-        .queryParam("TILEROW", "56")
-        .queryParam("TILECOL", "242")
-        .queryParam("SCALE", "0.0027465820") // zoom level 8
-        .request().get();
+@Test
+@Category(IntegrationTest.class)
+public void testGetTileJpgNoStats() throws Exception
+{
+  String contentType = "image/jpeg";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "gettile")
+      .queryParam("LAYER", "IslandsElevation-v2-no-stats")
+      .queryParam("FORMAT", contentType)
+      .queryParam("TILEROW", "56")
+      .queryParam("TILECOL", "242")
+      .queryParam("SCALE", "0.0027465820") // zoom level 8
+      .request().get();
 
-    processImageResponse(response, contentType, "jpg");
-  }
+  processImageResponse(response, contentType, "jpg");
+}
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetTileTifNoStats() throws Exception
-  {
-    String contentType = "image/tiff";
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "gettile")
-        .queryParam("LAYER", "IslandsElevation-v2-no-stats")
-        .queryParam("FORMAT", contentType)
-        .queryParam("TILEROW", "56")
-        .queryParam("TILECOL", "242")
-        .queryParam("SCALE", "0.0027465820") // zoom level 8
-        .request().get();
+@Test
+@Category(IntegrationTest.class)
+public void testGetTileTifNoStats() throws Exception
+{
+  String contentType = "image/tiff";
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "gettile")
+      .queryParam("LAYER", "IslandsElevation-v2-no-stats")
+      .queryParam("FORMAT", contentType)
+      .queryParam("TILEROW", "56")
+      .queryParam("TILECOL", "242")
+      .queryParam("SCALE", "0.0027465820") // zoom level 8
+      .request().get();
 
-    processImageResponse(response, contentType, "tif");
-  }
+  processImageResponse(response, contentType, "tif");
+}
 }

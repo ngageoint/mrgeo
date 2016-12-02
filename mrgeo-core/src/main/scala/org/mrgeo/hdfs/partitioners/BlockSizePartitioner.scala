@@ -28,12 +28,15 @@ class BlockSizePartitioner() extends FileSplitPartitioner() with Externalizable 
 
   var partitions:Int = 0
 
-  override def numPartitions: Int = { partitions }
+  override def numPartitions:Int = {
+    partitions
+  }
 
-  def getPartition(key: Any): Int = 0
+  def getPartition(key:Any):Int = 0
 
-  override def readExternal(in: ObjectInput): Unit = {}
-  override def writeExternal(out: ObjectOutput): Unit = {}
+  override def readExternal(in:ObjectInput):Unit = {}
+
+  override def writeExternal(out:ObjectOutput):Unit = {}
 
   def hasFixedPartitions:Boolean = true
 
@@ -46,7 +49,7 @@ class BlockSizePartitioner() extends FileSplitPartitioner() with Externalizable 
     val tile = RasterWritable.toMrGeoRaster(raster.first()._2)
 
 
-    val tilesperblock = (blocksize / tile.datalength()) - 1  // subtract 1 for the 0-based counting
+    val tilesperblock = (blocksize / tile.datalength()) - 1 // subtract 1 for the 0-based counting
 
     partitions = Math.ceil(raster.count() / tilesperblock.toDouble).toInt
 

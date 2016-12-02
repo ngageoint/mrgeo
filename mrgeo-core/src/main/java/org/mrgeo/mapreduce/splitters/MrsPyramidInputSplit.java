@@ -32,84 +32,84 @@ import java.io.IOException;
  * created by the data plugin provider so that pyramids can be split in
  * whatever way is appropriate for the storage format. For example, a FileSplit
  * would be an appropriate native split format for a file-based data store, but
- * something else would likely be used if the data store were a database. 
+ * something else would likely be used if the data store were a database.
  */
 public class MrsPyramidInputSplit extends InputSplit implements Writable
 {
-  private TiledInputSplit wrappedInputSplit;
-  private String name;
+private TiledInputSplit wrappedInputSplit;
+private String name;
 
-  public MrsPyramidInputSplit()
-  {
-  }
+public MrsPyramidInputSplit()
+{
+}
 
-  public MrsPyramidInputSplit(final TiledInputSplit split, String name) throws IOException
-  {
-    super();
-    this.wrappedInputSplit = split;
-    this.name = name;
-  }
+public MrsPyramidInputSplit(final TiledInputSplit split, String name) throws IOException
+{
+  super();
+  this.wrappedInputSplit = split;
+  this.name = name;
+}
 
-  public String getName()
-  {
-    return name;
-  }
+public String getName()
+{
+  return name;
+}
 
-  @Override
-  public void readFields(DataInput in) throws IOException
+@Override
+public void readFields(DataInput in) throws IOException
+{
+  boolean wrappedWritable = in.readBoolean();
+  if (wrappedWritable)
   {
-    boolean wrappedWritable = in.readBoolean();
-    if (wrappedWritable)
+    String wrappedSplitClassName = in.readUTF();
+    try
     {
-      String wrappedSplitClassName = in.readUTF();
-      try
-      {
-        Class<?> splitClass = Class.forName(wrappedSplitClassName);
-        wrappedInputSplit = (TiledInputSplit)ReflectionUtils.newInstance(splitClass, HadoopUtils.createConfiguration());
-        wrappedInputSplit.readFields(in);
-      }
-      catch (ClassNotFoundException e)
-      {
-        throw new IOException(e);
-      }
+      Class<?> splitClass = Class.forName(wrappedSplitClassName);
+      wrappedInputSplit = (TiledInputSplit) ReflectionUtils.newInstance(splitClass, HadoopUtils.createConfiguration());
+      wrappedInputSplit.readFields(in);
     }
-
-    name = in.readUTF();
-  }
-
-  @Override
-  public void write(DataOutput out) throws IOException
-  {
-    // Write a boolean indicating whether the wrapped input split is writable. If
-    // it is, then write it after the boolean.
-    if (wrappedInputSplit != null)
+    catch (ClassNotFoundException e)
     {
-      out.writeBoolean(true);
-      out.writeUTF(wrappedInputSplit.getClass().getName());
-     wrappedInputSplit.write(out);
+      throw new IOException(e);
     }
-    else
-    {
-      out.writeBoolean(false);
-    }
-
-    out.writeUTF(name);
   }
 
-  @Override
-  public long getLength() throws IOException, InterruptedException
+  name = in.readUTF();
+}
+
+@Override
+public void write(DataOutput out) throws IOException
+{
+  // Write a boolean indicating whether the wrapped input split is writable. If
+  // it is, then write it after the boolean.
+  if (wrappedInputSplit != null)
   {
-    return wrappedInputSplit.getLength();
+    out.writeBoolean(true);
+    out.writeUTF(wrappedInputSplit.getClass().getName());
+    wrappedInputSplit.write(out);
+  }
+  else
+  {
+    out.writeBoolean(false);
   }
 
-  @Override
-  public String[] getLocations() throws IOException, InterruptedException
-  {
-    return wrappedInputSplit.getLocations();
-  }
+  out.writeUTF(name);
+}
 
-  public TiledInputSplit getWrappedSplit()
-  {
-    return wrappedInputSplit;
-  }
+@Override
+public long getLength() throws IOException, InterruptedException
+{
+  return wrappedInputSplit.getLength();
+}
+
+@Override
+public String[] getLocations() throws IOException, InterruptedException
+{
+  return wrappedInputSplit.getLocations();
+}
+
+public TiledInputSplit getWrappedSplit()
+{
+  return wrappedInputSplit;
+}
 }

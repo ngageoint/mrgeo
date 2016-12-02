@@ -36,77 +36,81 @@ import java.io.IOException;
 
 public class HdfsMrsPyramidOutputFormat extends FileOutputFormat<WritableComparable<?>, Writable>
 {
-  private static final Logger log = LoggerFactory.getLogger(HdfsMrsPyramidOutputFormat.class);
+private static final Logger log = LoggerFactory.getLogger(HdfsMrsPyramidOutputFormat.class);
+
+@Override
+public RecordWriter<WritableComparable<?>, Writable> getRecordWriter(TaskAttemptContext context) throws IOException
+{
+  CompressionCodec codec = null;
+  SequenceFile.CompressionType compressionType = SequenceFile.CompressionType.NONE;
+  if (getCompressOutput(context))
+  {
+    // find the kind of compression to do
+    compressionType = SequenceFileOutputFormat.getOutputCompressionType(context);
+
+    // find the right codec
+    codec = getCompressionCodec(context);
+  }
+
+  Path file = getDefaultWorkFile(context, "");
+
+  final MapFile.Writer out = createMapFileWriter(context, codec, compressionType, file);
+
+  return new Writer(out);
+}
+
+protected MapFile.Writer createMapFileWriter(TaskAttemptContext context, CompressionCodec codec,
+    SequenceFile.CompressionType compressionType, Path file) throws IOException
+{
+  return new MapFile.Writer(context.getConfiguration(), file,
+      MapFile.Writer.keyClass(context.getOutputKeyClass().asSubclass(WritableComparable.class)),
+      MapFile.Writer.valueClass(context.getOutputValueClass().asSubclass(Writable.class)),
+      MapFile.Writer.compression(compressionType, codec),
+      MapFile.Writer.progressable(context));
+}
+
+protected CompressionCodec getCompressionCodec(TaskAttemptContext context)
+{
+  CompressionCodec codec;
+  Class<?> codecClass = getOutputCompressorClass(context,
+      DefaultCodec.class);
+  codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, context.getConfiguration());
+  return codec;
+}
+
+private static class Writer extends RecordWriter<WritableComparable<?>, Writable>
+{
+  private final MapFile.Writer out;
+  private TileIdWritable tileid;
+
+  public Writer(MapFile.Writer out)
+  {
+    this.out = out;
+    tileid = new TileIdWritable();
+  }
 
   @Override
-  public RecordWriter<WritableComparable<?>, Writable> getRecordWriter(TaskAttemptContext context) throws IOException
+  public void write(WritableComparable<?> key, Writable value)
+      throws IOException
   {
-    CompressionCodec codec = null;
-    SequenceFile.CompressionType compressionType = SequenceFile.CompressionType.NONE;
-    if (getCompressOutput(context)) {
-      // find the kind of compression to do
-      compressionType = SequenceFileOutputFormat.getOutputCompressionType(context);
-
-      // find the right codec
-      codec = getCompressionCodec(context);
+    // there may ba a case or two where an extended TileIdWritable is written as the key
+    // (buildpyramid does it).  So we strip out any of that information when we write the
+    // actual key.
+    if (key instanceof TileIdWritable)
+    {
+      tileid.set(((TileIdWritable) key).get());
+      out.append(tileid, value);
     }
-
-    Path file = getDefaultWorkFile(context, "");
-
-    final MapFile.Writer out = createMapFileWriter(context, codec, compressionType, file);
-
-    return new Writer(out);
+    else
+    {
+      out.append(key, value);
+    }
   }
 
-  protected MapFile.Writer createMapFileWriter(TaskAttemptContext context, CompressionCodec codec,
-                                             SequenceFile.CompressionType compressionType, Path file) throws IOException {
-    return new MapFile.Writer(context.getConfiguration(), file,
-        MapFile.Writer.keyClass(context.getOutputKeyClass().asSubclass(WritableComparable.class)),
-        MapFile.Writer.valueClass(context.getOutputValueClass().asSubclass(Writable.class)),
-        MapFile.Writer.compression(compressionType, codec),
-        MapFile.Writer.progressable(context));
-  }
-
-  protected CompressionCodec getCompressionCodec(TaskAttemptContext context) {
-      CompressionCodec codec;
-      Class<?> codecClass = getOutputCompressorClass(context,
-          DefaultCodec.class);
-      codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, context.getConfiguration());
-      return codec;
-  }
-
-  private static class Writer extends RecordWriter<WritableComparable<?>, Writable>
+  @Override
+  public void close(TaskAttemptContext contxt) throws IOException
   {
-    private final MapFile.Writer out;
-    private TileIdWritable tileid;
-
-    public Writer(MapFile.Writer out)
-    {
-      this.out = out;
-      tileid = new TileIdWritable();
-    }
-
-    @Override
-    public void write(WritableComparable<?> key, Writable value)
-        throws IOException
-    {
-      // there may ba a case or two where an extended TileIdWritable is written as the key
-      // (buildpyramid does it).  So we strip out any of that information when we write the
-      // actual key.
-      if (key instanceof TileIdWritable)
-      {
-        tileid.set(((TileIdWritable)key).get());
-        out.append(tileid, value);
-      }
-      else
-      {
-        out.append(key, value);
-      }
-    }
-
-    @Override
-    public void close(TaskAttemptContext contxt) throws IOException {
-      out.close();
-    }
+    out.close();
   }
+}
 }

@@ -165,6 +165,23 @@ private static MrsImage getImageForScale(final MrsPyramid pyramid, final double 
   return image;
 }
 
+private static int parseEpsgCode(String epsg)
+{
+  String prefix = "epsg:";
+  int index = epsg.toLowerCase().indexOf(prefix);
+  if (index >= 0)
+  {
+    try
+    {
+      return Integer.parseInt(epsg.substring(index + prefix.length()));
+    }
+    catch (NumberFormatException ignored)
+    {
+    }
+  }
+  throw new IllegalArgumentException("Invalid EPSG code: " + epsg);
+}
+
 /*
  * (non-Javadoc)
  *
@@ -190,28 +207,6 @@ public double[] getDefaultValues()
   return new double[]{-1.0};
 }
 
-
-@SuppressWarnings("squid:S1166") // Exception caught and handled
-private MrsImageDataProvider getDataProvider()
-{
-  if (imageName != null)
-  {
-    try
-    {
-      return
-          DataProviderFactory.getMrsImageDataProvider(imageName, AccessMode.READ, (ProviderProperties) null);
-
-
-    }
-    catch (DataProviderNotFound ignored)
-    {
-    }
-  }
-
-  return null;
-}
-
-
 /*
  * (non-Javadoc)
  *
@@ -230,7 +225,7 @@ public double[] getExtrema()
       ImageStats stats = metadata.getStats(0);
       if (stats != null)
       {
-        return new double[] { stats.min, stats.max };
+        return new double[]{stats.min, stats.max};
       }
     }
   }
@@ -256,10 +251,10 @@ public boolean outputIsTransparent()
 /**
  * Implements image rendering for GetMap requests
  *
- * @param pyramidName name of the source data
- * @param requestBounds      requested bounds (in dest projection coordinates)
- * @param width       requested width
- * @param height      requested height
+ * @param pyramidName   name of the source data
+ * @param requestBounds requested bounds (in dest projection coordinates)
+ * @param width         requested width
+ * @param height        requested height
  * @return image rendering of the requested bounds at the requested size
  */
 @SuppressWarnings("squid:S1166") // Exception caught and handled
@@ -482,22 +477,6 @@ public MrGeoRaster renderImage(final String pyramidName, final Bounds requestBou
   }
 }
 
-private static int parseEpsgCode(String epsg)
-{
-  String prefix = "epsg:";
-  int index = epsg.toLowerCase().indexOf(prefix);
-  if (index >= 0) {
-    try
-    {
-      return Integer.parseInt(epsg.substring(index + prefix.length()));
-    }
-    catch(NumberFormatException ignored)
-    {
-    }
-  }
-  throw new IllegalArgumentException("Invalid EPSG code: " + epsg);
-}
-
 /**
  * Implements image rendering for GetMosaic requests
  *
@@ -718,36 +697,6 @@ public MrGeoRaster renderImage(final String pyramidName, final int tileColumn, f
 
 }
 
-private MrGeoRaster maskRaster(double maskMax, MrGeoRaster raster, double[] nodata, MrGeoRaster maskRaster,
-    double[] maskNodata)
-{
-  for (int w = 0; w < maskRaster.width(); w++)
-  {
-    for (int h = 0; h < maskRaster.height(); h++)
-    {
-      boolean masked = true;
-      for (int b = 0; b < maskRaster.bands(); b++)
-      {
-        final double maskPixel = maskRaster.getPixelDouble(w, h, b);
-        if (maskPixel <= maskMax && Double.compare(maskPixel, maskNodata[b]) != 0)
-        {
-          masked = false;
-          break;
-        }
-      }
-
-      if (masked)
-      {
-        for (int b = 0; b < raster.bands(); b++)
-        {
-          raster.setPixel(w, h, b, nodata[b]);
-        }
-      }
-    }
-  }
-  return raster;
-}
-
 @Override
 public MrGeoRaster renderImage(final String pyramidName, final int tileColumn, final int tileRow,
     final int zoom, final String maskName,
@@ -783,6 +732,56 @@ protected double[] getImageTileEnvelope(final Bounds bounds, final int zoom,
   xform[5] = -res; /* n-s pixel resolution (negative value) */
 
   return xform;
+}
+
+@SuppressWarnings("squid:S1166") // Exception caught and handled
+private MrsImageDataProvider getDataProvider()
+{
+  if (imageName != null)
+  {
+    try
+    {
+      return
+          DataProviderFactory.getMrsImageDataProvider(imageName, AccessMode.READ, (ProviderProperties) null);
+
+
+    }
+    catch (DataProviderNotFound ignored)
+    {
+    }
+  }
+
+  return null;
+}
+
+private MrGeoRaster maskRaster(double maskMax, MrGeoRaster raster, double[] nodata, MrGeoRaster maskRaster,
+    double[] maskNodata)
+{
+  for (int w = 0; w < maskRaster.width(); w++)
+  {
+    for (int h = 0; h < maskRaster.height(); h++)
+    {
+      boolean masked = true;
+      for (int b = 0; b < maskRaster.bands(); b++)
+      {
+        final double maskPixel = maskRaster.getPixelDouble(w, h, b);
+        if (maskPixel <= maskMax && Double.compare(maskPixel, maskNodata[b]) != 0)
+        {
+          masked = false;
+          break;
+        }
+      }
+
+      if (masked)
+      {
+        for (int b = 0; b < raster.bands(); b++)
+        {
+          raster.setPixel(w, h, b, nodata[b]);
+        }
+      }
+    }
+  }
+  return raster;
 }
 
 }

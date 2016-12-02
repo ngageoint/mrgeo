@@ -16,74 +16,85 @@
 
 package org.mrgeo.resources.job;
 
-import org.apache.hadoop.mapreduce.Job;
 import org.mrgeo.job.JobDetails;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 public class JobResponseFormatter
 {
-  public static JobsListResponse createJobsListResponse(JobDetails[] jDetails, String jobUri, String prevUrl, String nextUrl) {
-    List<JobInfoResponse> jobInfo = new ArrayList<JobInfoResponse>();
-    JobsListResponse jres = new JobsListResponse();
-    jres.setJobInfo(jobInfo);      
-    for (int i = 0; i < jDetails.length; i++)
-    {
-      JobInfoResponse jInfo = new JobInfoResponse();
-      populateJobInfo(jInfo, jDetails[i], jobUri);
-      jobInfo.add(jInfo);
-    }
-    jres.setPrevURL(prevUrl);
-    jres.setNextURL(nextUrl);
-    return jres;
-  }
-
-  public static JobInfoResponse createJobResponse(JobDetails jDetails, String jobUri) {
+public static JobsListResponse createJobsListResponse(JobDetails[] jDetails, String jobUri, String prevUrl,
+    String nextUrl)
+{
+  List<JobInfoResponse> jobInfo = new ArrayList<JobInfoResponse>();
+  JobsListResponse jres = new JobsListResponse();
+  jres.setJobInfo(jobInfo);
+  for (int i = 0; i < jDetails.length; i++)
+  {
     JobInfoResponse jInfo = new JobInfoResponse();
-    populateJobInfo(jInfo, jDetails, jobUri);
-    return jInfo;
+    populateJobInfo(jInfo, jDetails[i], jobUri);
+    jobInfo.add(jInfo);
   }
-  
-  public static JobInfoDetailedResponse createJobResponseDetailed(JobDetails jDetails, String jobUri) {
-      JobInfoDetailedResponse jInfoDetaild = new JobInfoDetailedResponse();
-      populateJobInfoDetailed(jInfoDetaild, jDetails, jobUri);
-      return jInfoDetaild;
+  jres.setPrevURL(prevUrl);
+  jres.setNextURL(nextUrl);
+  return jres;
+}
+
+public static JobInfoResponse createJobResponse(JobDetails jDetails, String jobUri)
+{
+  JobInfoResponse jInfo = new JobInfoResponse();
+  populateJobInfo(jInfo, jDetails, jobUri);
+  return jInfo;
+}
+
+public static JobInfoDetailedResponse createJobResponseDetailed(JobDetails jDetails, String jobUri)
+{
+  JobInfoDetailedResponse jInfoDetaild = new JobInfoDetailedResponse();
+  populateJobInfoDetailed(jInfoDetaild, jDetails, jobUri);
+  return jInfoDetaild;
+}
+
+private static void populateJobInfoDetailed(JobInfoDetailedResponse jInfoDetaild, JobDetails jDetails, String jobUri)
+{
+  populateJobInfo(jInfoDetaild, jDetails, jobUri);
+  jInfoDetaild.setInstructions(jDetails.getInstructions());
+}
+
+private static void populateJobInfo(JobInfoResponse jInfo, JobDetails jDetails, String jobUri)
+{
+
+  jInfo.setJobId(jDetails.getJobId());
+  jInfo.setName(jDetails.getName());
+  jInfo.setStatusUrl(jobUri + jDetails.getJobId());
+  jInfo.setType(jDetails.getType());
+  JobStateResponse jsr = new JobStateResponse();
+  jsr.setState(jDetails.getStatus());
+  jsr.setMessage(jDetails.getMessage());
+  jsr.setJobFinished(jDetails.isFinished());
+  if (jDetails.getStartedDateTime() != -1)
+  {
+    jsr.setStartTime(new Date(jDetails.getStartedDateTime()));
   }
-  
-  private static void populateJobInfoDetailed(JobInfoDetailedResponse jInfoDetaild, JobDetails jDetails, String jobUri) {
-    populateJobInfo(jInfoDetaild, jDetails, jobUri);
-    jInfoDetaild.setInstructions(jDetails.getInstructions());
+  if (jDetails.getDuration() != -1)
+  {
+    jsr.setDuration(jDetails.getDuration());
   }
-  
-  private static void populateJobInfo(JobInfoResponse jInfo, JobDetails jDetails, String jobUri) {
-    
-    jInfo.setJobId(jDetails.getJobId());
-    jInfo.setName(jDetails.getName());
-    jInfo.setStatusUrl(jobUri + jDetails.getJobId());
-    jInfo.setType(jDetails.getType());
-    JobStateResponse jsr = new JobStateResponse();
-    jsr.setState(jDetails.getStatus());
-    jsr.setMessage(jDetails.getMessage());
-    jsr.setJobFinished(jDetails.isFinished());
-    if (jDetails.getStartedDateTime() != -1) {
-      jsr.setStartTime(new Date(jDetails.getStartedDateTime()));      
-    }
-    if (jDetails.getDuration() != -1) {
-      jsr.setDuration(jDetails.getDuration());      
-    }
-    jInfo.setJobState(jsr);
-    
-    TaskStateResponse tsr = new TaskStateResponse();
-    long taskId = jDetails.getJobId(); //task id is the same as job id
-    tsr.setState(jDetails.getStatus(taskId));
-    tsr.setMessage(jDetails.getMessage(taskId));
-    tsr.setTaskFinished((jDetails.isFinished(taskId)));
-    if (jDetails.getStartedDateTime(taskId) != -1) {
-      tsr.setStartTime(new Date(jDetails.getStartedDateTime(taskId)));      
-    }
-    if (jDetails.getDuration(taskId) != -1) {
-      tsr.setDuration(jDetails.getDuration(taskId));      
-    }
-    jInfo.setBuildPyramidTaskState(tsr);    
+  jInfo.setJobState(jsr);
+
+  TaskStateResponse tsr = new TaskStateResponse();
+  long taskId = jDetails.getJobId(); //task id is the same as job id
+  tsr.setState(jDetails.getStatus(taskId));
+  tsr.setMessage(jDetails.getMessage(taskId));
+  tsr.setTaskFinished((jDetails.isFinished(taskId)));
+  if (jDetails.getStartedDateTime(taskId) != -1)
+  {
+    tsr.setStartTime(new Date(jDetails.getStartedDateTime(taskId)));
   }
+  if (jDetails.getDuration(taskId) != -1)
+  {
+    tsr.setDuration(jDetails.getDuration(taskId));
+  }
+  jInfo.setBuildPyramidTaskState(tsr);
+}
 }
