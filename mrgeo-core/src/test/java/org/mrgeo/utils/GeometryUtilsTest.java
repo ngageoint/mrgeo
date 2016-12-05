@@ -26,85 +26,82 @@ import org.mrgeo.junit.UnitTest;
 public class GeometryUtilsTest
 {
 
-  @AfterClass
-  public static void tearDownAfterClass() throws Exception
-  {
-  }
+@AfterClass
+public static void tearDownAfterClass() throws Exception
+{
+}
 
-  @Before
-  public void setUp() throws Exception
-  {
-  }
+@Before
+public void setUp() throws Exception
+{
+}
 
-  @After
-  public void tearDown() throws Exception
-  {
-  }
-
-
+@After
+public void tearDown() throws Exception
+{
+}
 
 
+// Testing note:
+// Imagine that the line formed between the first two points extends
+// infinitely. Imagine standing on that line facing in the direction
+// of travel from the first point to the second point. If the third
+// point is to your left, then the inside function returns true. If
+// the third point is either on the line or to the right, then it
+// returns false.
+@Test
+@Category(UnitTest.class)
+public void testInsideWithDownVertical()
+{
+  Point v0 = GeometryFactory.createPoint(10.0, 10.0);
+  Point v1 = GeometryFactory.createPoint(10.0, 20.0);
+  Point p = GeometryFactory.createPoint(5.0, 15.0);
+  Assert.assertTrue(GeometryUtils.inside(v0, v1, p));
+  p = GeometryFactory.createPoint(15.0, 15.0);
+  Assert.assertFalse(GeometryUtils.inside(v0, v1, p));
+  p = GeometryFactory.createPoint(10.0, 15.0);
+  Assert.assertFalse(GeometryUtils.inside(v0, v1, p));
+}
 
-  // Testing note:
-  // Imagine that the line formed between the first two points extends
-  // infinitely. Imagine standing on that line facing in the direction
-  // of travel from the first point to the second point. If the third
-  // point is to your left, then the inside function returns true. If
-  // the third point is either on the line or to the right, then it
-  // returns false.
-  @Test
-  @Category(UnitTest.class)
-  public void testInsideWithDownVertical()
-  {
-    Point v0 = GeometryFactory.createPoint(10.0, 10.0);
-    Point v1 = GeometryFactory.createPoint(10.0, 20.0);
-    Point p = GeometryFactory.createPoint(5.0, 15.0);
-    Assert.assertTrue(GeometryUtils.inside(v0, v1, p));
-    p = GeometryFactory.createPoint(15.0, 15.0);
-    Assert.assertFalse(GeometryUtils.inside(v0, v1, p));
-    p = GeometryFactory.createPoint(10.0, 15.0);
-    Assert.assertFalse(GeometryUtils.inside(v0, v1, p));
-  }
+@Test
+@Category(UnitTest.class)
+public void testInsideWithUpVertical()
+{
+  Point v0 = GeometryFactory.createPoint(10.0, 20.0);
+  Point v1 = GeometryFactory.createPoint(10.0, 10.0);
+  Point p = GeometryFactory.createPoint(5.0, 15.0);
+  Assert.assertFalse(GeometryUtils.inside(v0, v1, p));
+  p = GeometryFactory.createPoint(15.0, 15.0);
+  Assert.assertTrue(GeometryUtils.inside(v0, v1, p));
+  p = GeometryFactory.createPoint(10.0, 15.0);
+  Assert.assertFalse(GeometryUtils.inside(v0, v1, p));
+}
 
-  @Test
-  @Category(UnitTest.class)
-  public void testInsideWithUpVertical()
-  {
-    Point v0 = GeometryFactory.createPoint(10.0, 20.0);
-    Point v1 = GeometryFactory.createPoint(10.0, 10.0);
-    Point p = GeometryFactory.createPoint(5.0, 15.0);
-    Assert.assertFalse(GeometryUtils.inside(v0, v1, p));
-    p = GeometryFactory.createPoint(15.0, 15.0);
-    Assert.assertTrue(GeometryUtils.inside(v0, v1, p));
-    p = GeometryFactory.createPoint(10.0, 15.0);
-    Assert.assertFalse(GeometryUtils.inside(v0, v1, p));
-  }
+@Test
+@Category(UnitTest.class)
+public void testInsideWithRightHorizontal()
+{
+  Point v0 = GeometryFactory.createPoint(10.0, 10.0);
+  Point v1 = GeometryFactory.createPoint(20.0, 10.0);
+  Point p = GeometryFactory.createPoint(15.0, 5.0);
+  Assert.assertFalse(GeometryUtils.inside(v0, v1, p));
+  p = GeometryFactory.createPoint(15.0, 15.0);
+  Assert.assertTrue(GeometryUtils.inside(v0, v1, p));
+  p = GeometryFactory.createPoint(15.0, 10.0);
+  Assert.assertFalse(GeometryUtils.inside(v0, v1, p));
+}
 
-  @Test
-  @Category(UnitTest.class)
-  public void testInsideWithRightHorizontal()
-  {
-    Point v0 = GeometryFactory.createPoint(10.0, 10.0);
-    Point v1 = GeometryFactory.createPoint(20.0, 10.0);
-    Point p = GeometryFactory.createPoint(15.0, 5.0);
-    Assert.assertFalse(GeometryUtils.inside(v0, v1, p));
-    p = GeometryFactory.createPoint(15.0, 15.0);
-    Assert.assertTrue(GeometryUtils.inside(v0, v1, p));
-    p = GeometryFactory.createPoint(15.0, 10.0);
-    Assert.assertFalse(GeometryUtils.inside(v0, v1, p));
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testInsideWithLeftHorizontal()
-  {
-    Point v0 = GeometryFactory.createPoint(20.0, 10.0);
-    Point v1 = GeometryFactory.createPoint(10.0, 10.0);
-    Point p = GeometryFactory.createPoint(15.0, 5.0);
-    Assert.assertTrue(GeometryUtils.inside(v0, v1, p));
-    p = GeometryFactory.createPoint(15.0, 15.0);
-    Assert.assertFalse(GeometryUtils.inside(v0, v1, p));
-    p = GeometryFactory.createPoint(15.0, 10.0);
-    Assert.assertFalse(GeometryUtils.inside(v0, v1, p));
-  }
+@Test
+@Category(UnitTest.class)
+public void testInsideWithLeftHorizontal()
+{
+  Point v0 = GeometryFactory.createPoint(20.0, 10.0);
+  Point v1 = GeometryFactory.createPoint(10.0, 10.0);
+  Point p = GeometryFactory.createPoint(15.0, 5.0);
+  Assert.assertTrue(GeometryUtils.inside(v0, v1, p));
+  p = GeometryFactory.createPoint(15.0, 15.0);
+  Assert.assertFalse(GeometryUtils.inside(v0, v1, p));
+  p = GeometryFactory.createPoint(15.0, 10.0);
+  Assert.assertFalse(GeometryUtils.inside(v0, v1, p));
+}
 }

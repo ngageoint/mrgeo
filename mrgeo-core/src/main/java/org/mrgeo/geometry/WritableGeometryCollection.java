@@ -18,14 +18,14 @@ package org.mrgeo.geometry;
 
 /**
  * @author jason.surratt
- * 
  */
 public interface WritableGeometryCollection extends GeometryCollection, WritableGeometry
 {
-  void addGeometry(WritableGeometry g);
-  boolean removeGeometry(Geometry g);
-  
-  void setRole(int index, String role);
-  
-  public void fromJTS(com.vividsolutions.jts.geom.GeometryCollection collection);
+void addGeometry(WritableGeometry g);
+
+boolean removeGeometry(Geometry g);
+
+void setRole(int index, String role);
+
+public void fromJTS(com.vividsolutions.jts.geom.GeometryCollection collection);
 }

@@ -24,10 +24,10 @@ import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
 import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
+import org.mrgeo.data.image.MrsImageWriter;
 import org.mrgeo.data.image.MrsPyramidWriterContext;
 import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.raster.RasterWritable;
-import org.mrgeo.data.image.MrsImageWriter;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,12 +41,12 @@ static final Logger log = LoggerFactory.getLogger(AccumuloMrsImageWriter.class);
 
 final private AccumuloMrsImageDataProvider provider;
 final private MrsPyramidWriterContext context;
+protected long memBuf = 1000000L; // bytes to store before sending a batch
 private Connector conn;
 private Properties mrgeoAccProps;
 private ColumnVisibility cv;
 //private String pl;
 private BatchWriter bw;
-protected long memBuf = 1000000L; // bytes to store before sending a batch
 //protected long timeout = 1000L; // milliseconds to wait before sending
 //protected int numThreads = 10;
 

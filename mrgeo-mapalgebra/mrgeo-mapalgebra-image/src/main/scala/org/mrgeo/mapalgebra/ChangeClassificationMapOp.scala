@@ -18,68 +18,98 @@ package org.mrgeo.mapalgebra
 
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.aggregators.AggregatorRegistry
 import org.mrgeo.data.rdd.RasterRDD
-import org.mrgeo.image.MrsPyramidMetadata
+import org.mrgeo.image.MrsPyramidMetadata.Classification
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import MrsPyramidMetadata.Classification
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 
 object ChangeClassificationMapOp extends MapOpRegistrar {
 
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("changeClassification")
   }
 
-  def create(raster:RasterMapOp, classification: String):MapOp =
+  def create(raster:RasterMapOp, classification:String):MapOp =
     new ChangeClassificationMapOp(Some(raster), Some(classification))
 
-  def create(raster:RasterMapOp, classification: String, aggregator:String):MapOp =
+  def create(raster:RasterMapOp, classification:String, aggregator:String):MapOp =
     new ChangeClassificationMapOp(Some(raster), Some(classification), Some(aggregator))
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new ChangeClassificationMapOp(node, variables)
 }
 
 @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
 class ChangeClassificationMapOp extends RasterMapOp with Externalizable {
 
-  private var rasterRDD: Option[RasterRDD] = None
+  private var rasterRDD:Option[RasterRDD] = None
 
-  private var inputMapOp: Option[RasterMapOp] = None
-  private var classification: Option[Classification] = None
-  private var aggregator: Option[String] = None
+  private var inputMapOp:Option[RasterMapOp] = None
+  private var classification:Option[Classification] = None
+  private var aggregator:Option[String] = None
 
-  private[mapalgebra] def this(raster:Option[RasterMapOp], classification:Option[String], aggregator:Option[String] = None) = {
+  override def rdd():Option[RasterRDD] = rasterRDD
+
+  override def setup(job:JobArguments, conf:SparkConf):Boolean = true
+
+  override def execute(context:SparkContext):Boolean = {
+    val input:RasterMapOp = inputMapOp getOrElse (throw new IOException("Input MapOp not valid!"))
+
+    val meta = input.metadata() getOrElse
+               (throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
+
+    rasterRDD = Some(
+      input.rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + inputMapOp.getClass.getName)))
+
+    meta.setClassification(
+      classification.getOrElse(throw new IOException("Can't get classification! Ouch! " + input.getClass.getName)))
+
+    if (aggregator.isDefined) {
+      meta.setResamplingMethod(aggregator.get)
+    }
+
+    metadata(meta)
+    true
+  }
+
+  override def teardown(job:JobArguments, conf:SparkConf):Boolean = true
+
+  override def readExternal(in:ObjectInput):Unit = {}
+
+  override def writeExternal(out:ObjectOutput):Unit = {}
+
+  private[mapalgebra] def this(raster:Option[RasterMapOp], classification:Option[String],
+                               aggregator:Option[String] = None) = {
     this()
     inputMapOp = raster
 
     this.aggregator = aggregator match {
-    case Some(s) =>
-      val clazz = AggregatorRegistry.aggregatorRegistry.get (s.toUpperCase)
-      if (clazz != null) {
-        Some(s.toUpperCase)
-      }
-      else {
-        throw new ParserException ("Invalid aggregator " + s)
-      }
-    case _ => None
+      case Some(s) =>
+        val clazz = AggregatorRegistry.aggregatorRegistry.get(s.toUpperCase)
+        if (clazz != null) {
+          Some(s.toUpperCase)
+        }
+        else {
+          throw new ParserException("Invalid aggregator " + s)
+        }
+      case _ => None
     }
 
     this.classification = Some(classification match {
-    case Some(s) => s.toLowerCase match {
-      case "categorical" => Classification.Categorical
-      case _ => Classification.Continuous
+      case Some(s) => s.toLowerCase match {
+        case "categorical" => Classification.Categorical
+        case _ => Classification.Continuous
       }
-    case _ => throw new ParserException("Can't decode string")
+      case _ => throw new ParserException("Can't decode string")
     })
 
   }
 
-  private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
+  private[mapalgebra] def this(node:ParserNode, variables:String => Option[ParserNode]) = {
     this()
 
     if ((node.getNumChildren < 2) || (node.getNumChildren > 3)) {
@@ -90,55 +120,27 @@ class ChangeClassificationMapOp extends RasterMapOp with Externalizable {
     inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
 
     classification = Some(MapOp.decodeString(node.getChild(1), variables) match {
-    case Some(s) => s.toLowerCase match {
-    case "categorical" => Classification.Categorical
-    case _ => Classification.Continuous
-    }
-    case _ => throw new ParserException("Can't decode string")
+      case Some(s) => s.toLowerCase match {
+        case "categorical" => Classification.Categorical
+        case _ => Classification.Continuous
+      }
+      case _ => throw new ParserException("Can't decode string")
     })
 
 
     if (node.getNumChildren == 3) {
       aggregator = Some(MapOp.decodeString(node.getChild(2)) match {
-      case Some(s) =>
-        val clazz = AggregatorRegistry.aggregatorRegistry.get(s.toUpperCase)
-        if (clazz != null) {
-          s.toUpperCase
-        }
-        else {
-          throw new ParserException("Invalid aggregator " + s)
-        }
-      case _ => throw new ParserException("Can't decode string")
+        case Some(s) =>
+          val clazz = AggregatorRegistry.aggregatorRegistry.get(s.toUpperCase)
+          if (clazz != null) {
+            s.toUpperCase
+          }
+          else {
+            throw new ParserException("Invalid aggregator " + s)
+          }
+        case _ => throw new ParserException("Can't decode string")
       })
     }
   }
-
-  override def rdd(): Option[RasterRDD] = rasterRDD
-
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = true
-
-  override def execute(context: SparkContext): Boolean = {
-    val input: RasterMapOp = inputMapOp getOrElse (throw new IOException("Input MapOp not valid!"))
-
-    val meta = input.metadata() getOrElse
-        (throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
-
-    rasterRDD = Some(input.rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + inputMapOp.getClass.getName)))
-
-    meta.setClassification(classification.getOrElse(throw new IOException("Can't get classification! Ouch! " + input.getClass.getName)))
-
-    if (aggregator.isDefined) {
-      meta.setResamplingMethod(aggregator.get)
-    }
-
-    metadata(meta)
-    true
-  }
-
-  override def teardown(job: JobArguments, conf: SparkConf): Boolean = true
-
-  override def readExternal(in: ObjectInput): Unit = {}
-
-  override def writeExternal(out: ObjectOutput): Unit = {}
 
 }

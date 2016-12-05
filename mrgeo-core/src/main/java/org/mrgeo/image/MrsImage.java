@@ -23,12 +23,14 @@ import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.KVIterator;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.image.MrsPyramidReaderContext;
 import org.mrgeo.data.raster.MrGeoRaster;
-import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TileNotFoundException;
-import org.mrgeo.utils.*;
+import org.mrgeo.utils.LatLng;
+import org.mrgeo.utils.LeakChecker;
+import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +43,6 @@ import java.util.Set;
 
 /**
  * @author tim.tisler
- *
  */
 public class MrsImage implements AutoCloseable
 {
@@ -109,6 +110,32 @@ public static MrsImage open(final String name, final int zoomlevel,
   MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(name,
       AccessMode.READ, providerProperties);
   return open(dp, zoomlevel);
+}
+
+public static Set<Long> getTileIdsFromBounds(final Bounds bounds, final int zoomlevel, final int tilesize)
+{
+  final TileBounds tb = TMSUtils.boundsToTile(bounds, zoomlevel, tilesize);
+
+  // we used to check if the tx/ty was within the image, but that was removed because when we
+  // send in a bounds, we really need an image that matches those bounds (in tile space),
+  // with nodata in the missing tile areas.
+
+  // create a list of all tileIds for the given bounding box.
+  final Set<Long> tileIds = new HashSet<>();
+
+  for (long tx = tb.w; tx <= tb.e; tx++)
+  {
+    for (long ty = tb.s; ty <= tb.n; ty++)
+    {
+      final long tileid = TMSUtils.tileid(tx, ty, zoomlevel);
+
+      log.debug("getRaster adding tile {}, {} ({})", tx, ty, tileid);
+
+      tileIds.add(tileid);
+    }
+  }
+  log.debug("getRaster added {} tiles", tileIds.size());
+  return tileIds;
 }
 
 /**
@@ -186,12 +213,11 @@ public Bounds getBounds(final int tx, final int ty)
   return new Bounds(bounds[0], bounds[1], bounds[2], bounds[3]);
 }
 
-
 /**
  * Retrieves the overall minimum and maximum raster values in the source data
  *
  * @return array with the overall minimum value in first position and overall maximum value in the
- *         second
+ * second
  */
 public double[] getExtrema()
 {
@@ -214,7 +240,6 @@ public long getHeight()
 {
   return getMetadata().getPixelBounds(getZoomlevel()).getHeight();
 }
-
 
 public long getMaxTileX()
 {
@@ -296,7 +321,6 @@ public LongRectangle getPixelRect()
 {
   return new LongRectangle(getPixelMinX(), getPixelMinY(), getWidth(), getHeight());
 }
-
 
 public MrGeoRaster getTile(final long tx, final long ty) throws TileNotFoundException
 {
@@ -399,82 +423,15 @@ public boolean isTileEmpty(final long tx, final long ty)
   return !reader.exists(new TileIdWritable(TMSUtils.tileid(tx, ty, getZoomlevel())));
 }
 
-
 @Override
 public String toString()
 {
   return getClass().getSimpleName() + ": " + getMetadata().getPyramid() + ":" + getZoomlevel();
 }
 
-// log an error if finalize() is called and close() was not called
-@Override
-protected void finalize() throws Throwable
-{
-  try
-  {
-    if (reader != null)
-    {
-      log.info("MrsImage.finalize(): looks like close() was not called. This is a potential " +
-          "memory leak. Please call close(). The MrsImage points to \"" + metadata.getPyramid() +
-          "\" with zoom level " + getZoomlevel());
-    }
-  }
-  finally
-  {
-    super.finalize();
-  }
-}
-
-private void openReader()
-{
-  try
-  {
-    if (reader != null )
-    {
-      reader.close();
-    }
-
-    reader = provider.getMrsTileReader(context);
-    if (reader == null)
-    {
-      throw new MrsImageException("Error Reading Image");
-    }
-  }
-  catch (IOException e)
-  {
-    throw new MrsImageException(e);
-  }
-}
-
 public Set<Long> getTileIdsFromBounds(final Bounds bounds)
 {
   return getTileIdsFromBounds(bounds, getZoomlevel(), getTilesize());
-}
-
-public static Set<Long> getTileIdsFromBounds(final Bounds bounds, final int zoomlevel, final int tilesize)
-{
-  final TileBounds tb = TMSUtils.boundsToTile(bounds, zoomlevel, tilesize);
-
-  // we used to check if the tx/ty was within the image, but that was removed because when we
-  // send in a bounds, we really need an image that matches those bounds (in tile space),
-  // with nodata in the missing tile areas.
-
-  // create a list of all tileIds for the given bounding box.
-  final Set<Long> tileIds = new HashSet<>();
-
-  for (long tx = tb.w; tx <= tb.e; tx++)
-  {
-    for (long ty = tb.s; ty <= tb.n; ty++)
-    {
-      final long tileid = TMSUtils.tileid(tx, ty, zoomlevel);
-
-      log.debug("getRaster adding tile {}, {} ({})", tx, ty, tileid);
-
-      tileIds.add(tileid);
-    }
-  }
-  log.debug("getRaster added {} tiles", tileIds.size());
-  return tileIds;
 }
 
 public MrGeoRaster getRaster() throws MrGeoRaster.MrGeoRasterException
@@ -582,7 +539,7 @@ public MrGeoRaster getRaster(final Tile[] tiles) throws MrGeoRaster.MrGeoRasterE
             tile.ty, bounds.w, bounds.s, bounds.e, bounds.n, start.px - ul.px, start.py - ul.py);
 
         merged.copyFrom(0, 0, source.width(), source.height(),
-                        source, (int) (start.px - ul.px), (int) (start.py - ul.py));
+            source, (int) (start.px - ul.px), (int) (start.py - ul.py));
       }
     }
     // bad tile - tile could be out of bounds - ignore it
@@ -645,14 +602,14 @@ public MrGeoRaster getRaster(final TileBounds tileBounds) throws MrGeoRaster.MrG
             tile.ty, bounds.w, bounds.s, bounds.e, bounds.n, start.px - ul.px, start.py - ul.py);
 
         merged.copyFrom(0, 0, source.width(), source.height(),
-                        source, (int) (start.px - ul.px), (int) (start.py - ul.py));
+            source, (int) (start.px - ul.px), (int) (start.py - ul.py));
       }
     }
     if (iter instanceof CloseableKVIterator)
     {
       try
       {
-        ((CloseableKVIterator)iter).close();
+        ((CloseableKVIterator) iter).close();
       }
       catch (IOException e)
       {
@@ -661,5 +618,45 @@ public MrGeoRaster getRaster(final TileBounds tileBounds) throws MrGeoRaster.MrG
     }
   }
   return merged;
+}
+
+// log an error if finalize() is called and close() was not called
+@Override
+protected void finalize() throws Throwable
+{
+  try
+  {
+    if (reader != null)
+    {
+      log.info("MrsImage.finalize(): looks like close() was not called. This is a potential " +
+          "memory leak. Please call close(). The MrsImage points to \"" + metadata.getPyramid() +
+          "\" with zoom level " + getZoomlevel());
+    }
+  }
+  finally
+  {
+    super.finalize();
+  }
+}
+
+private void openReader()
+{
+  try
+  {
+    if (reader != null)
+    {
+      reader.close();
+    }
+
+    reader = provider.getMrsTileReader(context);
+    if (reader == null)
+    {
+      throw new MrsImageException("Error Reading Image");
+    }
+  }
+  catch (IOException e)
+  {
+    throw new MrsImageException(e);
+  }
 }
 }

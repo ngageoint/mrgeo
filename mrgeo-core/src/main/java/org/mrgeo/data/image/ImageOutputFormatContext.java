@@ -21,79 +21,79 @@ import org.mrgeo.utils.tms.Bounds;
 
 public class ImageOutputFormatContext
 {
-  private String output;
-  private int zoomlevel;
-  private int tilesize;
-  private int bands;
-  private Bounds bounds;
-  private int tiletype;
-  private String protectionLevel;
+private String output;
+private int zoomlevel;
+private int tilesize;
+private int bands;
+private Bounds bounds;
+private int tiletype;
+private String protectionLevel;
 
-  /**
-   * This constructor is used when producing a single image output.
-   * 
-   * @param output
-   */
-  public ImageOutputFormatContext(final String output, Bounds bounds, int zoomlevel, int tilesize, String protectionLevel)
+/**
+ * This constructor is used when producing a single image output.
+ *
+ * @param output
+ */
+public ImageOutputFormatContext(final String output, Bounds bounds, int zoomlevel, int tilesize, String protectionLevel)
+{
+  this.output = output;
+  if (bounds != null)
   {
-    this.output = output;
-    if (bounds != null)
-    {
-      this.bounds = bounds.clone();
-    }
-    this.zoomlevel = zoomlevel;
-    this.tilesize = tilesize;
-    this.protectionLevel = protectionLevel;
+    this.bounds = bounds.clone();
   }
-  
-  public ImageOutputFormatContext(final String output, Bounds bounds, int zoomlevel, int tilesize,
-                                  String protectionLevel, int tiletype, int bands)
+  this.zoomlevel = zoomlevel;
+  this.tilesize = tilesize;
+  this.protectionLevel = protectionLevel;
+}
+
+public ImageOutputFormatContext(final String output, Bounds bounds, int zoomlevel, int tilesize,
+    String protectionLevel, int tiletype, int bands)
+{
+  this.output = output;
+  if (bounds != null)
   {
-    this.output = output;
-    if (bounds != null)
-    {
-      this.bounds = bounds.clone();
-    }
-    this.bands = bands;
-    this.zoomlevel = zoomlevel;
-    this.tilesize =  tilesize;
-    this.tiletype = tiletype;
-    this.protectionLevel = protectionLevel;
+    this.bounds = bounds.clone();
   }
+  this.bands = bands;
+  this.zoomlevel = zoomlevel;
+  this.tilesize = tilesize;
+  this.tiletype = tiletype;
+  this.protectionLevel = protectionLevel;
+}
 
 
-  public String getOutput()
-  {
-    return output;
-  }
+public String getOutput()
+{
+  return output;
+}
 
-  public int getZoomLevel()
-  {
-    return zoomlevel;
-  }
-  
-  public Bounds getBounds()
-  {
-    return bounds;
-  }
-  
-  public int getBands()
-  {
-    return bands;
-  }
-  
-  public int getTileSize()
-  {
-    return tilesize;
-  }
+public int getZoomLevel()
+{
+  return zoomlevel;
+}
 
-  public int getTileType()
-  {
-    return tiletype;
-  }
-  
-  public String getProtectionLevel()
-  {
-    return protectionLevel;
-  }
+public Bounds getBounds()
+{
+  return bounds;
+}
+
+public int getBands()
+{
+  return bands;
+}
+
+public int getTileSize()
+{
+  return tilesize;
+}
+
+public int getTileType()
+{
+  return tiletype;
+}
+
+public String getProtectionLevel()
+{
+  return protectionLevel;
+}
 }

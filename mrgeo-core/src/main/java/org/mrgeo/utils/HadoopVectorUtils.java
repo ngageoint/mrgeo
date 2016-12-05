@@ -19,17 +19,13 @@ package org.mrgeo.utils;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.RunningJob;
-import org.apache.hadoop.mapred.TaskCompletionEvent;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.util.ClassUtil;
 import org.apache.hadoop.util.GenericOptionsParser;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
-import org.mrgeo.mapalgebra.vector.PgQueryInputFormat;
 import org.mrgeo.image.MrsPyramidMetadata;
+import org.mrgeo.mapalgebra.vector.PgQueryInputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +49,7 @@ private static Random random = new Random(System.currentTimeMillis());
 
 private static Constructor<?> taskAttempt = null;
 private static Constructor<?> jobContext = null;
+
 static
 {
   Configuration.addDefaultResource("mapred-default.xml");
@@ -64,15 +61,13 @@ static
 
 /**
  * Add a {@link org.apache.hadoop.fs.Path} to the list of inputs for the map-reduce job.
- *
+ * <p>
  * NOTE: This was copied directly from the 1.0.3 source because there is a bug in the 20.2 version
  * of this method. When the Path references a a local file, the 20.2 added in improperly formatted
  * path to the job configuration. It looked like file://localhost:9001/my/path/to/file.tif.
  *
- * @param job
- *          The {@link org.apache.hadoop.mapreduce.Job} to modify
- * @param path
- *          {@link org.apache.hadoop.fs.Path} to be added to the list of inputs for the map-reduce job.
+ * @param job  The {@link org.apache.hadoop.mapreduce.Job} to modify
+ * @param path {@link org.apache.hadoop.fs.Path} to be added to the list of inputs for the map-reduce job.
  */
 public static void addInputPath(final Job job, final Path path) throws IOException
 {
@@ -99,11 +94,13 @@ public synchronized static Configuration createConfiguration()
   {
     final String[] hadoopParamsAsArray = hadoopParams.split(" ");
     final GenericOptionsParser parser;
-    try {
+    try
+    {
       parser = new GenericOptionsParser(hadoopParamsAsArray);
       config = parser.getConfiguration();
     }
-    catch (IOException e) {
+    catch (IOException e)
+    {
       // If configuration cannot be parsed, then correct behavior is to treat it as a system fault, to be handled by
       // the application fault barrier
       throw new RuntimeException("Fatal error parsing configuration options from command line", e);
@@ -283,7 +280,6 @@ getStringArraySetting(final Configuration config, final String propertyName)
 }
 
 
-
 public static void setJar(final Job job, Class clazz) throws IOException
 {
   Configuration conf = job.getConfiguration();
@@ -317,7 +313,6 @@ public static void setMetadata(final Job job, final MrsPyramidMetadata metadata)
 }
 
 
-
 public static void setupLocalRunner(final Configuration config) throws IOException
 {
   // hadoop v1 key
@@ -347,7 +342,7 @@ private static void loadJobContextClass()
   try
   {
     final Class<?> jc = Class.forName("org.apache.hadoop.mapreduce.JobContext");
-    final Class<?>[] argTypes = { Configuration.class, JobID.class };
+    final Class<?>[] argTypes = {Configuration.class, JobID.class};
 
     jobContext = jc.getDeclaredConstructor(argTypes);
 
@@ -360,7 +355,7 @@ private static void loadJobContextClass()
   try
   {
     final Class<?> jci = Class.forName("org.apache.hadoop.mapreduce.task.JobContextImpl");
-    final Class<?>[] argTypes = { Configuration.class, JobID.class };
+    final Class<?>[] argTypes = {Configuration.class, JobID.class};
 
     jobContext = jci.getDeclaredConstructor(argTypes);
 
@@ -380,7 +375,7 @@ private static void loadTaskAttemptClass()
   try
   {
     final Class<?> tac = Class.forName("org.apache.hadoop.mapreduce.TaskAttemptContext");
-    final Class<?>[] argTypes = { Configuration.class, TaskAttemptID.class };
+    final Class<?>[] argTypes = {Configuration.class, TaskAttemptID.class};
 
     taskAttempt = tac.getDeclaredConstructor(argTypes);
 
@@ -395,7 +390,7 @@ private static void loadTaskAttemptClass()
     // Class<?> taci = Class.forName("org.apache.hadoop.mapreduce.TaskAttemptContextImpl");
     final Class<?> taci = Class
         .forName("org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl");
-    final Class<?>[] argTypes = { Configuration.class, TaskAttemptID.class };
+    final Class<?>[] argTypes = {Configuration.class, TaskAttemptID.class};
 
     taskAttempt = taci.getDeclaredConstructor(argTypes);
 

@@ -16,7 +16,6 @@
 
 package org.mrgeo.image;
 
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -35,19 +34,15 @@ import java.util.List;
 
 public class ImageStats implements Cloneable, Serializable
 {
-private static final long serialVersionUID = 1L;
-
-public double min, max, mean, sum;
-public long count;
-
-@SuppressWarnings("unused")
-private static Logger log = LoggerFactory.getLogger(ImageStats.class);
-
 // tile id that is not valid for TMS and represents stats output from an OpChain mapper
 public static final long STATS_TILE_ID = -13;
-
 // count of image statistics measures, currently min, max, sum & count
 public static final int STATS_COUNT = 4;
+private static final long serialVersionUID = 1L;
+@SuppressWarnings("unused")
+private static Logger log = LoggerFactory.getLogger(ImageStats.class);
+public double min, max, mean, sum;
+public long count;
 
 // TODO: Add minx, maxx, miny, maxy
 public ImageStats()
@@ -72,8 +67,7 @@ public ImageStats(final double min, final double max, final double sum, final lo
 /**
  * Aggregates statistics output from multiple tasks
  *
- * @param listOfStats
- *          the stats arrays to aggregate
+ * @param listOfStats the stats arrays to aggregate
  * @return an array of ImageStats objects
  */
 static public ImageStats[] aggregateStats(final List<ImageStats[]> listOfStats)
@@ -112,11 +106,8 @@ static public ImageStats[] aggregateStats(final List<ImageStats[]> listOfStats)
  * Computes pixel value statistics: min, max, sum, count, & mean for a Raster and returns an array
  * of ImageStats objects, one for each band in the image.
  *
- * @param raster
- *          the raster to compute stats for
- * @param nodata
- *          the value to ignore
- *
+ * @param raster the raster to compute stats for
+ * @param nodata the value to ignore
  */
 static public void computeAndUpdateStats(final ImageStats[] tileStats, final MrGeoRaster raster,
     final double[] nodata)
@@ -149,10 +140,8 @@ static public void computeAndUpdateStats(final ImageStats[] tileStats, final MrG
  * Computes pixel value statistics: min, max, sum, count, & mean for a Raster and returns an array
  * of ImageStats objects, one for each band in the image.
  *
- * @param raster
- *          the raster to compute stats for
- * @param nodata
- *          the value to ignore
+ * @param raster the raster to compute stats for
+ * @param nodata the value to ignore
  * @return an array of ImageStats objects
  */
 static public ImageStats[] computeStats(final MrGeoRaster raster, final double[] nodata)
@@ -167,8 +156,7 @@ static public ImageStats[] computeStats(final MrGeoRaster raster, final double[]
  * Initializes an array of ImageStats objects, one for each band in the image, and initializes the
  * properties min, max, sum, count & mean to appropriate values.
  *
- * @param bands
- *          the number of bands in the image
+ * @param bands the number of bands in the image
  * @return an array of ImageStats objects
  */
 static public ImageStats[] initializeStatsArray(final int bands)
@@ -183,7 +171,6 @@ static public ImageStats[] initializeStatsArray(final int bands)
   }
   return stats;
 }
-
 
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled

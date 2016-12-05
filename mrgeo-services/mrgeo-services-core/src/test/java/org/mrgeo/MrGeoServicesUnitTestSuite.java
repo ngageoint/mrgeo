@@ -25,6 +25,6 @@ import org.junit.runner.RunWith;
 @Categories.IncludeCategory(org.mrgeo.junit.UnitTest.class)
 @org.junit.runners.Suite.SuiteClasses({MrGeoServicesAllTests.class})
 @ClassnameFilters("org\\.mrgeo\\.resources\\..*|org\\.mrgeo\\.services\\..*")
-public class MrGeoServicesUnitTestSuite 
+public class MrGeoServicesUnitTestSuite
 {
 }

@@ -41,10 +41,8 @@ import java.util.Properties;
 public class IngestImage extends Command
 {
 
-private Options options;
-
 private static Logger log = LoggerFactory.getLogger(IngestImage.class);
-
+private Options options;
 private double[] nodata;
 private int bands = -1;
 private int tiletype = -1;
@@ -120,7 +118,8 @@ public static Options createOptions()
   max.setRequired(false);
   aggregators.addOption(max);
 
-  Option minavgpair = new Option("minavgpair", "miminumaveragepair", false, "Minimum Average Pair Pyramid Pixel Resampling Method");
+  Option minavgpair =
+      new Option("minavgpair", "miminumaveragepair", false, "Minimum Average Pair Pyramid Pixel Resampling Method");
   minavgpair.setRequired(false);
   aggregators.addOption(minavgpair);
 
@@ -165,19 +164,6 @@ public static Options createOptions()
   return result;
 }
 
-private double parseNoData(String fromArg) throws NumberFormatException
-{
-  String arg = fromArg.trim();
-  if (arg.compareToIgnoreCase("nan") != 0)
-  {
-    return Double.parseDouble(arg);
-  }
-  else
-  {
-    return Double.NaN;
-  }
-}
-
 @Override
 @SuppressWarnings("squid:S1166") // Exceptions caught and error message printed
 public int run(String[] args, Configuration conf, ProviderProperties providerProperties)
@@ -215,13 +201,13 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
       String str = line.getOptionValue("nd");
       String[] strElements = str.split(",");
       nodataOverride = new double[strElements.length];
-      for (int i=0; i < nodataOverride.length; i++)
+      for (int i = 0; i < nodataOverride.length; i++)
       {
         try
         {
           nodataOverride[i] = parseNoData(strElements[i]);
         }
-        catch(NumberFormatException nfe)
+        catch (NumberFormatException nfe)
         {
           System.out.println("Invalid nodata value: " + strElements[i]);
           return -1;
@@ -267,14 +253,14 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
       }
       inputs.addAll(JavaConversions.asJavaCollection(iip.getInputs()));
     }
-    catch(IllegalArgumentException e)
+    catch (IllegalArgumentException e)
     {
       System.out.println(e.getMessage());
       return -1;
     }
 
     log.info("Ingest inputs (" + inputs.size() + ")");
-    for (String input:inputs)
+    for (String input : inputs)
     {
       log.info("   " + input);
     }
@@ -284,7 +270,7 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
       String rawTags = line.getOptionValue("t");
 
       String splittags[] = rawTags.split(",");
-      for (String t: splittags)
+      for (String t : splittags)
       {
         String[] s = t.split(":");
         if (s.length != 2)
@@ -394,5 +380,18 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
   }
 
   return -1;
+}
+
+private double parseNoData(String fromArg) throws NumberFormatException
+{
+  String arg = fromArg.trim();
+  if (arg.compareToIgnoreCase("nan") != 0)
+  {
+    return Double.parseDouble(arg);
+  }
+  else
+  {
+    return Double.NaN;
+  }
 }
 }

@@ -16,9 +16,7 @@
 
 package org.mrgeo.job;
 
-import org.mrgeo.job.JobResults;
-
 public interface RunnableJob extends Runnable
 {
-  public void setJobResults(JobResults jr);
+public void setJobResults(JobResults jr);
 }

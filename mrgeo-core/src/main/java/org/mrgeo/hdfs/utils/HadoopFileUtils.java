@@ -36,7 +36,9 @@ public class HadoopFileUtils
 {
 private static final Logger log = LoggerFactory.getLogger(HadoopFileUtils.class);
 
-private HadoopFileUtils() {}
+private HadoopFileUtils()
+{
+}
 
 public static void cleanDirectory(final Path dir) throws IOException
 {
@@ -184,6 +186,7 @@ public static Path createJobTmp() throws IOException
 {
   return createJobTmp(HadoopUtils.createConfiguration());
 }
+
 public static Path createJobTmp(Configuration conf) throws IOException
 {
   return createUniqueTmp(conf);
@@ -313,16 +316,19 @@ public static void delete(final Configuration conf, final Path path) throws IOEx
     Path qualifiedPath = path.makeQualified(fs);
     URI pathUri = qualifiedPath.toUri();
     String scheme = pathUri.getScheme().toLowerCase();
-    if ("s3".equals(scheme) || "s3n".equals(scheme)) {
+    if ("s3".equals(scheme) || "s3n".equals(scheme))
+    {
       boolean stillExists = fs.exists(path);
       int sleepIndex = 0;
       // Wait for S3 to finish the deletion in phases - initially checking
       // more frequently and then less frequently as time goes by.
-      int[][] waitPhases = { {60, 1}, {120, 2}, {60, 15} };
-      while (sleepIndex < waitPhases.length) {
+      int[][] waitPhases = {{60, 1}, {120, 2}, {60, 15}};
+      while (sleepIndex < waitPhases.length)
+      {
         int waitCount = 0;
         log.info("Sleep index " + sleepIndex);
-        while (stillExists && waitCount < waitPhases[sleepIndex][0]) {
+        while (stillExists && waitCount < waitPhases[sleepIndex][0])
+        {
           waitCount++;
           log.info("Waiting " + waitPhases[sleepIndex][1] + " seconds " + path.toString() + " to be deleted");
           try
@@ -338,7 +344,8 @@ public static void delete(final Configuration conf, final Path path) throws IOEx
         }
         sleepIndex++;
       }
-      if (stillExists) {
+      if (stillExists)
+      {
         throw new IOException(path.toString() + " was not deleted within the waiting period");
       }
     }
@@ -604,21 +611,6 @@ public static String unqualifyPath(final String path)
   return new Path((new Path(path)).toUri().getPath()).toString();
 }
 
-private static void cleanDirectory(final FileSystem fs, final Path dir) throws IOException
-{
-  final Path temp = new Path(dir, "_temporary");
-  if (fs.exists(temp))
-  {
-    fs.delete(temp, true);
-  }
-
-  final Path success = new Path(dir, "_SUCCESS");
-  if (fs.exists(success))
-  {
-    fs.delete(success, true);
-  }
-}
-
 public static Path resolveName(final String input) throws IOException, URISyntaxException
 {
   return resolveName(input, true);
@@ -653,5 +645,20 @@ public static Path resolveName(final Configuration conf, final String input,
     return p;
   }
   throw new IOException("Cannot find: " + input);
+}
+
+private static void cleanDirectory(final FileSystem fs, final Path dir) throws IOException
+{
+  final Path temp = new Path(dir, "_temporary");
+  if (fs.exists(temp))
+  {
+    fs.delete(temp, true);
+  }
+
+  final Path success = new Path(dir, "_SUCCESS");
+  if (fs.exists(success))
+  {
+    fs.delete(success, true);
+  }
 }
 }

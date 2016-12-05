@@ -16,7 +16,6 @@
 
 package org.mrgeo.data.raster;
 
-import junit.framework.Assert;
 import org.gdal.gdal.Dataset;
 import org.junit.*;
 import org.junit.experimental.categories.Category;
@@ -31,19 +30,15 @@ import java.io.IOException;
 @SuppressWarnings("all") // test code, not included in production
 public class MrGeoRasterTest
 {
-@Rule
-public TestName testname = new TestName();
-
 private static boolean GEN_BASELINE_DATA_ONLY = false;
-
-private TestUtils testutils;
-
 private static int width;
 private static int height;
-
 private static MrGeoRaster numberedInt;
 private static MrGeoRaster numberedFloat;
 private static MrGeoRaster numberedDouble;
+@Rule
+public TestName testname = new TestName();
+private TestUtils testutils;
 
 @BeforeClass
 public static void init() throws MrGeoRaster.MrGeoRasterException
@@ -162,14 +157,14 @@ public void scaleRasterNearestInt() throws IOException
   // scale up
   for (scale = 1; scale < 15; scale++)
   {
-    scaled = numberedInt.scale(width * scale, height * scale, false, new double[]{ Double.NaN });
+    scaled = numberedInt.scale(width * scale, height * scale, false, new double[]{Double.NaN});
     compareResult(scale, scaled);
   }
 
   // scale down
   for (scale = 2; scale < 8; scale++)
   {
-    scaled = numberedInt.scale(width / scale, height / scale, false, new double[]{ Double.NaN });
+    scaled = numberedInt.scale(width / scale, height / scale, false, new double[]{Double.NaN});
     compareResult(1.0 / scale, scaled);
   }
 }
@@ -184,16 +179,98 @@ public void scaleRasterNearestFloat() throws IOException
   // scale up
   for (scale = 1; scale < 15; scale++)
   {
-    scaled = numberedFloat.scale(width * scale, height * scale, false, new double[]{ Double.NaN });
+    scaled = numberedFloat.scale(width * scale, height * scale, false, new double[]{Double.NaN});
     compareResult(scale, scaled);
   }
 
   // scale down
   for (scale = 2; scale < 8; scale++)
   {
-    scaled = numberedFloat.scale(width / scale, height / scale, false, new double[]{ Double.NaN });
+    scaled = numberedFloat.scale(width / scale, height / scale, false, new double[]{Double.NaN});
     compareResult(1.0 / scale, scaled);
   }
+}
+
+@Test
+@Category(UnitTest.class)
+public void scaleRasterNearestDouble() throws IOException
+{
+  int scale;
+  MrGeoRaster scaled;
+
+  // scale up
+  for (scale = 1; scale < 15; scale++)
+  {
+    scaled = numberedDouble.scale(width * scale, height * scale, false, new double[]{Double.NaN});
+    compareResult(scale, scaled);
+  }
+
+  // scale down
+  for (scale = 2; scale < 8; scale += 1)
+  {
+    scaled = numberedDouble.scale(width / scale, height / scale, false, new double[]{Double.NaN});
+    compareResult(1.0 / scale, scaled);
+  }
+}
+
+@Test
+@Category(UnitTest.class)
+public void toRasterByte() throws IOException
+{
+  MrGeoRaster numberedByte = TestUtils.createNumberedRaster(width, height, DataBuffer.TYPE_BYTE);
+  Raster raster = numberedByte.toRaster();
+
+  compareRaster(numberedByte, raster);
+}
+
+@Test
+@Category(UnitTest.class)
+public void toRasterShort() throws IOException
+{
+  MrGeoRaster numberedShort = TestUtils.createNumberedRaster(width, height, DataBuffer.TYPE_SHORT);
+  Raster raster = numberedShort.toRaster();
+
+  compareRaster(numberedShort, raster);
+
+}
+
+@Test
+@Category(UnitTest.class)
+public void toRasterUShort() throws IOException
+{
+  MrGeoRaster numberedUShort = TestUtils.createNumberedRaster(width, height, DataBuffer.TYPE_USHORT);
+  Raster raster = numberedUShort.toRaster();
+
+  compareRaster(numberedUShort, raster);
+
+}
+
+@Test
+@Category(UnitTest.class)
+public void toRasterInt() throws IOException
+{
+  Raster raster = numberedInt.toRaster();
+
+  compareRaster(numberedInt, raster);
+
+}
+
+@Test
+@Category(UnitTest.class)
+public void toRasterFloat() throws IOException
+{
+  Raster raster = numberedFloat.toRaster();
+
+  compareRaster(numberedFloat, raster);
+}
+
+@Test
+@Category(UnitTest.class)
+public void toRasterDouble() throws IOException
+{
+  Raster raster = numberedDouble.toRaster();
+
+  compareRaster(numberedDouble, raster);
 }
 
 private void compareRaster(MrGeoRaster mrgeoraster, Raster raster)
@@ -228,7 +305,6 @@ private void compareRaster(MrGeoRaster mrgeoraster, Raster raster)
   }
 }
 
-
 private void compareResult(double scale, MrGeoRaster scaled) throws IOException
 {
   String name = testname.getMethodName() + String.format("-%.3f", scale);
@@ -241,84 +317,6 @@ private void compareResult(double scale, MrGeoRaster scaled) throws IOException
     testutils.compareRasters(name, scaled);
   }
 }
-
-@Test
-@Category(UnitTest.class)
-public void scaleRasterNearestDouble() throws IOException
-{
-  int scale;
-  MrGeoRaster scaled;
-
-  // scale up
-  for (scale = 1; scale < 15; scale++)
-  {
-    scaled = numberedDouble.scale(width * scale, height * scale, false, new double[]{ Double.NaN });
-    compareResult(scale, scaled);
-  }
-
-  // scale down
-  for (scale = 2; scale < 8; scale += 1)
-  {
-    scaled = numberedDouble.scale(width / scale, height / scale, false, new double[]{ Double.NaN });
-    compareResult(1.0 / scale, scaled);
-  }
-}
-
-@Test
-@Category(UnitTest.class)
-public void toRasterByte() throws IOException
-{
-  MrGeoRaster numberedByte = TestUtils.createNumberedRaster(width, height, DataBuffer.TYPE_BYTE);
-  Raster raster = numberedByte.toRaster();
-
-  compareRaster(numberedByte, raster);
-}
-
-
-@Test
-@Category(UnitTest.class)
-public void toRasterShort() throws IOException
-{
-  MrGeoRaster numberedShort = TestUtils.createNumberedRaster(width, height, DataBuffer.TYPE_SHORT);
-  Raster raster = numberedShort.toRaster();
-
-  compareRaster(numberedShort, raster);
-
-}
-@Test
-@Category(UnitTest.class)
-public void toRasterUShort() throws IOException
-{
-  MrGeoRaster numberedUShort = TestUtils.createNumberedRaster(width, height, DataBuffer.TYPE_USHORT);
-  Raster raster = numberedUShort.toRaster();
-
-  compareRaster(numberedUShort, raster);
-
-}
-@Test
-@Category(UnitTest.class)
-public void toRasterInt() throws IOException
-{  Raster raster = numberedInt.toRaster();
-
-  compareRaster(numberedInt, raster);
-
-}
-@Test
-@Category(UnitTest.class)
-public void toRasterFloat() throws IOException
-{
-  Raster raster = numberedFloat.toRaster();
-
-  compareRaster(numberedFloat, raster);
-}
-@Test
-@Category(UnitTest.class)
-public void toRasterDouble() throws IOException
-{
-  Raster raster = numberedDouble.toRaster();
-
-  compareRaster(numberedDouble, raster);
-}
 //@Test
 //@Category(UnitTest.class)
 //public void scaleRasterInterp()
@@ -330,7 +328,6 @@ public void toRasterDouble() throws IOException
 //  scaled = RasterUtils.scaleRasterInterp(numberedFloat,
 //      numberedFloat.width() * scale, numberedFloat.height() * scale, Double.NaN);
 //}
-
 
 
 }

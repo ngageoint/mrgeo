@@ -16,10 +16,7 @@
 
 package org.mrgeo.mapalgebra.parser.jexl;
 
-import org.apache.commons.jexl2.JexlContext;
 import org.apache.commons.jexl2.JexlException;
-import org.apache.commons.jexl2.MapContext;
-import org.apache.commons.jexl2.Script;
 import org.apache.commons.jexl2.parser.*;
 import org.mrgeo.mapalgebra.parser.*;
 
@@ -30,184 +27,184 @@ import java.util.Map;
 
 public class JexlParserAdapter implements ParserAdapter
 {
-  private MrGeoJexlEngine engine;
-  private ASTJexlScript jexlRootNode;
+private MrGeoJexlEngine engine;
+private ASTJexlScript jexlRootNode;
 
-  private Map<Class<? extends JexlNode>, String> twoArgFunctions;
+private Map<Class<? extends JexlNode>, String> twoArgFunctions;
 
-  public JexlParserAdapter()
+public JexlParserAdapter()
+{
+  twoArgFunctions = new HashMap<Class<? extends JexlNode>, String>();
+  twoArgFunctions.put(ASTAssignment.class, "=");
+  twoArgFunctions.put(ASTLTNode.class, "<");
+  twoArgFunctions.put(ASTLTNode.class, "lt");
+  twoArgFunctions.put(ASTLENode.class, "<=");
+  twoArgFunctions.put(ASTLENode.class, "le");
+  twoArgFunctions.put(ASTGTNode.class, ">");
+  twoArgFunctions.put(ASTGTNode.class, "gt");
+  twoArgFunctions.put(ASTGENode.class, ">=");
+  twoArgFunctions.put(ASTGENode.class, "ge");
+  twoArgFunctions.put(ASTEQNode.class, "==");
+  twoArgFunctions.put(ASTEQNode.class, "eq");
+  twoArgFunctions.put(ASTNENode.class, "!=");
+  twoArgFunctions.put(ASTNENode.class, "ne");
+  twoArgFunctions.put(ASTDivNode.class, "/");
+  twoArgFunctions.put(ASTDivNode.class, "div");
+  twoArgFunctions.put(ASTMulNode.class, "*");
+  twoArgFunctions.put(ASTAndNode.class, "&&");
+  twoArgFunctions.put(ASTAndNode.class, "and");
+  twoArgFunctions.put(ASTOrNode.class, "or");
+  twoArgFunctions.put(ASTOrNode.class, "||");
+  twoArgFunctions.put(ASTBitwiseAndNode.class, "&");
+  twoArgFunctions.put(ASTBitwiseOrNode.class, "|");
+  twoArgFunctions.put(ASTBitwiseXorNode.class, "^");
+  twoArgFunctions.put(ASTBitwiseComplNode.class, "~");
+}
+
+@Override
+public void initialize()
+{
+  engine = new MrGeoJexlEngine();
+  //engine.setSilent(false);
+  //engine.setStrict(true);
+}
+
+@Override
+public void initializeForTesting()
+{
+}
+
+@Override
+public void afterFunctionsLoaded()
+{
+}
+
+@Override
+public List<String> getFunctionNames()
+{
+  List<String> result = new ArrayList<String>();
+  for (String functionName : twoArgFunctions.values())
   {
-    twoArgFunctions = new HashMap<Class<? extends JexlNode>, String>();
-    twoArgFunctions.put(ASTAssignment.class, "=");
-    twoArgFunctions.put(ASTLTNode.class, "<");
-    twoArgFunctions.put(ASTLTNode.class, "lt");
-    twoArgFunctions.put(ASTLENode.class, "<=");
-    twoArgFunctions.put(ASTLENode.class, "le");
-    twoArgFunctions.put(ASTGTNode.class, ">");
-    twoArgFunctions.put(ASTGTNode.class, "gt");
-    twoArgFunctions.put(ASTGENode.class, ">=");
-    twoArgFunctions.put(ASTGENode.class, "ge");
-    twoArgFunctions.put(ASTEQNode.class, "==");
-    twoArgFunctions.put(ASTEQNode.class, "eq");
-    twoArgFunctions.put(ASTNENode.class, "!=");
-    twoArgFunctions.put(ASTNENode.class, "ne");
-    twoArgFunctions.put(ASTDivNode.class, "/");
-    twoArgFunctions.put(ASTDivNode.class, "div");
-    twoArgFunctions.put(ASTMulNode.class, "*");
-    twoArgFunctions.put(ASTAndNode.class, "&&");
-    twoArgFunctions.put(ASTAndNode.class, "and");
-    twoArgFunctions.put(ASTOrNode.class, "or");
-    twoArgFunctions.put(ASTOrNode.class, "||");
-    twoArgFunctions.put(ASTBitwiseAndNode.class, "&");
-    twoArgFunctions.put(ASTBitwiseOrNode.class, "|");
-    twoArgFunctions.put(ASTBitwiseXorNode.class, "^");
-    twoArgFunctions.put(ASTBitwiseComplNode.class, "~");
+    result.add(functionName);
   }
+  return result;
+}
 
-  @Override
-  public void initialize()
+@Override
+public void addFunction(String functionName)
+{
+}
+
+@Override
+public ParserNode parse(String expression) throws ParserException
+{
+  if (engine == null)
   {
-    engine = new MrGeoJexlEngine();
-    //engine.setSilent(false);
-    //engine.setStrict(true);
+    throw new ParserException("Map algebra parser engine was not initialized");
   }
-
-  @Override
-  public void initializeForTesting()
+  try
   {
+    engine.createScript(expression);
+    jexlRootNode = engine.getScript();
+    //jexlRootNode = (ASTJexlScript)engine.createScript(expression);
+    ParserNode last = null;
+    for (int i = 0; i < jexlRootNode.jjtGetNumChildren(); i++)
+    {
+      last = convertToMrGeoNode(jexlRootNode.jjtGetChild(i));
+    }
+    return last;
   }
-
-  @Override
-  public void afterFunctionsLoaded()
+  catch (JexlException e)
   {
+    throw new ParserException(e);
   }
+}
 
-  @Override
-  public List<String> getFunctionNames()
+@Override
+public Object evaluate(ParserNode node) throws ParserException
+{
+  JexlNode nativeNode = (JexlNode) node.getNativeNode();
+  if (nativeNode instanceof ASTAssignment)
   {
-    List<String> result = new ArrayList<String>();
-    for (String functionName : twoArgFunctions.values())
-    {
-      result.add(functionName);
-    }
-    return result;
+    JexlNode valueNode = nativeNode.jjtGetChild(1);
+    return valueNode.jjtGetValue();
   }
-
-  @Override
-  public void addFunction(String functionName)
+  else if (nativeNode instanceof ASTNumberLiteral)
   {
+    return ((ASTNumberLiteral) nativeNode).getLiteral();
   }
-
-  @Override
-  public ParserNode parse(String expression) throws ParserException
+  else if (nativeNode instanceof ASTStringLiteral)
   {
-    if (engine == null)
+    return ((ASTStringLiteral) nativeNode).getLiteral();
+  }
+  else if ((nativeNode instanceof ASTUnaryMinusNode) &&
+      (nativeNode.jjtGetChild(0) instanceof ASTNumberLiteral))
+  {
+    Number oldNum = ((ASTNumberLiteral) nativeNode.jjtGetChild(0)).getLiteral();
+    if (oldNum instanceof Integer)
     {
-      throw new ParserException("Map algebra parser engine was not initialized");
+      return -oldNum.intValue();
     }
-    try
+    else if (oldNum instanceof Double)
     {
-      engine.createScript(expression);
-      jexlRootNode = engine.getScript();
-      //jexlRootNode = (ASTJexlScript)engine.createScript(expression);
-      ParserNode last = null;
-      for (int i = 0; i < jexlRootNode.jjtGetNumChildren(); i++)
-      {
-        last = convertToMrGeoNode(jexlRootNode.jjtGetChild(i));
-      }
-      return last;
+      return -oldNum.doubleValue();
     }
-    catch(JexlException e)
+    else if (oldNum instanceof Float)
     {
-      throw new ParserException(e);
+      return (float) (0.0 - oldNum.floatValue());
+    }
+    else if (oldNum instanceof Short)
+    {
+      return -oldNum.shortValue();
+    }
+    else if (oldNum instanceof Long)
+    {
+      return -oldNum.longValue();
+    }
+    else if (oldNum instanceof Byte)
+    {
+      return -oldNum.byteValue();
     }
   }
+  return ((JexlNode) node.getNativeNode()).jjtGetValue();
+}
 
-  @Override
-  public Object evaluate(ParserNode node) throws ParserException
+private ParserNode convertToMrGeoNode(JexlNode node)
+{
+  ParserNode n = null;
+  JexlNode parentNode = node;
+  if (node instanceof ASTNumberLiteral)
   {
-    JexlNode nativeNode = (JexlNode)node.getNativeNode();
-    if (nativeNode instanceof ASTAssignment)
-    {
-      JexlNode valueNode = nativeNode.jjtGetChild(1);
-      return valueNode.jjtGetValue();
-    }
-    else if (nativeNode instanceof ASTNumberLiteral)
-    {
-      return ((ASTNumberLiteral)nativeNode).getLiteral();
-    }
-    else if (nativeNode instanceof ASTStringLiteral)
-    {
-      return ((ASTStringLiteral)nativeNode).getLiteral();
-    }
-    else if ((nativeNode instanceof ASTUnaryMinusNode) &&
-        (nativeNode.jjtGetChild(0) instanceof ASTNumberLiteral))
-    {
-      Number oldNum = ((ASTNumberLiteral)nativeNode.jjtGetChild(0)).getLiteral();
-      if (oldNum instanceof Integer)
-      {
-        return -oldNum.intValue();
-      }
-      else if (oldNum instanceof Double)
-      {
-        return -oldNum.doubleValue();
-      }
-      else if (oldNum instanceof Float)
-      {
-        return (float)(0.0 - oldNum.floatValue());
-      }
-      else if (oldNum instanceof Short)
-      {
-        return -oldNum.shortValue();
-      }
-      else if (oldNum instanceof Long)
-      {
-        return -oldNum.longValue();
-      }
-      else if (oldNum instanceof Byte)
-      {
-        return -oldNum.byteValue();
-      }
-    }
-    return ((JexlNode)node.getNativeNode()).jjtGetValue();
+    ParserConstantNode cn = new ParserConstantNode();
+    cn.setNativeNode(node);
+    cn.setValue(((ASTNumberLiteral) node).getLiteral());
+    cn.setName(cn.getValue().toString());
+    n = cn;
   }
-
-  private ParserNode convertToMrGeoNode(JexlNode node)
+  else if (node instanceof ASTStringLiteral)
   {
-    ParserNode n = null;
-    JexlNode parentNode = node;
-    if (node instanceof ASTNumberLiteral)
-    {
-      ParserConstantNode cn = new ParserConstantNode();
-      cn.setNativeNode(node);
-      cn.setValue(((ASTNumberLiteral) node).getLiteral());
-      cn.setName(cn.getValue().toString());
-      n = cn;
-    }
-    else if (node instanceof ASTStringLiteral)
-    {
-      ParserConstantNode cn = new ParserConstantNode();
-      cn.setNativeNode(node);
-      cn.setValue(((ASTStringLiteral) node).getLiteral());
-      cn.setName(cn.getValue().toString());
-      n = cn;
-    }
-    else if (node instanceof ASTTrueNode)
-    {
-      ParserConstantNode cn = new ParserConstantNode();
-      cn.setNativeNode(node);
-      cn.setValue(Boolean.valueOf(true));
-      cn.setName(cn.getValue().toString());
-      n = cn;
-    }
-    else if (node instanceof ASTFalseNode)
-    {
-      ParserConstantNode cn = new ParserConstantNode();
-      cn.setNativeNode(node);
-      cn.setValue(Boolean.valueOf(false));
-      cn.setName(cn.getValue().toString());
-      n = cn;
-    }
+    ParserConstantNode cn = new ParserConstantNode();
+    cn.setNativeNode(node);
+    cn.setValue(((ASTStringLiteral) node).getLiteral());
+    cn.setName(cn.getValue().toString());
+    n = cn;
+  }
+  else if (node instanceof ASTTrueNode)
+  {
+    ParserConstantNode cn = new ParserConstantNode();
+    cn.setNativeNode(node);
+    cn.setValue(Boolean.valueOf(true));
+    cn.setName(cn.getValue().toString());
+    n = cn;
+  }
+  else if (node instanceof ASTFalseNode)
+  {
+    ParserConstantNode cn = new ParserConstantNode();
+    cn.setNativeNode(node);
+    cn.setValue(Boolean.valueOf(false));
+    cn.setName(cn.getValue().toString());
+    n = cn;
+  }
 //    else if (node instanceof ASTAssignment)
 //    {
 //      ParserFunctionNode fn = new ParserFunctionNode();
@@ -220,182 +217,188 @@ public class JexlParserAdapter implements ParserAdapter
 //      fn.setName("=");
 //      n = fn;
 //    }
-    else if (node instanceof ASTMethodNode)
+  else if (node instanceof ASTMethodNode)
+  {
+    // For method nodes, the actual method name is stored in
+    // the first child node,
+    JexlNode methodNameNode = node.jjtGetChild(0);
+    if (methodNameNode instanceof ASTIdentifier)
     {
-      // For method nodes, the actual method name is stored in
-      // the first child node,
-      JexlNode methodNameNode = node.jjtGetChild(0);
-      if (methodNameNode instanceof ASTIdentifier)
+      ParserFunctionNode fn = new ParserFunctionNode();
+      fn.setNativeNode(node);
+      fn.setName(methodNameNode.image.toLowerCase());
+      n = fn;
+      parentNode = null;
+      // We have to process the children of a function call node
+      // separately from other nodes because the first child of the
+      // function call node is the name of the function, and we don't
+      // want that child included as part of the children we return.
+      for (int i = 1; i < node.jjtGetNumChildren(); i++)
+      {
+        n.addChild(convertToMrGeoNode(node.jjtGetChild(i)));
+      }
+      return n;
+    }
+  }
+  else
+  {
+    if (node instanceof ASTUnaryMinusNode)
+    {
+      // Handle negative numbers
+      if (node.jjtGetNumChildren() == 1 && node.jjtGetChild(0) instanceof ASTNumberLiteral)
+      {
+        ParserConstantNode cn = new ParserConstantNode();
+        cn.setNativeNode(node);
+
+        cn.setValue(-(((ASTNumberLiteral) node.jjtGetChild(0)).getLiteral().doubleValue()));
+        cn.setName(cn.getValue().toString());
+        n = cn;
+
+        parentNode = node;
+
+      }
+      else
       {
         ParserFunctionNode fn = new ParserFunctionNode();
+        fn.setName("uminus");
         fn.setNativeNode(node);
-        fn.setName(methodNameNode.image.toLowerCase());
         n = fn;
-        parentNode = null;
-        // We have to process the children of a function call node
-        // separately from other nodes because the first child of the
-        // function call node is the name of the function, and we don't
-        // want that child included as part of the children we return.
-        for (int i=1; i < node.jjtGetNumChildren(); i++)
-        {
-          n.addChild(convertToMrGeoNode(node.jjtGetChild(i)));
-        }
-        return n;
       }
     }
-    else
+    else if (node instanceof ASTBitwiseComplNode)
     {
-      if (node instanceof ASTUnaryMinusNode)
+      // Handle negative numbers
+      if (node.jjtGetNumChildren() == 1 && node.jjtGetChild(0) instanceof ASTNumberLiteral)
       {
-        // Handle negative numbers
-        if (node.jjtGetNumChildren() == 1 && node.jjtGetChild(0) instanceof ASTNumberLiteral)
-        {
-          ParserConstantNode cn = new ParserConstantNode();
-          cn.setNativeNode(node);
+        ParserConstantNode cn = new ParserConstantNode();
+        cn.setNativeNode(node);
 
-          cn.setValue(-(((ASTNumberLiteral) node.jjtGetChild(0)).getLiteral().doubleValue()));
-          cn.setName(cn.getValue().toString());
-          n = cn;
+        cn.setValue(~(((ASTNumberLiteral) node.jjtGetChild(0)).getLiteral().longValue()));
+        cn.setName(cn.getValue().toString());
+        n = cn;
 
-      parentNode = node;
+        parentNode = node;
 
-        }
-        else
-        {
-          ParserFunctionNode fn = new ParserFunctionNode();
-          fn.setName("uminus");
-          fn.setNativeNode(node);
-          n = fn;
-        }
       }
-      else if (node instanceof ASTBitwiseComplNode)
-      {
-        // Handle negative numbers
-        if (node.jjtGetNumChildren() == 1 && node.jjtGetChild(0) instanceof ASTNumberLiteral)
-        {
-          ParserConstantNode cn = new ParserConstantNode();
-          cn.setNativeNode(node);
-
-          cn.setValue(~(((ASTNumberLiteral) node.jjtGetChild(0)).getLiteral().longValue()));
-          cn.setName(cn.getValue().toString());
-          n = cn;
-
-          parentNode = node;
-
-        }
-        else
-        {
-          ParserFunctionNode fn = new ParserFunctionNode();
-          fn.setName("~");
-          fn.setNativeNode(node);
-          n = fn;
-        }
-      }
-      else if (node instanceof ASTBitwiseOrNode) {
-        if (node.jjtGetNumChildren() == 2 && node.jjtGetChild(0) instanceof ASTNumberLiteral &&
-            node.jjtGetChild(1) instanceof ASTNumberLiteral) {
-          ParserConstantNode cn = new ParserConstantNode();
-          cn.setNativeNode(node);
-
-          cn.setValue((((ASTNumberLiteral) node.jjtGetChild(0)).getLiteral().longValue() |
-                       ((ASTNumberLiteral) node.jjtGetChild(1)).getLiteral().longValue()));
-          cn.setName(cn.getValue().toString());
-          n = cn;
-
-          parentNode = node;
-        }
-        else
-        {
-          ParserFunctionNode fn = new ParserFunctionNode();
-          fn.setName("|");
-          fn.setNativeNode(node);
-          n = fn;
-        }
-      }
-      else if (node instanceof ASTBitwiseAndNode) {
-        if (node.jjtGetNumChildren() == 2 && node.jjtGetChild(0) instanceof ASTNumberLiteral &&
-            node.jjtGetChild(1) instanceof ASTNumberLiteral) {
-          ParserConstantNode cn = new ParserConstantNode();
-          cn.setNativeNode(node);
-
-          cn.setValue((((ASTNumberLiteral) node.jjtGetChild(0)).getLiteral().longValue() &
-                       ((ASTNumberLiteral) node.jjtGetChild(1)).getLiteral().longValue()));
-          cn.setName(cn.getValue().toString());
-          n = cn;
-
-          parentNode = node;
-        }
-        else
-        {
-          ParserFunctionNode fn = new ParserFunctionNode();
-          fn.setName("&");
-          fn.setNativeNode(node);
-          n = fn;
-        }
-      }
-      else if (node instanceof ASTBitwiseXorNode) {
-        if (node.jjtGetNumChildren() == 2 && node.jjtGetChild(0) instanceof ASTNumberLiteral &&
-            node.jjtGetChild(1) instanceof ASTNumberLiteral) {
-          ParserConstantNode cn = new ParserConstantNode();
-          cn.setNativeNode(node);
-
-          cn.setValue((((ASTNumberLiteral) node.jjtGetChild(0)).getLiteral().longValue() ^
-                       ((ASTNumberLiteral) node.jjtGetChild(1)).getLiteral().longValue()));
-          cn.setName(cn.getValue().toString());
-          n = cn;
-
-          parentNode = node;
-        }
-        else
-        {
-          ParserFunctionNode fn = new ParserFunctionNode();
-          fn.setName("^");
-          fn.setNativeNode(node);
-          n = fn;
-        }
-      }
-      else if (node instanceof ASTIdentifier)
-      {
-        ParserVariableNode vn = new ParserVariableNode();
-        vn.setNativeNode(node);
-        vn.setName(node.image);
-        n = vn;
-//      parentNode = node;
-      }
-      else if (node instanceof ASTNotNode)
+      else
       {
         ParserFunctionNode fn = new ParserFunctionNode();
+        fn.setName("~");
         fn.setNativeNode(node);
-        fn.setName("!");
         n = fn;
       }
-      else if (node instanceof ASTArrayLiteral)
+    }
+    else if (node instanceof ASTBitwiseOrNode)
+    {
+      if (node.jjtGetNumChildren() == 2 && node.jjtGetChild(0) instanceof ASTNumberLiteral &&
+          node.jjtGetChild(1) instanceof ASTNumberLiteral)
       {
-        // This is invoked in the case where an image is specified in
-        // map algebra (e.g. [myImage]). We translate this to the same
-        // node structure that JEP used to generate.
-        ParserFunctionNode fn = new ParserFunctionNode();
-        fn.setName("LIST");
-        fn.setNativeNode(node);
-        n = fn;
+        ParserConstantNode cn = new ParserConstantNode();
+        cn.setNativeNode(node);
+
+        cn.setValue((((ASTNumberLiteral) node.jjtGetChild(0)).getLiteral().longValue() |
+            ((ASTNumberLiteral) node.jjtGetChild(1)).getLiteral().longValue()));
+        cn.setName(cn.getValue().toString());
+        n = cn;
+
         parentNode = node;
       }
-      else if (node instanceof ASTAdditiveNode)
+      else
       {
-        // This is used for two or more expressions being added/subtracted
-        ParserNode newParent = null;
-        int index = 1;
-        ParserNode previousOperand = convertToMrGeoNode(node.jjtGetChild(0));
-        while (index < node.jjtGetNumChildren())
-        {
-          newParent = new ParserFunctionNode();
-          newParent.setName(((ASTAdditiveOperator) node.jjtGetChild(index)).image);
-          newParent.addChild(previousOperand);
-          newParent.addChild(convertToMrGeoNode(node.jjtGetChild(index + 1)));
-          previousOperand = newParent;
-          index += 2;
-        }
-        return newParent;
+        ParserFunctionNode fn = new ParserFunctionNode();
+        fn.setName("|");
+        fn.setNativeNode(node);
+        n = fn;
+      }
+    }
+    else if (node instanceof ASTBitwiseAndNode)
+    {
+      if (node.jjtGetNumChildren() == 2 && node.jjtGetChild(0) instanceof ASTNumberLiteral &&
+          node.jjtGetChild(1) instanceof ASTNumberLiteral)
+      {
+        ParserConstantNode cn = new ParserConstantNode();
+        cn.setNativeNode(node);
+
+        cn.setValue((((ASTNumberLiteral) node.jjtGetChild(0)).getLiteral().longValue() &
+            ((ASTNumberLiteral) node.jjtGetChild(1)).getLiteral().longValue()));
+        cn.setName(cn.getValue().toString());
+        n = cn;
+
+        parentNode = node;
+      }
+      else
+      {
+        ParserFunctionNode fn = new ParserFunctionNode();
+        fn.setName("&");
+        fn.setNativeNode(node);
+        n = fn;
+      }
+    }
+    else if (node instanceof ASTBitwiseXorNode)
+    {
+      if (node.jjtGetNumChildren() == 2 && node.jjtGetChild(0) instanceof ASTNumberLiteral &&
+          node.jjtGetChild(1) instanceof ASTNumberLiteral)
+      {
+        ParserConstantNode cn = new ParserConstantNode();
+        cn.setNativeNode(node);
+
+        cn.setValue((((ASTNumberLiteral) node.jjtGetChild(0)).getLiteral().longValue() ^
+            ((ASTNumberLiteral) node.jjtGetChild(1)).getLiteral().longValue()));
+        cn.setName(cn.getValue().toString());
+        n = cn;
+
+        parentNode = node;
+      }
+      else
+      {
+        ParserFunctionNode fn = new ParserFunctionNode();
+        fn.setName("^");
+        fn.setNativeNode(node);
+        n = fn;
+      }
+    }
+    else if (node instanceof ASTIdentifier)
+    {
+      ParserVariableNode vn = new ParserVariableNode();
+      vn.setNativeNode(node);
+      vn.setName(node.image);
+      n = vn;
+//      parentNode = node;
+    }
+    else if (node instanceof ASTNotNode)
+    {
+      ParserFunctionNode fn = new ParserFunctionNode();
+      fn.setNativeNode(node);
+      fn.setName("!");
+      n = fn;
+    }
+    else if (node instanceof ASTArrayLiteral)
+    {
+      // This is invoked in the case where an image is specified in
+      // map algebra (e.g. [myImage]). We translate this to the same
+      // node structure that JEP used to generate.
+      ParserFunctionNode fn = new ParserFunctionNode();
+      fn.setName("LIST");
+      fn.setNativeNode(node);
+      n = fn;
+      parentNode = node;
+    }
+    else if (node instanceof ASTAdditiveNode)
+    {
+      // This is used for two or more expressions being added/subtracted
+      ParserNode newParent = null;
+      int index = 1;
+      ParserNode previousOperand = convertToMrGeoNode(node.jjtGetChild(0));
+      while (index < node.jjtGetNumChildren())
+      {
+        newParent = new ParserFunctionNode();
+        newParent.setName(((ASTAdditiveOperator) node.jjtGetChild(index)).image);
+        newParent.addChild(previousOperand);
+        newParent.addChild(convertToMrGeoNode(node.jjtGetChild(index + 1)));
+        previousOperand = newParent;
+        index += 2;
+      }
+      return newParent;
 
 //      n.addChild(convertToMrGeoNode(node.jjtGetChild(0)));
 //      ParserFunctionNode fn = new ParserFunctionNode();
@@ -408,7 +411,7 @@ public class JexlParserAdapter implements ParserAdapter
 //      n.addChild(convertToMrGeoNode(node.jjtGetChild(0)));
 //      n.addChild(convertToMrGeoNode(node.jjtGetChild(2)));
 //      return n;
-      }
+    }
 //    else if (node instanceof ASTDivNode)
 //    {
 //      ParserFunctionNode fn = new ParserFunctionNode();
@@ -425,31 +428,31 @@ public class JexlParserAdapter implements ParserAdapter
 //      n = fn;
 //      parentNode = node;
 //    }
-      else if (twoArgFunctions.containsKey(node.getClass()))
-      {
-        ParserFunctionNode fn = new ParserFunctionNode();
-        fn.setName(twoArgFunctions.get(node.getClass()));
-        fn.setNativeNode(node);
-        n = fn;
-        parentNode = node;
-      }
-      else if ((node instanceof ASTReference) || (node instanceof ASTReferenceExpression))
-      {
-        if (node.jjtGetNumChildren() > 0)
-        {
-          JexlNode child = node.jjtGetChild(0);
-          return convertToMrGeoNode(child);
-        }
-      }
-    }
-    if (n != null)
+    else if (twoArgFunctions.containsKey(node.getClass()))
     {
-      for (int i=0; i < parentNode.jjtGetNumChildren(); i++)
-      {
-        n.addChild(convertToMrGeoNode(parentNode.jjtGetChild(i)));
-      }
-      return n;
+      ParserFunctionNode fn = new ParserFunctionNode();
+      fn.setName(twoArgFunctions.get(node.getClass()));
+      fn.setNativeNode(node);
+      n = fn;
+      parentNode = node;
     }
-    return null;
+    else if ((node instanceof ASTReference) || (node instanceof ASTReferenceExpression))
+    {
+      if (node.jjtGetNumChildren() > 0)
+      {
+        JexlNode child = node.jjtGetChild(0);
+        return convertToMrGeoNode(child);
+      }
+    }
   }
+  if (n != null)
+  {
+    for (int i = 0; i < parentNode.jjtGetNumChildren(); i++)
+    {
+      n.addChild(convertToMrGeoNode(parentNode.jjtGetChild(i)));
+    }
+    return n;
+  }
+  return null;
+}
 }

@@ -18,22 +18,21 @@ package org.mrgeo.job;
 
 /**
  * @author jason.surratt
- * 
  */
 public class JobFailedException extends Exception
 {
 
-  /**
-   * 
-   */
-  private static final long serialVersionUID = 1L;
+/**
+ *
+ */
+private static final long serialVersionUID = 1L;
 
-  /**
-   * @param string
-   */
-  public JobFailedException(String string)
-  {
-    super(string);
-  }
+/**
+ * @param string
+ */
+public JobFailedException(String string)
+{
+  super(string);
+}
 
 }

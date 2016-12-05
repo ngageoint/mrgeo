@@ -55,37 +55,6 @@ public RecordReader<TileIdWritable, RasterWritable> createRecordReader(InputSpli
 }
 
 /**
- * Return native splits from the data provider for the passed in input.
- * It ensures that the native splits returned from the data provider are
- * instances of TiledInputSplit.
- */
-protected List<TiledInputSplit> getNativeSplits(final JobContext context,
-    final ImageInputFormatContext ifContext,
-    final String input) throws IOException, InterruptedException
-{
-  MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(input,
-      DataProviderFactory.AccessMode.READ, context.getConfiguration());
-  MrsImageInputFormatProvider ifProvider = dp.getImageInputFormatProvider(ifContext);
-  List<InputSplit> splits = ifProvider.getInputFormat(input).getSplits(context);
-  // In order to work with MrGeo and input bounds cropping, the splits must be
-  // of type TiledInputSplit.
-  List<TiledInputSplit> result = new ArrayList<>(splits.size());
-  for (InputSplit split : splits)
-  {
-    if (split instanceof TiledInputSplit)
-    {
-      result.add((TiledInputSplit)split);
-    }
-    else
-    {
-      throw new IOException("ERROR: native input splits must be instances of" +
-          "TiledInputSplit. Received " + split.getClass().getCanonicalName());
-    }
-  }
-  return result;
-}
-
-/**
  * Returns the list of MrsPyramidInputSplit objects for the input pyramid.
  * Sub-classes should have no need to override this method. It
  * contains logic required by all input formats (described in the overview
@@ -119,10 +88,40 @@ public List<InputSplit> getSplits(JobContext context) throws IOException, Interr
 }
 
 /**
+ * Return native splits from the data provider for the passed in input.
+ * It ensures that the native splits returned from the data provider are
+ * instances of TiledInputSplit.
+ */
+protected List<TiledInputSplit> getNativeSplits(final JobContext context,
+    final ImageInputFormatContext ifContext,
+    final String input) throws IOException, InterruptedException
+{
+  MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(input,
+      DataProviderFactory.AccessMode.READ, context.getConfiguration());
+  MrsImageInputFormatProvider ifProvider = dp.getImageInputFormatProvider(ifContext);
+  List<InputSplit> splits = ifProvider.getInputFormat(input).getSplits(context);
+  // In order to work with MrGeo and input bounds cropping, the splits must be
+  // of type TiledInputSplit.
+  List<TiledInputSplit> result = new ArrayList<>(splits.size());
+  for (InputSplit split : splits)
+  {
+    if (split instanceof TiledInputSplit)
+    {
+      result.add((TiledInputSplit) split);
+    }
+    else
+    {
+      throw new IOException("ERROR: native input splits must be instances of" +
+          "TiledInputSplit. Received " + split.getClass().getCanonicalName());
+    }
+  }
+  return result;
+}
+
+/**
  * Performs cropping of input splits to the bounds specified in the ifContext. This
  * logic is common to all pyramid input formats, regardless of the data provider,
  * so there should be no need to override it in sub-classes.
- *
  */
 List<TiledInputSplit> filterInputSplits(final ImageInputFormatContext ifContext,
     final List<TiledInputSplit> splits,

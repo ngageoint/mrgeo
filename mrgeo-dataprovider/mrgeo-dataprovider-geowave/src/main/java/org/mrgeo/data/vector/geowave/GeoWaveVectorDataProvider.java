@@ -43,7 +43,6 @@ import org.joda.time.format.ISODateTimeFormat;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.data.vector.*;
 import org.mrgeo.geometry.Geometry;
 import org.opengis.filter.Filter;
 import org.slf4j.Logger;
@@ -51,23 +50,22 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class GeoWaveVectorDataProvider extends VectorDataProvider{
-static Logger log = LoggerFactory.getLogger(GeoWaveVectorDataProvider.class);
-
-private static final String PROVIDER_PROPERTIES_SIZE = GeoWaveVectorDataProvider.class.getName() + "providerProperties.size";
-private static final String PROVIDER_PROPERTIES_KEY_PREFIX = GeoWaveVectorDataProvider.class.getName() + "providerProperties.key";
-private static final String PROVIDER_PROPERTIES_VALUE_PREFIX = GeoWaveVectorDataProvider.class.getName() + "providerProperties.value";
-
-private static Map<String, DataSourceEntry> dataSourceEntries = new HashMap<String, DataSourceEntry>();
-private static volatile GeoWaveConnectionInfo connectionInfo;
+public class GeoWaveVectorDataProvider extends VectorDataProvider
+{
+private static final String PROVIDER_PROPERTIES_SIZE =
+    GeoWaveVectorDataProvider.class.getName() + "providerProperties.size";
+private static final String PROVIDER_PROPERTIES_KEY_PREFIX =
+    GeoWaveVectorDataProvider.class.getName() + "providerProperties.key";
+private static final String PROVIDER_PROPERTIES_VALUE_PREFIX =
+    GeoWaveVectorDataProvider.class.getName() + "providerProperties.value";
 private static final ReentrantReadWriteLock connectionLock = new ReentrantReadWriteLock();
-
+static Logger log = LoggerFactory.getLogger(GeoWaveVectorDataProvider.class);
 // Package private for unit testing
 static boolean initialized = false;
-
+private static Map<String, DataSourceEntry> dataSourceEntries = new HashMap<String, DataSourceEntry>();
+private static volatile GeoWaveConnectionInfo connectionInfo;
 private Configuration conf;
 private DataAdapter<?> dataAdapter;
 private PrimaryIndex primaryIndex;
@@ -80,13 +78,6 @@ private Date endTimeConstraint;
 private String requestedIndexName;
 private GeoWaveVectorMetadataReader metaReader;
 private ProviderProperties providerProperties;
-
-private static class ParseResults
-{
-  public String storeName;
-  public String name;
-  public Map<String, String> settings = new HashMap<String, String>();
-}
 
 public GeoWaveVectorDataProvider(Configuration conf, String inputPrefix, String input,
     ProviderProperties providerProperties)
@@ -122,7 +113,8 @@ public static GeoWaveConnectionInfo getConnectionInfo()
     log.debug("returning connection info " + connectionInfo);
     return connectionInfo;
   }
-  finally {
+  finally
+  {
     connectionLock.readLock().unlock();
   }
 }
@@ -134,8 +126,426 @@ static void setConnectionInfo(GeoWaveConnectionInfo connInfo)
   {
     connectionInfo = connInfo;
   }
-  finally {
+  finally
+  {
     connectionLock.writeLock().unlock();
+  }
+}
+
+public static boolean isValid(Configuration conf)
+{
+  // This must be a quick sanity check on the remote side for whether or not
+  // the GeoWave data provider should be used on the remote side.
+  initConnectionInfo(conf);
+  return (getConnectionInfo() != null);
+}
+
+public static boolean isValid()
+{
+  // This must be a quick sanity check on the client side for whether or not
+  // the GeoWave data provider should be used.
+  initConnectionInfo();
+  return (getConnectionInfo() != null);
+}
+
+public static String[] listVectors(final ProviderProperties providerProperties) throws IOException
+{
+  initConnectionInfo();
+  List<String> results = new ArrayList<String>();
+  for (String storeName : getConnectionInfo().getStoreNames())
+  {
+    initDataSource(null, storeName);
+    DataSourceEntry entry = getDataSourceEntry(storeName);
+    CloseableIterator<DataAdapter<?>> iter = entry.adapterStore.getAdapters();
+    try
+    {
+      while (iter.hasNext())
+      {
+        DataAdapter<?> adapter = iter.next();
+        if (adapter != null)
+        {
+          ByteArrayId adapterId = adapter.getAdapterId();
+          if (checkAuthorizations(adapterId, storeName, providerProperties))
+          {
+            results.add(adapterId.getString());
+          }
+        }
+      }
+    }
+    finally
+    {
+      if (iter != null)
+      {
+        iter.close();
+      }
+    }
+  }
+  String[] resultArray = new String[results.size()];
+  return results.toArray(resultArray);
+}
+
+@SuppressWarnings("squid:S1166") // Exception caught and handled
+public static boolean canOpen(String input,
+    ProviderProperties providerProperties) throws IOException
+{
+  log.debug("Inside canOpen with " + input);
+  initConnectionInfo();
+  ParseResults results = parseResourceName(input);
+  try
+  {
+    initDataSource(null, results.storeName);
+    DataSourceEntry entry = getDataSourceEntry(results.storeName);
+    CloseableIterator<DataAdapter<?>> iter = entry.adapterStore.getAdapters();
+    while (iter.hasNext())
+    {
+      DataAdapter<?> da = iter.next();
+      log.debug("GeoWave adapter: " + da.getAdapterId().toString());
+    }
+    ByteArrayId adapterId = new ByteArrayId(results.name);
+    DataAdapter<?> adapter = entry.adapterStore.getAdapter(adapterId);
+    if (adapter == null)
+    {
+      return false;
+    }
+    return checkAuthorizations(adapterId, results.storeName, providerProperties);
+  }
+  catch (IOException ignored)
+  {
+  }
+  catch (IllegalArgumentException e)
+  {
+    log.info("Unable to open " + input + " with the GeoWave data provider", e);
+  }
+  return false;
+}
+
+public static long getAdapterCount(ByteArrayId adapterId,
+    String namespace,
+    ProviderProperties providerProperties)
+    throws IOException
+{
+  initConnectionInfo();
+  initDataSource(null, namespace);
+  DataSourceEntry entry = getDataSourceEntry(namespace);
+  List<String> roles = null;
+  if (providerProperties != null)
+  {
+    roles = providerProperties.getRoles();
+  }
+  if (roles != null && roles.size() > 0)
+  {
+    String auths = StringUtils.join(roles, ",");
+    CountDataStatistics<?> count = (CountDataStatistics<?>) entry.statisticsStore
+        .getDataStatistics(adapterId, CountDataStatistics.STATS_ID, auths);
+    if (count != null && count.isSet())
+    {
+      return count.getCount();
+    }
+  }
+  else
+  {
+    CountDataStatistics<?> count =
+        (CountDataStatistics<?>) entry.statisticsStore.getDataStatistics(adapterId, CountDataStatistics.STATS_ID);
+    if (count != null && count.isSet())
+    {
+      return count.getCount();
+    }
+  }
+  return 0L;
+}
+
+// Package private for unit testing
+static void parseDataSourceSettings(String strSettings,
+    Map<String, String> settings) throws IOException
+{
+  boolean foundSemiColon = true;
+  String remaining = strSettings.trim();
+  if (remaining.isEmpty())
+  {
+    return;
+  }
+
+  int settingIndex = 0;
+  while (foundSemiColon)
+  {
+    int equalsIndex = remaining.indexOf("=", settingIndex);
+    if (equalsIndex >= 0)
+    {
+      String keyName = remaining.substring(settingIndex, equalsIndex).trim();
+      // Everything after the = char
+      remaining = remaining.substring(equalsIndex + 1).trim();
+      if (remaining.length() > 0)
+      {
+        // Handle double-quoted settings specially, skipping escaped double
+        // quotes inside the value.
+        if (remaining.startsWith("\""))
+        {
+          // Find the index of the corresponding closing quote. Note that double
+          // quotes can be escaped with a backslash (\) within the quoted string.
+          int closingQuoteIndex = remaining.indexOf('"', 1);
+          while (closingQuoteIndex > 0)
+          {
+            // If the double quote is not preceeded by an escape backslash,
+            // then we've found the closing quote.
+            if (remaining.charAt(closingQuoteIndex - 1) != '\\')
+            {
+              break;
+            }
+            closingQuoteIndex = remaining.indexOf('"', closingQuoteIndex + 1);
+          }
+          if (closingQuoteIndex >= 0)
+          {
+            String value = remaining.substring(1, closingQuoteIndex);
+            log.debug("Adding GeoWave source key setting " + keyName + " = " + value);
+            settings.put(keyName, value);
+            settingIndex = 0;
+            int nextSemiColonIndex = remaining.indexOf(';', closingQuoteIndex + 1);
+            if (nextSemiColonIndex >= 0)
+            {
+              foundSemiColon = true;
+              remaining = remaining.substring(nextSemiColonIndex + 1).trim();
+            }
+            else
+            {
+              // No more settings
+              foundSemiColon = false;
+            }
+          }
+          else
+          {
+            throw new IOException("Invalid GeoWave settings string, expected ending double quote for key " +
+                keyName + " in " + strSettings);
+          }
+        }
+        else
+        {
+          // The value is not quoted
+          int semiColonIndex = remaining.indexOf(";");
+          if (semiColonIndex >= 0)
+          {
+            String value = remaining.substring(0, semiColonIndex);
+            log.debug("Adding GeoWave source key setting " + keyName + " = " + value);
+            settings.put(keyName, value);
+            settingIndex = 0;
+            remaining = remaining.substring(semiColonIndex + 1);
+          }
+          else
+          {
+            log.debug("Adding GeoWave source key setting " + keyName + " = " + remaining);
+            settings.put(keyName, remaining);
+            // There are no more settings since there are no more semi-colons
+            foundSemiColon = false;
+          }
+        }
+      }
+      else
+      {
+        throw new IOException("Missing value for " + keyName);
+      }
+    }
+    else
+    {
+      throw new IOException("Invalid syntax. No value assignment in \"" + remaining + "\"");
+    }
+  }
+}
+
+/**
+ * Parses the input string into the optional namespace, the name of the input and
+ * the optional query string
+ * that accompanies it. The two strings are separated by a semi-colon, and the query
+ * should be included in double quotes if it contains any semi-colons or square brackets.
+ * But the double quotes are not required otherwise.
+ *
+ * @param input
+ */
+private static ParseResults parseResourceName(String input) throws IOException
+{
+  int semiColonIndex = input.indexOf(';');
+  if (semiColonIndex == 0)
+  {
+    throw new IOException("Missing name from GeoWave data source: " + input);
+  }
+  int dotIndex = input.indexOf('.');
+  ParseResults results = new ParseResults();
+  if (semiColonIndex > 0)
+  {
+    if (dotIndex >= 0)
+    {
+      results.storeName = input.substring(0, dotIndex);
+      results.name = input.substring(dotIndex + 1, semiColonIndex);
+    }
+    else
+    {
+      results.name = input.substring(0, semiColonIndex);
+    }
+    // Start parsing the data source settings
+    String strSettings = input.substring(semiColonIndex + 1);
+    // Now parse each property of the geowave source.
+    parseDataSourceSettings(strSettings, results.settings);
+  }
+  else
+  {
+    if (dotIndex >= 0)
+    {
+      results.storeName = input.substring(0, dotIndex);
+      results.name = input.substring(dotIndex + 1);
+    }
+    else
+    {
+      results.name = input;
+    }
+  }
+  // If there is no datastore explicitly in the resource name, then we
+  // check to make sure the GeoWave configuration for MrGeo only has one
+  // datastore specified and use it. If there are multiple datastores
+  // configured, then throw an exception.
+  if (results.storeName == null || results.storeName.isEmpty())
+  {
+    GeoWaveConnectionInfo connectionInfo = getConnectionInfo();
+    String[] dataStores = connectionInfo.getStoreNames();
+    if (dataStores == null || dataStores.length == 0)
+    {
+      throw new IOException("Missing missing " + GeoWaveConnectionInfo.GEOWAVE_STORENAMES_KEY +
+          " in the MrGeo configuration");
+    }
+    else
+    {
+      if (dataStores.length > 1)
+      {
+        throw new IOException(
+            "You must specify a GeoWave data store for " + input +
+                " because multiple GeoWave data stores are configured in MrGeo (e.g." +
+                " mystore." + input + ")");
+      }
+      results.storeName = dataStores[0];
+    }
+  }
+  return results;
+}
+
+private static boolean checkAuthorizations(ByteArrayId adapterId,
+    String namespace,
+    ProviderProperties providerProperties) throws IOException
+{
+  // Check to see if the requester is authorized to see any of the data in
+  // the adapter.
+  return (getAdapterCount(adapterId, namespace, providerProperties) > 0L);
+}
+
+private static DataSourceEntry getDataSourceEntry(String namespace) throws IOException
+{
+  DataSourceEntry entry = dataSourceEntries.get(namespace);
+  if (entry == null)
+  {
+    throw new IOException("Data source was not yet initialized for namespace: " + namespace);
+  }
+  return entry;
+}
+
+private static void initConnectionInfo(Configuration conf)
+{
+  // The connectionInfo only needs to be set once. It is the same for
+  // the duration of the JVM. Note that it is instantiated differently
+  // on the driver-side than it is within map/reduce tasks. This method
+  // loads connection settings from the job configuration.
+  if (connectionInfo == null)
+  {
+    connectionLock.writeLock().lock();
+    try
+    {
+      if (connectionInfo == null)
+      {
+        connectionInfo = GeoWaveConnectionInfo.load(conf);
+      }
+    }
+    finally
+    {
+      connectionLock.writeLock().unlock();
+    }
+  }
+}
+
+private static void initConnectionInfo()
+{
+  // The connectionInfo only needs to be set once. It is the same for
+  // the duration of the JVM. Note that it is instantiated differently
+  // on the driver-side than it is within map/reduce tasks. This method
+  // loads connection settings from the mrgeo.conf file.
+  if (connectionInfo == null)
+  {
+    connectionLock.writeLock().lock();
+    try
+    {
+      if (connectionInfo == null)
+      {
+        connectionInfo = GeoWaveConnectionInfo.load();
+      }
+    }
+    finally
+    {
+      connectionLock.writeLock().unlock();
+    }
+  }
+}
+
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "It is ok to read the config file here")
+private static void initDataSource(Configuration conf, String storeName) throws IOException
+{
+  DataSourceEntry entry = dataSourceEntries.get(storeName);
+  if (entry == null)
+  {
+    entry = new DataSourceEntry();
+    // Check to see if we are running client side or not. If the Hadoop config
+    // contains the storenames property, then we should load geowave resources
+    // based on settings in the Hadoop config. Otherwise, we should load the
+    // geowave resources based on settings in the MrGeo config (on client side).
+    if (conf == null || conf.get(GeoWaveConnectionInfo.GEOWAVE_STORENAMES_KEY) == null)
+    {
+      // Since the geowave store name is not in the configuration, then this is being
+      // called from the client side.
+      GeoWaveConnectionInfo connInfo = getConnectionInfo();
+      String[] storeNamesForMrGeo = connInfo.getStoreNames();
+      if (storeNamesForMrGeo == null)
+      {
+        throw new IOException("To use GeoWave, you must set " +
+            GeoWaveConnectionInfo.GEOWAVE_STORENAMES_KEY +
+            " in the MrGeo config file");
+      }
+      StoreLoader inputStoreLoader = new StoreLoader(storeName);
+
+      if (!inputStoreLoader.loadFromConfig(new File(MrGeoProperties.findMrGeoConf())))
+      {
+        String msg = "Cannot find GeoWave store name: " + inputStoreLoader.getStoreName();
+        log.error(msg);
+        throw new IOException(msg);
+      }
+      DataStorePluginOptions inputStoreOptions = inputStoreLoader.getDataStorePlugin();
+//        inputStoreOptions.getFactoryOptions().setGeowaveNamespace(namespace);
+      dataSourceEntries.put(storeName, entry);
+      entry.inputStoreOptions = inputStoreOptions;
+      entry.indexStore = inputStoreOptions.createIndexStore();
+//        entry.secondaryIndexStore = inputStoreOptions.createSecondaryIndexStore();
+      entry.statisticsStore = inputStoreOptions.createDataStatisticsStore();
+      entry.adapterStore = inputStoreOptions.createAdapterStore();
+//        entry.adapterIndexMappingStore = inputStoreOptions.createAdapterIndexMappingStore();
+      entry.dataStore = inputStoreOptions.createDataStore();
+    }
+    else
+    {
+      // The store name was in the configuration, so this is being called from
+      // the remote side. Create a fake JobContext to satisfy the GeoWave API
+      // access to the Hadoop configuration.
+      JobContext context = new JobContextImpl(conf, new JobID());
+      final Map<String, String> configOptions = GeoWaveInputFormat.getStoreConfigOptions(context);
+      entry.inputStoreOptions = new DataStorePluginOptions(storeName, configOptions);
+      entry.indexStore = entry.inputStoreOptions.createIndexStore();
+//        entry.secondaryIndexStore = entry.inputStoreOptions.createSecondaryIndexStore();
+      entry.statisticsStore = entry.inputStoreOptions.createDataStatisticsStore();
+      entry.adapterStore = GeoWaveStoreFinder.createAdapterStore(configOptions);
+//        entry.adapterIndexMappingStore = entry.inputStoreOptions.createAdapterIndexMappingStore();
+      entry.dataStore = GeoWaveStoreFinder.createDataStore(configOptions);
+    }
   }
 }
 
@@ -187,7 +597,7 @@ public PrimaryIndex getPrimaryIndex() throws IOException
     DistributableQuery query = getQuery();
     while (indices.hasNext())
     {
-      PrimaryIndex idx = (PrimaryIndex)indices.next();
+      PrimaryIndex idx = (PrimaryIndex) indices.next();
       String indexName = idx.getId().getString();
       log.debug("Checking GeoWave index " + idx.getId().getString());
       NumericDimensionField<? extends CommonIndexValue>[] dimFields = idx.getIndexModel().getDimensions();
@@ -305,14 +715,14 @@ public com.vividsolutions.jts.geom.Geometry getSpatialConstraint() throws IOExce
   return spatialConstraint;
 }
 
-@SuppressFBWarnings(value="EI_EXPOSE_REP", justification = "Used by trusted code")
+@SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Used by trusted code")
 public Date getStartTimeConstraint() throws IOException
 {
   init();
   return startTimeConstraint;
 }
 
-@SuppressFBWarnings(value="EI_EXPOSE_REP", justification = "Used by trusted code")
+@SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Used by trusted code")
 public Date getEndTimeConstraint() throws IOException
 {
   init();
@@ -359,26 +769,6 @@ public DistributableQuery getQuery() throws IOException
   return query;
 }
 
-@SuppressFBWarnings(value="PZLA_PREFER_ZERO_LENGTH_ARRAYS", justification = "Null return value is valid")
-private String[] getAuthorizations(ProviderProperties providerProperties)
-{
-  List<String> userRoles = null;
-  if (providerProperties != null)
-  {
-    userRoles = providerProperties.getRoles();
-  }
-  if (userRoles != null)
-  {
-    String[] auths = new String[userRoles.size()];
-    for (int i = 0; i < userRoles.size(); i++)
-    {
-      auths[i] = userRoles.get(i).trim();
-    }
-    return auths;
-  }
-  return null;
-}
-
 public QueryOptions getQueryOptions(ProviderProperties providerProperties) throws IOException
 {
   QueryOptions queryOptions = new QueryOptions(getDataAdapter(), getPrimaryIndex());
@@ -388,192 +778,6 @@ public QueryOptions getQueryOptions(ProviderProperties providerProperties) throw
     queryOptions.setAuthorizations(auths);
   }
   return queryOptions;
-}
-
-private TemporalConstraints getTemporalConstraints(Date startTime, Date endTime)
-{
-  TemporalRange tr = new TemporalRange();
-  if (startTime != null)
-  {
-    tr.setStartTime(startTime);
-  }
-  if (endTime != null)
-  {
-    tr.setEndTime(endTime);
-  }
-  TemporalConstraints tc = new TemporalConstraints();
-  tc.add(tr);
-  return tc;
-}
-
-/**
- * Parses the input string into the optional namespace, the name of the input and
- * the optional query string
- * that accompanies it. The two strings are separated by a semi-colon, and the query
- * should be included in double quotes if it contains any semi-colons or square brackets.
- * But the double quotes are not required otherwise.
- *
- * @param input
- */
-private static ParseResults parseResourceName(String input) throws IOException
-{
-  int semiColonIndex = input.indexOf(';');
-  if (semiColonIndex == 0)
-  {
-    throw new IOException("Missing name from GeoWave data source: " + input);
-  }
-  int dotIndex = input.indexOf('.');
-  ParseResults results = new ParseResults();
-  if (semiColonIndex > 0)
-  {
-    if (dotIndex >= 0)
-    {
-      results.storeName = input.substring(0, dotIndex);
-      results.name = input.substring(dotIndex + 1, semiColonIndex);
-    }
-    else
-    {
-      results.name = input.substring(0, semiColonIndex);
-    }
-    // Start parsing the data source settings
-    String strSettings = input.substring(semiColonIndex + 1);
-    // Now parse each property of the geowave source.
-    parseDataSourceSettings(strSettings, results.settings);
-  }
-  else
-  {
-    if (dotIndex >= 0)
-    {
-      results.storeName = input.substring(0, dotIndex);
-      results.name = input.substring(dotIndex + 1);
-    }
-    else
-    {
-      results.name = input;
-    }
-  }
-  // If there is no datastore explicitly in the resource name, then we
-  // check to make sure the GeoWave configuration for MrGeo only has one
-  // datastore specified and use it. If there are multiple datastores
-  // configured, then throw an exception.
-  if (results.storeName == null || results.storeName.isEmpty())
-  {
-    GeoWaveConnectionInfo connectionInfo = getConnectionInfo();
-    String[] dataStores = connectionInfo.getStoreNames();
-    if (dataStores == null || dataStores.length == 0)
-    {
-      throw new IOException("Missing missing " + GeoWaveConnectionInfo.GEOWAVE_STORENAMES_KEY +
-          " in the MrGeo configuration");
-    }
-    else
-    {
-      if (dataStores.length > 1)
-      {
-        throw new IOException(
-            "You must specify a GeoWave data store for " + input +
-                " because multiple GeoWave data stores are configured in MrGeo (e.g." +
-                " mystore." + input + ")");
-      }
-      results.storeName = dataStores[0];
-    }
-  }
-  return results;
-}
-
-// Package private for unit testing
-static void parseDataSourceSettings(String strSettings,
-    Map<String, String> settings) throws IOException
-{
-  boolean foundSemiColon = true;
-  String remaining = strSettings.trim();
-  if (remaining.isEmpty())
-  {
-    return;
-  }
-
-  int settingIndex = 0;
-  while (foundSemiColon)
-  {
-    int equalsIndex = remaining.indexOf("=", settingIndex);
-    if (equalsIndex >= 0)
-    {
-      String keyName = remaining.substring(settingIndex, equalsIndex).trim();
-      // Everything after the = char
-      remaining = remaining.substring(equalsIndex + 1).trim();
-      if (remaining.length() > 0)
-      {
-        // Handle double-quoted settings specially, skipping escaped double
-        // quotes inside the value.
-        if (remaining.startsWith("\""))
-        {
-          // Find the index of the corresponding closing quote. Note that double
-          // quotes can be escaped with a backslash (\) within the quoted string.
-          int closingQuoteIndex = remaining.indexOf('"', 1);
-          while (closingQuoteIndex > 0)
-          {
-            // If the double quote is not preceeded by an escape backslash,
-            // then we've found the closing quote.
-            if (remaining.charAt(closingQuoteIndex - 1) != '\\')
-            {
-              break;
-            }
-            closingQuoteIndex = remaining.indexOf('"', closingQuoteIndex + 1);
-          }
-          if (closingQuoteIndex >= 0)
-          {
-            String value = remaining.substring(1, closingQuoteIndex);
-            log.debug("Adding GeoWave source key setting " + keyName + " = " + value);
-            settings.put(keyName, value);
-            settingIndex = 0;
-            int nextSemiColonIndex = remaining.indexOf(';', closingQuoteIndex + 1);
-            if (nextSemiColonIndex >= 0)
-            {
-              foundSemiColon = true;
-              remaining = remaining.substring(nextSemiColonIndex + 1).trim();
-            }
-            else
-            {
-              // No more settings
-              foundSemiColon = false;
-            }
-          }
-          else
-          {
-            throw new IOException("Invalid GeoWave settings string, expected ending double quote for key " +
-                keyName + " in " + strSettings);
-          }
-        }
-        else
-        {
-          // The value is not quoted
-          int semiColonIndex = remaining.indexOf(";");
-          if (semiColonIndex >= 0)
-          {
-            String value = remaining.substring(0, semiColonIndex);
-            log.debug("Adding GeoWave source key setting " + keyName + " = " + value);
-            settings.put(keyName, value);
-            settingIndex = 0;
-            remaining = remaining.substring(semiColonIndex + 1);
-          }
-          else
-          {
-            log.debug("Adding GeoWave source key setting " + keyName + " = " + remaining);
-            settings.put(keyName, remaining);
-            // There are no more settings since there are no more semi-colons
-            foundSemiColon = false;
-          }
-        }
-      }
-      else
-      {
-        throw new IOException("Missing value for " + keyName);
-      }
-    }
-    else
-    {
-      throw new IOException("Invalid syntax. No value assignment in \"" + remaining + "\"");
-    }
-  }
 }
 
 @Override
@@ -601,7 +805,7 @@ public VectorReader getVectorReader() throws IOException
   DataSourceEntry entry = getDataSourceEntry(results.storeName);
   Query query = new BasicQuery(new BasicQuery.Constraints());
   CQLQuery cqlQuery = new CQLQuery(query, filter,
-      (FeatureDataAdapter)entry.adapterStore.getAdapter(new ByteArrayId(this.getGeoWaveResourceName())));
+      (FeatureDataAdapter) entry.adapterStore.getAdapter(new ByteArrayId(this.getGeoWaveResourceName())));
   return new GeoWaveVectorReader(results.storeName, entry.dataStore,
       entry.adapterStore.getAdapter(new ByteArrayId(this.getGeoWaveResourceName())),
       cqlQuery, getPrimaryIndex(), filter, providerProperties);
@@ -682,190 +886,6 @@ public void move(String toResource) throws IOException
   // Not yet implemented
 }
 
-public static boolean isValid(Configuration conf)
-{
-  // This must be a quick sanity check on the remote side for whether or not
-  // the GeoWave data provider should be used on the remote side.
-  initConnectionInfo(conf);
-  return (getConnectionInfo() != null);
-}
-
-public static boolean isValid()
-{
-  // This must be a quick sanity check on the client side for whether or not
-  // the GeoWave data provider should be used.
-  initConnectionInfo();
-  return (getConnectionInfo() != null);
-}
-
-public static String[] listVectors(final ProviderProperties providerProperties) throws IOException
-{
-  initConnectionInfo();
-  List<String> results = new ArrayList<String>();
-  for (String storeName: getConnectionInfo().getStoreNames())
-  {
-    initDataSource(null, storeName);
-    DataSourceEntry entry = getDataSourceEntry(storeName);
-    CloseableIterator<DataAdapter<?>> iter = entry.adapterStore.getAdapters();
-    try
-    {
-      while (iter.hasNext())
-      {
-        DataAdapter<?> adapter = iter.next();
-        if (adapter != null)
-        {
-          ByteArrayId adapterId = adapter.getAdapterId();
-          if (checkAuthorizations(adapterId, storeName, providerProperties))
-          {
-            results.add(adapterId.getString());
-          }
-        }
-      }
-    }
-    finally
-    {
-      if (iter != null)
-      {
-        iter.close();
-      }
-    }
-  }
-  String[] resultArray = new String[results.size()];
-  return results.toArray(resultArray);
-}
-
-@SuppressWarnings("squid:S1166") // Exception caught and handled
-public static boolean canOpen(String input,
-    ProviderProperties providerProperties) throws IOException
-{
-  log.debug("Inside canOpen with " + input);
-  initConnectionInfo();
-  ParseResults results = parseResourceName(input);
-  try
-  {
-    initDataSource(null, results.storeName);
-    DataSourceEntry entry = getDataSourceEntry(results.storeName);
-    CloseableIterator<DataAdapter<?>> iter = entry.adapterStore.getAdapters();
-    while (iter.hasNext()) {
-      DataAdapter<?> da = iter.next();
-      log.debug("GeoWave adapter: " + da.getAdapterId().toString());
-    }
-    ByteArrayId adapterId = new ByteArrayId(results.name);
-    DataAdapter<?> adapter = entry.adapterStore.getAdapter(adapterId);
-    if (adapter == null)
-    {
-      return false;
-    }
-    return checkAuthorizations(adapterId, results.storeName, providerProperties);
-  }
-  catch(IOException ignored) {
-  }
-  catch(IllegalArgumentException e)
-  {
-    log.info("Unable to open " + input + " with the GeoWave data provider", e);
-  }
-  return false;
-}
-
-private static boolean checkAuthorizations(ByteArrayId adapterId,
-    String namespace,
-    ProviderProperties providerProperties) throws IOException
-{
-  // Check to see if the requester is authorized to see any of the data in
-  // the adapter.
-  return (getAdapterCount(adapterId, namespace, providerProperties) > 0L);
-}
-
-private static DataSourceEntry getDataSourceEntry(String namespace) throws IOException
-{
-  DataSourceEntry entry = dataSourceEntries.get(namespace);
-  if (entry == null)
-  {
-    throw new IOException("Data source was not yet initialized for namespace: " + namespace);
-  }
-  return entry;
-}
-
-public static long getAdapterCount(ByteArrayId adapterId,
-    String namespace,
-    ProviderProperties providerProperties)
-    throws IOException
-{
-  initConnectionInfo();
-  initDataSource(null, namespace);
-  DataSourceEntry entry = getDataSourceEntry(namespace);
-  List<String> roles = null;
-  if (providerProperties != null)
-  {
-    roles = providerProperties.getRoles();
-  }
-  if (roles != null && roles.size() > 0)
-  {
-    String auths = StringUtils.join(roles, ",");
-    CountDataStatistics<?> count = (CountDataStatistics<?>)entry.statisticsStore.getDataStatistics(adapterId,  CountDataStatistics.STATS_ID, auths);
-    if (count != null && count.isSet())
-    {
-      return count.getCount();
-    }
-  }
-  else
-  {
-    CountDataStatistics<?> count = (CountDataStatistics<?>)entry.statisticsStore.getDataStatistics(adapterId,  CountDataStatistics.STATS_ID);
-    if (count != null && count.isSet())
-    {
-      return count.getCount();
-    }
-  }
-  return 0L;
-}
-
-private void init() throws IOException
-{
-  // Don't initialize more than once.
-  if (initialized)
-  {
-    return;
-  }
-  ParseResults results = parseResourceName(getResourceName());
-  init(results);
-}
-
-@SuppressWarnings("squid:S2696") // static used for 1 time initialization.  Yuck!
-private void init(ParseResults results) throws IOException
-{
-  // Don't initialize more than once.
-  if (initialized)
-  {
-    return;
-  }
-  initialized = true;
-  // Extract the GeoWave adapter name and optional CQL string
-  DataSourceEntry entry = getDataSourceEntry(results.storeName);
-  // Now perform initialization for this specific data provider (i.e. for
-  // this resource).
-  dataAdapter = entry.adapterStore.getAdapter(new ByteArrayId(results.name));
-  assignSettings(results.name, results.settings);
-
-// Testing code
-//    SimpleFeatureType sft = ((FeatureDataAdapter)dataAdapter).getType();
-//    int attributeCount = sft.getAttributeCount();
-//    System.out.println("attributeCount = " + attributeCount);
-//    CloseableIterator<?> iter = dataStore.query(dataAdapter, null);
-//    try
-//    {
-//      while (iter.hasNext())
-//      {
-//        Object value = iter.next();
-//        System.out.println("class is " + value.getClass().getName());
-//        System.out.println("value is " + value);
-//      }
-//    }
-//    finally
-//    {
-//      iter.close();
-//    }
-}
-
 // Package private for unit testing
 void assignSettings(String name, Map<String, String> settings) throws IOException
 {
@@ -879,7 +899,7 @@ void assignSettings(String name, Map<String, String> settings) throws IOExceptio
     if (keyName != null && !keyName.isEmpty())
     {
       String value = entry.getValue();
-      switch(keyName)
+      switch (keyName)
       {
       case "spatial":
       {
@@ -947,6 +967,89 @@ void assignSettings(String name, Map<String, String> settings) throws IOExceptio
   }
 }
 
+@SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS", justification = "Null return value is valid")
+private String[] getAuthorizations(ProviderProperties providerProperties)
+{
+  List<String> userRoles = null;
+  if (providerProperties != null)
+  {
+    userRoles = providerProperties.getRoles();
+  }
+  if (userRoles != null)
+  {
+    String[] auths = new String[userRoles.size()];
+    for (int i = 0; i < userRoles.size(); i++)
+    {
+      auths[i] = userRoles.get(i).trim();
+    }
+    return auths;
+  }
+  return null;
+}
+
+private TemporalConstraints getTemporalConstraints(Date startTime, Date endTime)
+{
+  TemporalRange tr = new TemporalRange();
+  if (startTime != null)
+  {
+    tr.setStartTime(startTime);
+  }
+  if (endTime != null)
+  {
+    tr.setEndTime(endTime);
+  }
+  TemporalConstraints tc = new TemporalConstraints();
+  tc.add(tr);
+  return tc;
+}
+
+private void init() throws IOException
+{
+  // Don't initialize more than once.
+  if (initialized)
+  {
+    return;
+  }
+  ParseResults results = parseResourceName(getResourceName());
+  init(results);
+}
+
+@SuppressWarnings("squid:S2696") // static used for 1 time initialization.  Yuck!
+private void init(ParseResults results) throws IOException
+{
+  // Don't initialize more than once.
+  if (initialized)
+  {
+    return;
+  }
+  initialized = true;
+  // Extract the GeoWave adapter name and optional CQL string
+  DataSourceEntry entry = getDataSourceEntry(results.storeName);
+  // Now perform initialization for this specific data provider (i.e. for
+  // this resource).
+  dataAdapter = entry.adapterStore.getAdapter(new ByteArrayId(results.name));
+  assignSettings(results.name, results.settings);
+
+// Testing code
+//    SimpleFeatureType sft = ((FeatureDataAdapter)dataAdapter).getType();
+//    int attributeCount = sft.getAttributeCount();
+//    System.out.println("attributeCount = " + attributeCount);
+//    CloseableIterator<?> iter = dataStore.query(dataAdapter, null);
+//    try
+//    {
+//      while (iter.hasNext())
+//      {
+//        Object value = iter.next();
+//        System.out.println("class is " + value.getClass().getName());
+//        System.out.println("value is " + value);
+//      }
+//    }
+//    finally
+//    {
+//      iter.close();
+//    }
+}
+
 private Date parseDate(String value)
 {
   DateTimeFormatter formatter = ISODateTimeFormat.dateOptionalTimeParser();
@@ -954,117 +1057,15 @@ private Date parseDate(String value)
   return dateTime.toDate();
 }
 
-private static void initConnectionInfo(Configuration conf)
+private static class ParseResults
 {
-  // The connectionInfo only needs to be set once. It is the same for
-  // the duration of the JVM. Note that it is instantiated differently
-  // on the driver-side than it is within map/reduce tasks. This method
-  // loads connection settings from the job configuration.
-  if (connectionInfo == null)
-  {
-    connectionLock.writeLock().lock();
-    try
-    {
-      if (connectionInfo == null)
-      {
-        connectionInfo = GeoWaveConnectionInfo.load(conf);
-      }
-    }
-    finally
-    {
-      connectionLock.writeLock().unlock();
-    }
-  }
-}
-
-private static void initConnectionInfo()
-{
-  // The connectionInfo only needs to be set once. It is the same for
-  // the duration of the JVM. Note that it is instantiated differently
-  // on the driver-side than it is within map/reduce tasks. This method
-  // loads connection settings from the mrgeo.conf file.
-  if (connectionInfo == null)
-  {
-    connectionLock.writeLock().lock();
-    try
-    {
-      if (connectionInfo == null)
-      {
-        connectionInfo = GeoWaveConnectionInfo.load();
-      }
-    }
-    finally {
-      connectionLock.writeLock().unlock();
-    }
-  }
-}
-
-@SuppressFBWarnings(value="PATH_TRAVERSAL_IN", justification = "It is ok to read the config file here")
-private static void initDataSource(Configuration conf, String storeName) throws IOException
-{
-  DataSourceEntry entry = dataSourceEntries.get(storeName);
-  if (entry == null)
-  {
-    entry = new DataSourceEntry();
-    // Check to see if we are running client side or not. If the Hadoop config
-    // contains the storenames property, then we should load geowave resources
-    // based on settings in the Hadoop config. Otherwise, we should load the
-    // geowave resources based on settings in the MrGeo config (on client side).
-    if (conf == null || conf.get(GeoWaveConnectionInfo.GEOWAVE_STORENAMES_KEY) == null)
-    {
-      // Since the geowave store name is not in the configuration, then this is being
-      // called from the client side.
-      GeoWaveConnectionInfo connInfo = getConnectionInfo();
-      String[] storeNamesForMrGeo = connInfo.getStoreNames();
-      if (storeNamesForMrGeo == null)
-      {
-        throw new IOException("To use GeoWave, you must set " +
-            GeoWaveConnectionInfo.GEOWAVE_STORENAMES_KEY +
-            " in the MrGeo config file");
-      }
-      StoreLoader inputStoreLoader = new StoreLoader(storeName);
-
-      if (!inputStoreLoader.loadFromConfig(new File(MrGeoProperties.findMrGeoConf())))
-      {
-        String msg = "Cannot find GeoWave store name: " + inputStoreLoader.getStoreName();
-        log.error(msg);
-        throw new IOException(msg);
-      }
-      DataStorePluginOptions inputStoreOptions = inputStoreLoader.getDataStorePlugin();
-//        inputStoreOptions.getFactoryOptions().setGeowaveNamespace(namespace);
-      dataSourceEntries.put(storeName, entry);
-      entry.inputStoreOptions = inputStoreOptions;
-      entry.indexStore = inputStoreOptions.createIndexStore();
-//        entry.secondaryIndexStore = inputStoreOptions.createSecondaryIndexStore();
-      entry.statisticsStore = inputStoreOptions.createDataStatisticsStore();
-      entry.adapterStore = inputStoreOptions.createAdapterStore();
-//        entry.adapterIndexMappingStore = inputStoreOptions.createAdapterIndexMappingStore();
-      entry.dataStore = inputStoreOptions.createDataStore();
-    }
-    else
-    {
-      // The store name was in the configuration, so this is being called from
-      // the remote side. Create a fake JobContext to satisfy the GeoWave API
-      // access to the Hadoop configuration.
-      JobContext context = new JobContextImpl(conf, new JobID());
-      final Map<String, String> configOptions = GeoWaveInputFormat.getStoreConfigOptions(context);
-      entry.inputStoreOptions = new DataStorePluginOptions(storeName, configOptions);
-      entry.indexStore = entry.inputStoreOptions.createIndexStore();
-//        entry.secondaryIndexStore = entry.inputStoreOptions.createSecondaryIndexStore();
-      entry.statisticsStore = entry.inputStoreOptions.createDataStatisticsStore();
-      entry.adapterStore = GeoWaveStoreFinder.createAdapterStore(configOptions);
-//        entry.adapterIndexMappingStore = entry.inputStoreOptions.createAdapterIndexMappingStore();
-      entry.dataStore = GeoWaveStoreFinder.createDataStore(configOptions);
-    }
-  }
+  public String storeName;
+  public String name;
+  public Map<String, String> settings = new HashMap<String, String>();
 }
 
 static class DataSourceEntry
 {
-  public DataSourceEntry()
-  {
-  }
-
   private DataStorePluginOptions inputStoreOptions;
   private IndexStore indexStore;
   //    private SecondaryIndexDataStore secondaryIndexStore;
@@ -1072,5 +1073,9 @@ static class DataSourceEntry
   private AdapterStore adapterStore;
   private DataStatisticsStore statisticsStore;
   private DataStore dataStore;
+
+  public DataSourceEntry()
+  {
+  }
 }
 }

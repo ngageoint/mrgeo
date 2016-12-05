@@ -47,259 +47,257 @@ import java.util.List;
 @SuppressWarnings("all") // test code, not included in production
 public class HdfsMrsImageDataProviderFactoryTest extends LocalRunnerTest
 {
-  HdfsMrsImageDataProviderFactory factory;
-  Configuration conf;
-  ProviderProperties providerProperties;
+private static String all_ones = Defs.INPUT + "all-ones";
+HdfsMrsImageDataProviderFactory factory;
+Configuration conf;
+ProviderProperties providerProperties;
+private String oldImageBase;
 
+@BeforeClass
+static public void setup() throws IOException
+{
+  File f = new File(all_ones);
+  all_ones = f.toURI().toString();
 
-  private static String all_ones = Defs.INPUT + "all-ones";
+  // strip the final "/" from the path
+  all_ones = all_ones.substring(0, all_ones.length() - 1);
+}
 
-  private String oldImageBase;
-  @BeforeClass
-  static public void setup() throws IOException
+@Before
+public void init()
+{
+  oldImageBase = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, "");
+
+  MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, (new File(Defs.INPUT)).toURI().toString());
+  factory = new HdfsMrsImageDataProviderFactory();
+  conf = HadoopUtils.createConfiguration();
+  factory.initialize(conf);
+  providerProperties = new ProviderProperties();
+}
+
+@After
+public void teardown()
+{
+  MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, oldImageBase);
+}
+
+@Test
+@Category(UnitTest.class)
+public void testGetPrefix() throws Exception
+{
+  Assert.assertEquals("Bad prefix", "hdfs", factory.getPrefix());
+}
+
+@Test
+@Category(UnitTest.class)
+public void testCreateMrsImageDataProvider2() throws Exception
+{
+  String name = "foo";
+  MrsImageDataProvider provider = factory.createMrsImageDataProvider(name, providerProperties);
+
+  Assert.assertNotNull("Provider not created!", provider);
+  Assert.assertEquals("Name not set properly", name, provider.getResourceName());
+}
+
+@Test
+@Category(UnitTest.class)
+public void testCanOpen2() throws Exception
+{
+  Assert.assertTrue("Can not open image!", factory.canOpen("all-ones", providerProperties));
+}
+
+@Test
+@Category(UnitTest.class)
+public void testCanOpenMissing2() throws Exception
+{
+  Assert.assertFalse("Can not open image!", factory.canOpen("missing", providerProperties));
+}
+
+@Test
+@Category(UnitTest.class)
+public void testCanOpenBadUri2() throws Exception
+{
+  boolean result = factory.canOpen("abcd:bad-name", providerProperties);
+  Assert.assertFalse(result);
+}
+
+@Test(expected = NullPointerException.class)
+@Category(UnitTest.class)
+public void testCanOpenNull2() throws Exception
+{
+  factory.canOpen(null, providerProperties);
+}
+
+@Test
+@Category(UnitTest.class)
+public void testExists2() throws Exception
+{
+  Assert.assertTrue("Can not open file!", factory.exists(all_ones, providerProperties));
+}
+
+@Test
+@Category(UnitTest.class)
+public void testExistsMissing2() throws Exception
+{
+  Assert.assertFalse("Can not open file!", factory.exists("missing", providerProperties));
+}
+
+@Test
+@Category(UnitTest.class)
+public void testExistsBadUri2() throws Exception
+{
+  Assert.assertFalse(factory.exists("abcd:bad-name", providerProperties));
+}
+
+@Test(expected = NullPointerException.class)
+@Category(UnitTest.class)
+public void testExistsNull2() throws Exception
+{
+  factory.exists(null, providerProperties);
+}
+
+@Test
+@Category(UnitTest.class)
+public void testCanWrite2() throws Exception
+{
+  Assert.assertFalse("Can not write existing file!", factory.canWrite(all_ones, providerProperties));
+}
+
+@Test
+@Category(UnitTest.class)
+public void testCanWriteMissing2() throws Exception
+{
+  Assert.assertTrue("Can not write!", factory.canWrite("missing", providerProperties));
+}
+
+@Test
+@Category(UnitTest.class)
+public void testCanWriteBadUri2() throws Exception
+{
+  Assert.assertFalse(factory.canWrite("abcd:bad-name", providerProperties));
+}
+
+@Test(expected = NullPointerException.class)
+@Category(UnitTest.class)
+public void testCanWriteNull2() throws Exception
+{
+  factory.canWrite(null, providerProperties);
+}
+
+@SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Test code")
+@Test
+@Category(UnitTest.class)
+public void testListImages() throws Exception
+{
+  File dir = new File(Defs.INPUT);
+  File[] files = dir.listFiles();
+
+  List<String> base = new ArrayList<String>();
+
+  for (File file : files)
   {
-    File f = new File(all_ones);
-    all_ones = f.toURI().toString();
-
-    // strip the final "/" from the path
-    all_ones = all_ones.substring(0, all_ones.length() - 1);
-  }
-
-  @Before
-  public void init()
-  {
-    oldImageBase = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, "");
-
-    MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, (new File(Defs.INPUT)).toURI().toString());
-    factory = new HdfsMrsImageDataProviderFactory();
-    conf = HadoopUtils.createConfiguration();
-    factory.initialize(conf);
-    providerProperties = new ProviderProperties();
-  }
-
-  @After
-  public void teardown()
-  {
-    MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, oldImageBase);
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testGetPrefix() throws Exception
-  {
-    Assert.assertEquals("Bad prefix", "hdfs", factory.getPrefix());
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testCreateMrsImageDataProvider2() throws Exception
-  {
-    String name = "foo";
-    MrsImageDataProvider provider = factory.createMrsImageDataProvider(name, providerProperties);
-
-    Assert.assertNotNull("Provider not created!", provider);
-    Assert.assertEquals("Name not set properly", name, provider.getResourceName());
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testCanOpen2() throws Exception
-  {
-    Assert.assertTrue("Can not open image!", factory.canOpen("all-ones", providerProperties));
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testCanOpenMissing2() throws Exception
-  {
-    Assert.assertFalse("Can not open image!", factory.canOpen( "missing", providerProperties));
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testCanOpenBadUri2() throws Exception
-  {
-    boolean result = factory.canOpen( "abcd:bad-name", providerProperties);
-    Assert.assertFalse(result);
-  }
-
-  @Test(expected = NullPointerException.class)
-  @Category(UnitTest.class)
-  public void testCanOpenNull2() throws Exception
-  {
-    factory.canOpen( null, providerProperties);
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testExists2() throws Exception
-  {
-    Assert.assertTrue("Can not open file!", factory.exists(all_ones, providerProperties));
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testExistsMissing2() throws Exception
-  {
-    Assert.assertFalse("Can not open file!", factory.exists( "missing", providerProperties));
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testExistsBadUri2() throws Exception
-  {
-    Assert.assertFalse(factory.exists( "abcd:bad-name", providerProperties));
-  }
-
-  @Test(expected = NullPointerException.class)
-  @Category(UnitTest.class)
-  public void testExistsNull2() throws Exception
-  {
-    factory.exists( null, providerProperties);
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testCanWrite2() throws Exception
-  {
-    Assert.assertFalse("Can not write existing file!", factory.canWrite(all_ones, providerProperties));
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testCanWriteMissing2() throws Exception
-  {
-    Assert.assertTrue("Can not write!", factory.canWrite( "missing", providerProperties));
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testCanWriteBadUri2() throws Exception
-  {
-    Assert.assertFalse(factory.canWrite( "abcd:bad-name", providerProperties));
-  }
-
-  @Test(expected = NullPointerException.class)
-  @Category(UnitTest.class)
-  public void testCanWriteNull2() throws Exception
-  {
-    factory.canWrite( null, providerProperties);
-  }
-
-  @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Test code")
-  @Test
-  @Category(UnitTest.class)
-  public void testListImages() throws Exception
-  {
-    File dir = new File(Defs.INPUT);
-    File[] files = dir.listFiles();
-
-    List<String> base = new ArrayList<String>();
-
-    for (File file: files)
+    if (file.isDirectory())
     {
-      if (file.isDirectory())
+      File metadataFile = new File(file, "metadata");
+      if (metadataFile.exists())
       {
-        File metadataFile = new File(file, "metadata");
-        if (metadataFile.exists())
-        {
-          base.add(file.getName());
-        }
+        base.add(file.getName());
       }
     }
-    Collections.sort(base);
-
-    String[] images = factory.listImages(providerProperties);
-    Arrays.sort(images);
-
-    Assert.assertEquals("Wrong number of images!", base.size(), images.length);
-
-    for (int i = 0; i < base.size(); i++)
-    {
-      Assert.assertEquals("Bad image", base.get(i), images[i]);
-    }
   }
+  Collections.sort(base);
 
-  @Test
-  @Category(UnitTest.class)
-  public void testListImagesNoImages() throws Exception
+  String[] images = factory.listImages(providerProperties);
+  Arrays.sort(images);
+
+  Assert.assertEquals("Wrong number of images!", base.size(), images.length);
+
+  for (int i = 0; i < base.size(); i++)
   {
-    Path p = HadoopFileUtils.createUniqueTmpPath();
-    HadoopFileUtils.create(p);
+    Assert.assertEquals("Bad image", base.get(i), images[i]);
+  }
+}
 
+@Test
+@Category(UnitTest.class)
+public void testListImagesNoImages() throws Exception
+{
+  Path p = HadoopFileUtils.createUniqueTmpPath();
+  HadoopFileUtils.create(p);
+
+  try
+  {
+    MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, p.toUri().toString());
+    // test with conf
+    String[] images = factory.listImages(providerProperties);
+
+    Assert.assertNotNull("Shouldn't be null!", images);
+    Assert.assertEquals("Length should be 0!", 0, images.length);
+  }
+  finally
+  {
+    HadoopFileUtils.delete(p);
+  }
+}
+
+
+@Test(expected = FileNotFoundException.class)
+@Category(UnitTest.class)
+public void testListImagesBadBase() throws Exception
+{
+  MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, "bad-name");
+  factory.listImages(providerProperties);
+}
+
+@Test(expected = IOException.class)
+@Category(UnitTest.class)
+public void testListImagesBadUri() throws Exception
+{
+  MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, "abcd:bad-name");
+  factory.listImages(providerProperties);
+}
+
+@Test
+@Category(UnitTest.class)
+public void testListImagesNoBase1() throws Exception
+{
+  MrGeoProperties.getInstance().remove(MrGeoConstants.MRGEO_HDFS_IMAGE);
+
+  // should fall back to /mrgeo/images
+  FileSystem fs = HadoopFileUtils.getFileSystem(conf);
+  if (fs.exists(new Path("/mrgeo/images")))
+  {
+    String[] images = factory.listImages(providerProperties);
+
+    // can't really test _what_ listImages will return, just that it isn't null
+    Assert.assertNotNull("Shouldn't be null!", images);
+  }
+  else
+  {
     try
     {
-      MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, p.toUri().toString());
-      // test with conf
-      String[] images = factory.listImages(providerProperties);
+      factory.listImages(providerProperties);
 
-      Assert.assertNotNull("Shouldn't be null!", images);
-      Assert.assertEquals("Length should be 0!", 0, images.length);
+      Assert.fail("This should have thrown a FileNotFoundException!");
     }
-    finally
+    catch (FileNotFoundException e)
     {
-      HadoopFileUtils.delete(p);
     }
   }
 
+}
 
-  @Test(expected = FileNotFoundException.class)
-  @Category(UnitTest.class)
-  public void testListImagesBadBase() throws Exception
-  {
-    MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, "bad-name");
-    factory.listImages(providerProperties);
-  }
+@Test
+@Category(UnitTest.class)
+public void testDelete2() throws Exception
+{
+  String name = HadoopFileUtils.createUniqueTmpPath().toString();
+  HadoopFileUtils.copyToHdfs(all_ones, name);
 
-  @Test(expected = IOException.class)
-  @Category(UnitTest.class)
-  public void testListImagesBadUri() throws Exception
-  {
-    MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, "abcd:bad-name");
-    factory.listImages(providerProperties);
-  }
+  Assert.assertTrue("Image should exist!", HadoopFileUtils.exists(name));
+  factory.delete(name, providerProperties);
 
-  @Test
-  @Category(UnitTest.class)
-  public void testListImagesNoBase1() throws Exception
-  {
-    MrGeoProperties.getInstance().remove(MrGeoConstants.MRGEO_HDFS_IMAGE);
+  Assert.assertFalse("Image was not deleted!", HadoopFileUtils.exists(name));
 
-    // should fall back to /mrgeo/images
-    FileSystem fs = HadoopFileUtils.getFileSystem(conf);
-    if (fs.exists(new Path("/mrgeo/images")))
-    {
-      String[] images = factory.listImages(providerProperties);
-
-      // can't really test _what_ listImages will return, just that it isn't null
-      Assert.assertNotNull("Shouldn't be null!", images);
-    }
-    else
-    {
-      try
-      {
-        factory.listImages(providerProperties);
-
-        Assert.fail("This should have thrown a FileNotFoundException!");
-      }
-      catch (FileNotFoundException e)
-      {
-      }
-    }
-
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testDelete2() throws Exception
-  {
-    String name = HadoopFileUtils.createUniqueTmpPath().toString();
-    HadoopFileUtils.copyToHdfs(all_ones, name);
-
-    Assert.assertTrue("Image should exist!", HadoopFileUtils.exists(name));
-    factory.delete(name, providerProperties);
-
-    Assert.assertFalse("Image was not deleted!", HadoopFileUtils.exists(name));
-
-  }
+}
 }

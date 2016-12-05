@@ -42,40 +42,23 @@ private static final Logger log = LoggerFactory.getLogger(HdfsImageResultScanner
 
 // reader used for pulling items
 private final HdfsMrsImageReader reader;
-
-// hdfs specific reader
-private MapFile.Reader mapfile;
-
-// keep track of where the reader is
-private int curPartitionIndex;
-
-// return item
-private RasterWritable currentValue;
-
-// keep track of where things are
-private TileIdWritable currentKey;
-
-// stop condition
-private TileIdWritable endKey;
-
 private final long rowStart;
 private final long rowEnd;
 private final int zoom;
+// hdfs specific reader
+private MapFile.Reader mapfile;
+// keep track of where the reader is
+private int curPartitionIndex;
+// return item
+private RasterWritable currentValue;
+// keep track of where things are
+private TileIdWritable currentKey;
+// stop condition
+private TileIdWritable endKey;
 
 // private final TileIdPartitioner partitioner;
-
 // workaround for MapFile.Reader.seek behavior
 private boolean readFirstKey;
-
-@Override
-public void close() throws IOException
-{
-  if (mapfile != null)
-  {
-    mapfile.close();
-    mapfile = null;
-  }
-}
 
 HdfsImageResultScanner(final LongRectangle bounds,
     final HdfsMrsImageReader reader)
@@ -93,12 +76,9 @@ HdfsImageResultScanner(final LongRectangle bounds,
 /**
  * Constructor will initialize the conditions for pulling tiles
  *
- * @param startKey
- *          start of the list of tiles to pull
- * @param endKey
- *          end (inclusive) of tile to pull
- * @param reader
- *          the reader being used
+ * @param startKey start of the list of tiles to pull
+ * @param endKey   end (inclusive) of tile to pull
+ * @param reader   the reader being used
  */
 HdfsImageResultScanner(final TileIdWritable startKey, final TileIdWritable endKey,
     final HdfsMrsImageReader reader)
@@ -116,6 +96,16 @@ HdfsImageResultScanner(final TileIdWritable startKey, final TileIdWritable endKe
 
   primeScanner(startTileId, endTileId);
 
+}
+
+@Override
+public void close() throws IOException
+{
+  if (mapfile != null)
+  {
+    mapfile.close();
+    mapfile = null;
+  }
 }
 
 @Override
@@ -314,13 +304,13 @@ private void primeScanner(final long startTileId, final long endTileId)
         // need to do it once.
         if (startKey == null)
         {
-          startKey = (TileIdWritable)mapfile.getKeyClass().newInstance();
+          startKey = (TileIdWritable) mapfile.getKeyClass().newInstance();
           startKey.set(startTileId);
-          endKey = (TileIdWritable)mapfile.getKeyClass().newInstance();
+          endKey = (TileIdWritable) mapfile.getKeyClass().newInstance();
           endKey.set(endTileId);
           // Because package names for some of our Writable value classes changed,
           // we need to create the
-          currentValue = (RasterWritable)mapfile.getValueClass().newInstance();
+          currentValue = (RasterWritable) mapfile.getValueClass().newInstance();
         }
       }
       catch (InstantiationException | IllegalAccessException e)

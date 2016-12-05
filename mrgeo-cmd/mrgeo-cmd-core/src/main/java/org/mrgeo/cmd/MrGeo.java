@@ -42,49 +42,6 @@ private static Logger log = LoggerFactory.getLogger(MrGeo.class);
 private static Map<String, CommandSpi> commands = null;
 
 /**
- * Print generic usage to std out.
- */
-private static void usage()
-{
-  System.out.println("Usage: mrgeo COMMAND");
-  System.out.println("       where command is one of:");
-
-  int maxLen = 0;
-  for (String name : commands.keySet())
-  {
-    maxLen = Math.max(maxLen, name.length());
-  }
-
-  for (Map.Entry<String, CommandSpi> cmd : commands.entrySet())
-  {
-    String name = cmd.getKey();
-    System.out.println("  " +
-        StringUtils.rightPad(name, maxLen + 2) + cmd.getValue().getDescription());
-  }
-
-  System.out.println("Generic options supported are:");
-  new HelpFormatter().printHelp("command <options>", createOptions());
-}
-
-/**
- * Discover, load, and store all mrgeo commands (using {@link CommandSpi}).
- * Using Java's ServiceLoader, discover all service providers for commands, load them for
- * future use.
- */
-private static void loadCommands()
-{
-  commands = new TreeMap<>();
-
-  ServiceLoader<CommandSpi> loader = ServiceLoader.load(CommandSpi.class);
-
-  for (CommandSpi cmd : loader)
-  {
-    commands.put(cmd.getCommandName(), cmd);
-  }
-
-}
-
-/**
  * This is the main method for executing mrgeo commands.  All commands come through this method.
  * <p/>
  * Instead of returning an integer denoting return status.  This method uses
@@ -127,6 +84,49 @@ public static Options createOptions()
   result.addOption(new Option("h", "help", false, "Display help for this command"));
 
   return result;
+}
+
+/**
+ * Print generic usage to std out.
+ */
+private static void usage()
+{
+  System.out.println("Usage: mrgeo COMMAND");
+  System.out.println("       where command is one of:");
+
+  int maxLen = 0;
+  for (String name : commands.keySet())
+  {
+    maxLen = Math.max(maxLen, name.length());
+  }
+
+  for (Map.Entry<String, CommandSpi> cmd : commands.entrySet())
+  {
+    String name = cmd.getKey();
+    System.out.println("  " +
+        StringUtils.rightPad(name, maxLen + 2) + cmd.getValue().getDescription());
+  }
+
+  System.out.println("Generic options supported are:");
+  new HelpFormatter().printHelp("command <options>", createOptions());
+}
+
+/**
+ * Discover, load, and store all mrgeo commands (using {@link CommandSpi}).
+ * Using Java's ServiceLoader, discover all service providers for commands, load them for
+ * future use.
+ */
+private static void loadCommands()
+{
+  commands = new TreeMap<>();
+
+  ServiceLoader<CommandSpi> loader = ServiceLoader.load(CommandSpi.class);
+
+  for (CommandSpi cmd : loader)
+  {
+    commands.put(cmd.getCommandName(), cmd);
+  }
+
 }
 
 /**

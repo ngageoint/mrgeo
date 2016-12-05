@@ -27,11 +27,11 @@ import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsPyramid;
-import org.mrgeo.mapalgebra.MapAlgebra;
-import org.mrgeo.mapalgebra.parser.ParserException;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.job.JobCancelledException;
 import org.mrgeo.job.JobFailedException;
-import org.mrgeo.image.MrsPyramidMetadata;
+import org.mrgeo.mapalgebra.MapAlgebra;
+import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.utils.GDALJavaUtils;
 import org.mrgeo.utils.GDALUtils;
 import org.mrgeo.utils.tms.Bounds;
@@ -57,7 +57,7 @@ public MrsPyramidMetadata getImageMetadata(final String testName)
 {
   MrsImageDataProvider dp =
       DataProviderFactory.getMrsImageDataProvider(new Path(outputHdfs, testName).toString(),
-          DataProviderFactory.AccessMode.READ, (ProviderProperties)null);
+          DataProviderFactory.AccessMode.READ, (ProviderProperties) null);
 
   return dp.getMetadataReader().read();
 }
@@ -70,7 +70,7 @@ public void generateBaselinePyramid(final Configuration conf, final String testN
   runMapAlgebraExpression(conf, testName, ex);
 
   final Path src = new Path(outputHdfs, testName);
-  final MrsPyramid pyramid = MrsPyramid.open(src.toString(), (ProviderProperties)null);
+  final MrsPyramid pyramid = MrsPyramid.open(src.toString(), (ProviderProperties) null);
   if (pyramid != null)
   {
     final Path dst = new Path(inputLocal, testName);
@@ -97,7 +97,7 @@ public void generateBaselineTif(final Configuration conf, final String testName,
 public void saveBaselineTif(String testName, double nodata) throws IOException
 {
   final MrsPyramid pyramid = MrsPyramid.open(new Path(outputHdfs, testName).toString(),
-                                             (ProviderProperties)null);
+      (ProviderProperties) null);
   MrsPyramidMetadata meta = pyramid.getMetadata();
 
   try (MrsImage image = pyramid.getImage(meta.getMaxZoomLevel()))
@@ -106,7 +106,9 @@ public void saveBaselineTif(String testName, double nodata) throws IOException
     final File baselineTif = new File(new File(inputLocal), testName + ".tif");
 
     Bounds tilesBounds = TMSUtils.tileBounds(meta.getBounds(), image.getMaxZoomlevel(), image.getTilesize());
-    GDALJavaUtils.saveRaster(raster.toDataset(meta.getBounds(), meta.getDefaultValues()), baselineTif.getCanonicalPath(), tilesBounds, nodata);
+    GDALJavaUtils
+        .saveRaster(raster.toDataset(meta.getBounds(), meta.getDefaultValues()), baselineTif.getCanonicalPath(),
+            tilesBounds, nodata);
   }
 }
 
@@ -123,7 +125,7 @@ runRasterExpression(final Configuration conf, final String testName,
     throws ParserException, IOException, JobFailedException, JobCancelledException
 {
   runMapAlgebraExpression(conf, testName, ex);
-  compareRasterOutput(testName, testTranslator,  null);
+  compareRasterOutput(testName, testTranslator, null);
 }
 
 public void
@@ -137,10 +139,44 @@ runRasterExpression(final Configuration conf, final String testName,
 }
 
 
-
-public void compareRasterOutput(final String testName, final TestUtils.ValueTranslator testTranslator) throws IOException
+public void compareRasterOutput(final String testName, final TestUtils.ValueTranslator testTranslator)
+    throws IOException
 {
   compareRasterOutput(testName, null, testTranslator, null);
+}
+
+public void compareLocalRasterOutput(final String testName, final TestUtils.ValueTranslator testTranslator)
+    throws IOException
+{
+  compareLocalRasterOutput(testName, null, testTranslator, null);
+}
+
+public void compareLocalRasterOutput(final String testName, final TestUtils.ValueTranslator testTranslator,
+    final ProviderProperties providerProperties) throws IOException
+{
+  compareLocalRasterOutput(testName, null, testTranslator, providerProperties);
+}
+
+/**
+ * Runs the map algebra expression and stores the results to outputHdfs in  a
+ * subdirectory that matches the testName. No comparison against expected
+ * output is done. See other methods in this class like runVectorExpression and
+ * runRasterExpression for that capability.
+ */
+public void runMapAlgebraExpression(final Configuration conf, final String testName, final String ex)
+    throws IOException, JobFailedException, JobCancelledException, ParserException
+{
+  HadoopFileUtils.delete(new Path(outputHdfs, testName));
+
+  log.info(ex);
+
+  long start = System.currentTimeMillis();
+
+  ProviderProperties pp = ProviderProperties.fromDelimitedString("");
+  MapAlgebra.validateWithExceptions(ex, pp);
+  MapAlgebra.mapalgebra(ex, (new Path(outputHdfs, testName)).toString(), conf, pp, null);
+
+  log.info("Test Execution time: " + (System.currentTimeMillis() - start));
 }
 
 private void compareRasterOutput(final String testName, final TestUtils.ValueTranslator testTranslator,
@@ -153,7 +189,7 @@ private void compareRasterOutput(final String testName, final TestUtils.ValueTra
     final TestUtils.ValueTranslator testTranslator, final ProviderProperties providerProperties) throws IOException
 {
   final MrsPyramid pyramid = MrsPyramid.open(new Path(outputHdfs, testName).toString(),
-                                             providerProperties);
+      providerProperties);
   final MrsImage image = pyramid.getHighestResImage();
 
   try
@@ -170,7 +206,7 @@ private void compareRasterOutput(final String testName, final TestUtils.ValueTra
     {
       final String inputLocalAbs = file.getCanonicalFile().toURI().toString();
       final MrsPyramid goldenPyramid = MrsPyramid.open(inputLocalAbs + "/" + testName,
-                                                       providerProperties);
+          providerProperties);
       final MrsImage goldenImage = goldenPyramid.getImage(image.getZoomlevel());
       try
       {
@@ -193,15 +229,6 @@ private void compareRasterOutput(final String testName, final TestUtils.ValueTra
     }
   }
 }
-public void compareLocalRasterOutput(final String testName, final TestUtils.ValueTranslator testTranslator) throws IOException
-{
-  compareLocalRasterOutput(testName, null, testTranslator, null);
-}
-public void compareLocalRasterOutput(final String testName, final TestUtils.ValueTranslator testTranslator,
-    final ProviderProperties providerProperties) throws IOException
-{
-  compareLocalRasterOutput(testName, null, testTranslator, providerProperties);
-}
 
 private void compareLocalRasterOutput(final String testName, final TestUtils.ValueTranslator baselineTranslator,
     final TestUtils.ValueTranslator testTranslator, final ProviderProperties providerProperties) throws IOException
@@ -219,7 +246,7 @@ private void compareLocalRasterOutput(final String testName, final TestUtils.Val
   {
     final String inputLocalAbs = tf.getCanonicalFile().toURI().toString();
     final MrsPyramid testPyramid = MrsPyramid.open(inputLocalAbs + "/" + testName,
-                                                   providerProperties);
+        providerProperties);
     final MrsImage testImage = testPyramid.getImage(testPyramid.getMaximumLevel());
     testRaster = testImage.getRaster();
   }
@@ -236,7 +263,7 @@ private void compareLocalRasterOutput(final String testName, final TestUtils.Val
   {
     final String inputLocalAbs = file.getCanonicalFile().toURI().toString();
     final MrsPyramid goldenPyramid = MrsPyramid.open(inputLocalAbs + "/" + testName,
-                                                     providerProperties);
+        providerProperties);
     final MrsImage goldenImage = goldenPyramid.getImage(goldenPyramid.getMaximumLevel());
     try
     {
@@ -250,28 +277,5 @@ private void compareLocalRasterOutput(final String testName, final TestUtils.Val
       }
     }
   }
-}
-
-/**
- * Runs the map algebra expression and stores the results to outputHdfs in  a
- * subdirectory that matches the testName. No comparison against expected
- * output is done. See other methods in this class like runVectorExpression and
- * runRasterExpression for that capability.
- *
- */
-public void runMapAlgebraExpression(final Configuration conf, final String testName, final String ex)
-    throws IOException, JobFailedException, JobCancelledException, ParserException
-{
-  HadoopFileUtils.delete(new Path(outputHdfs, testName));
-
-  log.info(ex);
-
-  long start = System.currentTimeMillis();
-
-  ProviderProperties pp = ProviderProperties.fromDelimitedString("");
-  MapAlgebra.validateWithExceptions(ex, pp);
-  MapAlgebra.mapalgebra(ex, (new Path(outputHdfs, testName)).toString(), conf, pp, null);
-
-  log.info("Test Execution time: " + (System.currentTimeMillis() - start));
 }
 }

@@ -25,34 +25,34 @@ import org.slf4j.LoggerFactory;
  */
 public class PngImageRenderer extends ImageRendererAbstract
 {
-  @SuppressWarnings("unused")
-  private static final Logger log = LoggerFactory.getLogger(PngImageRenderer.class);
+@SuppressWarnings("unused")
+private static final Logger log = LoggerFactory.getLogger(PngImageRenderer.class);
 
-  public PngImageRenderer()
-  {
-    super();
-  }
+public PngImageRenderer()
+{
+  super();
+}
 
-  public PngImageRenderer(final SpatialReference srs)
-  {
-    super(srs);
-  }
+public PngImageRenderer(final SpatialReference srs)
+{
+  super(srs);
+}
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.mrgeo.services.wms.ImageRenderer#getMimeType()
-   */
-  @Override
-  public String[] getMimeTypes()
-  {
-    return new String[] { "image/png" };
-  }
+/*
+ * (non-Javadoc)
+ *
+ * @see org.mrgeo.services.wms.ImageRenderer#getMimeType()
+ */
+@Override
+public String[] getMimeTypes()
+{
+  return new String[]{"image/png"};
+}
 
-  @Override
-  public String[] getWmsFormats()
-  {
-    return new String[] { "png" };
-  }
+@Override
+public String[] getWmsFormats()
+{
+  return new String[]{"png"};
+}
 
 }

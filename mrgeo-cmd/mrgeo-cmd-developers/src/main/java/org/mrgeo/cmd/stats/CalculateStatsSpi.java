@@ -23,22 +23,22 @@ import org.mrgeo.cmd.CommandSpi;
 public class CalculateStatsSpi extends CommandSpi
 {
 
-  @Override
-  public Class<? extends Command> getCommandClass()
-  {
-    return CalculateStats.class;
-  }
+@Override
+public Class<? extends Command> getCommandClass()
+{
+  return CalculateStats.class;
+}
 
-  @Override
-  public String getCommandName()
-  {
-    return "calcstats";
-  }
+@Override
+public String getCommandName()
+{
+  return "calcstats";
+}
 
-  @Override
-  public String getDescription()
-  {
-    return "Recalculate statistics on a MrsImage (developer cmd)";
-  }
-  
+@Override
+public String getDescription()
+{
+  return "Recalculate statistics on a MrsImage (developer cmd)";
+}
+
 }

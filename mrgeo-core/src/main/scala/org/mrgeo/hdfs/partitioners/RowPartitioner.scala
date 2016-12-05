@@ -23,42 +23,41 @@ import org.mrgeo.hdfs.tile.PartitionerSplit
 import org.mrgeo.utils.tms.{Bounds, TMSUtils, TileBounds}
 
 @SerialVersionUID(-1)
-class RowPartitioner() extends FileSplitPartitioner() with Externalizable
-{
+class RowPartitioner() extends FileSplitPartitioner() with Externalizable {
   private val splits = new PartitionerSplit
 
-  def this(bounds:Bounds, zoom:Int, tilesize:Int)
-  {
+  def this(bounds:Bounds, zoom:Int, tilesize:Int) {
     this()
 
-    val tileBounds: TileBounds = TMSUtils
+    val tileBounds:TileBounds = TMSUtils
         .boundsToTile(bounds, zoom, tilesize)
-    val tileIncrement: Int = 1
-    val splitGenerator: ImageSplitGenerator = new ImageSplitGenerator(tileBounds.w, tileBounds.s, tileBounds.e,
+    val tileIncrement:Int = 1
+    val splitGenerator:ImageSplitGenerator = new ImageSplitGenerator(tileBounds.w, tileBounds.s, tileBounds.e,
       tileBounds.n, zoom, tileIncrement)
 
     splits.generateSplits(splitGenerator)
   }
 
-  override def numPartitions: Int = {
+  override def numPartitions:Int = {
     splits.length
   }
 
-  override def getPartition(key: Any): Int = {
+  override def getPartition(key:Any):Int = {
     key match {
-    case id: TileIdWritable =>
-      val split = splits.getSplit(id.get())
-      split.getPartition
-    case _ => throw new RuntimeException("Bad type sent into SparkTileIdPartitioner.getPartition(): " +
-        key.getClass + ". Expected org.mrgeo.data.tile.TileIdWritable or a subclass.")
+      case id:TileIdWritable =>
+        val split = splits.getSplit(id.get())
+        split.getPartition
+      case _ => throw new RuntimeException("Bad type sent into SparkTileIdPartitioner.getPartition(): " +
+                                           key.getClass +
+                                           ". Expected org.mrgeo.data.tile.TileIdWritable or a subclass.")
     }
   }
 
-  override def readExternal(in: ObjectInput): Unit = {
+  override def readExternal(in:ObjectInput):Unit = {
     splits.readExternal(in)
   }
 
-  override def writeExternal(out: ObjectOutput): Unit = {
+  override def writeExternal(out:ObjectOutput):Unit = {
     splits.writeExternal(out)
   }
 

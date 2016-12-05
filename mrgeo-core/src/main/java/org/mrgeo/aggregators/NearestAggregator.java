@@ -24,13 +24,13 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.mrgeo.utils.FloatUtils;
 
 /**
- * Use a preference model to assign the destination pixel with a neighboring 
- source pixel.
- ---------
- | 0 | 1 |
- ---------
- | 3 | 2 |
- ---------
+ * Use a preference model to assign the destination pixel with a neighboring
+ * source pixel.
+ * ---------
+ * | 0 | 1 |
+ * ---------
+ * | 3 | 2 |
+ * ---------
  * No data values will be excluded.
  */
 public class NearestAggregator implements Aggregator
@@ -45,13 +45,21 @@ public double aggregate(double[] values, double nodata)
   boolean data3 = FloatUtils.isNotNodata(values[3], nodata);
 
   if (data0)
+  {
     return values[0];
+  }
   if (data1)
+  {
     return values[1];
+  }
   if (data3)
+  {
     return values[3];
+  }
   if (data2)
+  {
     return values[2];
+  }
 
   return nodata;
 }
@@ -65,13 +73,21 @@ public float aggregate(float[] values, float nodata)
   boolean data3 = FloatUtils.isNotNodata(values[3], nodata);
 
   if (data0)
+  {
     return values[0];
+  }
   if (data1)
+  {
     return values[1];
+  }
   if (data3)
+  {
     return values[3];
+  }
   if (data2)
+  {
     return values[2];
+  }
 
   return nodata;
 }
@@ -85,13 +101,21 @@ public int aggregate(int[] values, int nodata)
   boolean data3 = values[3] != nodata;
 
   if (data0)
+  {
     return values[0];
+  }
   if (data1)
+  {
     return values[1];
+  }
   if (data3)
+  {
     return values[3];
+  }
   if (data2)
+  {
     return values[2];
+  }
 
   return nodata;
 }
@@ -105,16 +129,25 @@ public short aggregate(short[] values, short nodata)
   boolean data3 = values[3] != nodata;
 
   if (data0)
+  {
     return values[0];
+  }
   if (data1)
+  {
     return values[1];
+  }
   if (data3)
+  {
     return values[3];
+  }
   if (data2)
+  {
     return values[2];
+  }
 
   return nodata;
 }
+
 @Override
 public byte aggregate(byte[] values, byte nodata)
 {
@@ -124,25 +157,33 @@ public byte aggregate(byte[] values, byte nodata)
   boolean data3 = values[3] != nodata;
 
   if (data0)
+  {
     return values[0];
+  }
   if (data1)
+  {
     return values[1];
+  }
   if (data3)
+  {
     return values[3];
+  }
   if (data2)
+  {
     return values[2];
+  }
 
   return nodata;
 }
 
 @Override
-public double aggregate(double[][]values, double weightx, double weighty, double nodata)
+public double aggregate(double[][] values, double weightx, double weighty, double nodata)
 {
   throw new NotImplementedException("Not yet implemented");
 }
 
 @Override
-public float aggregate(float[][]values, double weightx, double weighty, float nodata)
+public float aggregate(float[][] values, double weightx, double weighty, float nodata)
 {
   throw new NotImplementedException("Not yet implemented");
 }

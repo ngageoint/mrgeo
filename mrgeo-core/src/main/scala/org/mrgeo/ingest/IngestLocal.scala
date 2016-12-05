@@ -25,7 +25,7 @@ import org.mrgeo.utils.SparkUtils
 
 class IngestLocal extends IngestImage with Externalizable {
 
-  override def execute(context: SparkContext): Boolean = {
+  override def execute(context:SparkContext):Boolean = {
 
     val ingested = IngestImage.localingest(context, inputs, zoom, skipPreprocessing, tilesize,
       categorical, skipCategoryLoad, nodata, protectionlevel)
@@ -36,7 +36,7 @@ class IngestLocal extends IngestImage with Externalizable {
     true
   }
 
-  override def readExternal(in: ObjectInput): Unit = {
+  override def readExternal(in:ObjectInput):Unit = {
     val bands = in.readInt()
     nodata = Array.ofDim[Double](bands)
     for (band <- 0 until bands) {
@@ -44,7 +44,7 @@ class IngestLocal extends IngestImage with Externalizable {
     }
   }
 
-  override def writeExternal(out: ObjectOutput): Unit = {
+  override def writeExternal(out:ObjectOutput):Unit = {
     out.writeInt(nodata.length)
     for (nd <- nodata) {
       out.writeDouble(nd.doubleValue())

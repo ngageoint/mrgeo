@@ -32,7 +32,7 @@ public static void scaleInt(final MrGeoRaster src, final MrGeoRaster dst)
       srcX = startX;
       for (int x = 0; x < dst.width(); x++)
       {
-        dst.setPixel(x, y, b, src.getPixelInt((int)(srcX + EPSILON), (int)(srcY + EPSILON), b));
+        dst.setPixel(x, y, b, src.getPixelInt((int) (srcX + EPSILON), (int) (srcY + EPSILON), b));
         srcX += x_ratio;
       }
       srcY += y_ratio;
@@ -56,7 +56,7 @@ public static void scaleFloat(final MrGeoRaster src, final MrGeoRaster dst)
       for (int x = 0; x < dst.width(); x++)
       {
 
-        dst.setPixel(x, y, b, src.getPixelFloat((int)(srcX + EPSILON), (int)(srcY + EPSILON), b));
+        dst.setPixel(x, y, b, src.getPixelFloat((int) (srcX + EPSILON), (int) (srcY + EPSILON), b));
         srcX += x_ratio;
       }
       srcY += y_ratio;
@@ -79,7 +79,7 @@ public static void scaleDouble(final MrGeoRaster src, final MrGeoRaster dst)
       srcX = 0;
       for (int x = 0; x < dst.width(); x++)
       {
-        dst.setPixel(x, y, b, src.getPixelDouble((int)(srcX + EPSILON), (int)(srcY + EPSILON), b));
+        dst.setPixel(x, y, b, src.getPixelDouble((int) (srcX + EPSILON), (int) (srcY + EPSILON), b));
         srcX += x_ratio;
       }
       srcY += y_ratio;
@@ -87,7 +87,6 @@ public static void scaleDouble(final MrGeoRaster src, final MrGeoRaster dst)
   }
 
 }
-
 
 
 }

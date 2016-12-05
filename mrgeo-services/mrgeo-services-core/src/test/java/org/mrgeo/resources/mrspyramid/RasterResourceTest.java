@@ -16,7 +16,6 @@
 
 package org.mrgeo.resources.mrspyramid;
 
-import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import junit.framework.Assert;
 import org.apache.commons.io.IOUtils;
 import org.custommonkey.xmlunit.Diff;
@@ -24,7 +23,6 @@ import org.custommonkey.xmlunit.XMLUnit;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
-import org.glassfish.jersey.test.spi.TestContainerFactory;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.Mockito;
@@ -43,8 +41,6 @@ import org.mrgeo.utils.tms.Bounds;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Application;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -62,35 +58,6 @@ public class RasterResourceTest extends JerseyTest
 
 private MrsPyramidService service;
 private HttpServletRequest request;
-
-
-@Override
-protected Application configure()
-{
-  service = Mockito.mock(MrsPyramidService.class);
-  request = Mockito.mock(HttpServletRequest.class);
-
-  ResourceConfig config = new ResourceConfig();
-  config.register(RasterResource.class);
-  config.register(new AbstractBinder()
-  {
-    @Override
-    protected void configure()
-    {
-      bind(service).to(MrsPyramidService.class);
-    }
-  });
-  return config;
-}
-
-
-@Override
-public void setUp() throws Exception
-{
-  super.setUp();
-  Mockito.reset(service, request);
-}
-
 private String returnXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
     "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n" +
     "<Document>\n" +
@@ -128,13 +95,21 @@ private String returnXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
     "</Document>\n" +
     "</kml>\n";
 
+@Override
+public void setUp() throws Exception
+{
+  super.setUp();
+  Mockito.reset(service, request);
+}
+
 @Test
 @Category(UnitTest.class)
 public void testGetImageAsKML() throws Exception
 {
   MrsPyramid pyramidMock = mock(MrsPyramid.class);
   when(service.getPyramid(anyString(), (ProviderProperties) any())).thenReturn(pyramidMock);
-  when(service.renderKml(anyString(), (Bounds) any(), anyInt(), anyInt(), (ColorScale) any(), anyInt(), (ProviderProperties)anyObject()))
+  when(service.renderKml(anyString(), (Bounds) any(), anyInt(), anyInt(), (ColorScale) any(), anyInt(),
+      (ProviderProperties) anyObject()))
       .thenReturn(Response.ok().entity(returnXml).type("application/vnd.google-earth.kml+xml").build());
 
   Response response = target("raster/some/raster/path")
@@ -160,14 +135,16 @@ public void testGetImageBadColorScaleName() throws Exception
 {
   MrsPyramid pyramidMock = mock(MrsPyramid.class);
   when(service.getPyramid(anyString(), (ProviderProperties) any())).thenReturn(pyramidMock);
-  when(service.getColorScaleFromName(anyString())).thenAnswer(new Answer() {
+  when(service.getColorScaleFromName(anyString())).thenAnswer(new Answer()
+  {
     public Object answer(InvocationOnMock invocation) throws FileNotFoundException, MrsPyramidServiceException
     {
       String builder = "File does not exist: " + "/mrgeo/color-scales/" + invocation.getArguments()[0] + ".xml";
       throw new MrsPyramidServiceException(builder);
     }
   });
-  when(service.renderKml(anyString(), (Bounds) any(), anyInt(), anyInt(), (ColorScale) any(), anyInt(), (ProviderProperties)anyObject()))
+  when(service.renderKml(anyString(), (Bounds) any(), anyInt(), anyInt(), (ColorScale) any(), anyInt(),
+      (ProviderProperties) anyObject()))
       .thenReturn(Response.ok().entity(returnXml).type("application/vnd.google-earth.kml+xml").build());
 
   Response response = target("raster/some/raster/path")
@@ -207,7 +184,8 @@ public void testGetImageBadFormat() throws Exception
 @Category(UnitTest.class)
 public void testGetImageNotExist() throws Exception
 {
-  when(service.renderKml(anyString(), (Bounds) any(), anyInt(), anyInt(), (ColorScale) any(), anyInt(), (ProviderProperties)anyObject()))
+  when(service.renderKml(anyString(), (Bounds) any(), anyInt(), anyInt(), (ColorScale) any(), anyInt(),
+      (ProviderProperties) anyObject()))
       .thenReturn(Response.ok().entity(returnXml).type("application/vnd.google-earth.kml+xml").build());
   final String resultImage = "badpathtest";
 
@@ -230,14 +208,15 @@ public void testGetImagePng() throws Exception
   when(service.getColorScaleFromName(anyString())).thenReturn(null);
   ImageRenderer renderer = mock(ImageRenderer.class);
 
-  when(renderer.renderImage(anyString(), (Bounds) any(), anyInt(), anyInt(), (ProviderProperties)anyObject(), anyString()))
+  when(renderer
+      .renderImage(anyString(), (Bounds) any(), anyInt(), anyInt(), (ProviderProperties) anyObject(), anyString()))
       .thenReturn(null); // Nothing to return, we aren't validating response
 
   when(service.getImageRenderer(anyString())).thenReturn(renderer);
 
   ImageResponseWriter writer = mock(ImageResponseWriter.class);
   //Mockito.when(writer.getMimeType()).thenReturn( typ );
-  when(writer.write((MrGeoRaster) any(), anyString(), (Bounds) any())).thenReturn(Response.ok().type( typ ));
+  when(writer.write((MrGeoRaster) any(), anyString(), (Bounds) any())).thenReturn(Response.ok().type(typ));
 
   when(service.getImageResponseWriter(anyString())).thenReturn(writer);
 
@@ -263,14 +242,15 @@ public void testGetImageTiff() throws Exception
   when(service.getColorScaleFromName(anyString())).thenReturn(null);
   ImageRenderer renderer = mock(ImageRenderer.class);
 
-  when(renderer.renderImage(anyString(), (Bounds) any(), anyInt(), anyInt(), (ProviderProperties)anyObject(), anyString()))
+  when(renderer
+      .renderImage(anyString(), (Bounds) any(), anyInt(), anyInt(), (ProviderProperties) anyObject(), anyString()))
       .thenReturn(null); // Nothing to return, we aren't validating response
 
   when(service.getImageRenderer(anyString())).thenReturn(renderer);
 
   ImageResponseWriter writer = mock(ImageResponseWriter.class);
   //Mockito.when(writer.getMimeType()).thenReturn( typ );
-  when(writer.write((MrGeoRaster) any(), anyString(), (Bounds) any())).thenReturn(Response.ok().type( typ ));
+  when(writer.write((MrGeoRaster) any(), anyString(), (Bounds) any())).thenReturn(Response.ok().type(typ));
 
   when(service.getImageResponseWriter(anyString())).thenReturn(writer);
 
@@ -282,5 +262,24 @@ public void testGetImageTiff() throws Exception
       .request().get();
 
   assertEquals(typ, response.getHeaderString("Content-Type"));
+}
+
+@Override
+protected Application configure()
+{
+  service = Mockito.mock(MrsPyramidService.class);
+  request = Mockito.mock(HttpServletRequest.class);
+
+  ResourceConfig config = new ResourceConfig();
+  config.register(RasterResource.class);
+  config.register(new AbstractBinder()
+  {
+    @Override
+    protected void configure()
+    {
+      bind(service).to(MrsPyramidService.class);
+    }
+  });
+  return config;
 }
 }

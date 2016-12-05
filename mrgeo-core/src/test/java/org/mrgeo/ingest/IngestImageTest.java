@@ -24,13 +24,10 @@ import java.util.HashMap;
 @SuppressWarnings("all") // test code, not included in production
 public class IngestImageTest extends LocalRunnerTest
 {
+public final static boolean GEN_BASELINE_DATA_ONLY = false;
+private static TestUtils testUtils;
 @Rule
 public TestName testname = new TestName();
-
-public final static boolean GEN_BASELINE_DATA_ONLY = false;
-
-private static TestUtils testUtils;
-
 private String onetile = "onetile.tif";
 private String bigtile = "bigtile.tif";
 private String shiftedtile = "shiftedtile.tif";
@@ -75,7 +72,7 @@ public void ingestOneTile() throws IOException
       bounds, zoom, tilesize, new double[]{-9999}, 1, DataBuffer.TYPE_FLOAT,
       new HashMap<String, String>(), "", new ProviderProperties());
 
-  MrsPyramid ingested = MrsPyramid.open(output,  getConfiguration());
+  MrsPyramid ingested = MrsPyramid.open(output, getConfiguration());
   MrsPyramidMetadata meta = ingested.getMetadata();
 
   Assert.assertEquals("Bad zoom", 3, meta.getMaxZoomLevel());
@@ -120,11 +117,11 @@ public void ingestFourTiles() throws IOException
     {
       if (bounds == null)
       {
-        bounds = TMSUtils .tileBounds(x, y, zoom, tilesize);
+        bounds = TMSUtils.tileBounds(x, y, zoom, tilesize);
       }
       else
       {
-        bounds = bounds.expand(TMSUtils .tileBounds(x, y, zoom, tilesize));
+        bounds = bounds.expand(TMSUtils.tileBounds(x, y, zoom, tilesize));
       }
     }
   }
@@ -133,7 +130,7 @@ public void ingestFourTiles() throws IOException
       bounds, zoom, tilesize, new double[]{-9999}, 1, DataBuffer.TYPE_FLOAT,
       new HashMap<String, String>(), "", new ProviderProperties());
 
-  MrsPyramid ingested = MrsPyramid.open(output,  getConfiguration());
+  MrsPyramid ingested = MrsPyramid.open(output, getConfiguration());
   MrsPyramidMetadata meta = ingested.getMetadata();
 
   Assert.assertEquals("Bad zoom", zoom, meta.getMaxZoomLevel());
@@ -149,9 +146,10 @@ public void ingestFourTiles() throws IOException
     {
       for (int x = 0; x < raster.width(); x++)
       {
-        int pixelId =  (x % tilesize) + ((y % tilesize) * tilesize);
+        int pixelId = (x % tilesize) + ((y % tilesize) * tilesize);
 
-        Assert.assertEquals("Bad pixel px: " + x + " py: " + y +  " expected: " + pixelId + " actual: " +  raster.getPixelDouble(x, y, 0),
+        Assert.assertEquals(
+            "Bad pixel px: " + x + " py: " + y + " expected: " + pixelId + " actual: " + raster.getPixelDouble(x, y, 0),
             pixelId, raster.getPixelDouble(x, y, 0), 1e-8);
       }
     }
@@ -181,7 +179,7 @@ public void ingestTileShifted() throws IOException
       bounds, zoom, tilesize, new double[]{-9999}, 1, DataBuffer.TYPE_FLOAT,
       new HashMap<String, String>(), "", new ProviderProperties());
 
-  MrsPyramid ingested = MrsPyramid.open(output,  getConfiguration());
+  MrsPyramid ingested = MrsPyramid.open(output, getConfiguration());
   MrsPyramidMetadata meta = ingested.getMetadata();
 
   Assert.assertEquals("Bad zoom", 3, meta.getMaxZoomLevel());
@@ -202,7 +200,8 @@ public void ingestTileShifted() throws IOException
         int px = raster.getPixelInt(x, y, 0);
         if (px != -9999)
         {
-          Assert.assertEquals("Bad pixel px: " + x + " py: " + y + " expected: " + pixelId + " actual: " + raster.getPixelInt(x, y, 0),
+          Assert.assertEquals(
+              "Bad pixel px: " + x + " py: " + y + " expected: " + pixelId + " actual: " + raster.getPixelInt(x, y, 0),
               pixelId, raster.getPixelInt(x, y, 0));
 
           pixelId++;
@@ -238,7 +237,7 @@ public void ingestBigtile() throws IOException
       bounds, zoom, tilesize, new double[]{-9999}, 1, DataBuffer.TYPE_FLOAT,
       new HashMap<String, String>(), "", new ProviderProperties());
 
-  MrsPyramid ingested = MrsPyramid.open(output,  getConfiguration());
+  MrsPyramid ingested = MrsPyramid.open(output, getConfiguration());
   MrsPyramidMetadata meta = ingested.getMetadata();
 
   Assert.assertEquals("Bad zoom", zoom, meta.getMaxZoomLevel());

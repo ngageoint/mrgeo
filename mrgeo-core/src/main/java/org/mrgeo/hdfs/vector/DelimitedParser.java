@@ -78,6 +78,66 @@ public DelimitedParser(List<String> attributeNames, int xCol, int yCol,
   this.skipFirstLine = skipFirstLine;
 }
 
+static String[] split(String line, char delimiter, char encapsulator)
+{
+  ArrayList<String> result = new ArrayList<String>();
+
+  StringBuffer buf = new StringBuffer();
+
+  for (int i = 0; i < line.length(); i++)
+  {
+    char c = line.charAt(i);
+    if (c == delimiter)
+    {
+      result.add(buf.toString());
+      buf.delete(0, buf.length());
+    }
+    else if (c == encapsulator)
+    {
+      // skip the first encapsulator
+      i++;
+      // clear out the buffer
+      buf.delete(0, buf.length());
+      // add data until we hit another encapsulator
+      while (i < line.length() && line.charAt(i) != encapsulator)
+      {
+        c = line.charAt(i++);
+        buf.append(c);
+      }
+
+      // add the encapsulated string
+      result.add(buf.toString());
+      // clear out the buffer
+      buf.delete(0, buf.length());
+      // skip the last encapsulator
+      i++;
+
+      if (i >= line.length())
+      {
+//          log.error("Missing token end character (" + encapsulator +
+//              ") in line: " + line);
+
+        // need to return here, or we will add a blank field on the end of the result
+        return result.toArray(new String[result.size()]);
+      }
+
+      // find the next delimiter. There may be white space or something between.
+      while (i < line.length() && line.charAt(i) != delimiter)
+      {
+        i++;
+      }
+    }
+    else
+    {
+      buf.append(c);
+    }
+  }
+
+  result.add(buf.toString());
+
+  return result.toArray(new String[result.size()]);
+}
+
 public char getDelimiter()
 {
   return delimiter;
@@ -157,7 +217,8 @@ public Geometry parse(String line)
         {
           x = null;
         }
-      } catch (NumberFormatException e)
+      }
+      catch (NumberFormatException e)
       {
         log.error("Invalid numeric value for x: " + values[i] + ". Continuing with null x value.");
         x = null;
@@ -175,7 +236,8 @@ public Geometry parse(String line)
         {
           y = null;
         }
-      } catch (NumberFormatException e)
+      }
+      catch (NumberFormatException e)
       {
         log.error("Invalid numeric value for y: " + values[i] + ". Continuing with null y value.");
         y = null;
@@ -223,66 +285,6 @@ public Geometry parse(String line)
   return feature;
 }
 
-static String[] split(String line, char delimiter, char encapsulator)
-{
-  ArrayList<String> result = new ArrayList<String>();
-
-  StringBuffer buf = new StringBuffer();
-
-  for (int i = 0; i < line.length(); i++)
-  {
-    char c = line.charAt(i);
-    if (c == delimiter)
-    {
-      result.add(buf.toString());
-      buf.delete(0, buf.length());
-    }
-    else if (c == encapsulator)
-    {
-      // skip the first encapsulator
-      i++;
-      // clear out the buffer
-      buf.delete(0, buf.length());
-      // add data until we hit another encapsulator
-      while (i < line.length() && line.charAt(i) != encapsulator)
-      {
-        c = line.charAt(i++);
-        buf.append(c);
-      }
-
-      // add the encapsulated string
-      result.add(buf.toString());
-      // clear out the buffer
-      buf.delete(0, buf.length());
-      // skip the last encapsulator
-      i++;
-
-      if (i >= line.length())
-      {
-//          log.error("Missing token end character (" + encapsulator +
-//              ") in line: " + line);
-
-        // need to return here, or we will add a blank field on the end of the result
-        return result.toArray(new String[result.size()]);
-      }
-
-      // find the next delimiter. There may be white space or something between.
-      while (i < line.length() && line.charAt(i) != delimiter)
-      {
-        i++;
-      }
-    }
-    else
-    {
-      buf.append(c);
-    }
-  }
-
-  result.add(buf.toString());
-
-  return result.toArray(new String[result.size()]);
-}
-
 @Override
 public void writeExternal(ObjectOutput out) throws IOException
 {
@@ -290,7 +292,7 @@ public void writeExternal(ObjectOutput out) throws IOException
   {
     out.writeBoolean(true);
     out.writeInt(attributeNames.size());
-    for (String name: attributeNames)
+    for (String name : attributeNames)
     {
       out.writeUTF(name);
     }
@@ -315,7 +317,7 @@ public void readExternal(ObjectInput in) throws IOException, ClassNotFoundExcept
   {
     attributeNames = new ArrayList<String>();
     int count = in.readInt();
-    for (int i=0; i < count; i++)
+    for (int i = 0; i < count; i++)
     {
       attributeNames.add(in.readUTF());
     }
@@ -323,7 +325,7 @@ public void readExternal(ObjectInput in) throws IOException, ClassNotFoundExcept
   xCol = in.readInt();
   yCol = in.readInt();
   geometryCol = in.readInt();
-  delimiter = in .readChar();
+  delimiter = in.readChar();
   encapsulator = in.readChar();
   skipFirstLine = in.readBoolean();
 }

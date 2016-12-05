@@ -25,39 +25,17 @@ import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.utils.MrGeoImplicits._
 import org.mrgeo.utils.SparkUtils
 
 abstract class RawUnaryMathMapOp extends RasterMapOp with Externalizable {
   var input:Option[RasterMapOp] = None
   var rasterRDD:Option[RasterRDD] = None
 
-  private[unarymath] def initialize(node:ParserNode, variables: String => Option[ParserNode]) = {
+  override def setup(job:JobArguments, conf:SparkConf):Boolean = true
 
-    if (node.getNumChildren < 1) {
-      throw new ParserException(node.getName + " requires one argument")
-    }
-    else if (node.getNumChildren > 1) {
-      throw new ParserException(node.getName + " requires only one argument")
-    }
+  override def teardown(job:JobArguments, conf:SparkConf):Boolean = true
 
-    input = RasterMapOp.decodeToRaster(node.getChild(0), variables)
-    val childA = node.getChild(0)
-
-
-    if (input.isEmpty) {
-      throw new ParserException("\"" + node.getName + "\" must have at least 1 raster input")
-    }
-
-    if (input.isDefined && !input.get.isInstanceOf[RasterMapOp]) {
-      throw new ParserException("\"" + childA + "\" is not a raster input")
-    }
-  }
-
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = true
-  override def teardown(job: JobArguments, conf: SparkConf): Boolean = true
-
-  override def execute(context: SparkContext): Boolean = {
+  override def execute(context:SparkContext):Boolean = {
 
     // our metadata is the same as the raster
     val meta = input.get.metadata().get
@@ -70,8 +48,18 @@ abstract class RawUnaryMathMapOp extends RasterMapOp with Externalizable {
     // copy this here to avoid serializing the whole mapop
     val nodatas = meta.getDefaultValues
 
-    val outputnodata = if (convert)  Array.fill[Double](meta.getBands)(nodata()) else nodatas
-    val outputdatatype = if (convert) datatype() else r.datatype()
+    val outputnodata = if (convert) {
+      Array.fill[Double](meta.getBands)(nodata())
+    }
+    else {
+      nodatas
+    }
+    val outputdatatype = if (convert) {
+      datatype()
+    }
+    else {
+      r.datatype()
+    }
 
     rasterRDD = Some(RasterRDD(rdd.map(tile => {
       val raster = RasterWritable.toMrGeoRaster(tile._2)
@@ -79,11 +67,11 @@ abstract class RawUnaryMathMapOp extends RasterMapOp with Externalizable {
       val output = MrGeoRaster.createEmptyRaster(raster.width(), raster.height(), raster.bands(), outputdatatype)
 
       val width = raster.width()
-      var b: Int = 0
+      var b:Int = 0
       while (b < raster.bands()) {
-        var y: Int = 0
+        var y:Int = 0
         while (y < raster.height()) {
-          var x: Int = 0
+          var x:Int = 0
           while (x < width) {
             val v = raster.getPixelDouble(x, y, b)
             if (RasterMapOp.isNotNodata(v, nodatas(b))) {
@@ -107,18 +95,45 @@ abstract class RawUnaryMathMapOp extends RasterMapOp with Externalizable {
     true
   }
 
-  private[unarymath] def function(a:Double):Double
+  override def readExternal(in:ObjectInput):Unit = {}
 
-  override def readExternal(in: ObjectInput): Unit = {}
-
-  override def writeExternal(out: ObjectOutput): Unit = {}
+  override def writeExternal(out:ObjectOutput):Unit = {}
 
   override def rdd():Option[RasterRDD] = {
     rasterRDD
   }
 
-  private[unarymath] def datatype():Int = { DataBuffer.TYPE_UNDEFINED }
-  private[unarymath] def nodata():Double = { Float.NaN }
+  private[unarymath] def initialize(node:ParserNode, variables:String => Option[ParserNode]) = {
+
+    if (node.getNumChildren < 1) {
+      throw new ParserException(node.getName + " requires one argument")
+    }
+    else if (node.getNumChildren > 1) {
+      throw new ParserException(node.getName + " requires only one argument")
+    }
+
+    input = RasterMapOp.decodeToRaster(node.getChild(0), variables)
+    val childA = node.getChild(0)
+
+
+    if (input.isEmpty) {
+      throw new ParserException("\"" + node.getName + "\" must have at least 1 raster input")
+    }
+
+    if (input.isDefined && !input.get.isInstanceOf[RasterMapOp]) {
+      throw new ParserException("\"" + childA + "\" is not a raster input")
+    }
+  }
+
+  private[unarymath] def function(a:Double):Double
+
+  private[unarymath] def datatype():Int = {
+    DataBuffer.TYPE_UNDEFINED
+  }
+
+  private[unarymath] def nodata():Double = {
+    Float.NaN
+  }
 
 
 }

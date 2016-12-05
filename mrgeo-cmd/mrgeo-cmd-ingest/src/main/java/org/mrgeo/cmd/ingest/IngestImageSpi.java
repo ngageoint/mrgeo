@@ -23,22 +23,22 @@ import org.mrgeo.cmd.CommandSpi;
 public class IngestImageSpi extends CommandSpi
 {
 
-  @Override
-  public Class<? extends Command> getCommandClass()
-  {
-    return IngestImage.class;
-  }
+@Override
+public Class<? extends Command> getCommandClass()
+{
+  return IngestImage.class;
+}
 
-  @Override
-  public String getCommandName()
-  {
-    return "ingest";
-  }
+@Override
+public String getCommandName()
+{
+  return "ingest";
+}
 
-  @Override
-  public String getDescription()
-  {
-    return "Ingest source imagery into MrsPyramid format";
-  }
-  
+@Override
+public String getDescription()
+{
+  return "Ingest source imagery into MrsPyramid format";
+}
+
 }

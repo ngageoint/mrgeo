@@ -34,82 +34,11 @@ private static final long serialVersionUID = 1L;
 
 // static field types
 private final static int UNKNOWN = 0; // unknown
-
-private static String getTypeLiteral(int type)
-{
-  switch (type)
-  {
-  case BINARY:
-    return "BINARY";
-  case CHARACTER:
-    return "CHARACTER";
-  case DATE:
-    return "DATE";
-  case FLOAT:
-    return "FLOAT";
-  case GENERAL:
-    return "GENERAL";
-  case LOGICAL:
-    return "LOGICAL";
-  case MEMO:
-    return "MEMO";
-  case NUMERIC:
-    return "NUMERIC";
-  default:
-    return "UNKNOWN";
-  }
-}
-
-public static int parseLiteral(String literal)
-{
-  if (literal == null)
-    return UNKNOWN;
-  String letter = literal.trim().toUpperCase().substring(0, 1);
-  if (letter.equals("B"))
-  {
-    return BINARY;
-  }
-  else if (letter.equals("C"))
-  {
-    return CHARACTER;
-  }
-  else if (letter.equals("D"))
-  {
-    return DATE;
-  }
-  else if (letter.equals("F"))
-  {
-    return FLOAT;
-  }
-  else if (letter.equals("G"))
-  {
-    return GENERAL;
-  }
-  else if (letter.equals("L"))
-  {
-    return LOGICAL;
-  }
-  else if (letter.equals("M"))
-  {
-    return MEMO;
-  }
-  else if (letter.equals("N"))
-  {
-    return NUMERIC;
-  }
-  else
-  {
-    return UNKNOWN;
-  }
-}
-
 public int decimal;
 public int length;
 // field data
 public String name;
-
 public int offset;
-
 public int type;
 
 public DbaseField()
@@ -164,7 +93,9 @@ public DbaseField(String name, int type, int length)
 {
   this(name, type, length, 0);
   if (type == FLOAT)
+  {
     decimal = 3;
+  }
 }
 
 public DbaseField(String name, int type, int length, int decimal)
@@ -189,6 +120,76 @@ public DbaseField(String name, int type, int length, int decimal)
   default:
     this.length = length;
     this.decimal = decimal;
+  }
+}
+
+public static int parseLiteral(String literal)
+{
+  if (literal == null)
+  {
+    return UNKNOWN;
+  }
+  String letter = literal.trim().toUpperCase().substring(0, 1);
+  if (letter.equals("B"))
+  {
+    return BINARY;
+  }
+  else if (letter.equals("C"))
+  {
+    return CHARACTER;
+  }
+  else if (letter.equals("D"))
+  {
+    return DATE;
+  }
+  else if (letter.equals("F"))
+  {
+    return FLOAT;
+  }
+  else if (letter.equals("G"))
+  {
+    return GENERAL;
+  }
+  else if (letter.equals("L"))
+  {
+    return LOGICAL;
+  }
+  else if (letter.equals("M"))
+  {
+    return MEMO;
+  }
+  else if (letter.equals("N"))
+  {
+    return NUMERIC;
+  }
+  else
+  {
+    return UNKNOWN;
+  }
+}
+
+private static String getTypeLiteral(int type)
+{
+  switch (type)
+  {
+  case BINARY:
+    return "BINARY";
+  case CHARACTER:
+    return "CHARACTER";
+  case DATE:
+    return "DATE";
+  case FLOAT:
+    return "FLOAT";
+  case GENERAL:
+    return "GENERAL";
+  case LOGICAL:
+    return "LOGICAL";
+  case MEMO:
+    return "MEMO";
+  case NUMERIC:
+    return "NUMERIC";
+  default:
+    return "UNKNOWN";
   }
 }
 

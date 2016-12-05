@@ -14,7 +14,7 @@
   ~
   -->
 <ColorMap name="elevation">
-<!-- An elevation theme color scale intended for small scale maps -->
+  <!-- An elevation theme color scale intended for small scale maps -->
   <Scaling>MinMax</Scaling>
   <ReliefShading>0</ReliefShading>
   <Interpolate>1</Interpolate>
@@ -22,7 +22,7 @@
   <NullColor color="0,0,0" opacity="0"/>
   <!--  Dark Green  -->
   <Color value="0.0" color="45,89,0"/>
-  <!--  Light Green  -->  
+  <!--  Light Green  -->
   <Color value="0.1" color="119,190,119"/>
   <!--  Yellow  -->
   <Color value="0.25" color="253,253,150"/>

@@ -34,12 +34,12 @@ import org.mrgeo.data.accumulo.partitioners.AccumuloMrGeoRangePartitioner;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
 import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
+import org.mrgeo.data.image.ImageOutputFormatContext;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageOutputFormatProvider;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.rdd.RasterRDD;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.data.image.ImageOutputFormatContext;
 import org.mrgeo.utils.Base64Utils;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
@@ -53,13 +53,15 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Properties;
+import java.util.Set;
 
 public class AccumuloMrsPyramidOutputFormatProvider extends MrsImageOutputFormatProvider
 {
-final MrsImageDataProvider provider;
 final static Logger log = LoggerFactory.getLogger(AccumuloMrsPyramidOutputFormatProvider.class);
-
+final MrsImageDataProvider provider;
 private int zoomLevel = -1;
 private int tileSize = -1;
 private Bounds bounds = null;
@@ -235,6 +237,25 @@ public Configuration setupOutput(final Configuration conf) throws DataProviderEx
   Configuration conf2 = super.setupOutput(conf1);
   setupConfig(conf2, null);
   return conf2;
+}
+
+@Override
+public void finalizeExternalSave(Configuration conf) throws DataProviderException
+{
+  performTeardown(conf);
+}
+
+public byte[] longToBytes(long x)
+{
+  ByteBuffer buffer = ByteBuffer.allocate(8);
+  buffer.putLong(x);
+  return buffer.array();
+}
+
+@Override
+public boolean validateProtectionLevel(String protectionLevel)
+{
+  return AccumuloUtils.validateProtectionLevel(protectionLevel);
 }
 
 @SuppressWarnings("squid:S2095") // hadoop FileSystem cannot be closed, or else subsequent uses will fail
@@ -462,13 +483,6 @@ private void setupConfig(final Configuration conf, final Job job) throws DataPro
 
 } // end setupJob
 
-
-@Override
-public void finalizeExternalSave(Configuration conf) throws DataProviderException
-{
-  performTeardown(conf);
-}
-
 //  private void teardownForSpark(final Configuration conf) throws DataProviderException
 //  {
 //    performTeardown(conf);
@@ -523,7 +537,7 @@ private void performTeardown(final Configuration conf) throws DataProviderExcept
 //        } else {
 //          fs.delete(success, true);
 //        }
-//        
+//
 //        Path logs = new Path(workDir + "files" + File.separator, "_logs");
 //        if(! fs.exists(logs)){
 //          // failure in the job
@@ -569,19 +583,5 @@ private void performTeardown(final Configuration conf) throws DataProviderExcept
   }
 
 } // end finalizeExternalSave
-
-
-public byte[] longToBytes(long x)
-{
-  ByteBuffer buffer = ByteBuffer.allocate(8);
-  buffer.putLong(x);
-  return buffer.array();
-}
-
-@Override
-public boolean validateProtectionLevel(String protectionLevel)
-{
-  return AccumuloUtils.validateProtectionLevel(protectionLevel);
-}
 
 } // end AccumuloMrsPyramidOutputFormatProvider

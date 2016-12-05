@@ -34,52 +34,52 @@ import javax.ws.rs.core.Response;
 @SuppressWarnings("all") // Test code, not included in production
 public class CustomColorScaleTest extends WmsGeneratorTestAbstract
 {
-  @SuppressWarnings("unused")
-  private static final Logger log = 
+@SuppressWarnings("unused")
+private static final Logger log =
     LoggerFactory.getLogger(CustomColorScaleTest.class);
-  
-  @BeforeClass 
-  public static void setUpForJUnit()
-  {    
-    try 
-    {
-      baselineInput = TestUtils.composeInputDir(CustomColorScaleTest.class);
-      WmsGeneratorTestAbstract.setUpForJUnit();
-      
-      FileSystem fileSystem = HadoopFileUtils.getFileSystem(inputHdfs);
-      
-      //remove the system color scale
-      fileSystem.delete(new Path(inputHdfs, "Default.xml"), false);
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-    }
-  }
-  
-  /*
-   * WmsGenerator should use ColorScale's hardcoded color scale if the image doesn't have a color
-   * scale file, nor is there a system Default.xml color scale in the image base path.
-   */
-  @Test
-  @Category(IntegrationTest.class)
-  public void testMissingSystemColorScale() throws Exception
+
+@BeforeClass
+public static void setUpForJUnit()
+{
+  try
   {
-    MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_COLORSCALE, "foo/bar");
+    baselineInput = TestUtils.composeInputDir(CustomColorScaleTest.class);
+    WmsGeneratorTestAbstract.setUpForJUnit();
 
-    String contentType = "image/png";
+    FileSystem fileSystem = HadoopFileUtils.getFileSystem(inputHdfs);
 
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmap")
-        .queryParam("LAYERS", "IslandsElevation-v2")
-        .queryParam("FORMAT", contentType)
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .request().get();
-
-    processImageResponse(response, contentType, "png");
+    //remove the system color scale
+    fileSystem.delete(new Path(inputHdfs, "Default.xml"), false);
   }
+  catch (Exception e)
+  {
+    e.printStackTrace();
+  }
+}
+
+/*
+ * WmsGenerator should use ColorScale's hardcoded color scale if the image doesn't have a color
+ * scale file, nor is there a system Default.xml color scale in the image base path.
+ */
+@Test
+@Category(IntegrationTest.class)
+public void testMissingSystemColorScale() throws Exception
+{
+  MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_COLORSCALE, "foo/bar");
+
+  String contentType = "image/png";
+
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmap")
+      .queryParam("LAYERS", "IslandsElevation-v2")
+      .queryParam("FORMAT", contentType)
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+      .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .request().get();
+
+  processImageResponse(response, contentType, "png");
+}
 
 }

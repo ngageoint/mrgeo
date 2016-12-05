@@ -33,12 +33,101 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.List;
 
 public class HdfsAdHocDataProvider extends AdHocDataProvider
 {
+/**
+ * Stores a list of the files in the HDFS directory corresponding to the resource name the
+ * provider was constructed with. Internal code should *always* call initializeFiles() prior to
+ * accessing this data member.
+ */
+private final List<Path> files = new java.util.concurrent.CopyOnWriteArrayList<Path>();
 private Configuration conf;
+private Path resourcePath;
+
+public HdfsAdHocDataProvider(final Configuration conf,
+    final ProviderProperties providerProperties) throws IOException
+{
+  super(HadoopFileUtils.unqualifyPath(new Path(HadoopFileUtils.getTempDir(conf),
+      HadoopUtils.createRandomString(10))).toString());
+  this.conf = conf;
+}
+
+public HdfsAdHocDataProvider(final Configuration conf, final String resourceName,
+    final ProviderProperties providerProperties) throws IOException
+{
+  super(resourceName);
+  this.conf = conf;
+}
+
+@SuppressWarnings("squid:S1166") // Exception caught and handled
+public static boolean canOpen(final Configuration conf,
+    final String name, final ProviderProperties providerProperties) throws IOException
+{
+  try
+  {
+    Path p = determineResourcePath(conf, name);
+    FileSystem fs = HadoopFileUtils.getFileSystem(conf, p);
+    return fs.exists(p);
+  }
+  catch (URISyntaxException e)
+  {
+    // The requested resource is not a legitimate HDFS source
+  }
+  return false;
+}
+
+public static boolean canWrite(final String name, final Configuration conf,
+    final ProviderProperties providerProperties) throws IOException
+{
+  // I think Ad hoc should always be able to write...
+
+  return true;
+//    Path p = HadoopFileUtils.resolveName(name);
+//    FileSystem fs = HadoopFileUtils.getFileSystem(p);
+//
+//    // Don't allow writing to an existing location
+//    if (!fs.exists(p))
+//    {
+//      return true;
+//    }
+//    return false;
+}
+
+@SuppressWarnings("squid:S1166") // Exception caught and handled
+public static boolean exists(final Configuration conf, String name,
+    final ProviderProperties providerProperties) throws IOException
+{
+  try
+  {
+    return HadoopFileUtils.exists(determineResourcePath(conf, name));
+  }
+  catch (URISyntaxException e)
+  {
+    // The name may not be an HDFS source, so in that case we return false
+  }
+  return false;
+}
+
+public static void delete(final Configuration conf, String name,
+    final ProviderProperties providerProperties) throws IOException
+{
+  try
+  {
+    HadoopFileUtils.delete(determineResourcePath(conf, name));
+  }
+  catch (URISyntaxException e)
+  {
+    throw new IOException(e);
+  }
+}
+
+private static Path determineResourcePath(final Configuration conf,
+    final String resourceName) throws IOException, URISyntaxException
+{
+  return HadoopFileUtils.resolveName(conf, resourceName, false);
+}
 
 @Override
 public void setupJob(Job job) throws DataProviderException
@@ -56,29 +145,6 @@ public void setupJob(Job job) throws DataProviderException
   {
     throw new DataProviderException("Error setting up HDFS ad hoc provider", e);
   }
-}
-
-private Path resourcePath;
-/**
- * Stores a list of the files in the HDFS directory corresponding to the resource name the
- * provider was constructed with. Internal code should *always* call initializeFiles() prior to
- * accessing this data member.
- */
-private final List<Path> files = new java.util.concurrent.CopyOnWriteArrayList<Path>();
-
-public HdfsAdHocDataProvider(final Configuration conf,
-    final ProviderProperties providerProperties) throws IOException
-{
-  super(HadoopFileUtils.unqualifyPath(new Path(HadoopFileUtils.getTempDir(conf),
-      HadoopUtils.createRandomString(10))).toString());
-  this.conf = conf;
-}
-
-public HdfsAdHocDataProvider(final Configuration conf, final String resourceName,
-    final ProviderProperties providerProperties) throws IOException
-{
-  super(resourceName);
-  this.conf = conf;
 }
 
 @Override
@@ -151,7 +217,7 @@ public InputStream get(final String name) throws IOException
 {
   initializeFiles(getConfiguration());
 
-  for (Path p: files)
+  for (Path p : files)
   {
     String s = FilenameUtils.getBaseName(p.toString());
     if (s.equalsIgnoreCase(name))
@@ -191,51 +257,11 @@ public Path getResourcePath() throws IOException
   return resourcePath;
 }
 
-private static Path determineResourcePath(final Configuration conf,
-    final String resourceName) throws IOException, URISyntaxException
-{
-  return HadoopFileUtils.resolveName(conf, resourceName, false);
-}
-
 @Override
 public int size() throws IOException
 {
   initializeFiles(getConfiguration());
   return files.size();
-}
-
-@SuppressWarnings("squid:S1166") // Exception caught and handled
-public static boolean canOpen(final Configuration conf,
-    final String name, final ProviderProperties providerProperties) throws IOException
-{
-  try
-  {
-    Path p = determineResourcePath(conf, name);
-    FileSystem fs = HadoopFileUtils.getFileSystem(conf, p);
-    return fs.exists(p);
-  }
-  catch(URISyntaxException e)
-  {
-    // The requested resource is not a legitimate HDFS source
-  }
-  return false;
-}
-
-public static boolean canWrite(final String name, final Configuration conf,
-    final ProviderProperties providerProperties) throws IOException
-{
-  // I think Ad hoc should always be able to write...
-
-  return true;
-//    Path p = HadoopFileUtils.resolveName(name);
-//    FileSystem fs = HadoopFileUtils.getFileSystem(p);
-//    
-//    // Don't allow writing to an existing location
-//    if (!fs.exists(p))
-//    {
-//      return true;
-//    }
-//    return false;
 }
 
 private void initializeFiles(final Configuration conf) throws IOException
@@ -253,34 +279,6 @@ private void initializeFiles(final Configuration conf) throws IOException
     {
       files.add(f.getPath());
     }
-  }
-}
-
-@SuppressWarnings("squid:S1166") // Exception caught and handled
-public static boolean exists(final Configuration conf, String name,
-    final ProviderProperties providerProperties) throws IOException
-{
-  try
-  {
-    return HadoopFileUtils.exists(determineResourcePath(conf, name));
-  }
-  catch (URISyntaxException e)
-  {
-    // The name may not be an HDFS source, so in that case we return false
-  }
-  return false;
-}
-
-public static void delete(final Configuration conf, String name,
-    final ProviderProperties providerProperties) throws IOException
-{
-  try
-  {
-    HadoopFileUtils.delete(determineResourcePath(conf, name));
-  }
-  catch (URISyntaxException e)
-  {
-    throw new IOException(e);
   }
 }
 

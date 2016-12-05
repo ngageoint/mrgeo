@@ -60,7 +60,6 @@ public static ColorModel createColorModel(final Raster raster)
 }
 
 
-
 public static WritableRaster createEmptyRaster(final int width, final int height,
     final int bands, final int datatype,
     final double nodata)
@@ -69,6 +68,7 @@ public static WritableRaster createEmptyRaster(final int width, final int height
   fillWithNodata(raster, nodata);
   return raster;
 }
+
 public static WritableRaster createEmptyRaster(final int width, final int height,
     final int bands, final int datatype,
     final double[] nodatas)
@@ -86,6 +86,44 @@ public static WritableRaster createEmptyRaster(final int width, final int height
   return Raster.createWritableRaster(model, null);
 }
 
+public static BufferedImage makeBufferedImage(Raster raster)
+{
+  WritableRaster wr;
+  if (raster instanceof WritableRaster)
+  {
+    wr = (WritableRaster) raster;
+  }
+  else
+  {
+    wr = Raster.createWritableRaster(raster.getSampleModel(),
+        raster.getDataBuffer(), null);
+  }
+
+  ColorModel cm = RasterUtils.createColorModel(raster);
+  return new BufferedImage(cm, wr, false, null);
+}
+
+public static double getDefaultNoDataForType(final int rasterDataType)
+{
+  switch (rasterDataType)
+  {
+  case DataBuffer.TYPE_BYTE:
+    return 255;
+  case DataBuffer.TYPE_FLOAT:
+    return Float.NaN;
+  case DataBuffer.TYPE_DOUBLE:
+    return Double.NaN;
+  case DataBuffer.TYPE_INT:
+    return Integer.MIN_VALUE;
+  case DataBuffer.TYPE_SHORT:
+    return Short.MIN_VALUE;
+  case DataBuffer.TYPE_USHORT:
+    return 65536;  // no ushort constant
+  default:
+    throw new RasterWritable.RasterWritableException(
+        "Error trying to get default nodata value from raster. Bad raster data type " + rasterDataType);
+  }
+}
 
 private static void fillWithNodata(final WritableRaster raster, final double nodata)
 {
@@ -145,14 +183,14 @@ private static void fillWithNodata(final WritableRaster raster, final double[] n
     case DataBuffer.TYPE_SHORT:
     case DataBuffer.TYPE_USHORT:
       final int[] intsamples = new int[elements];
-      final int inodata = (int)nodata[b];
+      final int inodata = (int) nodata[b];
       Arrays.fill(intsamples, inodata);
       raster.setSamples(0, 0, raster.getWidth(), raster.getHeight(), b, intsamples);
       break;
     case DataBuffer.TYPE_FLOAT:
       final float[] floatsamples = new float[elements];
 
-      final float fnodata = (float)nodata[b];
+      final float fnodata = (float) nodata[b];
       Arrays.fill(floatsamples, fnodata);
       raster.setSamples(0, 0, raster.getWidth(), raster.getHeight(), b, floatsamples);
       break;
@@ -165,45 +203,6 @@ private static void fillWithNodata(final WritableRaster raster, final double[] n
       throw new RasterWritable.RasterWritableException(
           "Error trying to get fill pixels in the raster with nodata value. Bad raster data type");
     }
-  }
-}
-
-public static BufferedImage makeBufferedImage(Raster raster)
-{
-  WritableRaster wr;
-  if (raster instanceof WritableRaster)
-  {
-    wr = (WritableRaster) raster;
-  }
-  else
-  {
-    wr = Raster.createWritableRaster(raster.getSampleModel(),
-        raster.getDataBuffer(), null);
-  }
-
-  ColorModel cm = RasterUtils.createColorModel(raster);
-  return new BufferedImage(cm, wr, false, null);
-}
-
-public static double getDefaultNoDataForType(final int rasterDataType)
-{
-  switch (rasterDataType)
-  {
-    case DataBuffer.TYPE_BYTE:
-      return 255;
-    case DataBuffer.TYPE_FLOAT:
-      return Float.NaN;
-    case DataBuffer.TYPE_DOUBLE:
-      return Double.NaN;
-    case DataBuffer.TYPE_INT:
-      return Integer.MIN_VALUE;
-    case DataBuffer.TYPE_SHORT:
-      return Short.MIN_VALUE;
-    case DataBuffer.TYPE_USHORT:
-      return 65536;  // no ushort constant
-    default:
-      throw new RasterWritable.RasterWritableException(
-              "Error trying to get default nodata value from raster. Bad raster data type " + rasterDataType);
   }
 }
 

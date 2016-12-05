@@ -15,7 +15,7 @@
  */
 
 /**
- * 
+ *
  */
 package org.mrgeo.aggregators;
 
@@ -28,134 +28,134 @@ import org.mrgeo.utils.FloatUtils;
 public class MeanAggregator implements Aggregator
 {
 
-  @Override
-  public double aggregate(final double[] values, final double nodata)
+@Override
+public double aggregate(final double[] values, final double nodata)
+{
+  double sum = 0;
+  int count = 0;
+  for (final double value : values)
   {
-    double sum = 0;
-    int count = 0;
-    for (final double value : values)
+    if (FloatUtils.isNotNodata(value, nodata))
     {
-      if (FloatUtils.isNotNodata(value, nodata))
-      {
-        sum += value;
-        count++;
-      }
+      sum += value;
+      count++;
     }
-    return (count == 0) ? nodata : (sum / count);
   }
+  return (count == 0) ? nodata : (sum / count);
+}
 
-  @Override
-  public double aggregate(final double[][] values, final double weightx, final double weighty,
-      final double nodata)
+@Override
+public double aggregate(final double[][] values, final double weightx, final double weighty,
+    final double nodata)
+{
+
+  double s0;
+  double s1;
+
+  if (FloatUtils.isNotNodata(values[0][0], nodata))
   {
-
-    double s0;
-    double s1;
-
-    if (FloatUtils.isNotNodata(values[0][0], nodata))
-    {
-      s0 = values[0][1];
-    }
-    else if (FloatUtils.isNotNodata(values[0][1], nodata))
-    {
-      s0 = values[0][0];
-    }
-    else
-    {
-      s0 = (values[0][1] - values[0][0]) * weightx + values[0][0];
-    }
-
-    if (FloatUtils.isNotNodata(values[1][0], nodata))
-    {
-      s1 = values[1][1];
-    }
-    else if (FloatUtils.isNotNodata(values[1][1], nodata))
-    {
-      s1 = values[1][0];
-    }
-    else
-    {
-      s1 = (values[1][1] - values[1][0]) * weightx + values[1][0];
-    }
-
-
-    if (FloatUtils.isNotNodata(s0, nodata))
-    {
-      return s1;
-    }
-    else if (FloatUtils.isNotNodata(s1, nodata))
-    {
-      return s0;
-    }
-    else
-    {
-      return ((s1 - s0) * weighty + s0);
-    }
+    s0 = values[0][1];
   }
-
-  @Override
-  public float aggregate(final float[] values, final float nodata)
+  else if (FloatUtils.isNotNodata(values[0][1], nodata))
   {
-    float sum = 0;
-    int count = 0;
-    for (final float value : values)
-    {
-      if (FloatUtils.isNotNodata(value, nodata))
-      {
-        sum += value;
-        count++;
-      }
-    }
-    return (count == 0) ? nodata : (sum / count);
+    s0 = values[0][0];
+  }
+  else
+  {
+    s0 = (values[0][1] - values[0][0]) * weightx + values[0][0];
   }
 
-  @Override
-  public float aggregate(final float[][] values, final double weightx, final double weighty,
-      final float nodata)
-  {    
-    float s0;
-    float s1;
-
-    if (FloatUtils.isNotNodata(values[0][0], nodata))
-    {
-      s0 = values[0][1];
-    }
-    else if (FloatUtils.isNotNodata(values[0][1], nodata))
-    {
-      s0 = values[0][0];
-    }
-    else
-    {
-      s0 = (float) ((values[0][1] - values[0][0]) * weightx + values[0][0]);
-    }
-
-    if (FloatUtils.isNotNodata(values[1][0], nodata))
-    {
-      s1 = values[1][1];
-    }
-    else if (FloatUtils.isNotNodata(values[1][1], nodata))
-    {
-      s1 = values[1][0];
-    }
-    else
-    {
-      s1 = (float) ((values[1][1] - values[1][0]) * weightx + values[1][0]);
-    }
+  if (FloatUtils.isNotNodata(values[1][0], nodata))
+  {
+    s1 = values[1][1];
+  }
+  else if (FloatUtils.isNotNodata(values[1][1], nodata))
+  {
+    s1 = values[1][0];
+  }
+  else
+  {
+    s1 = (values[1][1] - values[1][0]) * weightx + values[1][0];
+  }
 
 
-    if (FloatUtils.isNotNodata(s0, nodata))
+  if (FloatUtils.isNotNodata(s0, nodata))
+  {
+    return s1;
+  }
+  else if (FloatUtils.isNotNodata(s1, nodata))
+  {
+    return s0;
+  }
+  else
+  {
+    return ((s1 - s0) * weighty + s0);
+  }
+}
+
+@Override
+public float aggregate(final float[] values, final float nodata)
+{
+  float sum = 0;
+  int count = 0;
+  for (final float value : values)
+  {
+    if (FloatUtils.isNotNodata(value, nodata))
     {
-      return s1;
-    }
-    else if (FloatUtils.isNotNodata(s1, nodata))
-    {
-      return s0;
-    }
-    else
-    {
-      return (float) ((s1 - s0) * weighty + s0);
+      sum += value;
+      count++;
     }
   }
+  return (count == 0) ? nodata : (sum / count);
+}
+
+@Override
+public float aggregate(final float[][] values, final double weightx, final double weighty,
+    final float nodata)
+{
+  float s0;
+  float s1;
+
+  if (FloatUtils.isNotNodata(values[0][0], nodata))
+  {
+    s0 = values[0][1];
+  }
+  else if (FloatUtils.isNotNodata(values[0][1], nodata))
+  {
+    s0 = values[0][0];
+  }
+  else
+  {
+    s0 = (float) ((values[0][1] - values[0][0]) * weightx + values[0][0]);
+  }
+
+  if (FloatUtils.isNotNodata(values[1][0], nodata))
+  {
+    s1 = values[1][1];
+  }
+  else if (FloatUtils.isNotNodata(values[1][1], nodata))
+  {
+    s1 = values[1][0];
+  }
+  else
+  {
+    s1 = (float) ((values[1][1] - values[1][0]) * weightx + values[1][0]);
+  }
+
+
+  if (FloatUtils.isNotNodata(s0, nodata))
+  {
+    return s1;
+  }
+  else if (FloatUtils.isNotNodata(s1, nodata))
+  {
+    return s0;
+  }
+  else
+  {
+    return (float) ((s1 - s0) * weighty + s0);
+  }
+}
 
 @Override
 public int aggregate(final int[] values, final int nodata)
@@ -195,11 +195,11 @@ public int aggregate(final int[][] values, final double weightx, final double we
     s0 = (int) ((values[0][1] - values[0][0]) * weightx + values[0][0]);
   }
 
-  if (values[1][0] !=  nodata)
+  if (values[1][0] != nodata)
   {
     s1 = values[1][1];
   }
-  else if (values[1][1] !=  nodata)
+  else if (values[1][1] != nodata)
   {
     s1 = values[1][0];
   }
@@ -235,7 +235,7 @@ public short aggregate(final short[] values, final short nodata)
       count++;
     }
   }
-  return (count == 0) ? nodata : (short)(sum / count);
+  return (count == 0) ? nodata : (short) (sum / count);
 }
 
 
@@ -260,11 +260,11 @@ public short aggregate(final short[][] values, final double weightx, final doubl
     s0 = (short) ((values[0][1] - values[0][0]) * weightx + values[0][0]);
   }
 
-  if (values[1][0] !=  nodata)
+  if (values[1][0] != nodata)
   {
     s1 = values[1][1];
   }
-  else if (values[1][1] !=  nodata)
+  else if (values[1][1] != nodata)
   {
     s1 = values[1][0];
   }
@@ -300,7 +300,7 @@ public byte aggregate(final byte[] values, final byte nodata)
       count++;
     }
   }
-  return (count == 0) ? nodata : (byte)(sum / count);
+  return (count == 0) ? nodata : (byte) (sum / count);
 }
 
 
@@ -325,11 +325,11 @@ public byte aggregate(final byte[][] values, final double weightx, final double 
     s0 = (byte) ((values[0][1] - values[0][0]) * weightx + values[0][0]);
   }
 
-  if (values[1][0] !=  nodata)
+  if (values[1][0] != nodata)
   {
     s1 = values[1][1];
   }
-  else if (values[1][1] !=  nodata)
+  else if (values[1][1] != nodata)
   {
     s1 = values[1][0];
   }

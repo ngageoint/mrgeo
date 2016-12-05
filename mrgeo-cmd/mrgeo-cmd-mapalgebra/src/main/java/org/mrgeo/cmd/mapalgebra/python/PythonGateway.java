@@ -17,7 +17,6 @@
 package org.mrgeo.cmd.mapalgebra.python;
 
 import org.apache.commons.cli.*;
-import org.apache.commons.io.IOExceptionWithCause;
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.MrGeo;
@@ -26,14 +25,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import py4j.GatewayServer;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Semaphore;
 
 public class PythonGateway extends Command
 {
@@ -49,7 +47,8 @@ private static Options createOptions()
   port.setRequired(true);
   result.addOption(port);
 
-  Option portrange = new Option("pr", "port-range", true, "Port range for mail py4j communications (\"minport-maxport\")");
+  Option portrange =
+      new Option("pr", "port-range", true, "Port range for mail py4j communications (\"minport-maxport\")");
   portrange.setRequired(false);
   result.addOption(portrange);
 

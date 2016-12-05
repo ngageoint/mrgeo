@@ -36,111 +36,111 @@ import static org.junit.Assert.assertFalse;
 @SuppressWarnings("all") // Test code, not included in production
 public class ImageFormatTypeVariantsTest extends WmsGeneratorTestAbstract
 {
-  private static final Logger log = LoggerFactory.getLogger(ImageFormatTypeVariantsTest.class);
+private static final Logger log = LoggerFactory.getLogger(ImageFormatTypeVariantsTest.class);
 
-  @BeforeClass
-  public static void setUpForJUnit()
+@BeforeClass
+public static void setUpForJUnit()
+{
+  try
   {
-    try
-    {
-      baselineInput = TestUtils.composeInputDir(ImageFormatTypeVariantsTest.class);
-      WmsGeneratorTestAbstract.setUpForJUnit();
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-    }
+    baselineInput = TestUtils.composeInputDir(ImageFormatTypeVariantsTest.class);
+    WmsGeneratorTestAbstract.setUpForJUnit();
   }
-
-  private Response testGetMapWithVariant(String format) throws IOException, SAXException
+  catch (Exception e)
   {
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getmap")
-        .queryParam("LAYERS", "IslandsElevation-v2")
-        .queryParam("FORMAT", format)
-        .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
-        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-        .request().get();
-
-    return response;
+    e.printStackTrace();
   }
+}
 
-  /*
-   * These are variants from the standard mime types we're allowing to be flexible.  Its debatable
-   * how useful this test is, since it requires maintenance every time a new image format is added.
-   * Often, non-standard mime types are passed into WMS requests, so keeping this test for now.
-   * Here only GetMap requests are being tested since the image format parsing code path is the
-   * same for all WMS request types.  Also, only a non-zero response length is checked for here,
-   * rather than a full image comparison, since that coverage is in other tests.
-   */
-  @Test
-  @Category(IntegrationTest.class)
-  public void testVariants() throws Exception
+/*
+ * These are variants from the standard mime types we're allowing to be flexible.  Its debatable
+ * how useful this test is, since it requires maintenance every time a new image format is added.
+ * Often, non-standard mime types are passed into WMS requests, so keeping this test for now.
+ * Here only GetMap requests are being tested since the image format parsing code path is the
+ * same for all WMS request types.  Also, only a non-zero response length is checked for here,
+ * rather than a full image comparison, since that coverage is in other tests.
+ */
+@Test
+@Category(IntegrationTest.class)
+public void testVariants() throws Exception
+{
+  Response response = null;
+  try
   {
-    Response response  = null;
-    try
+    //correct format is "image/png"
+    String[] pngVariants = new String[]{"PNG", "png", "IMAGE/PNG", "image/PNG"};
+    for (int i = 0; i < pngVariants.length; i++)
     {
-      //correct format is "image/png"
-      String[] pngVariants = new String[]{ "PNG", "png", "IMAGE/PNG", "image/PNG" };
-      for (int i = 0; i < pngVariants.length; i++)
+      log.info("Checking image format: " + pngVariants[i] + " ...");
+      try
       {
-        log.info("Checking image format: " + pngVariants[i] + " ...");
-        try
-        {
-          response = testGetMapWithVariant(pngVariants[i]);
-        }
-        finally
-        {
-          Assert.assertNotNull(response);
-          assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
-          assertFalse(response.readEntity(String.class).contains("Invalid format"));
-          response.close();
-        }
+        response = testGetMapWithVariant(pngVariants[i]);
       }
-      //correct format is "image/jpeg"
-      String[] jpgVariants = new String[]{ "jpeg", "jpg", "JPG", "JPEG", "image/jpg", "IMAGE/JPG",
-          "image/JPG", "IMAGE/JPEG", "image/JPEG" };
-      for (int i = 0; i < jpgVariants.length; i++)
+      finally
       {
-        log.info("Checking image format: " + jpgVariants[i] + " ...");
-        try
-        {
-          response = testGetMapWithVariant(jpgVariants[i]);
-        }
-        finally
-        {
-          Assert.assertNotNull(response);
-          assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
-          assertFalse(response.readEntity(String.class).contains("Invalid format"));
-          response.close();
-        }
-      }
-
-      //correct format is "image/tiff"
-      String[] tifVariants = new String[]{ "tiff", "tif", "TIF", "TIFF", "image/tif", "IMAGE/TIF",
-          "image/TIF", "IMAGE/TIFF", "image/TIFF" };
-      for (int i = 0; i < tifVariants.length; i++)
-      {
-        log.info("Checking image format: " + tifVariants[i] + " ...");
-        try
-        {
-          response = testGetMapWithVariant(tifVariants[i]);
-        }
-        finally
-        {
-          Assert.assertNotNull(response);
-          assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
-          assertFalse(response.readEntity(String.class).contains("Invalid format"));
-          response.close();
-        }
+        Assert.assertNotNull(response);
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        assertFalse(response.readEntity(String.class).contains("Invalid format"));
+        response.close();
       }
     }
-    catch (Exception e)
+    //correct format is "image/jpeg"
+    String[] jpgVariants = new String[]{"jpeg", "jpg", "JPG", "JPEG", "image/jpg", "IMAGE/JPG",
+        "image/JPG", "IMAGE/JPEG", "image/JPEG"};
+    for (int i = 0; i < jpgVariants.length; i++)
     {
-      e.printStackTrace();
-      throw e;
+      log.info("Checking image format: " + jpgVariants[i] + " ...");
+      try
+      {
+        response = testGetMapWithVariant(jpgVariants[i]);
+      }
+      finally
+      {
+        Assert.assertNotNull(response);
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        assertFalse(response.readEntity(String.class).contains("Invalid format"));
+        response.close();
+      }
+    }
+
+    //correct format is "image/tiff"
+    String[] tifVariants = new String[]{"tiff", "tif", "TIF", "TIFF", "image/tif", "IMAGE/TIF",
+        "image/TIF", "IMAGE/TIFF", "image/TIFF"};
+    for (int i = 0; i < tifVariants.length; i++)
+    {
+      log.info("Checking image format: " + tifVariants[i] + " ...");
+      try
+      {
+        response = testGetMapWithVariant(tifVariants[i]);
+      }
+      finally
+      {
+        Assert.assertNotNull(response);
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        assertFalse(response.readEntity(String.class).contains("Invalid format"));
+        response.close();
+      }
     }
   }
+  catch (Exception e)
+  {
+    e.printStackTrace();
+    throw e;
+  }
+}
+
+private Response testGetMapWithVariant(String format) throws IOException, SAXException
+{
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmap")
+      .queryParam("LAYERS", "IslandsElevation-v2")
+      .queryParam("FORMAT", format)
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+      .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
+      .request().get();
+
+  return response;
+}
 }

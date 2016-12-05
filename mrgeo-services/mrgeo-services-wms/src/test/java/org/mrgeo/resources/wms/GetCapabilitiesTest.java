@@ -32,36 +32,36 @@ import javax.ws.rs.core.Response;
 @SuppressWarnings("all") // Test code, not included in production
 public class GetCapabilitiesTest extends WmsGeneratorTestAbstract
 {
-  @SuppressWarnings("unused")
-  private static final Logger log = LoggerFactory.getLogger(GetCapabilitiesTest.class);
-  
-  @BeforeClass 
-  public static void setUpForJUnit()
-  {    
-    try 
-    {
-      baselineInput = TestUtils.composeInputDir(GetCapabilitiesTest.class);
-      WmsGeneratorTestAbstract.setUpForJUnit();
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-    }
-  }
-  
-  /*
-   * defaults to GetCapabilities request when no request type is specified
-   */
-  @Test
-  @Category(IntegrationTest.class)
-  public void testEmptyRequestType() throws Exception
-  {
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .request().get();
+@SuppressWarnings("unused")
+private static final Logger log = LoggerFactory.getLogger(GetCapabilitiesTest.class);
 
-    processXMLResponse(response, "GetCapabilities-1-1-1-EmptyRequest.xml");
+@BeforeClass
+public static void setUpForJUnit()
+{
+  try
+  {
+    baselineInput = TestUtils.composeInputDir(GetCapabilitiesTest.class);
+    WmsGeneratorTestAbstract.setUpForJUnit();
   }
+  catch (Exception e)
+  {
+    e.printStackTrace();
+  }
+}
+
+/*
+ * defaults to GetCapabilities request when no request type is specified
+ */
+@Test
+@Category(IntegrationTest.class)
+public void testEmptyRequestType() throws Exception
+{
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .request().get();
+
+  processXMLResponse(response, "GetCapabilities-1-1-1-EmptyRequest.xml");
+}
 
   /*
    * WmsGenerator supports capabilities for versions 1.1.1, 1.3.0, and 1.4.0.  If no version is
@@ -70,106 +70,106 @@ public class GetCapabilitiesTest extends WmsGeneratorTestAbstract
    * version number is automatically assigned.
    */
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetCapabilitiesEmptyVersion() throws Exception
-  {
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getcapabilities")
-        .request().get();
+@Test
+@Category(IntegrationTest.class)
+public void testGetCapabilitiesEmptyVersion() throws Exception
+{
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getcapabilities")
+      .request().get();
 
-    processXMLResponse(response, "GetCapabilities-1-1-1-EmptyVersion.xml");
-  }
+  processXMLResponse(response, "GetCapabilities-1-1-1-EmptyVersion.xml");
+}
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetCapabilities111() throws Exception
-  {
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getcapabilities")
-        .queryParam("version", "1.1.1")
-        .request().get();
+@Test
+@Category(IntegrationTest.class)
+public void testGetCapabilities111() throws Exception
+{
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getcapabilities")
+      .queryParam("version", "1.1.1")
+      .request().get();
 
-    processXMLResponse(response, "GetCapabilities-1-1-1.xml");
-  }
+  processXMLResponse(response, "GetCapabilities-1-1-1.xml");
+}
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetCapabilities130() throws Exception
-  {
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getcapabilities")
-        .queryParam("VERSION", "1.3.0")
-        .request().get();
+@Test
+@Category(IntegrationTest.class)
+public void testGetCapabilities130() throws Exception
+{
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getcapabilities")
+      .queryParam("VERSION", "1.3.0")
+      .request().get();
 
-    processXMLResponse(response, "GetCapabilities-1-3-0.xml");
-  }
+  processXMLResponse(response, "GetCapabilities-1-3-0.xml");
+}
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetCapabilities140() throws Exception
-  {
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getcapabilities")
-        .queryParam("VERSION", "1.4.0")
-        .request().get();
+@Test
+@Category(IntegrationTest.class)
+public void testGetCapabilities140() throws Exception
+{
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getcapabilities")
+      .queryParam("VERSION", "1.4.0")
+      .request().get();
 
-    processXMLResponse(response, "GetCapabilities-1-4-0.xml");
-  }
+  processXMLResponse(response, "GetCapabilities-1-4-0.xml");
+}
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetCapabilitiesLessThan111() throws Exception
-  {
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getcapabilities")
-        .queryParam("version", "0.9.9")
-        .request().get();
+@Test
+@Category(IntegrationTest.class)
+public void testGetCapabilitiesLessThan111() throws Exception
+{
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getcapabilities")
+      .queryParam("version", "0.9.9")
+      .request().get();
 
-    processXMLResponse(response, "GetCapabilities-1-1-1.xml");
-  }
+  processXMLResponse(response, "GetCapabilities-1-1-1.xml");
+}
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetCapabilitiesLessThan130() throws Exception
-  {
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getcapabilities")
-        .queryParam("version", "1.2.9")
-        .request().get();
+@Test
+@Category(IntegrationTest.class)
+public void testGetCapabilitiesLessThan130() throws Exception
+{
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getcapabilities")
+      .queryParam("version", "1.2.9")
+      .request().get();
 
-    processXMLResponse(response, "GetCapabilities-1-1-1.xml");
-  }
+  processXMLResponse(response, "GetCapabilities-1-1-1.xml");
+}
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetCapabilitiesLessThan140() throws Exception
-  {
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getcapabilities")
-        .queryParam("VERSION", "1.3.9")
-        .request().get();
+@Test
+@Category(IntegrationTest.class)
+public void testGetCapabilitiesLessThan140() throws Exception
+{
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getcapabilities")
+      .queryParam("VERSION", "1.3.9")
+      .request().get();
 
-    processXMLResponse(response, "GetCapabilities-1-3-0.xml");
-  }
+  processXMLResponse(response, "GetCapabilities-1-3-0.xml");
+}
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetCapabilitiesGreaterThan140() throws Exception
-  {
-    Response response = target("wms")
-        .queryParam("SERVICE", "WMS")
-        .queryParam("REQUEST", "getcapabilities")
-        .queryParam("VERSION", "1.4.1")
-        .request().get();
+@Test
+@Category(IntegrationTest.class)
+public void testGetCapabilitiesGreaterThan140() throws Exception
+{
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getcapabilities")
+      .queryParam("VERSION", "1.4.1")
+      .request().get();
 
-    processXMLResponse(response, "GetCapabilities-1-4-0.xml");
-  }
+  processXMLResponse(response, "GetCapabilities-1-4-0.xml");
+}
 }

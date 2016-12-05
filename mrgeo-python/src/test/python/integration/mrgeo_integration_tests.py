@@ -1,10 +1,10 @@
 import sys
-sys.path.append("..") # need to add the parent test path...  yuck!
+
+sys.path.append("..")  # need to add the parent test path...  yuck!
 import mrgeotest
 
 
 class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
-
     allones = None
     alltwos = None
     allhundreds = None
@@ -143,6 +143,7 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
     def test_bandcombineAlt(self):
         bands = self.allhundreds.bc(self.allones)
         self.compareraster(bands, self.name)
+
     def test_bitwise_or(self):
         result = self.allhundreds.convert("byte", "truncate") | 6
         self.compareraster(result, self.name, nodata=255)
@@ -212,7 +213,8 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
         self.compareraster(p, self.name)
 
     def test_export(self):
-        exp = self.smallelevation.export(self.outputdir + self.name, singleFile=True, format="tiff", overridenodata=-9999)
+        exp = self.smallelevation.export(self.outputdir + self.name, singleFile=True, format="tiff",
+                                         overridenodata=-9999)
 
         self.comparelocalraster(self.name)
         self.compareraster(exp, self.name)

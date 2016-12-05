@@ -19,7 +19,7 @@ class CropExactMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTe
 
   before {
     inputRaster = createRasterMapOp(tileIds = tileIds, zoomLevel = zoomLevel, tileSize = tileSize,
-                                    imageInitialData = Some(expectedData))
+      imageInitialData = Some(expectedData))
   }
 
   after {
@@ -37,7 +37,7 @@ class CropExactMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTe
       transformedRDD.count
     }
     verifyRastersNoData(transformedRDD, Array(11, 12, 19, 20), tileSize, zoomLevel,
-        inputRaster.metadata().get.getDefaultValues, left, right, bottom, top, Some(expectedData))
+      inputRaster.metadata().get.getDefaultValues, left, right, bottom, top, Some(expectedData))
   }
 
   it should "keep the top two tiles when the bounds excludes the bottom two" in {
@@ -110,7 +110,9 @@ class CropExactMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTe
     }
   }
 
-  it should "set the bounds on the mapop and expand the image to fill the bounds when the crop bounds are larger then the tile bounds" in {
+  it should
+  "set the bounds on the mapop and expand the image to fill the bounds when the crop bounds are larger then the tile bounds" in
+  {
     val (left, bottom, right, top) = (-89.0, -44.0, 44.0, 44.0)
     subject = CropExactMapOp.create(inputRaster, left, bottom, right, top).asInstanceOf[RasterMapOp]
     subject.execute(subject.context())
@@ -121,7 +123,7 @@ class CropExactMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTe
     assertResult(left) {
       subject.metadata().get.getBounds.w
     }
-//    verifyRastersAreUnchanged(transformedRDD, Array(11, 12, 19, 20))
+    //    verifyRastersAreUnchanged(transformedRDD, Array(11, 12, 19, 20))
     verifyRastersNoData(transformedRDD, Array(11, 12, 19, 20), tileSize, zoomLevel,
       inputRaster.metadata().get.getDefaultValues, left, right, bottom, top)
   }
@@ -131,7 +133,7 @@ class CropExactMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTe
     // Create a new raster map op.  Make sure to reuse the current context since you can only have one context active
     // in a JVM
     val rasterMapOpForBounds = createRasterMapOpWithBounds(tileIds = tileIds, zoomLevel = 3, tileSize = 512,
-                                                           bounds = new Bounds(left, bottom, right, top))
+      bounds = new Bounds(left, bottom, right, top))
     subject = CropExactMapOp.create(inputRaster, rasterMapOpForBounds).asInstanceOf[RasterMapOp]
     subject.execute(subject.context())
     val transformedRDD = subject.rdd().get
@@ -146,7 +148,7 @@ class CropExactMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTe
     val (left, bottom, right, top) = (-44.0, -44.0, 44.0, 44.0)
     val imageData = Array(1.0, 2.0, 3.0)
     val rasterMapOpWithBands = createRasterMapOp(tileIds = tileIds, zoomLevel = 3, tileSize = 512,
-                                                 imageInitialData = Some(imageData))
+      imageInitialData = Some(imageData))
     subject = CropExactMapOp.create(rasterMapOpWithBands, left, bottom, right, top).asInstanceOf[RasterMapOp]
     subject.execute(subject.context())
     val transformedRDD = subject.rdd().get

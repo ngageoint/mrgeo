@@ -25,97 +25,104 @@ import java.io.IOException;
 
 public class ShpPointZ implements ShpData
 {
-  protected JPointZ[] p;
-  private ESRILayer parent = null;
+protected JPointZ[] p;
+private ESRILayer parent = null;
 
-  /** Creates new ShpPoint */
-  public ShpPointZ(int initialSize)
+/**
+ * Creates new ShpPoint
+ */
+public ShpPointZ(int initialSize)
+{
+  p = new JPointZ[initialSize];
+}
+
+@Override
+public void addShape(JShape obj) throws FormatException
+{
+  if (obj instanceof JPointZ)
   {
-    p = new JPointZ[initialSize];
+    JPointZ[] temp = new JPointZ[p.length + 1];
+    System.arraycopy(p, 0, temp, 0, p.length);
+    temp[p.length] = (JPointZ) obj;
+    p = temp;
   }
+}
 
-  @Override
-  public void addShape(JShape obj) throws FormatException
+@Override
+public int getCount()
+{
+  return parent.index.recordCount;
+}
+
+@Override
+@SuppressWarnings("squid:S00112")
+// I didn't write this code, so I'm not sure why it throws the RuntimeException.  Keeping it
+public JShape getShape(int i) throws IOException
+{
+  try
   {
-    if (obj instanceof JPointZ)
+    if (i < parent.index.getCachePos()
+        || i > (parent.index.getCachePos() + parent.index.getCurrentCacheSize() - 1))
     {
-      JPointZ[] temp = new JPointZ[p.length + 1];
-      System.arraycopy(p, 0, temp, 0, p.length);
-      temp[p.length] = (JPointZ) obj;
-      p = temp;
-    }
-  }
-
-  @Override
-  public int getCount()
-  {
-    return parent.index.recordCount;
-  }
-
-  @Override
-  @SuppressWarnings("squid:S00112") // I didn't write this code, so I'm not sure why it throws the RuntimeException.  Keeping it
-  public JShape getShape(int i) throws IOException
-  {
-    try
-    {
-      if (i < parent.index.getCachePos()
-          || i > (parent.index.getCachePos() + parent.index.getCurrentCacheSize() - 1))
+      // save if necessary
+      if (parent.index.modData)
       {
-        // save if necessary
-        if (parent.index.modData)
-          parent.save();
-        if (parent.table.isModified())
-          parent.table.save();
-        // load
-        parent.index.loadData(i);
-        parent.shape.loadData(i);
-        // set data references
-        for (int j = 0; j < p.length; j++)
-        {
-          JShape obj = p[j];
-          obj.setDataReference(parent.table.getRow(j + parent.index.getCachePos()));
-        }
+        parent.save();
       }
-      return p[i - parent.index.getCachePos()];
+      if (parent.table.isModified())
+      {
+        parent.table.save();
+      }
+      // load
+      parent.index.loadData(i);
+      parent.shape.loadData(i);
+      // set data references
+      for (int j = 0; j < p.length; j++)
+      {
+        JShape obj = p[j];
+        obj.setDataReference(parent.table.getRow(j + parent.index.getCachePos()));
+      }
     }
-    catch (Exception e)
-    {
-      throw new RuntimeException(e);
-    }
+    return p[i - parent.index.getCachePos()];
   }
-
-  @Override
-  public void load(int i, byte[] record)
+  catch (Exception e)
   {
-    double px = Convert.getLEDouble(record, 4);
-    double py = Convert.getLEDouble(record, 12);
-    double z = Convert.getLEDouble(record, 20);
-    double m = Convert.getLEDouble(record, 28);
-    p[i] = new JPointZ(px, py, z, m);
-    p[i].setId(i);
+    throw new RuntimeException(e);
   }
+}
 
-  @Override
-  public void resizeCache(int size)
-  {
-    p = new JPointZ[size];
-  }
+@Override
+public void load(int i, byte[] record)
+{
+  double px = Convert.getLEDouble(record, 4);
+  double py = Convert.getLEDouble(record, 12);
+  double z = Convert.getLEDouble(record, 20);
+  double m = Convert.getLEDouble(record, 28);
+  p[i] = new JPointZ(px, py, z, m);
+  p[i].setId(i);
+}
 
-  @Override
-  public byte[] save(int i)
-  {
-    byte[] record = new byte[p[i].getRecordLength()];
-    Convert.setLEInteger(record, 0, JShape.POINTZ);
-    Convert.setLEDouble(record, 4, p[i].getX());
-    Convert.setLEDouble(record, 12, p[i].getY());
-    Convert.setLEDouble(record, 20, p[i].getZ());
-    Convert.setLEDouble(record, 28, p[i].getM());
-    return record;
-  }
+@Override
+public void resizeCache(int size)
+{
+  p = new JPointZ[size];
+}
 
-  @Override
-  public void setParent(ESRILayer parent)
-  {
-    this.parent = parent;
-  }
+@Override
+public byte[] save(int i)
+{
+  byte[] record = new byte[p[i].getRecordLength()];
+  Convert.setLEInteger(record, 0, JShape.POINTZ);
+  Convert.setLEDouble(record, 4, p[i].getX());
+  Convert.setLEDouble(record, 12, p[i].getY());
+  Convert.setLEDouble(record, 20, p[i].getZ());
+  Convert.setLEDouble(record, 28, p[i].getM());
+  return record;
+}
+
+@Override
+public void setParent(ESRILayer parent)
+{
+  this.parent = parent;
+}
 }

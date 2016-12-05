@@ -23,23 +23,23 @@ import org.junit.Test;
 public class HdfsMrsImageWriterTest
 {
 
-  HdfsMrsImageWriter writer;
+HdfsMrsImageWriter writer;
 
-  @Before
-  public void setUp() throws Exception
-  {
+@Before
+public void setUp() throws Exception
+{
 
-  }
+}
 
-  @Test
-  public void testAppend() throws Exception
-  {
+@Test
+public void testAppend() throws Exception
+{
 
-  }
+}
 
-  @Test
-  public void testClose() throws Exception
-  {
+@Test
+public void testClose() throws Exception
+{
 
-  }
+}
 }

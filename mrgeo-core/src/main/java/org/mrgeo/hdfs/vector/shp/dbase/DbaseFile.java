@@ -31,32 +31,23 @@ import java.util.List;
 
 public class DbaseFile
 {
-private static Logger log = LoggerFactory.getLogger(DbaseFile.class);
-
 public final static int DEFAULT_CACHE_SIZE = 1000;
 private final static byte ROW_DELETED = 42;
 private final static byte ROW_OK = 32;
-
-public static DbaseFile open(SeekableDataInput dbf, boolean cachemode, int cachesize, String mode)
-    throws IOException, DbaseException
-{
-  return new DbaseFile(dbf, cachemode, cachesize, mode);
-}
-
+private static Logger log = LoggerFactory.getLogger(DbaseFile.class);
+protected DbaseHeader header = null;
+@SuppressWarnings("rawtypes")
+protected List[] row = null; // data!
 private boolean cachemode = false; // cache mode indicator flag
 private int cachepos; // cache position (inclusive); dynamic access only
 private int cachesize; // size of cache - represents all rows if not dynamic
 //protected File file = null;
 private byte[] flg = null; // row flags!
-protected DbaseHeader header = null;
 private SeekableDataInput in = null;
 private boolean modData = false; // modified data
 //private String mode = null;
 
 //protected boolean modStructure = false; // modified structure
-
-@SuppressWarnings("rawtypes")
-protected List[] row = null; // data!
 
 private DbaseFile(SeekableDataInput in, boolean cachemode, int cachesize, String mode)
     throws IOException, DbaseException
@@ -69,6 +60,12 @@ private DbaseFile(SeekableDataInput in, boolean cachemode, int cachesize, String
   row = new ArrayList[0];
   flg = new byte[0];
   load();
+}
+
+public static DbaseFile open(SeekableDataInput dbf, boolean cachemode, int cachesize, String mode)
+    throws IOException, DbaseException
+{
+  return new DbaseFile(dbf, cachemode, cachesize, mode);
 }
 
 public synchronized void addColumn(DbaseField field) throws DbaseException
@@ -104,13 +101,19 @@ public synchronized void addColumn(String name, int type, int length, int decima
     throws DbaseException
 {
   if (header.getRecordCount() > 0)
+  {
     throw new DbaseException(
         "Columns can't be added after records are in the DBF in this version!");
+  }
   name = name.trim();
   if (name.length() > 11)
+  {
     name = name.substring(0, 10);
+  }
   if (getColumn(name) != -1)
+  {
     throw new DbaseException("Column name already in table!  Cancelled...");
+  }
   DbaseField field = new DbaseField();
   field.name = name;
   field.type = type;
@@ -170,18 +173,22 @@ public synchronized boolean delRow(int i)
   return true;
 }
 
-@Override
-protected void finalize() throws IOException, DbaseException
-{
-  if (modData)
-    save();
-  if (in != null)
-    in.close();
-}
-
 public int getCacheSize()
 {
   return cachesize;
+}
+
+public void setCacheSize(int size)
+{
+  if (!cachemode)
+  {
+    return;
+  }
+  if (size < 1)
+  {
+    size = 1;
+  }
+  cachesize = size;
 }
 
 public int getColumn(String fieldName)
@@ -202,7 +209,9 @@ public List getRow(int i)
     if (i < cachepos || i > (cachepos + row.length - 1))
     {
       if (modData)
+      {
         saveRows(cachepos);
+      }
       loadRows(i);
     }
     return row[i - cachepos];
@@ -240,9 +249,99 @@ public boolean isModified()
   return modData;
 }
 
+public void setModified(boolean state)
+{
+  modData = state;
+}
+
 public void load() throws IOException, DbaseException
 {
   load(in);
+}
+
+public void purge()
+{
+  row = new ArrayList[0];
+  flg = new byte[0];
+  header = new DbaseHeader();
+}
+
+@SuppressWarnings("hiding")
+public void resetCache(int cachepos, int size)
+{
+  this.cachepos = cachepos;
+  row = new ArrayList[size];
+}
+
+@SuppressWarnings("static-method")
+public void save()
+{
+  throw new UnsupportedOperationException();
+}
+
+@SuppressWarnings({"static-method", "unused"})
+public void saveRows(int i)
+{
+  throw new UnsupportedOperationException();
+}
+
+public synchronized void setColumns(DbaseFile template) throws DbaseException
+{
+  if (header.getRecordCount() > 0)
+  {
+    throw new DbaseException("Invalid operation after records are in the DBF!");
+  }
+  for (int i = 0; i < template.header.getFieldCount(); i++)
+  {
+    DbaseField field = template.header.getField(i);
+    header.addField(field);
+  }
+  header.update();
+}
+
+@SuppressWarnings("rawtypes")
+public void setRow(List data, int i) throws DbaseException
+{
+  synchronized (row)
+  {
+    List temp = null;
+    try
+    {
+      temp = row[i];
+    }
+    catch (Exception e)
+    {
+      throw new DbaseException("Row is invalid!", e);
+    }
+    if (data != null)
+    {
+      if (data.size() != temp.size())
+      {
+        throw new DbaseException("Invalid number of replacement columns in set!");
+      }
+    }
+    row[i] = data;
+  }
+  modData = true;
+}
+
+@Override
+public String toString()
+{
+  return "\n" + getHeader();
+}
+
+@Override
+protected void finalize() throws IOException, DbaseException
+{
+  if (modData)
+  {
+    save();
+  }
+  if (in != null)
+  {
+    in.close();
+  }
 }
 
 private void load(SeekableDataInput is) throws IOException, DbaseException
@@ -254,12 +353,14 @@ private void load(SeekableDataInput is) throws IOException, DbaseException
   flg = new byte[header.getRecordCount()];
   cachepos = -1;
   if (!cachemode)
+  {
     cachesize = header.getRecordCount();
+  }
   // read data
   loadRows(is, 0);
 }
 
-@SuppressWarnings({ "unchecked", "rawtypes" })
+@SuppressWarnings({"unchecked", "rawtypes"})
 private List loadRow(SeekableDataInput is, int i) throws IOException
 {
   List arow = new ArrayList(header.getFieldCount());
@@ -267,7 +368,9 @@ private List loadRow(SeekableDataInput is, int i) throws IOException
   // read record
   is.readFully(record, 0, header.getRecordLength());
   if (flg != null)
+  {
     flg[i] = record[0];
+  }
   // load record
   for (int j = 0; j < header.getFieldCount(); j++)
   {
@@ -310,9 +413,13 @@ private List loadRow(SeekableDataInput is, int i) throws IOException
         tempStr = Convert.getString(record, field.offset, field.length);
         Boolean logic = null;
         if (tempStr.equalsIgnoreCase("Y") || tempStr.equalsIgnoreCase("T"))
+        {
           logic = true;
+        }
         if (tempStr.equalsIgnoreCase("N") || tempStr.equalsIgnoreCase("F"))
+        {
           logic = false;
+        }
         // note, not sure about space or ?, assuming this means "null"
         arow.add(logic);
         break;
@@ -363,7 +470,9 @@ private List loadRow(SeekableDataInput is, int i) throws IOException
 private void loadRows(int i) throws IOException, DbaseException
 {
   if (header == null)
+  {
     throw new DbaseException("Header never read.  Cannot load!");
+  }
   loadRows(in, i);
 }
 
@@ -380,87 +489,5 @@ private void loadRows(SeekableDataInput is, int i) throws IOException
     // initialize row data
     row[j] = loadRow(is, cachepos + j);
   }
-}
-
-public void purge()
-{
-  row = new ArrayList[0];
-  flg = new byte[0];
-  header = new DbaseHeader();
-}
-
-@SuppressWarnings("hiding")
-public void resetCache(int cachepos, int size)
-{
-  this.cachepos = cachepos;
-  row = new ArrayList[size];
-}
-
-@SuppressWarnings("static-method")
-public void save()
-{
-  throw new UnsupportedOperationException();
-}
-
-@SuppressWarnings({ "static-method", "unused" })
-public void saveRows(int i)
-{
-  throw new UnsupportedOperationException();
-}
-
-public void setCacheSize(int size)
-{
-  if (!cachemode)
-    return;
-  if (size < 1)
-    size = 1;
-  cachesize = size;
-}
-
-public synchronized void setColumns(DbaseFile template) throws DbaseException
-{
-  if (header.getRecordCount() > 0)
-    throw new DbaseException("Invalid operation after records are in the DBF!");
-  for (int i = 0; i < template.header.getFieldCount(); i++)
-  {
-    DbaseField field = template.header.getField(i);
-    header.addField(field);
-  }
-  header.update();
-}
-
-public void setModified(boolean state)
-{
-  modData = state;
-}
-
-@SuppressWarnings("rawtypes")
-public void setRow(List data, int i) throws DbaseException
-{
-  synchronized (row)
-  {
-    List temp = null;
-    try
-    {
-      temp = row[i];
-    }
-    catch (Exception e)
-    {
-      throw new DbaseException("Row is invalid!", e);
-    }
-    if (data != null)
-    {
-      if (data.size() != temp.size())
-        throw new DbaseException("Invalid number of replacement columns in set!");
-    }
-    row[i] = data;
-  }
-  modData = true;
-}
-
-@Override
-public String toString()
-{
-  return "\n" + getHeader();
 }
 }

@@ -19,17 +19,17 @@ package org.mrgeo.job;
 public class JobCancelledException extends Exception
 {
 
-  /**
-   * 
-   */
-  private static final long serialVersionUID = -28067678342230393L;
+/**
+ *
+ */
+private static final long serialVersionUID = -28067678342230393L;
 
-  /**
-   * @param string
-   */
-  public JobCancelledException(String string)
-  {
-    super(string);
-  }
+/**
+ * @param string
+ */
+public JobCancelledException(String string)
+{
+  super(string);
+}
 
 }

@@ -20,42 +20,61 @@ import java.io.IOException
 
 import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.mapalgebra.parser._
-import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
+import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 import org.mrgeo.utils.tms.Bounds
 
 object IsNodataBoundsMapOp extends MapOpRegistrar {
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("isnodatabounds", "isnullbounds")
   }
 
   def create(raster:RasterMapOp, w:Double, s:Double, e:Double, n:Double):MapOp =
     new IsNodataBoundsMapOp(raster, new Bounds(w, s, e, n))
 
-  def create(raster:RasterMapOp, boundsRaster: RasterMapOp):MapOp =
+  def create(raster:RasterMapOp, boundsRaster:RasterMapOp):MapOp =
     new IsNodataBoundsMapOp(raster, boundsRaster)
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new IsNodataBoundsMapOp(node, variables)
 }
 
 class IsNodataBoundsMapOp extends IsNodataMapOp {
-  private var bounds: Option[Bounds] = None
-  private var rasterForBounds: Option[RasterMapOp] = None
+  private var bounds:Option[Bounds] = None
+  private var rasterForBounds:Option[RasterMapOp] = None
 
-  private[unarymath] def this(raster: RasterMapOp, bounds: Bounds) = {
+  override def getOutputBounds(inputMetadata:MrsPyramidMetadata):Bounds = {
+    rasterForBounds match {
+      case Some(rfb) => {
+        rfb.metadata() match {
+          case Some(metadata) => metadata.getBounds
+          case _ => throw new ParserException("Unable to read metadata for bounds raster: ")
+        }
+      }
+      case _ => {
+        bounds match {
+          case Some(b) => {
+            b
+          }
+          case _ => throw new IOException("Invalid bounds specified to isNodataBounds")
+        }
+      }
+    }
+  }
+
+  private[unarymath] def this(raster:RasterMapOp, bounds:Bounds) = {
     this()
     this.input = Some(raster)
     this.bounds = Some(bounds)
   }
 
-  private[unarymath] def this(raster: RasterMapOp, rasterForBounds: RasterMapOp) = {
+  private[unarymath] def this(raster:RasterMapOp, rasterForBounds:RasterMapOp) = {
     this()
     this.input = Some(raster)
     this.rasterForBounds = Some(rasterForBounds)
   }
 
-  private[unarymath] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
+  private[unarymath] def this(node:ParserNode, variables:String => Option[ParserNode]) = {
     this()
 
     if (node.getNumChildren != 2 && node.getNumChildren != 5) {
@@ -76,24 +95,5 @@ class IsNodataBoundsMapOp extends IsNodataMapOp {
     }
 
     input = RasterMapOp.decodeToRaster(node.getChild(0), variables)
-  }
-
-  override def getOutputBounds(inputMetadata: MrsPyramidMetadata): Bounds = {
-    rasterForBounds match {
-      case Some(rfb) => {
-        rfb.metadata() match {
-          case Some(metadata) => metadata.getBounds
-          case _ => throw new ParserException("Unable to read metadata for bounds raster: ")
-        }
-      }
-      case _ => {
-        bounds match {
-          case Some(b) => {
-            b
-          }
-          case _ => throw new IOException("Invalid bounds specified to isNodataBounds")
-        }
-      }
-    }
   }
 }

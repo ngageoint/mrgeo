@@ -90,20 +90,20 @@ public byte aggregate(byte[] values, byte nodata)
   {
     if (value != nodata)
     {
-      max = (byte)Math.max(max, value);
+      max = (byte) Math.max(max, value);
     }
   }
   return (max == -Byte.MAX_VALUE) ? nodata : max;
 }
 
 @Override
-public double aggregate(double[][]values, double weightx, double weighty, double nodata)
+public double aggregate(double[][] values, double weightx, double weighty, double nodata)
 {
   throw new NotImplementedException("Not yet implemented");
 }
 
 @Override
-public float aggregate(float[][]values, double weightx, double weighty, float nodata)
+public float aggregate(float[][] values, double weightx, double weighty, float nodata)
 {
   throw new NotImplementedException("Not yet implemented");
 }

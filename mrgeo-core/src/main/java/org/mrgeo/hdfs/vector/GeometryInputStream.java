@@ -23,25 +23,24 @@ import java.util.Iterator;
 
 /**
  * @author jason.surratt
- * 
  */
 public interface GeometryInputStream extends Iterator<WritableGeometry>
 {
-  /**
-   * Returns the projection as WKT.
-   */
-  public String getProjection();
+/**
+ * Returns the projection as WKT.
+ */
+public String getProjection();
 
-  @Override
-  public boolean hasNext();
+@Override
+public boolean hasNext();
 
-  /**
-   * The returned WritableGeometry is own by the caller.
-   * 
-   * @return
-   */
-  @Override
-  public WritableGeometry next();
-  
-  public void close() throws IOException;
+/**
+ * The returned WritableGeometry is own by the caller.
+ *
+ * @return
+ */
+@Override
+public WritableGeometry next();
+
+public void close() throws IOException;
 }

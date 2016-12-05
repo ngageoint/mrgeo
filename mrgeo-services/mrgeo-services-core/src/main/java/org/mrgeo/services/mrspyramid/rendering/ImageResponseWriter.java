@@ -33,33 +33,36 @@ import java.io.IOException;
  */
 public interface ImageResponseWriter
 {
-  String[] getMimeTypes();
+String[] getMimeTypes();
 
-  /**
-   * Returns the mime type for the color scale applier
-   * 
-   * @return a mime type string
-   */
-  String getResponseMimeType();
+/**
+ * Returns the mime type for the color scale applier
+ *
+ * @return a mime type string
+ */
+String getResponseMimeType();
 
-  String[] getWmsFormats();
+String[] getWmsFormats();
 
-  Response.ResponseBuilder write(final MrGeoRaster raster);
-  void write(final MrGeoRaster raster, final HttpServletResponse response) throws ServletException;
-  
-  Response.ResponseBuilder write(final MrGeoRaster raster, double[] defaults);
-  void write(final MrGeoRaster raster, double[] defaults, final HttpServletResponse response) throws ServletException;
+Response.ResponseBuilder write(final MrGeoRaster raster);
 
-  Response.ResponseBuilder write(final MrGeoRaster raster, final int tileColumn, final int tileRow, final double scale,
+void write(final MrGeoRaster raster, final HttpServletResponse response) throws ServletException;
+
+Response.ResponseBuilder write(final MrGeoRaster raster, double[] defaults);
+
+void write(final MrGeoRaster raster, double[] defaults, final HttpServletResponse response) throws ServletException;
+
+Response.ResponseBuilder write(final MrGeoRaster raster, final int tileColumn, final int tileRow, final double scale,
     final MrsPyramid pyramid) throws IOException;
-  void write(final MrGeoRaster raster, final int tileColumn, final int tileRow, final double scale,
-             final MrsPyramid pyramid, final HttpServletResponse response) throws ServletException, IOException;
 
-  Response.ResponseBuilder write(final MrGeoRaster raster, final String imageName, final Bounds bounds);
+void write(final MrGeoRaster raster, final int tileColumn, final int tileRow, final double scale,
+    final MrsPyramid pyramid, final HttpServletResponse response) throws ServletException, IOException;
 
-  void write(final MrGeoRaster raster, final String imageName, final Bounds bounds,
+Response.ResponseBuilder write(final MrGeoRaster raster, final String imageName, final Bounds bounds);
+
+void write(final MrGeoRaster raster, final String imageName, final Bounds bounds,
     final HttpServletResponse response) throws ServletException;
-  
-  void writeToStream(final MrGeoRaster raster, double[] defaults, final ByteArrayOutputStream byteStream)
-      throws IOException;
+
+void writeToStream(final MrGeoRaster raster, double[] defaults, final ByteArrayOutputStream byteStream)
+    throws IOException;
 }

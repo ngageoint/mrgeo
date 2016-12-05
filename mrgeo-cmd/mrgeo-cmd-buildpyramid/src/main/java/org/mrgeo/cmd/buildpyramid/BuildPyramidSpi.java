@@ -23,22 +23,22 @@ import org.mrgeo.cmd.CommandSpi;
 public class BuildPyramidSpi extends CommandSpi
 {
 
-  @Override
-  public Class<? extends Command> getCommandClass()
-  {
-    return BuildPyramid.class;
-  }
+@Override
+public Class<? extends Command> getCommandClass()
+{
+  return BuildPyramid.class;
+}
 
-  @Override
-  public String getCommandName()
-  {
-    return "buildpyramid";
-  }
+@Override
+public String getCommandName()
+{
+  return "buildpyramid";
+}
 
-  @Override
-  public String getDescription()
-  {
-    return "Build/rebuild image pyramids for a MrsImage";
-  }
-  
+@Override
+public String getDescription()
+{
+  return "Build/rebuild image pyramids for a MrsImage";
+}
+
 }

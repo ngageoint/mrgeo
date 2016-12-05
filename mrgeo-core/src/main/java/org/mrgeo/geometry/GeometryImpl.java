@@ -81,6 +81,7 @@ public void setAttribute(String key, String value)
 {
   attributes.put(key, value);
 }
+
 @Override
 public void setAttributes(Map<String, String> attrs)
 {
@@ -123,7 +124,7 @@ public Geometry clip(Polygon geom)
 public void writeAttributes(DataOutputStream stream) throws IOException
 {
   stream.writeInt(attributes.size());
-  for (Map.Entry<String, String> attr: attributes.entrySet())
+  for (Map.Entry<String, String> attr : attributes.entrySet())
   {
     stream.writeUTF(attr.getKey());
     // attr can be larger than 64K, so we have to use the alternate write method

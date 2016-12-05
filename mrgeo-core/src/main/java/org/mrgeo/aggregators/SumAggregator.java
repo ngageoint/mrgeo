@@ -34,7 +34,7 @@ public double aggregate(double[] values, double nodata)
 {
   double sum = 0;
   int count = 0;
-  for (int i=0; i<values.length; i++)
+  for (int i = 0; i < values.length; i++)
   {
     if (FloatUtils.isNotNodata(values[i], nodata))
     {
@@ -50,7 +50,7 @@ public float aggregate(float[] values, float nodata)
 {
   float sum = 0;
   int count = 0;
-  for (int i=0; i<values.length; i++)
+  for (int i = 0; i < values.length; i++)
   {
     if (FloatUtils.isNotNodata(values[i], nodata))
     {
@@ -66,7 +66,7 @@ public byte aggregate(byte[] values, byte nodata)
 {
   int sum = 0;
   int count = 0;
-  for (int i=0; i<values.length; i++)
+  for (int i = 0; i < values.length; i++)
   {
     if (values[i] != nodata)
     {
@@ -74,7 +74,7 @@ public byte aggregate(byte[] values, byte nodata)
       count++;
     }
   }
-  return (count == 0) ? nodata : (byte)sum;
+  return (count == 0) ? nodata : (byte) sum;
 }
 
 @Override
@@ -82,7 +82,7 @@ public short aggregate(short[] values, short nodata)
 {
   int sum = 0;
   int count = 0;
-  for (int i=0; i<values.length; i++)
+  for (int i = 0; i < values.length; i++)
   {
     if (values[i] != nodata)
     {
@@ -90,7 +90,7 @@ public short aggregate(short[] values, short nodata)
       count++;
     }
   }
-  return (count == 0) ? nodata : (short)sum;
+  return (count == 0) ? nodata : (short) sum;
 }
 
 @Override
@@ -98,7 +98,7 @@ public int aggregate(int[] values, int nodata)
 {
   int sum = 0;
   int count = 0;
-  for (int i=0; i<values.length; i++)
+  for (int i = 0; i < values.length; i++)
   {
     if (values[i] != nodata)
     {
@@ -110,13 +110,13 @@ public int aggregate(int[] values, int nodata)
 }
 
 @Override
-public double aggregate(double[][]values, double weightx, double weighty, double nodata)
+public double aggregate(double[][] values, double weightx, double weighty, double nodata)
 {
   throw new NotImplementedException("Not yet implemented");
 }
 
 @Override
-public float aggregate(float[][]values, double weightx, double weighty, float nodata)
+public float aggregate(float[][] values, double weightx, double weighty, float nodata)
 {
   throw new NotImplementedException("Not yet implemented");
 }

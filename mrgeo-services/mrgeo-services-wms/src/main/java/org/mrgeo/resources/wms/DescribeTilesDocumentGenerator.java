@@ -24,9 +24,9 @@ import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.services.Version;
 import org.mrgeo.utils.LongRectangle;
+import org.mrgeo.utils.XmlUtils;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.TMSUtils;
-import org.mrgeo.utils.XmlUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -42,16 +42,6 @@ import java.util.Comparator;
 public class DescribeTilesDocumentGenerator
 {
 private static final Logger log = LoggerFactory.getLogger(DescribeTilesDocumentGenerator.class);
-
-@SuppressFBWarnings(value = "SE_COMPARATOR_SHOULD_BE_SERIALIZABLE", justification = "Do not need serialization")
-private static class MrsImageComparator implements Comparator<MrsImageDataProvider>
-{
-  @Override
-  public int compare(MrsImageDataProvider o1, MrsImageDataProvider o2)
-  {
-    return o1.getResourceName().compareTo(o2.getResourceName());
-  }
-}
 
 /*
  * Writes scale information for a layer
@@ -72,10 +62,6 @@ private static void writeScaleInfo(MrsPyramidMetadata metadata, int zoom, Elemen
   XmlUtils.createTextElement2(tileMatrix, "MatrixWidth", String.format("%d", tb.getWidth()));
   XmlUtils.createTextElement2(tileMatrix, "MatrixHeight", String.format("%d", tb.getHeight()));
 }
-
-  /*
-   * Adds data layers to the DescribeTiles response
-   */
 
 /**
  * @throws IOException
@@ -108,6 +94,10 @@ public Document generateDoc(Version version, String requestUrl,
 
   return doc;
 }
+
+  /*
+   * Adds data layers to the DescribeTiles response
+   */
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled
 private void addLayersToDescribeTiles(Element dt, Version version,
@@ -180,7 +170,7 @@ private void addLayersToDescribeTiles(Element dt, Version version,
       }
       else if (bands >= 3)
       {
-        XmlUtils.createTextElement2(styles,"Value", "BandR,G,B");
+        XmlUtils.createTextElement2(styles, "Value", "BandR,G,B");
       }
 
       //only add this layer to the XML document if everything else was successful
@@ -191,6 +181,16 @@ private void addLayersToDescribeTiles(Element dt, Version version,
       // suck up the exception, there may be a bad file in the images directory...
     }
 
+  }
+}
+
+@SuppressFBWarnings(value = "SE_COMPARATOR_SHOULD_BE_SERIALIZABLE", justification = "Do not need serialization")
+private static class MrsImageComparator implements Comparator<MrsImageDataProvider>
+{
+  @Override
+  public int compare(MrsImageDataProvider o1, MrsImageDataProvider o2)
+  {
+    return o1.getResourceName().compareTo(o2.getResourceName());
   }
 }
 }

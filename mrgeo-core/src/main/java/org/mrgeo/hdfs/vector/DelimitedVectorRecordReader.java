@@ -39,62 +39,8 @@ public class DelimitedVectorRecordReader extends RecordReader<FeatureIdWritable,
 private DelimitedParser delimitedParser;
 private LineRecordReader recordReader;
 
-public static class VectorLineProducer implements LineProducer
-{
-  LineRecordReader lineRecordReader;
-  public VectorLineProducer(LineRecordReader recordReader)
-  {
-    this.lineRecordReader = recordReader;
-  }
-
-  @Override
-  public void close() throws IOException
-  {
-  }
-
-  @Override
-  public String nextLine() throws IOException
-  {
-    if (lineRecordReader.nextKeyValue())
-    {
-      return lineRecordReader.getCurrentValue().toString();
-    }
-    return null;
-  }
-}
-
 public DelimitedVectorRecordReader()
 {
-}
-
-@Override
-@SuppressWarnings("squid:S2095") // recordReader is closed explictly in the close() method
-public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
-    InterruptedException
-{
-  if (split instanceof FileSplit)
-  {
-    FileSplit fsplit = (FileSplit) split;
-    delimitedParser = getDelimitedParser(fsplit.getPath().toString(),
-        context.getConfiguration());
-    recordReader = new LineRecordReader();
-    recordReader.initialize(fsplit, context);
-    // Skip the first
-    if (delimitedParser.getSkipFirstLine())
-    {
-      // Only skip the first line of the first split. The other
-      // splits are somewhere in the middle of the original file,
-      // so their first lines should not be skipped.
-      if (fsplit.getStart() != 0)
-      {
-        nextKeyValue();
-      }
-    }
-  }
-  else
-  {
-    throw new IOException("input split is not a FileSplit");
-  }
 }
 
 public static DelimitedParser getDelimitedParser(String input, Configuration conf) throws IOException
@@ -174,6 +120,36 @@ public static DelimitedParser getDelimitedParser(String input, Configuration con
 }
 
 @Override
+@SuppressWarnings("squid:S2095") // recordReader is closed explictly in the close() method
+public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
+    InterruptedException
+{
+  if (split instanceof FileSplit)
+  {
+    FileSplit fsplit = (FileSplit) split;
+    delimitedParser = getDelimitedParser(fsplit.getPath().toString(),
+        context.getConfiguration());
+    recordReader = new LineRecordReader();
+    recordReader.initialize(fsplit, context);
+    // Skip the first
+    if (delimitedParser.getSkipFirstLine())
+    {
+      // Only skip the first line of the first split. The other
+      // splits are somewhere in the middle of the original file,
+      // so their first lines should not be skipped.
+      if (fsplit.getStart() != 0)
+      {
+        nextKeyValue();
+      }
+    }
+  }
+  else
+  {
+    throw new IOException("input split is not a FileSplit");
+  }
+}
+
+@Override
 public boolean nextKeyValue() throws IOException, InterruptedException
 {
   return recordReader.nextKeyValue();
@@ -209,6 +185,31 @@ public void close() throws IOException
   if (recordReader != null)
   {
     recordReader.close();
+  }
+}
+
+public static class VectorLineProducer implements LineProducer
+{
+  LineRecordReader lineRecordReader;
+
+  public VectorLineProducer(LineRecordReader recordReader)
+  {
+    this.lineRecordReader = recordReader;
+  }
+
+  @Override
+  public void close() throws IOException
+  {
+  }
+
+  @Override
+  public String nextLine() throws IOException
+  {
+    if (lineRecordReader.nextKeyValue())
+    {
+      return lineRecordReader.getCurrentValue().toString();
+    }
+    return null;
   }
 }
 }

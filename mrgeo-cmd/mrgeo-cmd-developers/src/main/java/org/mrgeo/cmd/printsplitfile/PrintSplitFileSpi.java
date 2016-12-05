@@ -23,22 +23,22 @@ import org.mrgeo.cmd.CommandSpi;
 public class PrintSplitFileSpi extends CommandSpi
 {
 
-  @Override
-  public Class<? extends Command> getCommandClass()
-  {
-    return PrintSplitFile.class;
-  }
+@Override
+public Class<? extends Command> getCommandClass()
+{
+  return PrintSplitFile.class;
+}
 
-  @Override
-  public String getCommandName()
-  {
-    return "printsplits";
-  }
+@Override
+public String getCommandName()
+{
+  return "printsplits";
+}
 
-  @Override
-  public String getDescription()
-  {
-    return "Print the splits file (developer cmd)";
-  }
-  
+@Override
+public String getDescription()
+{
+  return "Print the splits file (developer cmd)";
+}
+
 }

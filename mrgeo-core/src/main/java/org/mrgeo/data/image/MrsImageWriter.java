@@ -23,8 +23,9 @@ import java.io.IOException;
 
 public interface MrsImageWriter
 {
-  public void append(final TileIdWritable k, final MrGeoRaster tile) throws IOException;
-  public void close() throws IOException;
+public void append(final TileIdWritable k, final MrGeoRaster tile) throws IOException;
 
-  public String getName() throws IOException;
+public void close() throws IOException;
+
+public String getName() throws IOException;
 }

@@ -26,53 +26,53 @@ import java.io.IOException;
 
 public class VectorRecordReader extends RecordReader<FeatureIdWritable, Geometry>
 {
-  private RecordReader<FeatureIdWritable, Geometry> delegate;
+private RecordReader<FeatureIdWritable, Geometry> delegate;
 
-  @Override
-  public void initialize(InputSplit inputSplit, TaskAttemptContext context) throws IOException, InterruptedException
+@Override
+public void initialize(InputSplit inputSplit, TaskAttemptContext context) throws IOException, InterruptedException
+{
+  if (inputSplit instanceof VectorInputSplit)
   {
-    if (inputSplit instanceof VectorInputSplit)
-    {
-      VectorInputSplit vis = (VectorInputSplit) inputSplit;
-      VectorDataProvider dp = DataProviderFactory.getVectorDataProvider(vis.getVectorName(),
-          DataProviderFactory.AccessMode.READ,
-          context.getConfiguration());
-      delegate = dp.getRecordReader();
-      delegate.initialize(vis.getWrappedInputSplit(), context);
-    }
-    else
-    {
-      throw new IOException("Input split not a VectorInputSplit");
-    }
+    VectorInputSplit vis = (VectorInputSplit) inputSplit;
+    VectorDataProvider dp = DataProviderFactory.getVectorDataProvider(vis.getVectorName(),
+        DataProviderFactory.AccessMode.READ,
+        context.getConfiguration());
+    delegate = dp.getRecordReader();
+    delegate.initialize(vis.getWrappedInputSplit(), context);
   }
+  else
+  {
+    throw new IOException("Input split not a VectorInputSplit");
+  }
+}
 
-  @Override
-  public boolean nextKeyValue() throws IOException, InterruptedException
-  {
-    return delegate.nextKeyValue();
-  }
+@Override
+public boolean nextKeyValue() throws IOException, InterruptedException
+{
+  return delegate.nextKeyValue();
+}
 
-  @Override
-  public FeatureIdWritable getCurrentKey() throws IOException, InterruptedException
-  {
-    return delegate.getCurrentKey();
-  }
+@Override
+public FeatureIdWritable getCurrentKey() throws IOException, InterruptedException
+{
+  return delegate.getCurrentKey();
+}
 
-  @Override
-  public Geometry getCurrentValue() throws IOException, InterruptedException
-  {
-    return delegate.getCurrentValue();
-  }
+@Override
+public Geometry getCurrentValue() throws IOException, InterruptedException
+{
+  return delegate.getCurrentValue();
+}
 
-  @Override
-  public float getProgress() throws IOException, InterruptedException
-  {
-    return delegate.getProgress();
-  }
+@Override
+public float getProgress() throws IOException, InterruptedException
+{
+  return delegate.getProgress();
+}
 
-  @Override
-  public void close() throws IOException
-  {
-    delegate.close();
-  }
+@Override
+public void close() throws IOException
+{
+  delegate.close();
+}
 }

@@ -28,12 +28,12 @@ object AutoPersister extends Logging {
 
   val defaultStorageLevel = StorageLevel.MEMORY_AND_DISK
 
-  def getRef(rdd:RDD[_]): Int = {
+  def getRef(rdd:RDD[_]):Int = {
     references.getOrElse(rdd.id, 0)
   }
 
   // force a persist
-  def persist(rdd:RDD[_], storageLevel: StorageLevel = defaultStorageLevel) = {
+  def persist(rdd:RDD[_], storageLevel:StorageLevel = defaultStorageLevel) = {
     rdd.persist(storageLevel)
     incrementRef(rdd)
   }
@@ -47,7 +47,12 @@ object AutoPersister extends Logging {
   // decrement the ref count, unpersist if needed
   def decrementRef(rdd:RDD[_]):Int = {
     val cnt = references.getOrElse(rdd.id, return 0) - 1
-    logDebug("decrement ref: " + rdd.id + " from: " + (cnt + 1) + " to: " + cnt + (if (cnt <= 0) " unpersisting" else ""))
+    logDebug("decrement ref: " + rdd.id + " from: " + (cnt + 1) + " to: " + cnt + (if (cnt <= 0) {
+      " unpersisting"
+    }
+    else {
+      ""
+    }))
 
     references.put(rdd.id, cnt)
     if (cnt <= 0 && rdd.getStorageLevel != StorageLevel.NONE) {
@@ -59,11 +64,16 @@ object AutoPersister extends Logging {
   }
 
   // increment the ref count, persist when the count hits 2 (no need to persist over that)
-  def incrementRef(rdd:RDD[_], storageLevel: StorageLevel = defaultStorageLevel):Int = {
+  def incrementRef(rdd:RDD[_], storageLevel:StorageLevel = defaultStorageLevel):Int = {
 
     val cnt = references.getOrElseUpdate(rdd.id, 0) + 1
 
-    logDebug("increment ref: " + rdd.id + " from: " + (cnt - 1) + " to: " + cnt + (if (cnt == 2) " persisting" else ""))
+    logDebug("increment ref: " + rdd.id + " from: " + (cnt - 1) + " to: " + cnt + (if (cnt == 2) {
+      " persisting"
+    }
+    else {
+      ""
+    }))
     references.put(rdd.id, cnt)
 
     if (cnt == 2 && rdd.getStorageLevel == StorageLevel.NONE) {

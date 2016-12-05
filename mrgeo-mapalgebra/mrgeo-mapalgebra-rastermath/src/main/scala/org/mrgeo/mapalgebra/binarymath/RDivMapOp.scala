@@ -16,24 +16,25 @@
 
 package org.mrgeo.mapalgebra.binarymath
 
-import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
+import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object RDivMapOp extends MapOpRegistrar {
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("rdiv")
   }
 
   def create(const:Double, raster:RasterMapOp):MapOp = {
     new DivMapOp(Some(raster), Some(const), true)
   }
+
   def create(rasterA:RasterMapOp, rasterB:RasterMapOp):MapOp = {
     new DivMapOp(Some(rasterA), Some(rasterB))
   }
 
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new DivMapOp(node, variables)
 }
 

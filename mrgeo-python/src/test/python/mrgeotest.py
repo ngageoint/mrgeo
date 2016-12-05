@@ -1,9 +1,9 @@
 import os
 import shutil
-from osgeo import gdal
-from unittest import TestSuite, TestCase, defaultTestLoader, main
-
 import sys
+from osgeo import gdal
+from unittest import TestCase
+
 from py4j.java_gateway import java_import
 
 import gdaltest
@@ -12,7 +12,6 @@ from pymrgeo.mrgeo import MrGeo
 
 
 class MrGeoTests(TestCase):
-
     GENERATE_BASELINE_DATA = False
 
     classname = None
@@ -301,5 +300,3 @@ class VectorTestExpectation:
         self.minSpeed = minSpeed
         self.maxSpeed = maxSpeed
         self.avgSpeed = avgSpeed
-
-

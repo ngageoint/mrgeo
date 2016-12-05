@@ -21,28 +21,58 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.rdd.PairRDDFunctions
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.raster.{MrGeoRaster, RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.MapOp
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.utils.MrGeoImplicits._
 import org.mrgeo.utils.SparkUtils
 import org.mrgeo.utils.tms.Bounds
 
 abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
-  var constA: Option[Double] = None
-  var constB: Option[Double] = None
+  var constA:Option[Double] = None
+  var constB:Option[Double] = None
 
-  var varA: Option[RasterMapOp] = None
-  var varB: Option[RasterMapOp] = None
+  var varA:Option[RasterMapOp] = None
+  var varB:Option[RasterMapOp] = None
 
-  var rasterRDD: Option[RasterRDD] = None
+  var rasterRDD:Option[RasterRDD] = None
 
+  override def setup(job:JobArguments, conf:SparkConf):Boolean = true
 
-  private[binarymath] def initialize(node: ParserNode, variables: String => Option[ParserNode]) = {
+  override def teardown(job:JobArguments, conf:SparkConf):Boolean = true
+
+  override def execute(context:SparkContext):Boolean = {
+    rasterRDD =
+        if (constA.isDefined) {
+          computeWithConstantA(varB.get, constA.get)
+        }
+        else if (constB.isDefined) {
+          computeWithConstantB(varA.get, constB.get)
+        }
+        else {
+          compute(varA.get, varB.get)
+        }
+    true
+  }
+
+  override def readExternal(in:ObjectInput):Unit = {
+    constA = in.readObject().asInstanceOf[Option[Double]]
+    constB = in.readObject().asInstanceOf[Option[Double]]
+  }
+
+  override def writeExternal(out:ObjectOutput):Unit = {
+    out.writeObject(constA)
+    out.writeObject(constB)
+  }
+
+  override def rdd():Option[RasterRDD] = {
+    rasterRDD
+  }
+
+  private[binarymath] def initialize(node:ParserNode, variables:String => Option[ParserNode]) = {
 
     if (node.getNumChildren < 2) {
       throw new ParserException(node.getName + " requires two arguments")
@@ -58,12 +88,12 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
       varA = RasterMapOp.decodeToRaster(childA, variables)
     }
     catch {
-      case e: ParserException =>
+      case e:ParserException =>
         try {
           constA = MapOp.decodeDouble(childA, variables)
         }
         catch {
-          case e: ParserException => throw new ParserException(
+          case e:ParserException => throw new ParserException(
             "First term \"" + childA + "\" is not a raster or constant")
         }
     }
@@ -71,12 +101,12 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
       varB = RasterMapOp.decodeToRaster(childB, variables)
     }
     catch {
-      case e: ParserException =>
+      case e:ParserException =>
         try {
           constB = MapOp.decodeDouble(childB, variables)
         }
         catch {
-          case e: ParserException => throw new ParserException(
+          case e:ParserException => throw new ParserException(
             "Second term \"" + childB + "\" is not a raster or constant")
         }
     }
@@ -93,30 +123,12 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
     }
   }
 
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = true
+  private[binarymath] def computeWithConstantA(raster:RasterMapOp, const:Double):Option[RasterRDD] = {
 
-  override def teardown(job: JobArguments, conf: SparkConf): Boolean = true
+    val rdd = raster.rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + raster.getClass.getName))
 
-  override def execute(context: SparkContext): Boolean = {
-    rasterRDD =
-        if (constA.isDefined) {
-          computeWithConstantA(varB.get, constA.get)
-        }
-        else if (constB.isDefined) {
-          computeWithConstantB(varA.get, constB.get)
-        }
-        else {
-          compute(varA.get, varB.get)
-        }
-    true
-  }
-
-
-  private[binarymath] def computeWithConstantA(raster: RasterMapOp, const: Double): Option[RasterRDD] = {
-
-    val rdd = raster.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + raster.getClass.getName))
-
-    val meta = raster.metadata().getOrElse(throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName))
+    val meta = raster.metadata()
+        .getOrElse(throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName))
 
     // copy this here to avoid serializing the whole mapop
     val nodatas = meta.getDefaultValues
@@ -139,11 +151,11 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
 
       val output = MrGeoRaster.createEmptyRaster(width, height, bands, datatype())
 
-      var b: Int = 0
+      var b:Int = 0
       while (b < bands) {
-        var y: Int = 0
+        var y:Int = 0
         while (y < height) {
-          var x: Int = 0
+          var x:Int = 0
           while (x < width) {
             val v = raster.getPixelDouble(x, y, b)
             if (RasterMapOp.isNotNodata(v, nodatas(b))) {
@@ -169,11 +181,12 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
 
   }
 
-  private[binarymath] def computeWithConstantB(raster: RasterMapOp, const: Double): Option[RasterRDD] = {
+  private[binarymath] def computeWithConstantB(raster:RasterMapOp, const:Double):Option[RasterRDD] = {
 
-    val rdd = raster.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + raster.getClass.getName))
+    val rdd = raster.rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + raster.getClass.getName))
 
-    val meta = raster.metadata().getOrElse(throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName))
+    val meta = raster.metadata()
+        .getOrElse(throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName))
 
     // copy this here to avoid serializing the whole mapop
     val nodatas = meta.getDefaultValues
@@ -192,15 +205,15 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
 
       val width = raster.width()
       val height = raster.height()
-      val bands= raster.bands()
+      val bands = raster.bands()
 
       val output = MrGeoRaster.createEmptyRaster(width, height, bands, datatype())
 
-      var b: Int = 0
+      var b:Int = 0
       while (b < bands) {
-        var y: Int = 0
+        var y:Int = 0
         while (y < height) {
-          var x: Int = 0
+          var x:Int = 0
           while (x < width) {
             val v = raster.getPixelDouble(x, y, b)
             if (RasterMapOp.isNotNodata(v, nodatas(b))) {
@@ -225,23 +238,23 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
 
   }
 
-  private[binarymath] def compute(raster1: RasterMapOp, raster2: RasterMapOp): Option[RasterRDD] = {
-    val rdd1 = raster1.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + raster1.getClass.getName))
-    val rdd2 = raster2.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + raster2.getClass.getName))
+  private[binarymath] def compute(raster1:RasterMapOp, raster2:RasterMapOp):Option[RasterRDD] = {
+    val rdd1 = raster1.rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + raster1.getClass.getName))
+    val rdd2 = raster2.rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + raster2.getClass.getName))
 
     val r1 = RasterWritable.toMrGeoRaster(rdd1.first()._2)
     val r2 = RasterWritable.toMrGeoRaster(rdd2.first()._2)
 
     // copy this here to avoid serializing the whole mapop
     val nodata1 = raster1.metadata() match {
-    case Some(metadata) => metadata.getDefaultValues
-    case _ =>
-      Array.fill[Double](r1.bands())(Double.NaN)
+      case Some(metadata) => metadata.getDefaultValues
+      case _ =>
+        Array.fill[Double](r1.bands())(Double.NaN)
     }
     val nodata2 = raster2.metadata() match {
-    case Some(metadata) => metadata.getDefaultValues
-    case _ =>
-      Array.fill[Double](r2.bands())(Double.NaN)
+      case Some(metadata) => metadata.getDefaultValues
+      case _ =>
+        Array.fill[Double](r2.bands())(Double.NaN)
     }
 
     val outputnodata = if (datatype == r1.datatype()) {
@@ -278,11 +291,11 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
         }
 
         val width = raster1.width()
-        var b: Int = 0
+        var b:Int = 0
         while (b < raster1.bands()) {
-          var y: Int = 0
+          var y:Int = 0
           while (y < raster1.height()) {
-            var x: Int = 0
+            var x:Int = 0
             while (x < width) {
               val v1 = raster1.getPixelDouble(x, y, b)
               if (RasterMapOp.isNotNodata(v1, nodata1(b))) {
@@ -313,28 +326,19 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
     }))
 
     metadata(SparkUtils.calculateMetadata(answer, raster1.metadata().get.getMaxZoomLevel, outputnodata,
-      bounds = Bounds.combine(raster1.metadata().get.getBounds,raster2.metadata().get.getBounds), calcStats = false))
+      bounds = Bounds.combine(raster1.metadata().get.getBounds, raster2.metadata().get.getBounds), calcStats = false))
 
     Some(answer)
   }
 
-
   private[binarymath] def function(a:Double, b:Double):Double
-  private[binarymath] def datatype():Int = { DataBuffer.TYPE_FLOAT }
-  private[binarymath] def nodata():Double = { Float.NaN }
 
-  override def readExternal(in: ObjectInput): Unit = {
-    constA = in.readObject().asInstanceOf[Option[Double]]
-    constB = in.readObject().asInstanceOf[Option[Double]]
+  private[binarymath] def datatype():Int = {
+    DataBuffer.TYPE_FLOAT
   }
 
-  override def writeExternal(out: ObjectOutput): Unit = {
-    out.writeObject(constA)
-    out.writeObject(constB)
-  }
-
-  override def rdd():Option[RasterRDD] = {
-    rasterRDD
+  private[binarymath] def nodata():Double = {
+    Float.NaN
   }
 
 }

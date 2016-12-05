@@ -25,34 +25,34 @@ import org.slf4j.LoggerFactory;
  */
 public class TiffImageRenderer extends ImageRendererAbstract
 {
-  @SuppressWarnings("unused")
-  private static final Logger log = LoggerFactory.getLogger(TiffImageRenderer.class);
+@SuppressWarnings("unused")
+private static final Logger log = LoggerFactory.getLogger(TiffImageRenderer.class);
 
-  public TiffImageRenderer()
-  {
-    super();
-  }
+public TiffImageRenderer()
+{
+  super();
+}
 
-  public TiffImageRenderer(final SpatialReference srs)
-  {
-    super(srs);
-  }
+public TiffImageRenderer(final SpatialReference srs)
+{
+  super(srs);
+}
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.mrgeo.services.wms.ImageRenderer#getMimeType()
-   */
-  @Override
-  public String[] getMimeTypes()
-  {
-    return new String[] { "image/tiff", "image/tif" };
-  }
+/*
+ * (non-Javadoc)
+ *
+ * @see org.mrgeo.services.wms.ImageRenderer#getMimeType()
+ */
+@Override
+public String[] getMimeTypes()
+{
+  return new String[]{"image/tiff", "image/tif"};
+}
 
-  @Override
-  public String[] getWmsFormats()
-  {
-    return new String[] { "tiff", "tif" };
-  }
+@Override
+public String[] getWmsFormats()
+{
+  return new String[]{"tiff", "tif"};
+}
 
 }

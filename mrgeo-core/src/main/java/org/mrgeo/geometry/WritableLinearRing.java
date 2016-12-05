@@ -18,10 +18,9 @@ package org.mrgeo.geometry;
 
 /**
  * @author jason.surratt
- * 
  */
 public interface WritableLinearRing extends LinearRing, WritableLineString
 {
-  public void closeRing();
- 
+public void closeRing();
+
 }

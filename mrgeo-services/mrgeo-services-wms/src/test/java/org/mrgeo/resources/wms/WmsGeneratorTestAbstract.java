@@ -16,23 +16,17 @@
 
 package org.mrgeo.resources.wms;
 
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 import com.meterware.servletunit.ServletUnitClient;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import junit.framework.Assert;
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.custommonkey.xmlunit.XMLAssert;
 import org.custommonkey.xmlunit.XMLUnit;
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.mockito.Mockito;
 import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
@@ -48,8 +42,6 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.swing.text.Document;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -62,8 +54,6 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
@@ -73,18 +63,6 @@ import static org.junit.Assert.assertEquals;
 @SuppressWarnings("all") // Test code, not included in production
 public class WmsGeneratorTestAbstract extends JerseyTest
 {
-private static final Logger log = LoggerFactory.getLogger(WmsGeneratorTestAbstract.class);
-
-protected static String input;
-protected static String baselineInput;
-protected static Path inputHdfs;
-
-//  protected static ServletRunner servletRunner;
-protected static ServletUnitClient webClient;
-
-// only set this to true to generate new baseline images after correcting tests; image comparison
-// tests won't be run when is set to true
-private final static boolean GEN_BASELINE_DATA_ONLY = false;
 // bounds is completely outside of the image bounds
 final static String ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS =
     "160.312500,-12.656250,161.718750,-11.250000";
@@ -100,24 +78,21 @@ final static String ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_SOURCE_TILES =
 // zoom level = 11
 final static String ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL =
     "161.71875,-10.546875,161.89453125,-10.37109375";
-
-private static String imageStretch = "cost-distance";
+private static final Logger log = LoggerFactory.getLogger(WmsGeneratorTestAbstract.class);
+// only set this to true to generate new baseline images after correcting tests; image comparison
+// tests won't be run when is set to true
+private final static boolean GEN_BASELINE_DATA_ONLY = false;
+protected static String input;
+protected static String baselineInput;
+protected static Path inputHdfs;
+//  protected static ServletRunner servletRunner;
+protected static ServletUnitClient webClient;
 static String imageStretchUnqualified;
-private static String imageStretch2 = "cost-distance-shift-2";
 static String imageStretch2Unqualified;
-
-private static String small3band = "small-3band";
 static String small3bandUnqualified;
-
-
-@Override
-protected Application configure()
-{
-  ResourceConfig config = new ResourceConfig();
-  config.register(WmsGenerator.class);
-  return config;
-}
-
+private static String imageStretch = "cost-distance";
+private static String imageStretch2 = "cost-distance-shift-2";
+private static String small3band = "small-3band";
 
 @BeforeClass
 public static void setUpForJUnit()
@@ -145,31 +120,6 @@ public static void setUpForJUnit()
     e.printStackTrace();
   }
 }
-
-@Before
-public void init()
-{
-  DataProviderFactory.invalidateCache();
-  ColorScaleManager.invalidateCache();
-}
-
-//  @AfterClass
-//  public static void tearDownForJUnit()
-//  {
-//    if (servletRunner != null)
-//    {
-//      servletRunner.shutDown();
-//    }
-//  }
-
-//  @Override
-//  protected AppDescriptor configure()
-//  {
-//    return new WebAppDescriptor.Builder("org.mrgeo.resources")
-//            .contextPath("/")
-//            .initParam("javax.ws.rs.Application", "org.mrgeo.application.Application")
-//            .build();
-//  }
 
 // TODO: all test classes are using the same set of input data for now to make things simpler...
 // kind of inefficient
@@ -230,59 +180,34 @@ protected static void copyInputData() throws IOException
       HadoopFileUtils.unqualifyPath(new Path(inputHdfs, small3band)).toString();
 }
 
-//protected static WebRequest createRequest() throws MalformedURLException
-//{
-//  return new GetMethodWebRequest(
-//      new URL(
-//          MrGeoProperties.getInstance().getProperty("base.url", "http://localhost:8080")
-//              .replaceAll("/mrgeo-services/", "")),
-//      "/mrgeo-services/wms");
-//}
-
-
-protected void processImageResponse(final Response response, final String contentType, final String extension)
-    throws IOException
-{
-  try
-  {
-    Assert.assertEquals("Bad response code", Response.Status.OK.getStatusCode(), response.getStatus());
-    Assert.assertEquals(contentType, response.getHeaders().getFirst("Content-Type"));
-
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      final String outputPath =
-          baselineInput + Thread.currentThread().getStackTrace()[2].getMethodName() + "." +
-              extension;
-      log.info("Generating baseline image: " + outputPath);
-      ImageTestUtils.writeBaselineImage(response, outputPath);
-    }
-    else
-    {
-      final String baselineImageFile =
-          baselineInput + Thread.currentThread().getStackTrace()[2].getMethodName() + "." +
-              extension;
-      log.info("Comparing result to baseline image " + baselineImageFile + " ...");
-      ImageTestUtils.outputImageMatchesBaseline(response, baselineImageFile);
-    }
-  }
-  finally
-  {
-    if (response != null)
-    {
-      response.close();
-    }
-  }
-}
-
-
 protected static void processXMLResponse(final Response response,
-    final String baselineFileName) throws IOException, SAXException {
+    final String baselineFileName) throws IOException, SAXException
+{
   processXMLResponse(response, baselineFileName, Response.Status.OK);
 }
 
+//  @AfterClass
+//  public static void tearDownForJUnit()
+//  {
+//    if (servletRunner != null)
+//    {
+//      servletRunner.shutDown();
+//    }
+//  }
+
+//  @Override
+//  protected AppDescriptor configure()
+//  {
+//    return new WebAppDescriptor.Builder("org.mrgeo.resources")
+//            .contextPath("/")
+//            .initParam("javax.ws.rs.Application", "org.mrgeo.application.Application")
+//            .build();
+//  }
+
 protected static void processXMLResponse(final Response response,
     final String baselineFileName, Response.Status status)
-    throws IOException, SAXException {
+    throws IOException, SAXException
+{
   try
   {
     String content = response.readEntity(String.class);
@@ -309,7 +234,8 @@ protected static void processXMLResponse(final Response response,
             document,
             XPathConstants.NODESET);
 
-        for (int i = 0; i < nodeList.getLength(); ++i) {
+        for (int i = 0; i < nodeList.getLength(); ++i)
+        {
           Node node = nodeList.item(i);
           node.getParentNode().removeChild(node);
         }
@@ -367,6 +293,64 @@ protected static void processXMLResponse(final Response response,
       {
         IOUtils.closeQuietly(inputStream);
       }
+    }
+  }
+  finally
+  {
+    if (response != null)
+    {
+      response.close();
+    }
+  }
+}
+
+//protected static WebRequest createRequest() throws MalformedURLException
+//{
+//  return new GetMethodWebRequest(
+//      new URL(
+//          MrGeoProperties.getInstance().getProperty("base.url", "http://localhost:8080")
+//              .replaceAll("/mrgeo-services/", "")),
+//      "/mrgeo-services/wms");
+//}
+
+@Before
+public void init()
+{
+  DataProviderFactory.invalidateCache();
+  ColorScaleManager.invalidateCache();
+}
+
+@Override
+protected Application configure()
+{
+  ResourceConfig config = new ResourceConfig();
+  config.register(WmsGenerator.class);
+  return config;
+}
+
+protected void processImageResponse(final Response response, final String contentType, final String extension)
+    throws IOException
+{
+  try
+  {
+    Assert.assertEquals("Bad response code", Response.Status.OK.getStatusCode(), response.getStatus());
+    Assert.assertEquals(contentType, response.getHeaders().getFirst("Content-Type"));
+
+    if (GEN_BASELINE_DATA_ONLY)
+    {
+      final String outputPath =
+          baselineInput + Thread.currentThread().getStackTrace()[2].getMethodName() + "." +
+              extension;
+      log.info("Generating baseline image: " + outputPath);
+      ImageTestUtils.writeBaselineImage(response, outputPath);
+    }
+    else
+    {
+      final String baselineImageFile =
+          baselineInput + Thread.currentThread().getStackTrace()[2].getMethodName() + "." +
+              extension;
+      log.info("Comparing result to baseline image " + baselineImageFile + " ...");
+      ImageTestUtils.outputImageMatchesBaseline(response, baselineImageFile);
     }
   }
   finally

@@ -25,94 +25,101 @@ import java.io.IOException;
 
 public class ShpPoint implements ShpData
 {
-  protected JPoint[] p;
-  private ESRILayer parent = null;
+protected JPoint[] p;
+private ESRILayer parent = null;
 
-  /** Creates new ShpPoint */
-  public ShpPoint(int initialSize)
+/**
+ * Creates new ShpPoint
+ */
+public ShpPoint(int initialSize)
+{
+  p = new JPoint[initialSize];
+}
+
+@Override
+public void addShape(JShape obj) throws FormatException
+{
+  if (obj instanceof JPoint)
   {
-    p = new JPoint[initialSize];
+    JPoint[] temp = new JPoint[p.length + 1];
+    System.arraycopy(p, 0, temp, 0, p.length);
+    temp[p.length] = (JPoint) obj;
+    p = temp;
   }
+}
 
-  @Override
-  public void addShape(JShape obj) throws FormatException
+@Override
+public int getCount()
+{
+  return parent.index.recordCount;
+}
+
+@Override
+@SuppressWarnings("squid:S00112")
+// I didn't write this code, so I'm not sure why it throws the RuntimeException.  Keeping it
+public JShape getShape(int i) throws IOException
+{
+  try
   {
-    if (obj instanceof JPoint)
+    if (i < parent.index.getCachePos()
+        || i > (parent.index.getCachePos() + parent.index.getCurrentCacheSize() - 1))
     {
-      JPoint[] temp = new JPoint[p.length + 1];
-      System.arraycopy(p, 0, temp, 0, p.length);
-      temp[p.length] = (JPoint) obj;
-      p = temp;
-    }
-  }
-
-  @Override
-  public int getCount()
-  {
-    return parent.index.recordCount;
-  }
-
-  @Override
-  @SuppressWarnings("squid:S00112") // I didn't write this code, so I'm not sure why it throws the RuntimeException.  Keeping it
-  public JShape getShape(int i) throws IOException
-  {
-    try
-    {
-      if (i < parent.index.getCachePos()
-          || i > (parent.index.getCachePos() + parent.index.getCurrentCacheSize() - 1))
+      // save if necessary
+      if (parent.index.modData)
       {
-        // save if necessary
-        if (parent.index.modData)
-          parent.save();
-        if (parent.table.isModified())
-          parent.table.save();
-        // load
-        parent.index.loadData(i);
-        parent.shape.loadData(i);
-        // set data references
-        for (int j = 0; j < p.length; j++)
-        {
-          JShape obj = p[j];
-          obj.setDataReference(parent.table.getRow(j + parent.index.getCachePos()));
-        }
+        parent.save();
       }
-      return p[i - parent.index.getCachePos()];
+      if (parent.table.isModified())
+      {
+        parent.table.save();
+      }
+      // load
+      parent.index.loadData(i);
+      parent.shape.loadData(i);
+      // set data references
+      for (int j = 0; j < p.length; j++)
+      {
+        JShape obj = p[j];
+        obj.setDataReference(parent.table.getRow(j + parent.index.getCachePos()));
+      }
     }
-    catch (Exception e)
-    {
-      throw new RuntimeException(e);
-    }
+    return p[i - parent.index.getCachePos()];
   }
-
-  @Override
-  public void load(int i, byte[] record)
+  catch (Exception e)
   {
-    Convert.getLEInteger(record, 0); // int shapeType =
-    double px = Convert.getLEDouble(record, 4);
-    double py = Convert.getLEDouble(record, 12);
-    p[i] = new JPoint(px, py);
-    p[i].setId(i);
+    throw new RuntimeException(e);
   }
+}
 
-  @Override
-  public void resizeCache(int size)
-  {
-    p = new JPoint[size];
-  }
+@Override
+public void load(int i, byte[] record)
+{
+  Convert.getLEInteger(record, 0); // int shapeType =
+  double px = Convert.getLEDouble(record, 4);
+  double py = Convert.getLEDouble(record, 12);
+  p[i] = new JPoint(px, py);
+  p[i].setId(i);
+}
 
-  @Override
-  public byte[] save(int i)
-  {
-    byte[] record = new byte[p[i].getRecordLength()];
-    Convert.setLEInteger(record, 0, JShape.POINT);
-    Convert.setLEDouble(record, 4, p[i].getX());
-    Convert.setLEDouble(record, 12, p[i].getY());
-    return record;
-  }
+@Override
+public void resizeCache(int size)
+{
+  p = new JPoint[size];
+}
 
-  @Override
-  public void setParent(ESRILayer parent)
-  {
-    this.parent = parent;
-  }
+@Override
+public byte[] save(int i)
+{
+  byte[] record = new byte[p[i].getRecordLength()];
+  Convert.setLEInteger(record, 0, JShape.POINT);
+  Convert.setLEDouble(record, 4, p[i].getX());
+  Convert.setLEDouble(record, 12, p[i].getY());
+  return record;
+}
+
+@Override
+public void setParent(ESRILayer parent)
+{
+  this.parent = parent;
+}
 }

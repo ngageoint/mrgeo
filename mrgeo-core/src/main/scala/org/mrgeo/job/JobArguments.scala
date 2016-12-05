@@ -32,20 +32,9 @@ import org.mrgeo.utils.{FileUtils, HadoopUtils, Logging, SparkUtils}
 import scala.collection.JavaConversions.{asScalaSet, _}
 import scala.collection.mutable.ArrayBuffer
 
-@SuppressFBWarnings(value=Array("UUF_UNUSED_FIELD"), justification = "Scala generated code")
-@SuppressFBWarnings(value=Array("UPM_UNCALLED_PRIVATE_METHOD"), justification = "Scala constant")
+@SuppressFBWarnings(value = Array("UUF_UNUSED_FIELD"), justification = "Scala generated code")
+@SuppressFBWarnings(value = Array("UPM_UNCALLED_PRIVATE_METHOD"), justification = "Scala constant")
 class JobArguments() extends Logging {
-
-  final private val Name:String =  "name"
-  final private val Cluster:String =  "cluster"
-  final private val Driver:String = "driver"
-  final private val Jars:String =  "jars"
-  final private val DriverJar:String = "driverjar"
-  final private val Verbose:String =  "verbose"
-  final private val Cores:String =  "cores"
-  final private val Executors:String =  "executors"
-  final private val Memory:String =  "memory"
-  final private val MrGeoConfPrefix = "MrGeoConf:"
 
   /**
     * Pattern for matching a Windows drive, which contains only a single alphabet character.
@@ -53,55 +42,62 @@ class JobArguments() extends Logging {
   final val YARN:String = "yarn"
   final val LOCAL:String = "local"
   final val SPARK:String = "spark://"
-
+  final private val Name:String = "name"
+  final private val Cluster:String = "cluster"
+  final private val Driver:String = "driver"
+  final private val Jars:String = "jars"
+  final private val DriverJar:String = "driverjar"
+  final private val Verbose:String = "verbose"
+  final private val Cores:String = "cores"
+  final private val Executors:String = "executors"
+  final private val Memory:String = "memory"
+  final private val MrGeoConfPrefix = "MrGeoConf:"
   val windowsDrive = "([a-zA-Z])".r
   /**
     * Whether the underlying operating system is Windows.
     */
   val isWindows = SystemUtils.IS_OS_WINDOWS
-  var name: String = "foo" // null
-  var cluster: String = "local[1]"
-  var driverClass: String = null
-  var driverJar: String = null
-
+  val params = collection.mutable.Map[String, String]()
+  var name:String = "foo"
+  // null
+  var cluster:String = "local[1]"
+  var driverClass:String = null
+  var driverJar:String = null
   var memoryKb:Long = -1
   //var driverMem:String = null
   var executors:Int = -1
   var executorMemKb:Long = -1
   var cores:Int = -1
-  val params = collection.mutable.Map[String, String]()
-
-  var jars: Array[String] = null
-  var verbose: Boolean = false
+  var jars:Array[String] = null
+  var verbose:Boolean = false
 
   var isMemoryIntensive:Boolean = false
 
-  def this(args: Seq[String]) {
+  def this(args:Seq[String]) {
     this()
     parse(args.toList)
     DataProviderFactory.setConfigurationForProviders(params)
   }
 
 
-  def hasSetting(name: String): Boolean = {
+  def hasSetting(name:String):Boolean = {
     params.contains(name)
   }
 
-  def getSetting(name: String): String = {
+  def getSetting(name:String):String = {
     params(name)
   }
-  def getSetting(name: String, default:String): String = {
+
+  def getSetting(name:String, default:String):String = {
     if (params.contains(name)) {
       params(name)
     }
-    else
-    {
+    else {
       default
     }
   }
 
-  def addMrGeoProperties(): Unit =
-  {
+  def addMrGeoProperties():Unit = {
     val props = MrGeoProperties.getInstance()
     props.stringPropertyNames().foreach(U => {
       val key = MrGeoConfPrefix + U
@@ -110,18 +106,16 @@ class JobArguments() extends Logging {
   }
 
   def setSetting(key:String, value:String) = {
-    if (key.startsWith(MrGeoConfPrefix))
-    {
+    if (key.startsWith(MrGeoConfPrefix)) {
       val mrGeoKey = key.substring(MrGeoConfPrefix.length)
       MrGeoProperties.getInstance().setProperty(mrGeoKey, value)
     }
-    else
-    {
+    else {
       params += key -> value
     }
   }
 
-  def setAllSettings(values: Map[String, String]) = {
+  def setAllSettings(values:Map[String, String]) = {
     values.foreach(U => {
       setSetting(U._1, U._2)
     })
@@ -131,10 +125,10 @@ class JobArguments() extends Logging {
     jars = resolveURIs(paths)
   }
 
-  def toArgs: String = {
+  def toArgs:String = {
     val str = new StringBuilder()
 
-    var ping: Boolean = true
+    var ping:Boolean = true
 
     for (s <- toArray) {
       if (ping) {
@@ -150,9 +144,9 @@ class JobArguments() extends Logging {
   }
 
 
-  def toArgArray: Array[String] = {
+  def toArgArray:Array[String] = {
     val args = new ArrayBuffer[String]()
-    var ping: Boolean = true
+    var ping:Boolean = true
 
     for (s <- toArray) {
       if (ping) {
@@ -168,7 +162,7 @@ class JobArguments() extends Logging {
     args.toArray
   }
 
-  def toArray: Array[String] = {
+  def toArray:Array[String] = {
     val args = new ArrayBuffer[String]()
     if (name != null) {
       args += Name
@@ -222,97 +216,26 @@ class JobArguments() extends Logging {
     args.toArray
   }
 
-  @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
-  private def parse(opts: Seq[String]): Unit = opts match {
-  case ("--name") :: value :: tail =>
-    name = value
-    parse(tail)
-
-  case ("--cluster") :: value :: tail =>
-    value match  {
-    case "yarn" => useYarn()
-    case "debug" => useDebug()
-    case "local" => useLocal()
-    case _ => cluster = value
-    }
-    parse(tail)
-
-  case ("--driver") :: value :: tail =>
-    driverClass = value
-    parse(tail)
-
-  case ("--jars") :: value :: tail =>
-    jars = resolveURIs(value)
-    parse(tail)
-
-  case ("--driverjar") :: value :: tail =>
-    driverJar = FileUtils.resolveURI(value)
-    parse(tail)
-
-  case ("--verbose" | "-v") :: tail =>
-    verbose = true
-    parse(tail)
-
-  case ("--cores" | "--executor-cores") :: value :: tail =>
-    cores = value.toInt
-    parse(tail)
-
-  case ("--executors" | "--num-executors") :: value :: tail =>
-    executors = value.toInt
-    parse(tail)
-
-  case ("--memory | --executor-memory") :: value :: tail =>
-    memoryKb = value.toInt
-    parse(tail)
-
-  case key :: value :: tail =>
-    if (key.startsWith("--")) {
-      if (value.startsWith("--")) {
-        // The key is an on/off switch because the value is not really
-        // a value, so continue parsing with the value
-        setSetting(key.substring(2), null)
-        parse(value :: tail)
-      }
-      else {
-        setSetting(key.substring(2), value)
-        parse(tail)
-      }
-    }
-    else {
-      throw new Exception("Invalid switch " + key + ": must start with --")
-    }
-
-  case key :: Nil =>
-    if (key.startsWith("--")) {
-      setSetting(key.substring(2), null)
-    }
-    else {
-      throw new Exception("Invalid switch " + key + ": must start with --")
-    }
-
-  case Nil =>
-  }
-
-  def useYarn(): Unit = {
+  def useYarn():Unit = {
     cluster = YARN
     logInfo("Setting cluster to: " + cluster)
 
   }
 
-  def useDebug(): Unit = {
+  def useDebug():Unit = {
     cluster = LOCAL + "[1]"
     logInfo("Setting cluster to: " + cluster)
 
     setupMemory()
   }
 
-  def useLocal(): Unit = {
-    val cores: Int = Runtime.getRuntime.availableProcessors()
+  def useLocal():Unit = {
+    val cores:Int = Runtime.getRuntime.availableProcessors()
     if (cores <= 2) {
       cluster = LOCAL
     }
     else {
-      cluster = LOCAL+"[" + (cores.toDouble * 0.75).round + "]"
+      cluster = LOCAL + "[" + (cores.toDouble * 0.75).round + "]"
     }
 
     logInfo("Setting cluster to: " + cluster)
@@ -320,7 +243,7 @@ class JobArguments() extends Logging {
     setupMemory()
   }
 
-  def useSpark(master: String): Unit = {
+  def useSpark(master:String):Unit = {
     if (master.startsWith(SPARK)) {
       cluster = master
     }
@@ -331,47 +254,21 @@ class JobArguments() extends Logging {
     logInfo("Setting cluster to: " + cluster)
   }
 
-
-  def isYarn: Boolean = {
+  def isYarn:Boolean = {
     cluster.startsWith(YARN)
   }
 
-  def isLocal: Boolean = {
+  def isLocal:Boolean = {
     cluster.startsWith(LOCAL)
   }
 
-  def isDebug: Boolean = {
+  def isDebug:Boolean = {
     cluster.startsWith(LOCAL + "[1]")
   }
 
-  def isSpark: Boolean = {
+  def isSpark:Boolean = {
     cluster.startsWith(SPARK)
   }
-
-
-
-  // taken from Spark:Utils (private methods)
-
-
-  private def setupMemory(): Unit = {
-    val maxMem = Runtime.getRuntime.maxMemory()
-    if (maxMem != Long.MaxValue) {
-      val mem = (maxMem * 0.95).round
-      memoryKb = mem / 1024 // memory is in bytes, convert to kb
-      logInfo("Setting max memory to: " + Memory.format(mem))
-    }
-  }
-
-  /** Resolve a comma-separated list of paths. */
-  private def resolveURIs(paths: String, testWindows: Boolean = false): Array[String] = {
-    if (paths == null || paths.trim.isEmpty) {
-      null
-    }
-    else {
-      paths.split(",").map { p => FileUtils.resolveURI(p)}
-    }
-  }
-
 
   def loadYarnSettings():Unit = {
 
@@ -390,8 +287,14 @@ class JobArguments() extends Logging {
     val (newCores, newExecutors, newExMem) = adjustYarnParameters(res._1, res._2, res._3, res._4)
     // val (newCores, newExecutors, newExMem) = adjustYarnParameters(80, 10, 241664, 2416640)
 
-    val actualoverhead = ((if ((newExMem * YarnSparkHadoopUtil.MEMORY_OVERHEAD_FACTOR) > executorMemoryOverhead) newExMem * YarnSparkHadoopUtil.MEMORY_OVERHEAD_FACTOR
-    else executorMemoryOverhead) * 0.95).toLong
+    val actualoverhead = (
+        (if ((newExMem * YarnSparkHadoopUtil.MEMORY_OVERHEAD_FACTOR) > executorMemoryOverhead) {
+          newExMem *
+          YarnSparkHadoopUtil.MEMORY_OVERHEAD_FACTOR
+        }
+        else {
+          executorMemoryOverhead
+        }) * 0.95).toLong
 
     cores = newCores
     executors = newExecutors
@@ -400,33 +303,127 @@ class JobArguments() extends Logging {
 
     if (sparkConf.getBoolean("spark.dynamicAllocation.enabled", defaultValue = false)) {
       logInfo("Configuring job (" + name + ") using Spark dynamic allocation, each executor (starting with "
-          + executors + "), using " + cores + " cores, and " + SparkUtils.kbtohuman(memoryKb, "m") +
-          " total memory, " + SparkUtils.kbtohuman(executorMemKb + (actualoverhead * 1024), "m") +
-          " per worker (" + SparkUtils.kbtohuman(executorMemKb, "m") + " + " +
-          SparkUtils.kbtohuman(actualoverhead * 1024, "m") + " overhead per task)")
+              + executors + "), using " + cores + " cores, and " + SparkUtils.kbtohuman(memoryKb, "m") +
+              " total memory, " + SparkUtils.kbtohuman(executorMemKb + (actualoverhead * 1024), "m") +
+              " per worker (" + SparkUtils.kbtohuman(executorMemKb, "m") + " + " +
+              SparkUtils.kbtohuman(actualoverhead * 1024, "m") + " overhead per task)")
       println("Configuring job (" + name + ") using Spark dynamic allocation, each executor (starting with "
-          + executors + "), using " + cores + " cores, and " + SparkUtils.kbtohuman(memoryKb, "m") +
-          " total memory, " + SparkUtils.kbtohuman(executorMemKb + (actualoverhead * 1024), "m") +
-          " per worker (" + SparkUtils.kbtohuman(executorMemKb, "m") + " + " +
-          SparkUtils.kbtohuman(actualoverhead * 1024, "m") + " overhead per task)")
+              + executors + "), using " + cores + " cores, and " + SparkUtils.kbtohuman(memoryKb, "m") +
+              " total memory, " + SparkUtils.kbtohuman(executorMemKb + (actualoverhead * 1024), "m") +
+              " per worker (" + SparkUtils.kbtohuman(executorMemKb, "m") + " + " +
+              SparkUtils.kbtohuman(actualoverhead * 1024, "m") + " overhead per task)")
     }
     else {
       logInfo("Configuring job (" + name + ") with " + (executors + 1) + " workers (1 driver, " + executors +
-          " executors)  with " +
-          cores + " cores each and " + SparkUtils.kbtohuman(memoryKb, "m") +
-          " total memory, " + SparkUtils.kbtohuman(executorMemKb + (actualoverhead * 1024), "m") +
-          " per worker (" + SparkUtils.kbtohuman(executorMemKb, "m") + " + " +
-          SparkUtils.kbtohuman(actualoverhead * 1024, "m") + " overhead per task)")
+              " executors)  with " +
+              cores + " cores each and " + SparkUtils.kbtohuman(memoryKb, "m") +
+              " total memory, " + SparkUtils.kbtohuman(executorMemKb + (actualoverhead * 1024), "m") +
+              " per worker (" + SparkUtils.kbtohuman(executorMemKb, "m") + " + " +
+              SparkUtils.kbtohuman(actualoverhead * 1024, "m") + " overhead per task)")
       println("Configuring job (" + name + ") with " + (executors + 1) + " workers (1 driver, " + executors +
-          " executors)  with " +
-          cores + " cores each and " + SparkUtils.kbtohuman(memoryKb, "m") +
-          " total memory, " + SparkUtils.kbtohuman(executorMemKb + (actualoverhead * 1024), "m") +
-          " per worker (" + SparkUtils.kbtohuman(executorMemKb, "m") + " + " +
-          SparkUtils.kbtohuman(actualoverhead * 1024, "m") + " overhead per task)")
+              " executors)  with " +
+              cores + " cores each and " + SparkUtils.kbtohuman(memoryKb, "m") +
+              " total memory, " + SparkUtils.kbtohuman(executorMemKb + (actualoverhead * 1024), "m") +
+              " per worker (" + SparkUtils.kbtohuman(executorMemKb, "m") + " + " +
+              SparkUtils.kbtohuman(actualoverhead * 1024, "m") + " overhead per task)")
     }
   }
 
-  private def adjustYarnParameters(origCores: Int, origExecutors: Int, origMemory: Long, totalMemory: Long): (Int, Int, Int) = {
+
+  // taken from Spark:Utils (private methods)
+
+  @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
+  private def parse(opts:Seq[String]):Unit = opts match {
+    case ("--name") :: value :: tail =>
+      name = value
+      parse(tail)
+
+    case ("--cluster") :: value :: tail =>
+      value match {
+        case "yarn" => useYarn()
+        case "debug" => useDebug()
+        case "local" => useLocal()
+        case _ => cluster = value
+      }
+      parse(tail)
+
+    case ("--driver") :: value :: tail =>
+      driverClass = value
+      parse(tail)
+
+    case ("--jars") :: value :: tail =>
+      jars = resolveURIs(value)
+      parse(tail)
+
+    case ("--driverjar") :: value :: tail =>
+      driverJar = FileUtils.resolveURI(value)
+      parse(tail)
+
+    case ("--verbose" | "-v") :: tail =>
+      verbose = true
+      parse(tail)
+
+    case ("--cores" | "--executor-cores") :: value :: tail =>
+      cores = value.toInt
+      parse(tail)
+
+    case ("--executors" | "--num-executors") :: value :: tail =>
+      executors = value.toInt
+      parse(tail)
+
+    case ("--memory | --executor-memory") :: value :: tail =>
+      memoryKb = value.toInt
+      parse(tail)
+
+    case key :: value :: tail =>
+      if (key.startsWith("--")) {
+        if (value.startsWith("--")) {
+          // The key is an on/off switch because the value is not really
+          // a value, so continue parsing with the value
+          setSetting(key.substring(2), null)
+          parse(value :: tail)
+        }
+        else {
+          setSetting(key.substring(2), value)
+          parse(tail)
+        }
+      }
+      else {
+        throw new Exception("Invalid switch " + key + ": must start with --")
+      }
+
+    case key :: Nil =>
+      if (key.startsWith("--")) {
+        setSetting(key.substring(2), null)
+      }
+      else {
+        throw new Exception("Invalid switch " + key + ": must start with --")
+      }
+
+    case Nil =>
+  }
+
+  private def setupMemory():Unit = {
+    val maxMem = Runtime.getRuntime.maxMemory()
+    if (maxMem != Long.MaxValue) {
+      val mem = (maxMem * 0.95).round
+      memoryKb = mem / 1024 // memory is in bytes, convert to kb
+      logInfo("Setting max memory to: " + Memory.format(mem))
+    }
+  }
+
+  /** Resolve a comma-separated list of paths. */
+  private def resolveURIs(paths:String, testWindows:Boolean = false):Array[String] = {
+    if (paths == null || paths.trim.isEmpty) {
+      null
+    }
+    else {
+      paths.split(",").map { p => FileUtils.resolveURI(p) }
+    }
+  }
+
+  private def adjustYarnParameters(origCores:Int, origExecutors:Int, origMemory:Long,
+                                   totalMemory:Long):(Int, Int, Int) = {
     val sparkConf = SparkUtils.getConfiguration
     val hadoopConf = HadoopUtils.createConfiguration()
 
@@ -443,9 +440,9 @@ class JobArguments() extends Logging {
       YarnConfiguration.DEFAULT_RM_SCHEDULER_MAXIMUM_ALLOCATION_VCORES)
 
     println("Adjusting job parameters - original values: " + origExecutors + " executors (workers) " +
-        origCores + " cores/worker " + origMemory +  "m  memory/worker " +  totalMemory + "m  total memory")
+            origCores + " cores/worker " + origMemory + "m  memory/worker " + totalMemory + "m  total memory")
     logInfo("Adjusting job parameters - original values: " + origExecutors + " executors (workers) " +
-        origCores + " cores/worker " + origMemory +  "m  memory/worker " +  totalMemory + "m  total memory")
+            origCores + " cores/worker " + origMemory + "m  memory/worker " + totalMemory + "m  total memory")
 
     var mem = Math.min(Math.max(origMemory, minmemory), maxmemory)
     var cores = Math.min(Math.max(origCores, mincores), maxcores)
@@ -455,7 +452,7 @@ class JobArguments() extends Logging {
     val coreratio = Math.max(origCores / cores.toDouble, 1.0)
 
     println("Adjusting job parameters - min/max values: cores: " + mincores + "/" + maxcores +
-        " memory: " + minmemory + "/" + maxmemory)
+            " memory: " + minmemory + "/" + maxmemory)
 
     if (memratio > coreratio) {
       cores = Math.max((origCores / memratio).toInt, 1)
@@ -476,8 +473,8 @@ class JobArguments() extends Logging {
     }
 
     println("Adjusting job parameters - adjusted to min/max values: " + executors + " executors (workers) " +
-        cores + " cores/worker " + mem +  "m  memory/worker " +
-        " mem ratio: " + memratio + " core ratio: " + coreratio)
+            cores + " cores/worker " + mem + "m  memory/worker " +
+            " mem ratio: " + memratio + " core ratio: " + coreratio)
 
     (cores, executors, mem.toInt)
 
@@ -521,7 +518,7 @@ class JobArguments() extends Logging {
       }
       catch {
         // YarnClient was here in older versions of YARN
-        case cnfe: ClassNotFoundException =>
+        case cnfe:ClassNotFoundException =>
           cl.loadClass("org.apache.hadoop.yarn.client.YarnClient")
         case t:Throwable => throw t
       }
@@ -568,8 +565,8 @@ class JobArguments() extends Logging {
 
 }
 
-object JobArguments{
-  def main(args: Array[String]): Unit = {
+object JobArguments {
+  def main(args:Array[String]):Unit = {
     LoggingUtils.setDefaultLogLevel(LoggingUtils.INFO)
     val ja = new JobArguments()
     ja.loadYarnSettings()

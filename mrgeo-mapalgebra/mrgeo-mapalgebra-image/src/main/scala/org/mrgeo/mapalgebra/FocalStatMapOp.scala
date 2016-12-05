@@ -14,89 +14,41 @@ import org.mrgeo.utils.tms.TMSUtils
 
 object FocalStatMapOp extends MapOpRegistrar {
 
-  val Count: String = "count"
-  val Max: String = "max"
-  val Min: String = "min"
-  val Mean: String = "mean"
-  val Median: String = "median"
-  val Range: String = "range"
-  val StdDev: String = "stddev"
-  val Sum: String = "sum"
-  val Variance: String = "variance"
+  val Count:String = "count"
+  val Max:String = "max"
+  val Min:String = "min"
+  val Mean:String = "mean"
+  val Median:String = "median"
+  val Range:String = "range"
+  val StdDev:String = "stddev"
+  val Sum:String = "sum"
+  val Variance:String = "variance"
 
-  def create(raster:RasterMapOp, stat:String, neighborhoodSize:String, ignoreNoData: Boolean):MapOp =
+  def create(raster:RasterMapOp, stat:String, neighborhoodSize:String, ignoreNoData:Boolean):MapOp =
     new FocalStatMapOp(Some(raster), stat, neighborhoodSize, ignoreNoData)
 
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("focalstat")
   }
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new FocalStatMapOp(node, variables)
 }
 
 class FocalStatMapOp extends RawFocalMapOp with Externalizable {
-  private var stat: String = null
-  private var neighborhoodSize: String = null
-  private var neighborhoodPixels: Int = 0
-  private var ignoreNoData: Boolean = false
-  private var outputTileType: Option[Int] = None
-  private var outputNoDatas: Option[Array[Double]] = None
-  private var neighborhoodValues: Array[Double] = null
+  private var stat:String = null
+  private var neighborhoodSize:String = null
+  private var neighborhoodPixels:Int = 0
+  private var ignoreNoData:Boolean = false
+  private var outputTileType:Option[Int] = None
+  private var outputNoDatas:Option[Array[Double]] = None
+  private var neighborhoodValues:Array[Double] = null
 
-  private[mapalgebra] def this(raster:Option[RasterMapOp], stat:String, neighborhoodSize: String,
-                               ignoreNoData: Boolean) = {
-    this()
-    inputMapOp = raster
-    this.stat = stat
-    init
-  }
-
-  private[mapalgebra] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
-    this()
-
-    if (node.getNumChildren != 4) {
-      throw new ParserException("Usage: focalStat(<stat>, <raster>, <neighborhood size>, <ignoreNoData>)")
-    }
-
-    stat = MapOp.decodeString(node.getChild(0), variables) match  {
-      case Some(s) => s.toLowerCase
-      case _ => throw new ParserException("Error decoding string for stat")
-    }
-
-    inputMapOp = RasterMapOp.decodeToRaster(node.getChild(1), variables)
-
-    MapOp.decodeString(node.getChild(2), variables) match {
-      case Some(s) => neighborhoodSize = s
-      case _ => throw new ParserException("Error decoding string for neighborhood size")
-    }
-    MapOp.decodeBoolean(node.getChild(3), variables) match {
-      case Some(b) => ignoreNoData = b
-      case _ => throw new ParserException("Error decoding boolean for ignoreNoData")
-    }
-    init
-  }
-
-  private def init: Unit = {
-    stat.toLowerCase match {
-      case FocalStatMapOp.Count =>
-      case FocalStatMapOp.Max =>
-      case FocalStatMapOp.Min =>
-      case FocalStatMapOp.Mean =>
-      case FocalStatMapOp.Median =>
-      case FocalStatMapOp.Range =>
-      case FocalStatMapOp.StdDev =>
-      case FocalStatMapOp.Sum =>
-      case FocalStatMapOp.Variance =>
-      case _ => throw new ParserException("Bad focalStat stat: " + stat)
-    }
-  }
-
-  override def registerClasses(): Array[Class[_]] = {
+  override def registerClasses():Array[Class[_]] = {
     Array[Class[_]](classOf[Array[Float]])
   }
 
-  def isNodata(noDataValue: Double, value:Double):Boolean = {
+  def isNodata(noDataValue:Double, value:Double):Boolean = {
     if (noDataValue.isNaN) {
       value.isNaN
     }
@@ -105,7 +57,7 @@ class FocalStatMapOp extends RawFocalMapOp with Externalizable {
     }
   }
 
-  override def beforeExecute(meta: MrsPyramidMetadata): Unit = {
+  override def beforeExecute(meta:MrsPyramidMetadata):Unit = {
     // Make sure that neighborhood values is re-initialized at the start of map op execution
     neighborhoodValues = null
     neighborhoodPixels = neighborhoodSize match {
@@ -116,7 +68,8 @@ class FocalStatMapOp extends RawFocalMapOp with Externalizable {
         val metersPerPixel = degPerPixel * LatLng.METERS_PER_DEGREE
         (sizeInMeters / metersPerPixel).ceil.toInt
       }
-      case _ => throw new IllegalArgumentException("Invalid value for neighborhood size. Must specifiy either meters (e.g. 300m) or pixels (e.g. 10p)")
+      case _ => throw new IllegalArgumentException(
+        "Invalid value for neighborhood size. Must specifiy either meters (e.g. 300m) or pixels (e.g. 10p)")
     }
     stat.toLowerCase match {
       case FocalStatMapOp.Count =>
@@ -133,39 +86,25 @@ class FocalStatMapOp extends RawFocalMapOp with Externalizable {
     }
   }
 
-  override def getNeighborhoodInfo: (Int, Int) = {
+  override def getNeighborhoodInfo:(Int, Int) = {
     (this.neighborhoodPixels, this.neighborhoodPixels)
   }
 
-  override protected def getOutputTileType: Int = {
-    outputTileType match {
-      case Some(tt) => tt
-      case None => throw new IllegalStateException("The output tile type has not been set")
-    }
-  }
-
-  override protected def getOutputNoData: Array[Double] = {
-    outputNoDatas match {
-      case Some(nodatas) => nodatas
-      case None => throw new IllegalStateException("The output nodata values have not been set")
-    }
-  }
-
-  override def computePixelValue(raster: MrGeoRaster, notnodata: MrGeoRaster,
-                                 outNoData: Double, rasterWidth: Int,
-                                 processX: Int, processY: Int, processBand: Int,
-                                 xLeftOffset: Int, neighborhoodWidth: Int,
-                                 yAboveOffset: Int, neighborhoodHeight: Int, tileId: Long): Double = {
-    var x: Int = processX - xLeftOffset
+  override def computePixelValue(raster:MrGeoRaster, notnodata:MrGeoRaster,
+                                 outNoData:Double, rasterWidth:Int,
+                                 processX:Int, processY:Int, processBand:Int,
+                                 xLeftOffset:Int, neighborhoodWidth:Int,
+                                 yAboveOffset:Int, neighborhoodHeight:Int, tileId:Long):Double = {
+    var x:Int = processX - xLeftOffset
     val maxX = x + neighborhoodWidth
-    var y: Int = processY - yAboveOffset
+    var y:Int = processY - yAboveOffset
     val maxY = y + neighborhoodHeight
-    val processPixel: Double = raster.getPixelDouble(processX, processY, processBand)
-    var sum: Double = 0.0
+    val processPixel:Double = raster.getPixelDouble(processX, processY, processBand)
+    var sum:Double = 0.0
     if (neighborhoodValues == null) {
       neighborhoodValues = Array.ofDim[Double](neighborhoodWidth * neighborhoodHeight)
     }
-    var neighborhoodValueIndex: Int = 0
+    var neighborhoodValueIndex:Int = 0
     while (y < maxY) {
       x = processX - xLeftOffset
       while (x < maxX) {
@@ -196,72 +135,9 @@ class FocalStatMapOp extends RawFocalMapOp with Externalizable {
     }
   }
 
-  private def computeMax(values: Array[Double], maxIndex: Int): Double = {
-    var maxValue: Double = values(0)
-    var index: Int = 1
-    while (index < maxIndex) {
-      maxValue = maxValue.max(values(index))
-      index += 1
-    }
-    maxValue
-  }
-
-  private def computeMin(values: Array[Double], maxIndex: Int): Double = {
-    var minValue: Double = values(0)
-    var index: Int = 1
-    while (index < maxIndex) {
-      minValue = minValue.min(values(index))
-      index += 1
-    }
-    minValue
-  }
-
-  private def computeMedian(values: Array[Double], maxIndex: Int): Double = {
-    // Set the end of the array that we're not interested in to the max double value
-    // so they are sorted at the end. We don't want these values to be considered.
-    var index = maxIndex
-    while (index < values.length) {
-      values(index) = Double.MaxValue
-      index += 1
-    }
-    val sortedValues = values.sorted
-    if ((maxIndex & 1) == 1) {
-      // Odd number of elements, return the one right in the middle
-      sortedValues((maxIndex / 2).toInt)
-    }
-    else {
-      // Even number of elements, return the average of the two in the middle
-      val midIndex = (maxIndex / 2).toInt
-      (sortedValues(midIndex) + sortedValues(midIndex - 1)) / 2.0
-    }
-  }
-
-  private def computeRange(values: Array[Double], maxIndex: Int): Double = {
-    var minValue: Double = values(0)
-    var maxValue: Double = minValue
-    var index: Int = 1
-    while (index < maxIndex) {
-      val v = values(index)
-      minValue = minValue.min(v)
-      maxValue = maxValue.max(v)
-      index += 1
-    }
-    maxValue - minValue
-  }
-
-  private def computeSum(values: Array[Double], maxIndex: Int): Double = {
-    var sumValue: Double = 0.0
-    var index: Int = 0
-    while (index < maxIndex) {
-      sumValue += values(index)
-      index += 1
-    }
-    sumValue
-  }
-
   // The following was adapted from http://www.johndcook.com/blog/standard_deviation/ which in
   // turn came from Donald Knuth’s Art of Computer Programming, Vol 2, page 232, 3rd edition
-  def computeStat(values: Array[Double], maxIndex: Int, stat: String): Double = {
+  def computeStat(values:Array[Double], maxIndex:Int, stat:String):Double = {
     if (maxIndex <= 0 || values.length <= 0) {
       throw new IllegalArgumentException("computeStat expects at least one input value")
     }
@@ -269,8 +145,8 @@ class FocalStatMapOp extends RawFocalMapOp with Externalizable {
     var oldM = values(0)
     var newM = values(0)
     var oldS = 0.0
-    var newS: Double = 0.0
-    var n: Int = 1
+    var newS:Double = 0.0
+    var n:Int = 1
     while (n < maxIndex) {
       val value = values(n)
       n += 1
@@ -285,7 +161,7 @@ class FocalStatMapOp extends RawFocalMapOp with Externalizable {
         math.sqrt(if (n > 1) {
           newS / (n - 1)
         }
-        else{
+        else {
           0.0
         })
       }
@@ -309,10 +185,11 @@ class FocalStatMapOp extends RawFocalMapOp with Externalizable {
     }
   }
 
-  override def setup(job: JobArguments, conf:SparkConf): Boolean = true
-  override def teardown(job: JobArguments, conf:SparkConf): Boolean = true
+  override def setup(job:JobArguments, conf:SparkConf):Boolean = true
 
-  override def readExternal(in: ObjectInput): Unit = {
+  override def teardown(job:JobArguments, conf:SparkConf):Boolean = true
+
+  override def readExternal(in:ObjectInput):Unit = {
     stat = in.readUTF()
     neighborhoodSize = in.readUTF()
     ignoreNoData = in.readBoolean()
@@ -349,7 +226,7 @@ class FocalStatMapOp extends RawFocalMapOp with Externalizable {
     }
   }
 
-  override def writeExternal(out: ObjectOutput): Unit = {
+  override def writeExternal(out:ObjectOutput):Unit = {
     out.writeUTF(stat)
     out.writeUTF(neighborhoodSize)
     out.writeBoolean(ignoreNoData)
@@ -380,5 +257,130 @@ class FocalStatMapOp extends RawFocalMapOp with Externalizable {
         out.writeDouble(v)
       }
     }
+  }
+
+  override protected def getOutputTileType:Int = {
+    outputTileType match {
+      case Some(tt) => tt
+      case None => throw new IllegalStateException("The output tile type has not been set")
+    }
+  }
+
+  override protected def getOutputNoData:Array[Double] = {
+    outputNoDatas match {
+      case Some(nodatas) => nodatas
+      case None => throw new IllegalStateException("The output nodata values have not been set")
+    }
+  }
+
+  private[mapalgebra] def this(raster:Option[RasterMapOp], stat:String, neighborhoodSize:String,
+                               ignoreNoData:Boolean) = {
+    this()
+    inputMapOp = raster
+    this.stat = stat
+    init
+  }
+
+  private[mapalgebra] def this(node:ParserNode, variables:String => Option[ParserNode]) = {
+    this()
+
+    if (node.getNumChildren != 4) {
+      throw new ParserException("Usage: focalStat(<stat>, <raster>, <neighborhood size>, <ignoreNoData>)")
+    }
+
+    stat = MapOp.decodeString(node.getChild(0), variables) match {
+      case Some(s) => s.toLowerCase
+      case _ => throw new ParserException("Error decoding string for stat")
+    }
+
+    inputMapOp = RasterMapOp.decodeToRaster(node.getChild(1), variables)
+
+    MapOp.decodeString(node.getChild(2), variables) match {
+      case Some(s) => neighborhoodSize = s
+      case _ => throw new ParserException("Error decoding string for neighborhood size")
+    }
+    MapOp.decodeBoolean(node.getChild(3), variables) match {
+      case Some(b) => ignoreNoData = b
+      case _ => throw new ParserException("Error decoding boolean for ignoreNoData")
+    }
+    init
+  }
+
+  private def init:Unit = {
+    stat.toLowerCase match {
+      case FocalStatMapOp.Count =>
+      case FocalStatMapOp.Max =>
+      case FocalStatMapOp.Min =>
+      case FocalStatMapOp.Mean =>
+      case FocalStatMapOp.Median =>
+      case FocalStatMapOp.Range =>
+      case FocalStatMapOp.StdDev =>
+      case FocalStatMapOp.Sum =>
+      case FocalStatMapOp.Variance =>
+      case _ => throw new ParserException("Bad focalStat stat: " + stat)
+    }
+  }
+
+  private def computeMax(values:Array[Double], maxIndex:Int):Double = {
+    var maxValue:Double = values(0)
+    var index:Int = 1
+    while (index < maxIndex) {
+      maxValue = maxValue.max(values(index))
+      index += 1
+    }
+    maxValue
+  }
+
+  private def computeMin(values:Array[Double], maxIndex:Int):Double = {
+    var minValue:Double = values(0)
+    var index:Int = 1
+    while (index < maxIndex) {
+      minValue = minValue.min(values(index))
+      index += 1
+    }
+    minValue
+  }
+
+  private def computeMedian(values:Array[Double], maxIndex:Int):Double = {
+    // Set the end of the array that we're not interested in to the max double value
+    // so they are sorted at the end. We don't want these values to be considered.
+    var index = maxIndex
+    while (index < values.length) {
+      values(index) = Double.MaxValue
+      index += 1
+    }
+    val sortedValues = values.sorted
+    if ((maxIndex & 1) == 1) {
+      // Odd number of elements, return the one right in the middle
+      sortedValues((maxIndex / 2).toInt)
+    }
+    else {
+      // Even number of elements, return the average of the two in the middle
+      val midIndex = (maxIndex / 2).toInt
+      (sortedValues(midIndex) + sortedValues(midIndex - 1)) / 2.0
+    }
+  }
+
+  private def computeRange(values:Array[Double], maxIndex:Int):Double = {
+    var minValue:Double = values(0)
+    var maxValue:Double = minValue
+    var index:Int = 1
+    while (index < maxIndex) {
+      val v = values(index)
+      minValue = minValue.min(v)
+      maxValue = maxValue.max(v)
+      index += 1
+    }
+    maxValue - minValue
+  }
+
+  private def computeSum(values:Array[Double], maxIndex:Int):Double = {
+    var sumValue:Double = 0.0
+    var index:Int = 0
+    while (index < maxIndex) {
+      sumValue += values(index)
+      index += 1
+    }
+    sumValue
   }
 }

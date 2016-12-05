@@ -18,26 +18,28 @@ package org.mrgeo.mapalgebra
 
 import javax.vecmath.Vector3d
 
-import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 
 object SlopeMapOp extends MapOpRegistrar {
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("slope")
   }
 
-  def create(raster:RasterMapOp, units:String="rad"):MapOp = {
+  def create(raster:RasterMapOp, units:String = "rad"):MapOp = {
     new SlopeMapOp(Some(raster), units)
   }
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new SlopeMapOp(node, variables)
 }
 
 class SlopeMapOp extends SlopeAspectMapOp {
-  val up = new Vector3d(0, 0, 1.0)  // z (up) direction
+  val up = new Vector3d(0, 0, 1.0) // z (up) direction
+
+  override def computeTheta(normal:(Double, Double, Double)):Double = {
+    Math.acos(up.dot(new Vector3d(normal._1, normal._2, normal._3)))
+  }
 
   private[mapalgebra] def this(inputMapOp:Option[RasterMapOp], units:String) = {
     this()
@@ -45,7 +47,7 @@ class SlopeMapOp extends SlopeAspectMapOp {
     initialize(inputMapOp, units)
   }
 
-  private[mapalgebra] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
+  private[mapalgebra] def this(node:ParserNode, variables:String => Option[ParserNode]) = {
     this()
 
     if (node.getNumChildren < 1) {
@@ -56,7 +58,7 @@ class SlopeMapOp extends SlopeAspectMapOp {
     }
 
     val inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
-    var units: String = "rad"
+    var units:String = "rad"
     if (node.getNumChildren >= 2) {
       units = MapOp.decodeString(node.getChild(1)) match {
         case Some(s) => s
@@ -64,9 +66,5 @@ class SlopeMapOp extends SlopeAspectMapOp {
       }
     }
     initialize(inputMapOp, units)
-  }
-
-  override def computeTheta(normal: (Double, Double, Double)): Double = {
-    Math.acos(up.dot(new Vector3d(normal._1, normal._2, normal._3)))
   }
 }

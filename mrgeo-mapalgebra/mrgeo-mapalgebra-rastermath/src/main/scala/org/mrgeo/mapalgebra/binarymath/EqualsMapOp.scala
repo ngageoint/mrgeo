@@ -23,44 +23,46 @@ import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object EqualsMapOp extends MapOpRegistrar {
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("==", "eq")
   }
+
   def create(raster:RasterMapOp, const:Double):MapOp = {
     new EqualsMapOp(Some(raster), Some(const))
   }
+
   def create(rasterA:RasterMapOp, rasterB:RasterMapOp):MapOp = {
     new EqualsMapOp(Some(rasterA), Some(rasterB))
   }
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new EqualsMapOp(node, variables)
 }
 
 class EqualsMapOp extends RawBinaryMathMapOp {
-  private[binarymath] def this(raster: Option[RasterMapOp], paramB:Option[Any]) = {
+  private[binarymath] def this(raster:Option[RasterMapOp], paramB:Option[Any]) = {
     this()
 
     varA = raster
 
     paramB match {
-    case Some(rasterB:RasterMapOp) => varB = Some(rasterB)
-    case Some(double:Double) => constB = Some(double)
-    case Some(int:Int) => constB = Some(int.toDouble)
-    case Some(long:Long) => constB = Some(long.toDouble)
-    case Some(float:Float) => constB = Some(float.toDouble)
-    case Some(short:Short) => constB = Some(short.toDouble)
-    case _ =>  throw new ParserException("Second term \"" + paramB + "\" is not a raster or constant")
+      case Some(rasterB:RasterMapOp) => varB = Some(rasterB)
+      case Some(double:Double) => constB = Some(double)
+      case Some(int:Int) => constB = Some(int.toDouble)
+      case Some(long:Long) => constB = Some(long.toDouble)
+      case Some(float:Float) => constB = Some(float.toDouble)
+      case Some(short:Short) => constB = Some(short.toDouble)
+      case _ => throw new ParserException("Second term \"" + paramB + "\" is not a raster or constant")
     }
   }
 
-  private[binarymath] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
+  private[binarymath] def this(node:ParserNode, variables:String => Option[ParserNode]) = {
     this()
 
     initialize(node, variables)
   }
 
-  override private[binarymath] def function(a: Double, b: Double): Double = {
+  override private[binarymath] def function(a:Double, b:Double):Double = {
     val v = a - b
     if (v >= -RasterMapOp.EPSILON && v <= RasterMapOp.EPSILON) {
       1
@@ -70,7 +72,12 @@ class EqualsMapOp extends RawBinaryMathMapOp {
     }
   }
 
-  override private[binarymath] def datatype():Int = { DataBuffer.TYPE_BYTE }
-  override private[binarymath] def nodata():Double = { 255 }
+  override private[binarymath] def datatype():Int = {
+    DataBuffer.TYPE_BYTE
+  }
+
+  override private[binarymath] def nodata():Double = {
+    255
+  }
 
 }

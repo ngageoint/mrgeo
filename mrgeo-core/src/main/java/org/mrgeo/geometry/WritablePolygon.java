@@ -18,13 +18,13 @@ package org.mrgeo.geometry;
 
 /**
  * @author jason.surratt
- * 
  */
 public interface WritablePolygon extends Polygon, WritableGeometry
 {
-  void setExteriorRing(LinearRing ring);
-  void addInteriorRing(LinearRing ring);
-  
-  void fromJTS(com.vividsolutions.jts.geom.Polygon jtsPolygon);
+void setExteriorRing(LinearRing ring);
+
+void addInteriorRing(LinearRing ring);
+
+void fromJTS(com.vividsolutions.jts.geom.Polygon jtsPolygon);
 
 }

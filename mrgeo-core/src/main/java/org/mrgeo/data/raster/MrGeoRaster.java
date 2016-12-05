@@ -12,7 +12,6 @@ import org.mrgeo.utils.FloatUtils;
 import org.mrgeo.utils.GDALUtils;
 import org.mrgeo.utils.tms.Bounds;
 
-import java.awt.*;
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
@@ -22,7 +21,8 @@ import java.nio.*;
 
 public abstract class MrGeoRaster implements Serializable
 {
-final static int HEADER_LEN = 12;       // data offset: byte (VERSION) + int (width) + int (height) + short (bands) + byte (datatype)
+final static int HEADER_LEN = 12;
+// data offset: byte (VERSION) + int (width) + int (height) + short (bands) + byte (datatype)
 private final static int VERSION_OFFSET = 0;    // start
 private final static int WIDTH_OFFSET = 1;      // byte (VERSION)
 private final static int HEIGHT_OFFSET = 5;     // byte (VERSION) + int (width)
@@ -36,23 +36,6 @@ private final int bands;
 private final int datatype;
 private final int dataoffset;
 private final int bandoffset;
-
-public static class MrGeoRasterException extends IOException
-{
-  private static final long serialVersionUID = 1L;
-
-  private final Exception origException;
-  MrGeoRasterException(final String msg)
-  {
-    this.origException = new Exception(msg);
-  }
-
-  @Override
-  public void printStackTrace()
-  {
-    origException.printStackTrace();
-  }
-}
 
 MrGeoRaster(int width, int height, int bands, int datatype, byte[] data, int dataoffset)
 {
@@ -147,7 +130,8 @@ public static MrGeoRaster createRaster(int width, int height, int bands, int dat
 
 public static MrGeoRaster fromRaster(Raster raster) throws IOException
 {
-  MrGeoRaster mrgeo = MrGeoRaster.createEmptyRaster(raster.getWidth(), raster.getHeight(), raster.getNumBands(), raster.getTransferType());
+  MrGeoRaster mrgeo = MrGeoRaster
+      .createEmptyRaster(raster.getWidth(), raster.getHeight(), raster.getNumBands(), raster.getTransferType());
 
   for (int b = 0; b < raster.getNumBands(); b++)
   {
@@ -158,14 +142,14 @@ public static MrGeoRaster fromRaster(Raster raster) throws IOException
         switch (mrgeo.datatype())
         {
         case DataBuffer.TYPE_BYTE:
-          mrgeo.setPixel(x, y, b, (byte)raster.getSample(x, y, b));
+          mrgeo.setPixel(x, y, b, (byte) raster.getSample(x, y, b));
           break;
         case DataBuffer.TYPE_INT:
           mrgeo.setPixel(x, y, b, raster.getSample(x, y, b));
           break;
         case DataBuffer.TYPE_SHORT:
         case DataBuffer.TYPE_USHORT:
-          mrgeo.setPixel(x, y, b, (short)raster.getSample(x, y, b));
+          mrgeo.setPixel(x, y, b, (short) raster.getSample(x, y, b));
           break;
         case DataBuffer.TYPE_FLOAT:
           mrgeo.setPixel(x, y, b, raster.getSampleFloat(x, y, b));
@@ -188,7 +172,8 @@ public static MrGeoRaster fromDataset(Dataset dataset) throws MrGeoRasterExcepti
   return fromDataset(dataset, 0, 0, dataset.GetRasterXSize(), dataset.GetRasterYSize());
 }
 
-public static MrGeoRaster fromDataset(final Dataset dataset, final int x, final int y, final int width, final int height)
+public static MrGeoRaster fromDataset(final Dataset dataset, final int x, final int y, final int width,
+    final int height)
     throws MrGeoRasterException
 {
   int gdaltype = dataset.GetRasterBand(1).getDataType();
@@ -227,8 +212,9 @@ static int writeHeader(final int width, final int height, final int bands, final
   return HEADER_LEN;
 }
 
-static int[] readHeader(byte[] data) {
-  return new int[] {
+static int[] readHeader(byte[] data)
+{
+  return new int[]{
       ByteArrayUtils.getByte(data, VERSION_OFFSET),
       ByteArrayUtils.getInt(data, WIDTH_OFFSET),
       ByteArrayUtils.getInt(data, HEIGHT_OFFSET),
@@ -324,11 +310,6 @@ final public int datatype()
   return datatype;
 }
 
-final byte[] data()
-{
-  return data;
-}
-
 final public int dataoffset()
 {
   return dataoffset;
@@ -339,7 +320,10 @@ final public int datasize()
   return data.length - dataoffset;
 }
 
-final public int datalength() { return data.length; }
+final public int datalength()
+{
+  return data.length;
+}
 
 final public MrGeoRaster clip(int x, int y, int width, int height) throws MrGeoRasterException
 {
@@ -605,7 +589,7 @@ final public MrGeoRaster reduce(final int xfactor, final int yfactor, Aggregator
             }
           }
 
-          byte bytesample = aggregator.aggregate(bytesamples, (byte)nodatas[b]);
+          byte bytesample = aggregator.aggregate(bytesamples, (byte) nodatas[b]);
           child.setPixel(x / xfactor, y / yfactor, b, bytesample);
           break;
 
@@ -619,7 +603,7 @@ final public MrGeoRaster reduce(final int xfactor, final int yfactor, Aggregator
             }
           }
 
-          short shortsample = aggregator.aggregate(shortsamples, (short)nodatas[b]);
+          short shortsample = aggregator.aggregate(shortsamples, (short) nodatas[b]);
           child.setPixel(x / xfactor, y / yfactor, b, shortsample);
           break;
         case DataBuffer.TYPE_USHORT:
@@ -631,7 +615,7 @@ final public MrGeoRaster reduce(final int xfactor, final int yfactor, Aggregator
             }
           }
 
-          int ushortsample = aggregator.aggregate(shortsamples, (short)nodatas[b]);
+          int ushortsample = aggregator.aggregate(shortsamples, (short) nodatas[b]);
           child.setPixel(x / xfactor, y / yfactor, b, ushortsample);
           break;
         case DataBuffer.TYPE_INT:
@@ -643,7 +627,7 @@ final public MrGeoRaster reduce(final int xfactor, final int yfactor, Aggregator
             }
           }
 
-          int intSample = aggregator.aggregate(intsamples, (int)nodatas[b]);
+          int intSample = aggregator.aggregate(intsamples, (int) nodatas[b]);
           child.setPixel(x / xfactor, y / yfactor, b, intSample);
           break;
         case DataBuffer.TYPE_FLOAT:
@@ -655,7 +639,7 @@ final public MrGeoRaster reduce(final int xfactor, final int yfactor, Aggregator
             }
           }
 
-          float floatsample = aggregator.aggregate(floatsamples, (float)nodatas[b]);
+          float floatsample = aggregator.aggregate(floatsamples, (float) nodatas[b]);
           child.setPixel(x / xfactor, y / yfactor, b, floatsample);
           break;
         case DataBuffer.TYPE_DOUBLE:
@@ -694,7 +678,7 @@ final public void mosaic(MrGeoRaster other, double[] nodata)
         case DataBuffer.TYPE_BYTE:
         {
           final byte p = other.getPixelByte(x, y, b);
-          if (getPixelByte(x, y, b) == (byte)nodata[b])
+          if (getPixelByte(x, y, b) == (byte) nodata[b])
           {
             setPixel(x, y, b, p);
           }
@@ -703,7 +687,7 @@ final public void mosaic(MrGeoRaster other, double[] nodata)
         case DataBuffer.TYPE_FLOAT:
         {
           final float p = other.getPixelFloat(x, y, b);
-          if (FloatUtils.isNotNodata(p, (float)nodata[b]))
+          if (FloatUtils.isNotNodata(p, (float) nodata[b]))
           {
             setPixel(x, y, b, p);
           }
@@ -723,7 +707,7 @@ final public void mosaic(MrGeoRaster other, double[] nodata)
         case DataBuffer.TYPE_INT:
         {
           final int p = other.getPixelInt(x, y, b);
-          if (getPixelInt(x, y, b) == (int)nodata[b])
+          if (getPixelInt(x, y, b) == (int) nodata[b])
           {
             setPixel(x, y, b, p);
           }
@@ -733,7 +717,7 @@ final public void mosaic(MrGeoRaster other, double[] nodata)
         case DataBuffer.TYPE_SHORT:
         {
           final short p = other.getPixelShort(x, y, b);
-          if (getPixelShort(x, y, b) == (short)nodata[b])
+          if (getPixelShort(x, y, b) == (short) nodata[b])
           {
             setPixel(x, y, b, p);
           }
@@ -743,7 +727,7 @@ final public void mosaic(MrGeoRaster other, double[] nodata)
         case DataBuffer.TYPE_USHORT:
         {
           final int p = other.getPixeUShort(x, y, b);
-          if (getPixeUShort(x, y, b) == (short)nodata[b])
+          if (getPixeUShort(x, y, b) == (short) nodata[b])
           {
             setPixel(x, y, b, p);
           }
@@ -768,7 +752,8 @@ final public Dataset toDataset(final Bounds bounds, final double[] nodatas)
   Dataset ds = GDALUtils.createEmptyMemoryRaster(width, height, bands, gdaltype, nodatas);
 
   double[] xform = new double[6];
-  if (bounds != null) {
+  if (bounds != null)
+  {
 
     xform[0] = bounds.w;
     xform[1] = bounds.width() / width;
@@ -807,7 +792,7 @@ final public Dataset toDataset(final Bounds bounds, final double[] nodatas)
       }
     }
 
-    System.arraycopy(this.data ,calculateByteOffset(0, 0, b), banddata, 0, banddata.length);
+    System.arraycopy(this.data, calculateByteOffset(0, 0, b), banddata, 0, banddata.length);
     int success = band.WriteRaster(0, 0, width, height, width, height, gdaltype, banddata);
     if (success != gdalconstConstants.CE_None)
     {
@@ -822,7 +807,7 @@ final public Dataset toDataset(final Bounds bounds, final double[] nodatas)
 final public Raster toRaster()
 {
   WritableRaster raster = RasterUtils.createEmptyRaster(width, height, bands, datatype);
-  
+
   final ByteBuffer rasterBuffer = ByteBuffer.wrap(data);
   rasterBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
@@ -894,20 +879,32 @@ final public Raster toRaster()
   return raster;
 }
 
-
 public abstract byte getPixelByte(int x, int y, int band);
+
 public abstract short getPixelShort(int x, int y, int band);
+
 public abstract short getPixeUShort(int x, int y, int band);
+
 public abstract int getPixelInt(int x, int y, int band);
+
 public abstract float getPixelFloat(int x, int y, int band);
+
 public abstract double getPixelDouble(int x, int y, int band);
 
 public abstract void setPixel(int x, int y, int band, byte pixel);
+
 public abstract void setPixel(int x, int y, int band, short pixel);
+
 public abstract void setPixel(int x, int y, int band, int pixel);
+
 public abstract void setPixel(int x, int y, int band, float pixel);
+
 public abstract void setPixel(int x, int y, int band, double pixel);
 
+final byte[] data()
+{
+  return data;
+}
 
 final int calculateByteOffset(final int x, final int y, final int band)
 {
@@ -919,9 +916,9 @@ final int[] calculateByteRangeOffset(final int startx, final int starty, final i
   final int bpp = bytesPerPixel();
   final int bandoffset = band * this.bandoffset;
 
-  return new int[] {
+  return new int[]{
       ((starty * width + startx) + bandoffset) * bpp + dataoffset,
-      ((endy   * width + endx)   + bandoffset) * bpp + dataoffset};
+      ((endy * width + endx) + bandoffset) * bpp + dataoffset};
 }
 
 final int[] calculateByteRangeOffset(final int startx, final int starty, final int startband,
@@ -929,13 +926,30 @@ final int[] calculateByteRangeOffset(final int startx, final int starty, final i
 {
   final int bpp = bytesPerPixel();
 
-  return new int[] {
+  return new int[]{
       ((starty * width + startx) + (startband * bandoffset)) * bpp + dataoffset,
-      ((endy   * width + endx)   + (endband * bandoffset)) * bpp + dataoffset};
+      ((endy * width + endx) + (endband * bandoffset)) * bpp + dataoffset};
 }
 
 abstract int bytesPerPixel();
 
+public static class MrGeoRasterException extends IOException
+{
+  private static final long serialVersionUID = 1L;
+
+  private final Exception origException;
+
+  MrGeoRasterException(final String msg)
+  {
+    this.origException = new Exception(msg);
+  }
+
+  @Override
+  public void printStackTrace()
+  {
+    origException.printStackTrace();
+  }
+}
 
 
 }

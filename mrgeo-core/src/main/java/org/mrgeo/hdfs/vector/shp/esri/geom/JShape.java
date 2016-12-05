@@ -38,9 +38,28 @@ public final static byte POLYLINEZ = 13;
 public final static byte READY = 1; // the shape is ready (no topological
 // errors)
 public final static byte SELECTED = 4; // the shape is selected and ready
-static final long serialVersionUID = 1L;
 // status flags
 public final static byte UNKNOWN = 0;
+static final long serialVersionUID = 1L;
+@SuppressWarnings("rawtypes")
+protected transient List data; // data list
+protected JExtent extent; // the extent of the shape
+protected int id; // shape id
+protected byte status; // status flag
+// class vars
+protected byte type; // shape type
+
+/**
+ * Creates new JShape
+ */
+public JShape(byte type)
+{
+  this.type = type;
+  extent = null;
+  id = 0;
+  status = UNKNOWN;
+  data = null;
+}
 
 public static String getTypeLiteral(byte type)
 {
@@ -66,25 +85,6 @@ public static String getTypeLiteral(byte type)
 }
 
 @SuppressWarnings("rawtypes")
-protected transient List data; // data list
-protected JExtent extent; // the extent of the shape
-protected int id; // shape id
-protected byte status; // status flag
-
-// class vars
-protected byte type; // shape type
-
-/** Creates new JShape */
-public JShape(byte type)
-{
-  this.type = type;
-  extent = null;
-  id = 0;
-  status = UNKNOWN;
-  data = null;
-}
-
-@SuppressWarnings("rawtypes")
 public void addData(List v)
 {
   addData(v, false);
@@ -94,7 +94,9 @@ public void addData(List v)
 public void addData(List v, boolean clear)
 {
   if (v == null)
+  {
     return;
+  }
   if (data == null)
   {
     data = new ArrayList(v.size());
@@ -102,7 +104,9 @@ public void addData(List v, boolean clear)
   else
   {
     if (clear)
+    {
       data.clear();
+    }
   }
   for (int i = 0; i < v.size(); i++)
   {
@@ -121,9 +125,13 @@ public void addData(List v, boolean clear)
 public void addData(Serializable obj)
 {
   if (obj == null)
+  {
     return;
+  }
   if (data == null)
+  {
     data = new ArrayList(1);
+  }
   data.add(obj);
 }
 
@@ -143,7 +151,9 @@ public void clrData()
 public void debug()
 {
   if (extent != null)
+  {
     System.out.println("Extent: " + extent.toString());
+  }
 }
 
 @SuppressWarnings("rawtypes")
@@ -170,9 +180,19 @@ public JExtent getExtent()
   return extent;
 }
 
+protected final void setExtent(JExtent extent)
+{
+  this.extent = extent;
+}
+
 public final int getId()
 {
   return id;
+}
+
+public final void setId(int id)
+{
+  this.id = id;
 }
 
 public abstract int getRecordLength();
@@ -195,8 +215,28 @@ public boolean intersects(JExtent other)
 public boolean isSelected()
 {
   if (status == SELECTED)
+  {
     return true;
+  }
   return false;
+}
+
+public void setSelected(boolean flag)
+{
+  if (flag)
+  {
+    if (status == READY)
+    {
+      status = SELECTED;
+    }
+  }
+  else
+  {
+    if (status == SELECTED)
+    {
+      status = READY;
+    }
+  }
 }
 
 public void remData(int i)
@@ -212,9 +252,13 @@ public void remData(Serializable obj)
 public void setData(Serializable obj, int i)
 {
   if (obj == null)
+  {
     return;
+  }
   if (data == null)
+  {
     return;
+  }
   data.set(i, obj);
 }
 
@@ -222,30 +266,6 @@ public void setData(Serializable obj, int i)
 public void setDataReference(List data)
 {
   this.data = data;
-}
-
-protected final void setExtent(JExtent extent)
-{
-  this.extent = extent;
-}
-
-public final void setId(int id)
-{
-  this.id = id;
-}
-
-public void setSelected(boolean flag)
-{
-  if (flag)
-  {
-    if (status == READY)
-      status = SELECTED;
-  }
-  else
-  {
-    if (status == SELECTED)
-      status = READY;
-  }
 }
 
 @Override

@@ -22,14 +22,12 @@ import org.apache.hadoop.fs.Path;
 import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
-import org.mrgeo.aggregators.*;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.MrGeo;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.utils.SparkUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +60,6 @@ public static Options createOptions()
 }
 
 
-
 @Override
 @SuppressWarnings("squid:S1166") // Exception caught and error message printed
 public int run(String[] args, final Configuration conf,
@@ -78,7 +75,10 @@ public int run(String[] args, final Configuration conf,
   try
   {
     //if no arguments, print help
-    if (args.length == 0) throw new ParseException(null);
+    if (args.length == 0)
+    {
+      throw new ParseException(null);
+    }
     CommandLineParser parser = new PosixParser();
     line = parser.parse(options, args);
   }
@@ -95,7 +95,7 @@ public int run(String[] args, final Configuration conf,
   }
 
   String input = null;
-  for (String arg: line.getArgs())
+  for (String arg : line.getArgs())
   {
     input = arg;
   }
@@ -114,7 +114,8 @@ public int run(String[] args, final Configuration conf,
       {
         DataProviderFactory.getMrsImageDataProvider(input, DataProviderFactory.AccessMode.READ, providerProperties);
       }
-      catch (DataProviderNotFound e) {
+      catch (DataProviderNotFound e)
+      {
         log.error(input + " is not an image");
         return -1;
       }
@@ -122,7 +123,8 @@ public int run(String[] args, final Configuration conf,
       try
       {
         int numQuantiles = Integer.parseInt(line.getOptionValue("numQuantiles"));
-        if (line.hasOption("fraction")) {
+        if (line.hasOption("fraction"))
+        {
           float fraction = Float.parseFloat(line.getOptionValue("fraction"));
           if (!org.mrgeo.quantiles.Quantiles.compute(input, outputPath.toString(),
               numQuantiles, fraction, conf, providerProperties))
@@ -132,7 +134,8 @@ public int run(String[] args, final Configuration conf,
           }
           printResults(outputPath, conf);
         }
-        else {
+        else
+        {
           if (!org.mrgeo.quantiles.Quantiles.compute(input, outputPath.toString(),
               numQuantiles, conf, providerProperties))
           {
@@ -142,7 +145,8 @@ public int run(String[] args, final Configuration conf,
           printResults(outputPath, conf);
         }
       }
-      finally {
+      finally
+      {
         HadoopFileUtils.delete(conf, outputPath);
       }
     }
@@ -174,14 +178,17 @@ private void printResults(Path outputPath, Configuration conf) throws IOExceptio
 {
   InputStream is = HadoopFileUtils.open(conf, outputPath);
   BufferedReader br = new BufferedReader(new InputStreamReader(is));
-  try {
+  try
+  {
     String line = br.readLine();
-    while (line != null) {
+    while (line != null)
+    {
       System.out.println(line);
       line = br.readLine();
     }
   }
-  finally {
+  finally
+  {
     br.close();
   }
 }

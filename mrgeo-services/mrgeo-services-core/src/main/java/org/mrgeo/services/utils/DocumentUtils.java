@@ -44,85 +44,87 @@ import java.io.PrintWriter;
  */
 public class DocumentUtils
 {
-  private static final Logger log = LoggerFactory.getLogger(DocumentUtils.class);
+private static final Logger log = LoggerFactory.getLogger(DocumentUtils.class);
 
-  /**
-   * Writes the XML document response to the output
-   * @param doc XML document
-   * @param version WMS version
-   * @param out output writer
-   * @throws TransformerException
-   */
-  public static void writeDocument(Document doc, Version version, String service, PrintWriter out)
+/**
+ * Writes the XML document response to the output
+ *
+ * @param doc     XML document
+ * @param version WMS version
+ * @param out     output writer
+ * @throws TransformerException
+ */
+public static void writeDocument(Document doc, Version version, String service, PrintWriter out)
     throws TransformerException
-  {
-    TransformerFactory transformerFactory = TransformerFactory.newInstance();
-    Transformer transformer = transformerFactory.newTransformer();
-    transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+{
+  TransformerFactory transformerFactory = TransformerFactory.newInstance();
+  Transformer transformer = transformerFactory.newTransformer();
+  transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 //    transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, String.format(
 //      "http://schemas.opengis.net/%s/%s/%sAll.xsd", service, service, version.toString()));
-    DOMSource source = new DOMSource(doc);
-    StreamResult result = new StreamResult(out);
-    transformer.transform(source, result);
-  }
+  DOMSource source = new DOMSource(doc);
+  StreamResult result = new StreamResult(out);
+  transformer.transform(source, result);
+}
 
-  /**
-   * Checks the provided document against the 1.1.1 DTD
-   * @param doc XML document
-   * @param version WMS version
-   * @throws SAXException
-   * @throws IOException
-   * @throws TransformerException
-   * @throws ParserConfigurationException
-   */
-  public static void checkForErrors(Document doc, String service, Version version) throws SAXException, IOException,
+/**
+ * Checks the provided document against the 1.1.1 DTD
+ *
+ * @param doc     XML document
+ * @param version WMS version
+ * @throws SAXException
+ * @throws IOException
+ * @throws TransformerException
+ * @throws ParserConfigurationException
+ */
+public static void checkForErrors(Document doc, String service, Version version) throws SAXException, IOException,
     TransformerException, ParserConfigurationException
+{
+  ByteArrayOutputStream strm = new ByteArrayOutputStream();
+  PrintWriter pw = new PrintWriter(strm);
+  DocumentUtils.writeDocument(doc, version, service, pw);
+
+  DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+  factory.setValidating(true);
+  factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+  DocumentBuilder builder = factory.newDocumentBuilder();
+  builder.setErrorHandler(new ErrorHandler()
   {
-    ByteArrayOutputStream strm = new ByteArrayOutputStream();
-    PrintWriter pw = new PrintWriter(strm);
-    DocumentUtils.writeDocument(doc, version, service, pw);
-
-    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-    factory.setValidating(true);
-    factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-    DocumentBuilder builder = factory.newDocumentBuilder();
-    builder.setErrorHandler(new ErrorHandler()
+    // Validation errors
+    @Override
+    public void error(SAXParseException ex) throws SAXParseException
     {
-      // Validation errors
-      @Override
-      public void error(SAXParseException ex) throws SAXParseException
-      {
-        log.error("Error at " + ex.getLineNumber() + " line.");
-        log.error(ex.getMessage());
-      }
+      log.error("Error at " + ex.getLineNumber() + " line.");
+      log.error(ex.getMessage());
+    }
 
-      // Ignore the fatal errors
-      @Override
-      public void fatalError(SAXParseException ex) throws SAXException
-      {
-        log.error("Fatal Error at " + ex.getLineNumber() + " line.");
-        log.error(ex.getMessage());
-      }
+    // Ignore the fatal errors
+    @Override
+    public void fatalError(SAXParseException ex) throws SAXException
+    {
+      log.error("Fatal Error at " + ex.getLineNumber() + " line.");
+      log.error(ex.getMessage());
+    }
 
-      // Show warnings
-      @Override
-      public void warning(SAXParseException ex) throws SAXParseException
-      {
-        log.warn("Warning at " + ex.getLineNumber() + " line.");
-        log.warn(ex.getMessage());
-      }
-    });
+    // Show warnings
+    @Override
+    public void warning(SAXParseException ex) throws SAXParseException
+    {
+      log.warn("Warning at " + ex.getLineNumber() + " line.");
+      log.warn(ex.getMessage());
+    }
+  });
 
-    ByteArrayInputStream input = new ByteArrayInputStream(strm.toByteArray());
+  ByteArrayInputStream input = new ByteArrayInputStream(strm.toByteArray());
 
-    Document xmlDocument = builder.parse(input);
-    DOMSource source = new DOMSource(xmlDocument);
-    StreamResult result = new StreamResult(new ByteArrayOutputStream());
-    TransformerFactory tf = TransformerFactory.newInstance();
-    Transformer transformer = tf.newTransformer();
-    //TODO: should version be dynamic here?
-    transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, String.format(
-        "http://schemas.opengis.net/%s/%s/%sAll.xsd", service, service, version.toString()));
-    transformer.transform(source, result);
-  }
+  Document xmlDocument = builder.parse(input);
+  DOMSource source = new DOMSource(xmlDocument);
+  StreamResult result = new StreamResult(new ByteArrayOutputStream());
+  TransformerFactory tf = TransformerFactory.newInstance();
+  Transformer transformer = tf.newTransformer();
+  //TODO: should version be dynamic here?
+  transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, String.format(
+      "http://schemas.opengis.net/%s/%s/%sAll.xsd", service, service, version.toString()));
+  transformer.transform(source, result);
+}
 }

@@ -43,48 +43,26 @@ import java.util.Properties;
  */
 public class ShowConfiguration extends Command
 {
+private static final Logger log = LoggerFactory.getLogger(ShowConfiguration.class);
 private FileSystem fs = null;
-private Properties props = null;
 
 //private Connector conn = null;
-
-private static final Logger log = LoggerFactory.getLogger(ShowConfiguration.class);
-
-
-private void initialize(Configuration conf)
-{
-  try
-  {
-    fs = FileSystem.get(conf);
-    //fs = HadoopFileUtils.getFileSystem();
-  }
-  catch (IOException e)
-  {
-    log.error("Exception thrown", e);
-    System.out.println("Hadoop file system not available.");
-  }
-  props = MrGeoProperties.getInstance();
-
-} // end initialize
-
+private Properties props = null;
 
 public boolean isHadoopAvailable()
 {
   return fs != null;
 } // end isHadoopAvailable
 
-
 public String reportOS()
 {
   return "Operating system is " + System.getProperty("os.name");
 } // end reportOS
 
-
 public String reportUser()
 {
   return "User is " + System.getProperty("user.name");
 } // end reportUser
-
 
 @SuppressWarnings("squid:S1166") // Exceptions caught and errors printed
 public String reportMrGeoSettingsProperties()
@@ -172,22 +150,6 @@ public String reportMrGeoConfInfo()
 
   return sb.toString();
 } // end getMrGeoConfInfo
-
-@SuppressWarnings("squid:S1166") // Exception caught and handled
-private boolean isMrGeoConfAvailable()
-{
-
-  try
-  {
-    MrGeoProperties.findMrGeoConf();
-    return true;
-  }
-  catch (IOException ignored)
-  {
-  }
-
-  return false;
-} // end isMrGeoConfAvailable
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled
 public boolean existsInHDFS(String p)
@@ -299,8 +261,6 @@ public String reportJobJar()
   return sb.toString();
 } // end reportJobJar
 
-
-
 public String buildReport()
 {
   StringBuffer sb = new StringBuffer();
@@ -344,12 +304,11 @@ public String buildReport()
   // if Accumulo is in the configuration - check on Accumulo
 //    if(isAccumuloUsed()){
 //      sb.append(reportAccumulo());
-//      
+//
 //    }
 
   return sb.toString();
 } // end buildReport
-
 
 @Override
 public int run(String[] args, Configuration conf, ProviderProperties providerProperties)
@@ -358,5 +317,37 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
   System.out.println(buildReport());
   return 0;
 }
+
+private void initialize(Configuration conf)
+{
+  try
+  {
+    fs = FileSystem.get(conf);
+    //fs = HadoopFileUtils.getFileSystem();
+  }
+  catch (IOException e)
+  {
+    log.error("Exception thrown", e);
+    System.out.println("Hadoop file system not available.");
+  }
+  props = MrGeoProperties.getInstance();
+
+} // end initialize
+
+@SuppressWarnings("squid:S1166") // Exception caught and handled
+private boolean isMrGeoConfAvailable()
+{
+
+  try
+  {
+    MrGeoProperties.findMrGeoConf();
+    return true;
+  }
+  catch (IOException ignored)
+  {
+  }
+
+  return false;
+} // end isMrGeoConfAvailable
 
 } // end ShowConfiguration

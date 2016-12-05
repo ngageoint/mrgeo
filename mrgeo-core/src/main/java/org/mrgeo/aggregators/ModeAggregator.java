@@ -35,22 +35,25 @@ public class ModeAggregator implements Aggregator
 @Override
 public double aggregate(double[] values, double nodata)
 {
-  HashMap<Double,Integer> freqs = new HashMap<Double,Integer>();
+  HashMap<Double, Integer> freqs = new HashMap<Double, Integer>();
 
-  for (double val : values) {
+  for (double val : values)
+  {
     if (FloatUtils.isNotNodata(val, nodata))
     {
       Integer freq = freqs.get(val);
-      freqs.put(val, (freq == null ? 1 : freq+1));
+      freqs.put(val, (freq == null ? 1 : freq + 1));
     }
   }
 
   double mode = nodata;
   int maxFreq = 0;
 
-  for (Map.Entry<Double,Integer> entry : freqs.entrySet()) {
+  for (Map.Entry<Double, Integer> entry : freqs.entrySet())
+  {
     int freq = entry.getValue();
-    if (freq > maxFreq) {
+    if (freq > maxFreq)
+    {
       maxFreq = freq;
       mode = entry.getKey();
     }
@@ -62,22 +65,25 @@ public double aggregate(double[] values, double nodata)
 @Override
 public float aggregate(float[] values, float nodata)
 {
-  HashMap<Float,Integer> freqs = new HashMap<Float,Integer>();
+  HashMap<Float, Integer> freqs = new HashMap<Float, Integer>();
 
-  for (float val : values) {
+  for (float val : values)
+  {
     if (FloatUtils.isNotNodata(val, nodata))
     {
       Integer freq = freqs.get(val);
-      freqs.put(val, (freq == null ? 1 : freq+1));
+      freqs.put(val, (freq == null ? 1 : freq + 1));
     }
   }
 
   float mode = nodata;
   int maxFreq = 0;
 
-  for (Map.Entry<Float,Integer> entry : freqs.entrySet()) {
+  for (Map.Entry<Float, Integer> entry : freqs.entrySet())
+  {
     int freq = entry.getValue();
-    if (freq > maxFreq) {
+    if (freq > maxFreq)
+    {
       maxFreq = freq;
       mode = entry.getKey();
     }
@@ -89,22 +95,25 @@ public float aggregate(float[] values, float nodata)
 @Override
 public int aggregate(int[] values, int nodata)
 {
-  HashMap<Integer,Integer> freqs = new HashMap<Integer,Integer>();
+  HashMap<Integer, Integer> freqs = new HashMap<Integer, Integer>();
 
-  for (int val : values) {
+  for (int val : values)
+  {
     if (val != nodata)
     {
       Integer freq = freqs.get(val);
-      freqs.put(val, (freq == null ? 1 : freq+1));
+      freqs.put(val, (freq == null ? 1 : freq + 1));
     }
   }
 
   int mode = nodata;
   int maxFreq = 0;
 
-  for (Map.Entry<Integer,Integer> entry : freqs.entrySet()) {
+  for (Map.Entry<Integer, Integer> entry : freqs.entrySet())
+  {
     int freq = entry.getValue();
-    if (freq > maxFreq) {
+    if (freq > maxFreq)
+    {
       maxFreq = freq;
       mode = entry.getKey();
     }
@@ -116,22 +125,25 @@ public int aggregate(int[] values, int nodata)
 @Override
 public short aggregate(short[] values, short nodata)
 {
-  HashMap<Short,Integer> freqs = new HashMap<>();
+  HashMap<Short, Integer> freqs = new HashMap<>();
 
-  for (short val : values) {
+  for (short val : values)
+  {
     if (val != nodata)
     {
       Integer freq = freqs.get(val);
-      freqs.put(val, (freq == null ? 1 : freq+1));
+      freqs.put(val, (freq == null ? 1 : freq + 1));
     }
   }
 
   short mode = nodata;
   int maxFreq = 0;
 
-  for (Map.Entry<Short,Integer> entry : freqs.entrySet()) {
+  for (Map.Entry<Short, Integer> entry : freqs.entrySet())
+  {
     int freq = entry.getValue();
-    if (freq > maxFreq) {
+    if (freq > maxFreq)
+    {
       maxFreq = freq;
       mode = entry.getKey();
     }
@@ -143,22 +155,25 @@ public short aggregate(short[] values, short nodata)
 @Override
 public byte aggregate(byte[] values, byte nodata)
 {
-  HashMap<Byte,Integer> freqs = new HashMap<>();
+  HashMap<Byte, Integer> freqs = new HashMap<>();
 
-  for (byte val : values) {
+  for (byte val : values)
+  {
     if (val != nodata)
     {
       Integer freq = freqs.get(val);
-      freqs.put(val, (freq == null ? 1 : freq+1));
+      freqs.put(val, (freq == null ? 1 : freq + 1));
     }
   }
 
   byte mode = nodata;
   int maxFreq = 0;
 
-  for (Map.Entry<Byte,Integer> entry : freqs.entrySet()) {
+  for (Map.Entry<Byte, Integer> entry : freqs.entrySet())
+  {
     int freq = entry.getValue();
-    if (freq > maxFreq) {
+    if (freq > maxFreq)
+    {
       maxFreq = freq;
       mode = entry.getKey();
     }
@@ -168,13 +183,13 @@ public byte aggregate(byte[] values, byte nodata)
 }
 
 @Override
-public double aggregate(double[][]values, double weightx, double weighty, double nodata)
+public double aggregate(double[][] values, double weightx, double weighty, double nodata)
 {
   throw new NotImplementedException("Not yet implemented");
 }
 
 @Override
-public float aggregate(float[][]values, double weightx, double weighty, float nodata)
+public float aggregate(float[][] values, double weightx, double weighty, float nodata)
 {
   throw new NotImplementedException("Not yet implemented");
 }
