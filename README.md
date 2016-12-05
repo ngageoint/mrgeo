@@ -1,7 +1,7 @@
-||Apache|||||
-|:---|:---:|:---:|:---:|:---:|:---:|
-|**Version**|2.4.0|2.4.1|2.5.2|2.6.0|2.7.1|
-|**Status**|[![Build Status](https://jenkins.dgis-dev.com/buildStatus/icon?job=mrgeo-opensource-apache240)](https://jenkins.dgis-dev.com/job/mrgeo-opensource-apache240)|[![Build Status](https://jenkins.dgis-dev.com/buildStatus/icon?job=mrgeo-opensource-apache241)](https://jenkins.dgis-dev.com/job/mrgeo-opensource-apache241)|[![Build Status](https://jenkins.dgis-dev.com/buildStatus/icon?job=mrgeo-opensource-apache252)](https://jenkins.dgis-dev.com/job/mrgeo-opensource-apache252)|[![Build Status](https://jenkins.dgis-dev.com/buildStatus/icon?job=mrgeo-opensource-apache260)](https://jenkins.dgis-dev.com/job/mrgeo-opensource-apache260)|[![Build Status](https://jenkins.dgis-dev.com/buildStatus/icon?job=mrgeo-opensource-apache271)](https://jenkins.dgis-dev.com/job/mrgeo-opensource-apache271)
+||Apache||
+|:---|:---:|:---:|
+|**Version**|2.6.0|2.7.1|
+|**Status**|[![Build Status](https://jenkins.dgis-dev.com/buildStatus/icon?job=mrgeo-opensource-apache260)](https://jenkins.dgis-dev.com/job/mrgeo-opensource-apache260)|[![Build Status](https://jenkins.dgis-dev.com/buildStatus/icon?job=mrgeo-opensource-apache271)](https://jenkins.dgis-dev.com/job/mrgeo-opensource-apache271)
 
 ||CDH|||
 |:---|:---:|:---:|:---:|
