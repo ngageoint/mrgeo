@@ -92,4 +92,4 @@ mrgeo-core/src/main/scripts/WpsTools.pyc
 mrgeo-python/pyspark
 
 # jenkinsfile test
-Jenkinsfile
+*Jenkinsfile
