@@ -43,6 +43,7 @@ import org.joda.time.format.ISODateTimeFormat;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.vector.*;
 import org.mrgeo.geometry.Geometry;
 import org.opengis.filter.Filter;
 import org.slf4j.Logger;
@@ -50,6 +51,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class GeoWaveVectorDataProvider extends VectorDataProvider
