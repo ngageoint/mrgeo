@@ -18,7 +18,6 @@ package org.mrgeo.resources.serviceproviders;
 
 import org.mrgeo.services.version.VersionService;
 
-import javax.ws.rs.core.Context;
 import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Provider;
 
@@ -30,7 +29,7 @@ import javax.ws.rs.ext.Provider;
 public class VersionServiceProvider implements
     ContextResolver<VersionService>
 {
-    private static final VersionService instance = new VersionService();
+private static final VersionService instance = new VersionService();
 
 @Override
 public VersionService getContext(Class<?> type)

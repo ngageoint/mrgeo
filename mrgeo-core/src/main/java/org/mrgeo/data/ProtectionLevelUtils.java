@@ -24,38 +24,15 @@ import java.util.Properties;
 
 public class ProtectionLevelUtils
 {
-public static class ProtectionLevelException extends IOException
-{
-  private static final long serialVersionUID = 1L;
-
-  public ProtectionLevelException()
-  {
-    super();
-  }
-  public ProtectionLevelException(final String msg)
-  {
-    super(msg);
-  }
-  public ProtectionLevelException(final String msg, final Throwable cause)
-  {
-    super(msg, cause);
-  }
-  public ProtectionLevelException(final Throwable cause)
-  {
-    super(cause);
-  }
-}
-
 /**
  * If the passed protection level is null or empty, then check to see
  * if MrGeo is configured to require a protection level. If so, return
  * the configured default protection level if it is non-null and non-empty.
  * Otherwise, throw an exception indicating that the required protection
  * level is missing.
- *
+ * <p>
  * If the passed protection level is null or empty, and MrGeo is configured
  * such that protection level is not required, then return a blank string.
- *
  */
 public static String getAndValidateProtectionLevel(final ProtectionLevelValidator validator,
     final String protectionLevel) throws ProtectionLevelException
@@ -92,5 +69,30 @@ public static String getAndValidateProtectionLevel(final ProtectionLevelValidato
     }
   }
   return actualProtectionLevel;
+}
+
+public static class ProtectionLevelException extends IOException
+{
+  private static final long serialVersionUID = 1L;
+
+  public ProtectionLevelException()
+  {
+    super();
+  }
+
+  public ProtectionLevelException(final String msg)
+  {
+    super(msg);
+  }
+
+  public ProtectionLevelException(final String msg, final Throwable cause)
+  {
+    super(msg, cause);
+  }
+
+  public ProtectionLevelException(final Throwable cause)
+  {
+    super(cause);
+  }
 }
 }

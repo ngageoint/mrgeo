@@ -29,8 +29,8 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
-import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.image.ImageInputFormatContext;
+import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 import org.mrgeo.utils.tms.TMSUtils;
@@ -53,15 +53,133 @@ import java.util.Map.Entry;
 public class AccumuloMrsPyramidInputFormat extends InputFormatBase<TileIdWritable, RasterWritable>
 {
 
+// logger for the class
+private static final Logger log = LoggerFactory.getLogger(AccumuloMrsPyramidInputFormat.class);
 // table to use as input
 private String input;
-
 // the zoom level to be used
 private int inputZoom;
 
-// logger for the class
-private static final Logger log = LoggerFactory.getLogger(AccumuloMrsPyramidInputFormat.class);
+public static RecordReader<TileIdWritable, RasterWritable> makeRecordReader()
+{
+  return new RecordReaderBase<TileIdWritable, RasterWritable>()
+  {
 
+    @Override
+    public void initialize(InputSplit inSplit, TaskAttemptContext attempt) throws IOException
+    {
+
+//        RangeInputSplit ris = (RangeInputSplit) ((TiledInputSplit)inSplit).getWrappedSplit();
+//
+//        log.info("initializing with instance of " + ris.getInstanceName());
+//        log.info("initializing with auths of " + ris.getAuths().toString());
+//
+//        super.initialize(((TiledInputSplit)inSplit).getWrappedSplit(), attempt);
+
+      log.info("initializing input splits of type " + inSplit.getClass().getCanonicalName());
+      String[] locs;
+      try
+      {
+        locs = inSplit.getLocations();
+        for (int x = 0; x < locs.length; x++)
+        {
+          log.info("location " + x + " -> " + locs[x]);
+        }
+      }
+      catch (InterruptedException ie)
+      {
+        log.error("Exception thrown", ie);
+        return;
+      }
+      if (inSplit instanceof TiledInputSplit)
+      {
+
+        // deal with this
+        org.apache.accumulo.core.client.mapreduce.RangeInputSplit ris =
+            new org.apache.accumulo.core.client.mapreduce.RangeInputSplit();
+        InputSplit inS = ((TiledInputSplit) inSplit).getWrappedSplit();
+        log.info("input split class: " + inS.getClass().getCanonicalName());
+        long startId = ((TiledInputSplit) inSplit).getStartTileId();
+        long endId = ((TiledInputSplit) inSplit).getEndTileId();
+        Key startKey = AccumuloUtils.toKey(startId);
+        Key endKey = AccumuloUtils.toKey(endId);
+        int zoomL = ((TiledInputSplit) inSplit).getZoomLevel();
+        Range r = new Range(startKey, endKey);
+
+
+        log.info("Zoom Level = " + zoomL);
+        log.info("Range " + startId + " to " + endId);
+
+        try
+        {
+          locs = inS.getLocations();
+          for (int x = 0; x < locs.length; x++)
+          {
+            log.info("split " + x + " -> " + locs[x]);
+          }
+          ris.setRange(r);
+          ris.setLocations(locs);
+          ris.setTableName(((org.apache.accumulo.core.client.mapreduce.RangeInputSplit) inS).getTableName());
+          ris.setTableId(((org.apache.accumulo.core.client.mapreduce.RangeInputSplit) inS).getTableId());
+
+          // there can be more added here
+
+        }
+        catch (InterruptedException ie)
+        {
+          throw new RuntimeErrorException(new Error(ie.getMessage()));
+        }
+        log.info("table " + ris.getTableName() + " is offline: " + ris.isOffline());
+        super.initialize(ris, attempt);
+
+        //super.initialize(((TiledInputSplit) inSplit).getWrappedSplit(), attempt);
+
+      }
+      else
+      {
+        super.initialize(inSplit, attempt);
+      }
+
+
+    } // end initialize
+
+    @Override
+    public void close()
+    {
+      log.info("Record Reader closing!");
+    }
+
+    @Override
+    public boolean nextKeyValue() throws IOException, InterruptedException
+    {
+      if (scannerIterator.hasNext())
+      {
+        ++numKeysRead;
+        Entry<Key, Value> entry = scannerIterator.next();
+        // transform key and value
+        long id = AccumuloUtils.toLong(entry.getKey().getRow());
+        currentKey = entry.getKey();
+        //currentValue = entry.getValue();
+
+        log.info("Processing " + id + " -> " + entry.getValue().getSize());
+
+        currentK = new TileIdWritable(id);
+        DataInputBuffer dib = new DataInputBuffer();
+        byte[] data = entry.getValue().get();
+        dib.reset(data, data.length);
+
+        currentV = new RasterWritable();
+        currentV.readFields(dib);
+
+        //log.info("current key = " + id);
+//          if (log.isTraceEnabled())
+//            log.trace("Processing key/value pair: " + DefaultFormatter.formatEntry(entry, true));
+        return true;
+      }
+      return false;
+    }
+  }; //end RecordReaderBase
+}
 
 /**
  * getSplits will retrieve all the splits for a job given a zoom level.
@@ -161,7 +279,6 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
 
 } // end getSplits
 
-
 /**
  * createRecordReader will create a RecordReader that will be used in a map reduce job.  This
  * will transform the key from Accumulo to a TileIdWritable.
@@ -202,9 +319,9 @@ public RecordReader<TileIdWritable, RasterWritable> createRecordReader(InputSpli
 //    	      // Should never happen
 //    	      super.initialize(split, context);
 //    	    }
-//    	  } 
-//    	
-//    	
+//    	  }
+//
+//
 //    	@Override
 //      public boolean nextKeyValue() throws IOException, InterruptedException {
 //        if (scannerIterator.hasNext()) {
@@ -226,128 +343,6 @@ public RecordReader<TileIdWritable, RasterWritable> createRecordReader(InputSpli
 //    }; //end RecordReaderBase
 
 } // end RecordReader
-
-
-public static RecordReader<TileIdWritable, RasterWritable> makeRecordReader()
-{
-  return new RecordReaderBase<TileIdWritable, RasterWritable>()
-  {
-
-    @Override
-    public void initialize(InputSplit inSplit, TaskAttemptContext attempt) throws IOException
-    {
-
-//        RangeInputSplit ris = (RangeInputSplit) ((TiledInputSplit)inSplit).getWrappedSplit();
-//
-//        log.info("initializing with instance of " + ris.getInstanceName());
-//        log.info("initializing with auths of " + ris.getAuths().toString());
-//        
-//        super.initialize(((TiledInputSplit)inSplit).getWrappedSplit(), attempt);
-
-      log.info("initializing input splits of type " + inSplit.getClass().getCanonicalName());
-      String[] locs;
-      try
-      {
-        locs = inSplit.getLocations();
-        for (int x = 0; x < locs.length; x++)
-        {
-          log.info("location " + x + " -> " + locs[x]);
-        }
-      }
-      catch (InterruptedException ie)
-      {
-        log.error("Exception thrown {}", ie);
-        return;
-      }
-      if (inSplit instanceof TiledInputSplit)
-      {
-
-        // deal with this
-        org.apache.accumulo.core.client.mapreduce.RangeInputSplit ris =
-            new org.apache.accumulo.core.client.mapreduce.RangeInputSplit();
-        InputSplit inS = ((TiledInputSplit) inSplit).getWrappedSplit();
-        log.info("input split class: " + inS.getClass().getCanonicalName());
-        long startId = ((TiledInputSplit) inSplit).getStartTileId();
-        long endId = ((TiledInputSplit) inSplit).getEndTileId();
-        Key startKey = AccumuloUtils.toKey(startId);
-        Key endKey = AccumuloUtils.toKey(endId);
-        int zoomL = ((TiledInputSplit) inSplit).getZoomLevel();
-        Range r = new Range(startKey, endKey);
-
-
-        log.info("Zoom Level = " + zoomL);
-        log.info("Range " + startId + " to " + endId);
-
-        try
-        {
-          locs = inS.getLocations();
-          for (int x = 0; x < locs.length; x++)
-          {
-            log.info("split " + x + " -> " + locs[x]);
-          }
-          ris.setRange(r);
-          ris.setLocations(locs);
-          ris.setTableName(((org.apache.accumulo.core.client.mapreduce.RangeInputSplit) inS).getTableName());
-          ris.setTableId(((org.apache.accumulo.core.client.mapreduce.RangeInputSplit) inS).getTableId());
-
-          // there can be more added here
-
-        }
-        catch (InterruptedException ie)
-        {
-          throw new RuntimeErrorException(new Error(ie.getMessage()));
-        }
-        log.info("table " + ris.getTableName() + " is offline: " + ris.isOffline());
-        super.initialize(ris, attempt);
-
-        //super.initialize(((TiledInputSplit) inSplit).getWrappedSplit(), attempt);
-
-      }
-      else
-      {
-        super.initialize(inSplit, attempt);
-      }
-
-
-    } // end initialize
-
-    @Override
-    public void close()
-    {
-      log.info("Record Reader closing!");
-    }
-
-    @Override
-    public boolean nextKeyValue() throws IOException, InterruptedException
-    {
-      if (scannerIterator.hasNext())
-      {
-        ++numKeysRead;
-        Entry<Key, Value> entry = scannerIterator.next();
-        // transform key and value
-        long id = AccumuloUtils.toLong(entry.getKey().getRow());
-        currentKey = entry.getKey();
-        //currentValue = entry.getValue();
-
-        log.info("Processing " + id + " -> " + entry.getValue().getSize());
-
-        currentK = new TileIdWritable(id);
-        DataInputBuffer dib = new DataInputBuffer();
-        byte[] data = entry.getValue().get();
-        dib.reset(data, data.length);
-
-        currentV = new RasterWritable();
-        currentV.readFields(dib);
-
-        //log.info("current key = " + id);
-//          if (log.isTraceEnabled())
-//            log.trace("Processing key/value pair: " + DefaultFormatter.formatEntry(entry, true));
-        return true;
-      }
-      return false;
-    }
-  }; //end RecordReaderBase
-}
 
 
 } // end AccumuloMrsPyramidRecordReader

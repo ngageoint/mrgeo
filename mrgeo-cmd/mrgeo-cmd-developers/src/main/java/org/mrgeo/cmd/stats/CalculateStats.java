@@ -17,37 +17,12 @@
 package org.mrgeo.cmd.stats;
 
 import org.apache.commons.cli.*;
-import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.permission.FsPermission;
-import org.joda.time.format.DateTimeFormat;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.MrGeo;
-import org.mrgeo.data.DataProviderFactory;
-import org.mrgeo.data.DataProviderFactory.AccessMode;
-import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.data.image.MrsImageReader;
-import org.mrgeo.data.image.MrsPyramidReaderContext;
-import org.mrgeo.data.rdd.RasterRDD;
-import org.mrgeo.image.ImageStats;
-import org.mrgeo.image.MrsPyramid;
-import org.mrgeo.image.MrsPyramidMetadata;
-import org.mrgeo.utils.LongRectangle;
-import org.mrgeo.utils.SparkUtils;
-import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.awt.image.DataBuffer;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
-import java.text.DecimalFormat;
 
 public class CalculateStats extends Command
 {
@@ -107,7 +82,7 @@ public int run(final String[] args, final Configuration conf,
   }
   catch (Exception e)
   {
-    log.error("Exception Thrown {}", e);
+    log.error("Exception thrown", e);
   }
 
   return -1;

@@ -27,43 +27,29 @@ import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
-import org.mrgeo.utils.MrGeoImplicits._
-import org.mrgeo.utils.tms.{Bounds, TMSUtils}
 import org.mrgeo.utils.SparkUtils
+import org.mrgeo.utils.tms.{Bounds, TMSUtils}
 
 object IsNodataMapOp extends MapOpRegistrar {
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("isNodata", "isNull")
   }
+
   def create(raster:RasterMapOp):MapOp =
     new IsNodataMapOp(Some(raster))
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new IsNodataMapOp(node, variables)
 }
 
 class IsNodataMapOp extends RawUnaryMathMapOp {
 
-  private[unarymath] def this(raster: Option[RasterMapOp]) = {
-    this()
-    input = raster
-  }
-
-  private[unarymath] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
-    this()
-
-    initialize(node, variables)
-  }
-
-  protected def getOutputBounds(inputMetadata: MrsPyramidMetadata): Bounds = {
-    inputMetadata.getBounds
-  }
-
   // Unfortunately, the logic for isnodata uses nodata values, so we can't use the generic RawUnary execute
-  override def execute(context: SparkContext): Boolean = {
+  override def execute(context:SparkContext):Boolean = {
 
     // our metadata is the same as the raster
-    val meta = input.get.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
+    val meta = input.get.metadata() getOrElse
+               (throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
 
     val rdd = input.get.rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + input.getClass.getName))
 
@@ -90,11 +76,11 @@ class IsNodataMapOp extends RawUnaryMathMapOp {
           val output = MrGeoRaster.createEmptyRaster(raster.width(), raster.height(), raster.bands(),
             DataBuffer.TYPE_BYTE, 0)
 
-          var y: Int = 0
-          while (y <  raster.height()) {
-            var x: Int = 0
+          var y:Int = 0
+          while (y < raster.height()) {
+            var x:Int = 0
             while (x < raster.width()) {
-              var b: Int = 0
+              var b:Int = 0
               while (b < raster.bands()) {
                 val v = raster.getPixelDouble(x, y, b)
                 if (RasterMapOp.isNodata(v, nodatas(b))) {
@@ -120,6 +106,22 @@ class IsNodataMapOp extends RawUnaryMathMapOp {
     true
   }
 
+  protected def getOutputBounds(inputMetadata:MrsPyramidMetadata):Bounds = {
+    inputMetadata.getBounds
+  }
 
-  override private[unarymath] def function(a: Double): Double = { Double.NaN }
+  private[unarymath] def this(raster:Option[RasterMapOp]) = {
+    this()
+    input = raster
+  }
+
+  private[unarymath] def this(node:ParserNode, variables:String => Option[ParserNode]) = {
+    this()
+
+    initialize(node, variables)
+  }
+
+  override private[unarymath] def function(a:Double):Double = {
+    Double.NaN
+  }
 }

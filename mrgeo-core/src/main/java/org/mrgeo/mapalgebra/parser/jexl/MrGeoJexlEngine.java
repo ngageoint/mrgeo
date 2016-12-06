@@ -22,21 +22,21 @@ import org.apache.commons.jexl2.parser.ASTJexlScript;
 
 public class MrGeoJexlEngine extends JexlEngine
 {
-  private ASTJexlScript script;
+private ASTJexlScript script;
 
-  public MrGeoJexlEngine()
-  {
-  }
+public MrGeoJexlEngine()
+{
+}
 
-  @Override
-  protected ASTJexlScript parse(CharSequence expression, JexlInfo info, Scope frame)
-  {
-    script = super.parse(expression, info, frame);
-    return script;
-  }
+public ASTJexlScript getScript()
+{
+  return script;
+}
 
-  public ASTJexlScript getScript()
-  {
-    return script;
-  }
+@Override
+protected ASTJexlScript parse(CharSequence expression, JexlInfo info, Scope frame)
+{
+  script = super.parse(expression, info, frame);
+  return script;
+}
 }

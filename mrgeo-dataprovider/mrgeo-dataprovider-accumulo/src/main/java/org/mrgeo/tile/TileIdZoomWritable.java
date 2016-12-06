@@ -28,96 +28,98 @@ public class TileIdZoomWritable extends TileIdWritable
 {
 private static final long serialVersionUID = 1L;
 
-  private int zoom = -1;
+private int zoom = -1;
 
-  public TileIdZoomWritable()
+public TileIdZoomWritable()
+{
+}
+
+public TileIdZoomWritable(final long value)
+{
+  super(value);
+}
+
+public TileIdZoomWritable(final long value, final int zoom)
+{
+  super(value);
+  this.zoom = zoom;
+}
+
+public TileIdZoomWritable(final TileIdWritable writable)
+{
+  super(writable);
+}
+
+public TileIdZoomWritable(final TileIdZoomWritable writable)
+{
+  super(writable);
+  this.zoom = writable.zoom;
+}
+
+public int compareTo(final LongWritable o)
+{
+  if (o instanceof TileIdZoomWritable)
   {
+    return compareTo((TileIdZoomWritable) o);
   }
+  return super.compareTo(o);
+}
 
-  public TileIdZoomWritable(final long value)
+/**
+ * Compares two TileIdZoomWritable.
+ */
+public int compareTo(final TileIdZoomWritable o)
+{
+  if (this.zoom < o.zoom)
   {
-    super(value);
+    return -1;
   }
-
-  public TileIdZoomWritable(final long value, final int zoom)
+  else if (this.zoom > o.zoom)
   {
-    super(value);
-    this.zoom = zoom;
+    return 1;
   }
+  final long thisValue = this.get();
+  final long thatValue = o.get();
 
-  public TileIdZoomWritable(final TileIdWritable writable)
+  return (thisValue < thatValue ? -1 : (thisValue == thatValue ? 0 : 1));
+}
+
+@Override
+public boolean equals(final Object o)
+{
+  if (!(o instanceof TileIdZoomWritable))
   {
-    super(writable);
+    return false;
   }
+  final TileIdZoomWritable other = (TileIdZoomWritable) o;
+  return this.get() == other.get() && this.zoom == other.zoom;
+}
 
-  public TileIdZoomWritable(final TileIdZoomWritable writable)
-  {
-    super(writable);
-    this.zoom = writable.zoom;
-  }
+public int getZoom()
+{
+  return zoom;
+}
 
-  public int compareTo(final LongWritable o)
-  {
-    if (o instanceof TileIdZoomWritable)
-    {
-      return compareTo((TileIdZoomWritable) o);
-    }
-    return super.compareTo(o);
-  }
+@Override
+public int hashCode()
+{
+  return new HashCodeBuilder(17, 31). // two randomly chosen prime numbers
+      // if deriving: appendSuper(super.hashCode()).
+          appendSuper(super.hashCode()).append(zoom).toHashCode();
+}
 
-  /** Compares two TileIdZoomWritable. */
-  public int compareTo(final TileIdZoomWritable o)
-  {
-    if (this.zoom < o.zoom)
-    {
-      return -1;
-    }
-    else if (this.zoom > o.zoom)
-    {
-      return 1;
-    }
-    final long thisValue = this.get();
-    final long thatValue = o.get();
+@Override
+public void readFields(final DataInput in) throws IOException
+{
+  super.readFields(in);
+  zoom = in.readInt();
+}
 
-    return (thisValue < thatValue ? -1 : (thisValue == thatValue ? 0 : 1));
-  }
-
-  @Override
-  public boolean equals(final Object o)
-  {
-    if (!(o instanceof TileIdZoomWritable))
-    {
-      return false;
-    }
-    final TileIdZoomWritable other = (TileIdZoomWritable) o;
-    return this.get() == other.get() && this.zoom == other.zoom;
-  }
-
-  public int getZoom()
-  {
-    return zoom;
-  }
-
-  @Override
-  public int hashCode()
-  {
-    return new HashCodeBuilder(17, 31). // two randomly chosen prime numbers
-        // if deriving: appendSuper(super.hashCode()).
-        appendSuper(super.hashCode()).append(zoom).toHashCode();
-  }
-
-  @Override
-  public void readFields(final DataInput in) throws IOException
-  {
-    super.readFields(in);
-    zoom = in.readInt();
-  }
-
-  @Override
-  public void write(final DataOutput out) throws IOException
-  {
-    super.write(out);
-    out.writeInt(zoom);
-  }
+@Override
+public void write(final DataOutput out) throws IOException
+{
+  super.write(out);
+  out.writeInt(zoom);
+}
 
 }

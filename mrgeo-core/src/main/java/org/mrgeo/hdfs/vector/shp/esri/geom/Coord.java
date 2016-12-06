@@ -24,7 +24,9 @@ static final long serialVersionUID = 1L;
 public double x;
 public double y;
 
-/** Creates new Coord */
+/**
+ * Creates new Coord
+ */
 public Coord()
 {
   x = 0;
@@ -66,7 +68,9 @@ public boolean equals(Object obj)
   {
     Coord p = (Coord) obj;
     if (FloatUtils.isEqual(p.x, x) && FloatUtils.isEqual(p.y, y))
+    {
       return true;
+    }
   }
   return false;
 }

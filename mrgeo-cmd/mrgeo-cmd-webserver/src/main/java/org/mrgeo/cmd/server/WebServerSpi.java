@@ -23,22 +23,22 @@ import org.mrgeo.cmd.CommandSpi;
 public class WebServerSpi extends CommandSpi
 {
 
-  @Override
-  public Class<? extends Command> getCommandClass()
-  {
-    return WebServer.class;
-  }
+@Override
+public Class<? extends Command> getCommandClass()
+{
+  return WebServer.class;
+}
 
-  @Override
-  public String getCommandName()
-  {
-    return "webserver";
-  }
+@Override
+public String getCommandName()
+{
+  return "webserver";
+}
 
-  @Override
-  public String getDescription()
-  {
-    return "Start or stop an embedded web server hosting MrGeo webe services";
-  }
-  
+@Override
+public String getDescription()
+{
+  return "Start or stop an embedded web server hosting MrGeo webe services";
+}
+
 }

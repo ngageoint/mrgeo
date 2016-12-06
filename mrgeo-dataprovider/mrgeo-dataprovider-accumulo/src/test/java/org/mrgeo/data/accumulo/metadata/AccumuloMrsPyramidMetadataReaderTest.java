@@ -24,9 +24,9 @@ import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.accumulo.AccumuloDefs;
 import org.mrgeo.data.accumulo.image.AccumuloMrsImageDataProvider;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
-import org.mrgeo.junit.UnitTest;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.image.MrsPyramidMetadata.Classification;
+import org.mrgeo.junit.UnitTest;
 
 import java.io.*;
 
@@ -35,75 +35,74 @@ import java.io.*;
 public class AccumuloMrsPyramidMetadataReaderTest
 {
 
-  private static String junk = "junkadp";
-  private static String badTable = "badTable";
+private static String junk = "junkadp";
+private static String badTable = "badTable";
+private static Connector conn = null;
+private File file;
+private AccumuloMrsImageDataProvider provider;
+private AccumuloMrsPyramidMetadataWriter writer;
+private AccumuloMrsPyramidMetadataReader reader;
+private MrsPyramidMetadata metadata;
+private String originalFileStr;
+private String originalMeta;
 
-  private File file;
-  
-  private AccumuloMrsImageDataProvider provider;
-  private AccumuloMrsPyramidMetadataWriter writer;
-  private AccumuloMrsPyramidMetadataReader reader;
-  private MrsPyramidMetadata metadata;
-  private String originalFileStr;
-  private String originalMeta;
-  
-  private static Connector conn = null;
-  
-  @BeforeClass
-  public static void init() throws Exception
-  {
-    //conn = AccumuloConnector.getConnector(AccumuloDefs.INSTANCE, AccumuloDefs.ZOOKEEPERS, AccumuloDefs.USER, AccumuloDefs.PASSWORD);
-    conn = AccumuloConnector.getConnector();
+@BeforeClass
+public static void init() throws Exception
+{
+  //conn = AccumuloConnector.getConnector(AccumuloDefs.INSTANCE, AccumuloDefs.ZOOKEEPERS, AccumuloDefs.USER, AccumuloDefs.PASSWORD);
+  conn = AccumuloConnector.getConnector();
 
-    //conn = AccumuloConnector.getMockConnector(AccumuloDefs.INSTANCE, AccumuloDefs.USER, AccumuloDefs.PASSWORDBLANK);
-    
-    conn.tableOperations().create(junk);
-    
-  } // end init
+  //conn = AccumuloConnector.getMockConnector(AccumuloDefs.INSTANCE, AccumuloDefs.USER, AccumuloDefs.PASSWORDBLANK);
 
-  
-  @Before
-  public void setup() throws IOException
-  {
-    
-    metadata = new MrsPyramidMetadata();
-    
-    provider = new AccumuloMrsImageDataProvider(junk);
+  conn.tableOperations().create(junk);
 
-    String fstr = AccumuloDefs.CWD + AccumuloDefs.INPUTDIR + AccumuloDefs.INPUTMETADATADIR + AccumuloDefs.INPUTMETADATAFILE;
-    file = new File(fstr);
+} // end init
 
-    writer = (AccumuloMrsPyramidMetadataWriter) provider.getMetadataWriter();
-    writer.setConnector(conn);
 
-    reader = (AccumuloMrsPyramidMetadataReader) provider.getMetadataReader();
-    reader.setConnector(conn);
-    
-    FileInputStream fis = new FileInputStream(file);
-    long length = file.length();
-    byte[] b = new byte[(int)length];    
-    fis.read(b);
-    
-    originalFileStr = new String(b);
-    
-    fis.close();
+@Before
+public void setup() throws IOException
+{
 
-    ByteArrayInputStream bis = new ByteArrayInputStream(b);
-    metadata = MrsPyramidMetadata.load(bis);
-    bis.close();
-    
-    writer.write(metadata);
-    
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    metadata.save(bos);
-    originalMeta = new String(bos.toByteArray());
-    bos.close();
-    
-  } // end setup
+  metadata = new MrsPyramidMetadata();
 
-  @After
-  public void teardown(){
-    // get rid of the test table
+  provider = new AccumuloMrsImageDataProvider(junk);
+
+  String fstr =
+      AccumuloDefs.CWD + AccumuloDefs.INPUTDIR + AccumuloDefs.INPUTMETADATADIR + AccumuloDefs.INPUTMETADATAFILE;
+  file = new File(fstr);
+
+  writer = (AccumuloMrsPyramidMetadataWriter) provider.getMetadataWriter();
+  writer.setConnector(conn);
+
+  reader = (AccumuloMrsPyramidMetadataReader) provider.getMetadataReader();
+  reader.setConnector(conn);
+
+  FileInputStream fis = new FileInputStream(file);
+  long length = file.length();
+  byte[] b = new byte[(int) length];
+  fis.read(b);
+
+  originalFileStr = new String(b);
+
+  fis.close();
+
+  ByteArrayInputStream bis = new ByteArrayInputStream(b);
+  metadata = MrsPyramidMetadata.load(bis);
+  bis.close();
+
+  writer.write(metadata);
+
+  ByteArrayOutputStream bos = new ByteArrayOutputStream();
+  metadata.save(bos);
+  originalMeta = new String(bos.toByteArray());
+  bos.close();
+
+} // end setup
+
+@After
+public void teardown()
+{
+  // get rid of the test table
 //    try{
 //      conn.tableOperations().delete(junk);
 //    } catch(TableNotFoundException tnfe){
@@ -113,81 +112,82 @@ public class AccumuloMrsPyramidMetadataReaderTest
 //    } catch(AccumuloException ae){
 //      
 //    }
-  } // end finalizeExternalSave
+} // end finalizeExternalSave
 
-  @Ignore
-  @Test
-  @Category(UnitTest.class)
-  public void testRead() throws IOException
-  {
-    MrsPyramidMetadata meta = reader.read();
-    
-    Assert.assertEquals("Classification incorrect", Classification.Continuous, meta.getClassification());
-    Assert.assertEquals("Max zoom incorrect", 10, meta.getMaxZoomLevel());
-    Assert.assertEquals("Tile size incorrect", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, meta.getTilesize());
-  }
+@Ignore
+@Test
+@Category(UnitTest.class)
+public void testRead() throws IOException
+{
+  MrsPyramidMetadata meta = reader.read();
 
-  @Ignore
-  @Test(expected=IOException.class)
-  @Category(UnitTest.class)
-  public void testBadTable() throws IOException
-  {
-    provider = new AccumuloMrsImageDataProvider(badTable);
-    reader = new AccumuloMrsPyramidMetadataReader(provider, null);
-    reader.setConnector(conn);
+  Assert.assertEquals("Classification incorrect", Classification.Continuous, meta.getClassification());
+  Assert.assertEquals("Max zoom incorrect", 10, meta.getMaxZoomLevel());
+  Assert.assertEquals("Tile size incorrect", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, meta.getTilesize());
+}
 
-    reader.read();
-    
-  }
+@Ignore
+@Test(expected = IOException.class)
+@Category(UnitTest.class)
+public void testBadTable() throws IOException
+{
+  provider = new AccumuloMrsImageDataProvider(badTable);
+  reader = new AccumuloMrsPyramidMetadataReader(provider, null);
+  reader.setConnector(conn);
 
-  @Ignore
-  @Test(expected=IOException.class)
-  @Category(UnitTest.class)
-  public void testReadNoProvider() throws IOException
-  {
-    reader = new AccumuloMrsPyramidMetadataReader(null, null);
+  reader.read();
 
-    reader.read();
-  }
+}
+
+@Ignore
+@Test(expected = IOException.class)
+@Category(UnitTest.class)
+public void testReadNoProvider() throws IOException
+{
+  reader = new AccumuloMrsPyramidMetadataReader(null, null);
+
+  reader.read();
+}
 
 
-  @Ignore
-  @Test
-  @Category(UnitTest.class)
-  public void testReload() throws IOException
-  {
-    MrsPyramidMetadata meta = reader.read();
-    
-    final ByteArrayOutputStream orig = new ByteArrayOutputStream();
-    meta.save(orig);
-    
-    String originalMetadata = orig.toString();
+@Ignore
+@Test
+@Category(UnitTest.class)
+public void testReload() throws IOException
+{
+  MrsPyramidMetadata meta = reader.read();
 
-    // set a couple values in meta.
-    meta.setClassification(Classification.Categorical);
-    meta.setMaxZoomLevel(100);
-    meta.setTilesize(100);
-    
-    // check the values changed
-    Assert.assertEquals("Classification wasn't overwritten correctly", Classification.Categorical, meta.getClassification());
-    Assert.assertEquals("Max zoom wasn't overwritten correctly", 100, meta.getMaxZoomLevel());
-    Assert.assertEquals("Tile size wasn't overwritten correctly", 100, meta.getTilesize());
+  final ByteArrayOutputStream orig = new ByteArrayOutputStream();
+  meta.save(orig);
 
-    // reload
-    reader.reload();
-    
-    // check the values have reverted
-    Assert.assertEquals("Classification wasn't reloaded correctly", Classification.Continuous, meta.getClassification());
-    Assert.assertEquals("Max zoom wasn't reloaded correctly", 10, meta.getMaxZoomLevel());
-    Assert.assertEquals("Tile size wasn't reloaded correctly", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, meta.getTilesize());
-    
-    final ByteArrayOutputStream os = new ByteArrayOutputStream();
-    meta.save(os);
+  String originalMetadata = orig.toString();
 
-    // check the entire JSON
-    Assert.assertEquals("JSON dumps are different!", originalMetadata, os.toString());
-  }
+  // set a couple values in meta.
+  meta.setClassification(Classification.Categorical);
+  meta.setMaxZoomLevel(100);
+  meta.setTilesize(100);
 
-  
-  
+  // check the values changed
+  Assert.assertEquals("Classification wasn't overwritten correctly", Classification.Categorical,
+      meta.getClassification());
+  Assert.assertEquals("Max zoom wasn't overwritten correctly", 100, meta.getMaxZoomLevel());
+  Assert.assertEquals("Tile size wasn't overwritten correctly", 100, meta.getTilesize());
+
+  // reload
+  reader.reload();
+
+  // check the values have reverted
+  Assert.assertEquals("Classification wasn't reloaded correctly", Classification.Continuous, meta.getClassification());
+  Assert.assertEquals("Max zoom wasn't reloaded correctly", 10, meta.getMaxZoomLevel());
+  Assert.assertEquals("Tile size wasn't reloaded correctly", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT,
+      meta.getTilesize());
+
+  final ByteArrayOutputStream os = new ByteArrayOutputStream();
+  meta.save(os);
+
+  // check the entire JSON
+  Assert.assertEquals("JSON dumps are different!", originalMetadata, os.toString());
+}
+
+
 } // end AccumuloMrsPyramidMetadataReaderTest

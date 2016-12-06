@@ -16,426 +16,697 @@
   -->
 
 <metadata xml:lang="en">
-	<idinfo>
-		<citation Sync="TRUE">
-			<citeinfo>
-				<origin>DC GIS</origin>
-				<pubdate>3/12/03</pubdate>
-				<title>Ambulatory Surgical Centers</title>
-				<geoform Sync="TRUE">vector digital data</geoform>
-				<onlink>\\Octo-awllx69a6l\OCTOGIS\Data\DOH\AmbulatoryPt.shp</onlink>
-				<lworkcit>
-					<citeinfo Sync="TRUE">
-						<origin>DC GIS</origin>
-						<pubdate>5/31/03</pubdate>
-						<pubdate>5/31/03</pubdate>
-						<title>DC Geographic Information System</title>
-						<geoform>vector digital data</geoform>
-					</citeinfo>
-				</lworkcit>
-				<ftname Sync="TRUE">AmbulatoryPt</ftname></citeinfo>
-		</citation>
-		<descript>
-			<abstract>Ambulatory Surgical Centers. The dataset contains locations and attributes of Ambulatory Surgical Centers, created as part of the DC Geographic Information System (DC GIS) for the D.C. Office of the Chief Technology Officer (OCTO) and participating D.C. government agencies.
+  <idinfo>
+    <citation Sync="TRUE">
+      <citeinfo>
+        <origin>DC GIS</origin>
+        <pubdate>3/12/03</pubdate>
+        <title>Ambulatory Surgical Centers</title>
+        <geoform Sync="TRUE">vector digital data</geoform>
+        <onlink>\\Octo-awllx69a6l\OCTOGIS\Data\DOH\AmbulatoryPt.shp</onlink>
+        <lworkcit>
+          <citeinfo Sync="TRUE">
+            <origin>DC GIS</origin>
+            <pubdate>5/31/03</pubdate>
+            <pubdate>5/31/03</pubdate>
+            <title>DC Geographic Information System</title>
+            <geoform>vector digital data</geoform>
+          </citeinfo>
+        </lworkcit>
+        <ftname Sync="TRUE">AmbulatoryPt</ftname>
+      </citeinfo>
+    </citation>
+    <descript>
+      <abstract>Ambulatory Surgical Centers. The dataset contains locations and attributes of Ambulatory Surgical
+        Centers, created as part of the DC Geographic Information System (DC GIS) for the D.C. Office of the Chief
+        Technology Officer (OCTO) and participating D.C. government agencies.
 
-A database provided by the DC Department of Health's (DOH) website identified Ambulatory Surgical Centers and DC GIS staff geo-processed the data.
+        A database provided by the DC Department of Health's (DOH) website identified Ambulatory Surgical Centers and DC
+        GIS staff geo-processed the data.
 
-All DC GIS data is stored and exported in Maryland State Plane coordinates NAD 83 meters.
+        All DC GIS data is stored and exported in Maryland State Plane coordinates NAD 83 meters.
 
-METADATA CONTENT IS IN PROCESS OF VALIDATION AND SUBJECT TO CHANGE.</abstract>
-			<purpose Sync="TRUE">This data is used for the planning and management of Washington, D.C. by local government agencies.</purpose>
-			<langdata Sync="TRUE">en</langdata></descript>
-		<timeperd Sync="TRUE">
-			<timeinfo>
-				<sngdate Sync="TRUE">
-					<caldate>3/12/03</caldate>
-				</sngdate>
-			</timeinfo>
-			<current>publication date</current>
-		</timeperd>
-		<status>
-			<progress>Complete</progress><update>As needed</update></status>
-		<spdom>
-			<bounding>
-				<westbc Sync="TRUE">-77.049036</westbc>
-				<eastbc Sync="TRUE">-76.958920</eastbc>
-				<northbc Sync="TRUE">38.981919</northbc>
-				<southbc Sync="TRUE">38.868359</southbc>
-			</bounding>
-			<dsgpoly>
-				<dsgpolyo>
-					<grngpoin></grngpoin>
-				</dsgpolyo>
-			</dsgpoly>
-			<lboundng><leftbc Sync="TRUE">395751.322075</leftbc><rightbc Sync="TRUE">403559.335007</rightbc><bottombc Sync="TRUE">133394.024991</bottombc><topbc Sync="TRUE">145999.017596</topbc></lboundng></spdom>
-		<keywords>
-			<theme>
-				<themekt>none</themekt>
-				<themekey>Health care</themekey><themekey>Private facilities</themekey><themekey>Surgery</themekey><themekey>Prevention</themekey><themekey>Treatment</themekey></theme>
-			<place>
-				<placekey Sync="TRUE">Washington, D.C.</placekey>
-				<placekey Sync="TRUE">District of Columbia</placekey>
-				<placekey>DC</placekey>
-				<placekey>DC GIS</placekey>
-				<placekey>DCGIS</placekey>
-			</place>
-		</keywords>
-		<accconst Sync="TRUE">Contact OCTO GIS. Any data obtained outside of OCTO GIS are unauthorized copies.</accconst>
-		<useconst>Data cannot be redistributed in any manner without written authorization.  OCTO makes no claims as to the completeness, accuracy or content of any data contained hereon, and makes no representation of any kind, including, but not limited to, the warranty of the accuracy or fitness for a  particular use, nor are any such warranties to be implied or inferred with respect to the information or data furnished herein.</useconst>
-		<ptcontac>
-			<cntinfo>
-				<cntorgp Name="AbraLicenseePt">
-					<cntorg Sync="TRUE">D.C. Office of the Chief Technology Officer</cntorg>
-					<cntper>GIS Data Coordinator</cntper>
-				</cntorgp>
-				<cntaddr>
-					<addrtype>mailing and physical address</addrtype>
-					<address>441 4th St NW, Suite 930 South</address>
-					<city>Washington</city>
-					<state>DC</state>
-					<postal Sync="TRUE">20001</postal>
-					<country>USA</country>
-				</cntaddr>
-				<cntfax>(202) 727-5660</cntfax>
-				<cntemail>dcgis@dc.gov</cntemail>
-				<hours>8:30 am - 5 pm</hours>
-			</cntinfo>
-		</ptcontac>
-		<datacred>DC Department of Health (DOH) website</datacred>
-		<native Sync="TRUE">Microsoft Windows 2000 Version 5.0 (Build 2195) Service Pack 4; ESRI ArcCatalog 8.3.0.800</native>
-		<natvform Sync="TRUE">Shapefile</natvform></idinfo>
-	<dataqual>
-		<attracc>
-			<attraccr>Data believed to be complete and accurate, subject to change. Digital version compared with original source data for accuracy and completeness. Validated by source and/or responsible agency.</attraccr>
-		</attracc>
-		<logic Sync="TRUE">In process of validation by source and/or responsible agency.</logic>
-		<complete>Data believed to be complete and accurate, subject to change. Digital version compared with original source data for accuracy and completeness. Validated by source and/or responsible agency.</complete>
-		<posacc Sync="TRUE">
-			<horizpa>
-				<horizpar>In process of validation by source and/or responsible agency.</horizpar>
-			</horizpa>
-			<vertacc>
-				<vertaccr>N/A</vertaccr>
-			</vertacc>
-		</posacc>
-		<lineage>
-			<srcinfo Sync="TRUE">
-				<srccite>
-					<citeinfo Sync="TRUE">
-						<origin>DC Department of Health</origin>
-						<pubdate>2003</pubdate>
-						<title>DOH website</title>
-						<othercit>Site visited march 2003.</othercit>
-						<onlink>http://dchealth.dc.gov/</onlink>
-					</citeinfo>
-				</srccite>
-				<typesrc>website</typesrc>
-				<srctime>
-					<timeinfo>
-						<sngdate>
-							<caldate>2003</caldate>
-						</sngdate>
-					</timeinfo>
-					<srccurr>publication date</srccurr>
-				</srctime>
-				<srccitea>DOH website</srccitea>
-				<srccontr>locations and attributes</srccontr>
-			</srcinfo>
-			<srcinfo Sync="TRUE">
-				<srccite>
-					<citeinfo Sync="TRUE">
-						<origin>Alexandria Mapping Company</origin>
-						<pubdate>2002</pubdate>
-						<title>Metro Washington DC</title>
-						<edition>34th</edition>
-						<pubinfo>
-							<pubplace>Alexandria, VA</pubplace>
-							<publish>ADC</publish>
-						</pubinfo>
-						<onlink>http://www.adcmap.com</onlink>
-					</citeinfo>
-				</srccite>
-				<srcscale>24000</srcscale>
-				<typesrc>atlas</typesrc>
-				<srctime>
-					<timeinfo>
-						<sngdate>
-							<caldate>8/1/2002</caldate>
-						</sngdate>
-					</timeinfo>
-					<srccurr>publication date</srccurr>
-				</srctime>
-				<srccitea>ADC - Washington DC Metro</srccitea>
-				<srccontr>location</srccontr>
-			</srcinfo>
-			<procstep Sync="TRUE">
-				<procdesc>
-Data Collection:
+        METADATA CONTENT IS IN PROCESS OF VALIDATION AND SUBJECT TO CHANGE.
+      </abstract>
+      <purpose Sync="TRUE">This data is used for the planning and management of Washington, D.C. by local government
+        agencies.
+      </purpose>
+      <langdata Sync="TRUE">en</langdata>
+    </descript>
+    <timeperd Sync="TRUE">
+      <timeinfo>
+        <sngdate Sync="TRUE">
+          <caldate>3/12/03</caldate>
+        </sngdate>
+      </timeinfo>
+      <current>publication date</current>
+    </timeperd>
+    <status>
+      <progress>Complete</progress>
+      <update>As needed</update>
+    </status>
+    <spdom>
+      <bounding>
+        <westbc Sync="TRUE">-77.049036</westbc>
+        <eastbc Sync="TRUE">-76.958920</eastbc>
+        <northbc Sync="TRUE">38.981919</northbc>
+        <southbc Sync="TRUE">38.868359</southbc>
+      </bounding>
+      <dsgpoly>
+        <dsgpolyo>
+          <grngpoin></grngpoin>
+        </dsgpolyo>
+      </dsgpoly>
+      <lboundng>
+        <leftbc Sync="TRUE">395751.322075</leftbc>
+        <rightbc Sync="TRUE">403559.335007</rightbc>
+        <bottombc Sync="TRUE">133394.024991</bottombc>
+        <topbc Sync="TRUE">145999.017596</topbc>
+      </lboundng>
+    </spdom>
+    <keywords>
+      <theme>
+        <themekt>none</themekt>
+        <themekey>Health care</themekey>
+        <themekey>Private facilities</themekey>
+        <themekey>Surgery</themekey>
+        <themekey>Prevention</themekey>
+        <themekey>Treatment</themekey>
+      </theme>
+      <place>
+        <placekey Sync="TRUE">Washington, D.C.</placekey>
+        <placekey Sync="TRUE">District of Columbia</placekey>
+        <placekey>DC</placekey>
+        <placekey>DC GIS</placekey>
+        <placekey>DCGIS</placekey>
+      </place>
+    </keywords>
+    <accconst Sync="TRUE">Contact OCTO GIS. Any data obtained outside of OCTO GIS are unauthorized copies.</accconst>
+    <useconst>Data cannot be redistributed in any manner without written authorization. OCTO makes no claims as to the
+      completeness, accuracy or content of any data contained hereon, and makes no representation of any kind,
+      including, but not limited to, the warranty of the accuracy or fitness for a particular use, nor are any such
+      warranties to be implied or inferred with respect to the information or data furnished herein.
+    </useconst>
+    <ptcontac>
+      <cntinfo>
+        <cntorgp Name="AbraLicenseePt">
+          <cntorg Sync="TRUE">D.C. Office of the Chief Technology Officer</cntorg>
+          <cntper>GIS Data Coordinator</cntper>
+        </cntorgp>
+        <cntaddr>
+          <addrtype>mailing and physical address</addrtype>
+          <address>441 4th St NW, Suite 930 South</address>
+          <city>Washington</city>
+          <state>DC</state>
+          <postal Sync="TRUE">20001</postal>
+          <country>USA</country>
+        </cntaddr>
+        <cntfax>(202) 727-5660</cntfax>
+        <cntemail>dcgis@dc.gov</cntemail>
+        <hours>8:30 am - 5 pm</hours>
+      </cntinfo>
+    </ptcontac>
+    <datacred>DC Department of Health (DOH) website</datacred>
+    <native Sync="TRUE">Microsoft Windows 2000 Version 5.0 (Build 2195) Service Pack 4; ESRI ArcCatalog 8.3.0.800
+    </native>
+    <natvform Sync="TRUE">Shapefile</natvform>
+  </idinfo>
+  <dataqual>
+    <attracc>
+      <attraccr>Data believed to be complete and accurate, subject to change. Digital version compared with original
+        source data for accuracy and completeness. Validated by source and/or responsible agency.
+      </attraccr>
+    </attracc>
+    <logic Sync="TRUE">In process of validation by source and/or responsible agency.</logic>
+    <complete>Data believed to be complete and accurate, subject to change. Digital version compared with original
+      source data for accuracy and completeness. Validated by source and/or responsible agency.
+    </complete>
+    <posacc Sync="TRUE">
+      <horizpa>
+        <horizpar>In process of validation by source and/or responsible agency.</horizpar>
+      </horizpa>
+      <vertacc>
+        <vertaccr>N/A</vertaccr>
+      </vertacc>
+    </posacc>
+    <lineage>
+      <srcinfo Sync="TRUE">
+        <srccite>
+          <citeinfo Sync="TRUE">
+            <origin>DC Department of Health</origin>
+            <pubdate>2003</pubdate>
+            <title>DOH website</title>
+            <othercit>Site visited march 2003.</othercit>
+            <onlink>http://dchealth.dc.gov/</onlink>
+          </citeinfo>
+        </srccite>
+        <typesrc>website</typesrc>
+        <srctime>
+          <timeinfo>
+            <sngdate>
+              <caldate>2003</caldate>
+            </sngdate>
+          </timeinfo>
+          <srccurr>publication date</srccurr>
+        </srctime>
+        <srccitea>DOH website</srccitea>
+        <srccontr>locations and attributes</srccontr>
+      </srcinfo>
+      <srcinfo Sync="TRUE">
+        <srccite>
+          <citeinfo Sync="TRUE">
+            <origin>Alexandria Mapping Company</origin>
+            <pubdate>2002</pubdate>
+            <title>Metro Washington DC</title>
+            <edition>34th</edition>
+            <pubinfo>
+              <pubplace>Alexandria, VA</pubplace>
+              <publish>ADC</publish>
+            </pubinfo>
+            <onlink>http://www.adcmap.com</onlink>
+          </citeinfo>
+        </srccite>
+        <srcscale>24000</srcscale>
+        <typesrc>atlas</typesrc>
+        <srctime>
+          <timeinfo>
+            <sngdate>
+              <caldate>8/1/2002</caldate>
+            </sngdate>
+          </timeinfo>
+          <srccurr>publication date</srccurr>
+        </srctime>
+        <srccitea>ADC - Washington DC Metro</srccitea>
+        <srccontr>location</srccontr>
+      </srcinfo>
+      <procstep Sync="TRUE">
+        <procdesc>
+          Data Collection:
 
-Through the application's functionality and usability requirements, OCTO GIS staff compose a list of data layers needed for the application.   From this, staff determine the appropriate source and location for each layer, and assess the effort needed to get it.  
+          Through the application's functionality and usability requirements, OCTO GIS staff compose a list of data
+          layers needed for the application. From this, staff determine the appropriate source and location for each
+          layer, and assess the effort needed to get it.
 
-Some layers, already part of the DC Atlas, are incorporated into the data store.  For DC agency data, agency liaisons ask DC personnel about data availability and acquisition.  For third-party data, OCTO-GIS evaluates options and either finds alternatives, purchases, or licenses the data.  In some cases, staff create data from existing sources and then add required attribution.
-</procdesc>
-				<procdate>5/31/03</procdate>
-				<proccont Sync="TRUE">
-					<cntinfo>
-						<cntorgp>
-							<cntorg>D.C. Office of the Chief Technology Officer</cntorg>
-							<cntper>GIS Data Coordinator</cntper>
-						</cntorgp>
-						<cntfax Sync="TRUE">(202) 727-5660</cntfax>
-						<cntemail>dcgis@dc.gov</cntemail>
-						<hours>8:30 am - 5 pm</hours>
-					</cntinfo>
-				</proccont>
-			</procstep>
-			<procstep Sync="TRUE">
-				<procdesc>Data Preparation:
+          Some layers, already part of the DC Atlas, are incorporated into the data store. For DC agency data, agency
+          liaisons ask DC personnel about data availability and acquisition. For third-party data, OCTO-GIS evaluates
+          options and either finds alternatives, purchases, or licenses the data. In some cases, staff create data from
+          existing sources and then add required attribution.
+        </procdesc>
+        <procdate>5/31/03</procdate>
+        <proccont Sync="TRUE">
+          <cntinfo>
+            <cntorgp>
+              <cntorg>D.C. Office of the Chief Technology Officer</cntorg>
+              <cntper>GIS Data Coordinator</cntper>
+            </cntorgp>
+            <cntfax Sync="TRUE">(202) 727-5660</cntfax>
+            <cntemail>dcgis@dc.gov</cntemail>
+            <hours>8:30 am - 5 pm</hours>
+          </cntinfo>
+        </proccont>
+      </procstep>
+      <procstep Sync="TRUE">
+        <procdesc>Data Preparation:
 
-After the collection, the data team prepares the data for qa/qc and inclusion in the data store.  This step involves: 1.) configuring the datasets into a common form; 2.) geocoding tabular data using a common address base;  3.) generating or converting paper documents into digital format; 4.) populating required fields; and 5.) resolving data duplication and conflicts.
+          After the collection, the data team prepares the data for qa/qc and inclusion in the data store. This step
+          involves: 1.) configuring the datasets into a common form; 2.) geocoding tabular data using a common address
+          base; 3.) generating or converting paper documents into digital format; 4.) populating required fields; and
+          5.) resolving data duplication and conflicts.
 
-For geocoding, staff use a derivative of the Office of Tax and Revenue (OTR) owner-point database and the District Department of Transportation's (DDOT) street inventory system (SIS) street centerline file as the address base.  Through automated procedures on the owner-point derivative file, personnel clean and standardize the irregular premise address information into street number, name, type, and quadrant fields.  Also, staff use the merged SIS file containing the five centerlines classifications (street, alley, drive, service road, and ramp).
+          For geocoding, staff use a derivative of the Office of Tax and Revenue (OTR) owner-point database and the
+          District Department of Transportation's (DDOT) street inventory system (SIS) street centerline file as the
+          address base. Through automated procedures on the owner-point derivative file, personnel clean and standardize
+          the irregular premise address information into street number, name, type, and quadrant fields. Also, staff use
+          the merged SIS file containing the five centerlines classifications (street, alley, drive, service road, and
+          ramp).
 
-First, staff match tabular data to the standardized owner-points.  Then, the rest are matched to the street centerline file.  After this, staff compose a list of the unmatched records needing further research.  Since not all of the records geocode, staff note the final matching figures (number of hits, rejects, and the total).
+          First, staff match tabular data to the standardized owner-points. Then, the rest are matched to the street
+          centerline file. After this, staff compose a list of the unmatched records needing further research. Since not
+          all of the records geocode, staff note the final matching figures (number of hits, rejects, and the total).
 
-For web links, team members check the validity of existing links and find matching web sites that directly represent the feature.  Staff use several web search engines to find appropriate web links.  DC government sites are primarily used, when available.
+          For web links, team members check the validity of existing links and find matching web sites that directly
+          represent the feature. Staff use several web search engines to find appropriate web links. DC government sites
+          are primarily used, when available.
 
-To eliminate data redundancy, staff identify possible conflicting layers and duplicate features.  In some cases, staff pick the best source.  In others, the attributes in the multiple layers are consolidated.  Sometimes, staff map the conflicting layers and investigate feature clusters as areas of potential duplication.
+          To eliminate data redundancy, staff identify possible conflicting layers and duplicate features. In some
+          cases, staff pick the best source. In others, the attributes in the multiple layers are consolidated.
+          Sometimes, staff map the conflicting layers and investigate feature clusters as areas of potential
+          duplication.
 
-Where applicable, team members move points to the center of the corresponding buildings.  Staff then select the building footprints and assign the appropriate GIS_ID value that links the points with the appropriate building polygon(s).</procdesc>
-				<procdate>5/31/03</procdate>
-				<proccont>
-					<cntinfo>
-						<cntorgp>
-							<cntorg>D.C. Office of the Chief Technology Officer</cntorg>
-							<cntper>GIS Data Coordinator</cntper>
-						</cntorgp>
-						<cntfax>(202) 727-5660</cntfax>
-						<cntemail>dcgis@dc.gov</cntemail>
-						<hours>8:30 am - 5 pm</hours>
-					</cntinfo>
-				</proccont>
-			</procstep>
-			<procstep>
-				<procdesc>Data QA/QC
+          Where applicable, team members move points to the center of the corresponding buildings. Staff then select the
+          building footprints and assign the appropriate GIS_ID value that links the points with the appropriate
+          building polygon(s).
+        </procdesc>
+        <procdate>5/31/03</procdate>
+        <proccont>
+          <cntinfo>
+            <cntorgp>
+              <cntorg>D.C. Office of the Chief Technology Officer</cntorg>
+              <cntper>GIS Data Coordinator</cntper>
+            </cntorgp>
+            <cntfax>(202) 727-5660</cntfax>
+            <cntemail>dcgis@dc.gov</cntemail>
+            <hours>8:30 am - 5 pm</hours>
+          </cntinfo>
+        </proccont>
+      </procstep>
+      <procstep>
+        <procdesc>Data QA/QC
 
-After data preparation, the data team performs qa/qc.   Various processes check the following parameters: 1.) spatial and attribute accuracy; 2.) data usability; 3.) data dictionary adherence; 4.) specialized metrics, such as connectivity and directionality; and 5.) data load success.  These checks are, as follows:
+          After data preparation, the data team performs qa/qc. Various processes check the following parameters: 1.)
+          spatial and attribute accuracy; 2.) data usability; 3.) data dictionary adherence; 4.) specialized metrics,
+          such as connectivity and directionality; and 5.) data load success. These checks are, as follows:
 
-Visual - staff perform a structured visual check of the data, using on-screen, plotting, and customized routines, and, at times, comparing it to the source documents.
+          Visual - staff perform a structured visual check of the data, using on-screen, plotting, and customized
+          routines, and, at times, comparing it to the source documents.
 
-Edge-matching - For grided datasets, staff review the spatial capture, connectivity, and attribution of data across tile boundaries, where applicable.
+          Edge-matching - For grided datasets, staff review the spatial capture, connectivity, and attribution of data
+          across tile boundaries, where applicable.
 
-Automated - Staff compare the data to documented standards and source files through automated procedures and reports.
+          Automated - Staff compare the data to documented standards and source files through automated procedures and
+          reports.
 
-Specialized - Staff review more specific data parameters, such as directionality, connectivity , and topology.
+          Specialized - Staff review more specific data parameters, such as directionality, connectivity , and topology.
 
-Edit Verification - Staff ensure that previous errors are fixed to specifications.
+          Edit Verification - Staff ensure that previous errors are fixed to specifications.
 
-Field Verification - Occasionally, through field work, team members compare the GIS data with the real world.
+          Field Verification - Occasionally, through field work, team members compare the GIS data with the real world.
 
-Data Loading - Staff evaluate the success and evaluate the process of loading raw data into a structured database.
+          Data Loading - Staff evaluate the success and evaluate the process of loading raw data into a structured
+          database.
 
-Since most of the data use addresses as the spatial reference, staff compare the data against base layers (buildings, roads, street centerlines, owner-points, parks, and orthophotography) and move features where needed.
+          Since most of the data use addresses as the spatial reference, staff compare the data against base layers
+          (buildings, roads, street centerlines, owner-points, parks, and orthophotography) and move features where
+          needed.
 
-In some cases, OCTO GIS personnel produce maps and reports for source agency review. Through an iterative process, staff modify and enhance the layer to agency specifications.  For some datasets, the agency endorses the final product for data load and publication.</procdesc>
-				<procdate>5/31/03</procdate>
-				<proccont>
-					<cntinfo>
-						<cntorgp>
-							<cntorg>D.C. Office of the Chief Technology Officer</cntorg>
-							<cntper>GIS Data Coordinator</cntper>
-						</cntorgp>
-						<cntfax>(202) 727-5660</cntfax>
-						<cntemail>dcgis@dc.gov</cntemail>
-						<hours>8:30 am - 5 pm</hours>
-					</cntinfo>
-				</proccont>
-			</procstep>
-			<procstep>
-				<procdesc>
-Final Data Preparation:
+          In some cases, OCTO GIS personnel produce maps and reports for source agency review. Through an iterative
+          process, staff modify and enhance the layer to agency specifications. For some datasets, the agency endorses
+          the final product for data load and publication.
+        </procdesc>
+        <procdate>5/31/03</procdate>
+        <proccont>
+          <cntinfo>
+            <cntorgp>
+              <cntorg>D.C. Office of the Chief Technology Officer</cntorg>
+              <cntper>GIS Data Coordinator</cntper>
+            </cntorgp>
+            <cntfax>(202) 727-5660</cntfax>
+            <cntemail>dcgis@dc.gov</cntemail>
+            <hours>8:30 am - 5 pm</hours>
+          </cntinfo>
+        </proccont>
+      </procstep>
+      <procstep>
+        <procdesc>
+          Final Data Preparation:
 
-For final preparation, staff ensure all of the needed items are present (unneeded items are deleted), the metadata is complete and current, the shapefile is in the proper projection, and a spatial index exists.  If not already done, a GIS_ID (unique id for features in the layer) is computed with automated tools.
-</procdesc>
-				<procdate>5/31/03</procdate>
-				<proccont>
-					<cntinfo>
-						<cntorgp>
-							<cntorg>D.C. Office of the Chief Technology Officer</cntorg>
-							<cntper>GIS Data Coordinator</cntper>
-						</cntorgp>
-						<cntfax>(202) 727-5660</cntfax>
-						<cntemail>dcgis@dc.gov</cntemail>
-						<hours>8:30 am - 5 pm</hours>
-					</cntinfo>
-				</proccont>
-			</procstep>
-			<procstep>
-				<procdesc>
-Data Load:
+          For final preparation, staff ensure all of the needed items are present (unneeded items are deleted), the
+          metadata is complete and current, the shapefile is in the proper projection, and a spatial index exists. If
+          not already done, a GIS_ID (unique id for features in the layer) is computed with automated tools.
+        </procdesc>
+        <procdate>5/31/03</procdate>
+        <proccont>
+          <cntinfo>
+            <cntorgp>
+              <cntorg>D.C. Office of the Chief Technology Officer</cntorg>
+              <cntper>GIS Data Coordinator</cntper>
+            </cntorgp>
+            <cntfax>(202) 727-5660</cntfax>
+            <cntemail>dcgis@dc.gov</cntemail>
+            <hours>8:30 am - 5 pm</hours>
+          </cntinfo>
+        </proccont>
+      </procstep>
+      <procstep>
+        <procdesc>
+          Data Load:
 
-After final preparation, OCTO GIS staff load the data into the application's test database, where SDE handles the spatial data and ORACLE manages the attribute information.
+          After final preparation, OCTO GIS staff load the data into the application's test database, where SDE handles
+          the spatial data and ORACLE manages the attribute information.
 
-First, staff add primary key and name fields to the layer.  Second, personnel register the layer into the appropriate tables and establish the unique feature-ids (the link between the spatial object and its attributes) specific to that layer.  Then, staff populate feature, search, address, web url, contact, data source, and other tables, where applicable. For point layers, team members calculate each feature's geographic extent and populate the features table.  Lastly, each layer is intersected with the base geography (2002 Advisory Neighborhood Commission areas, 2002 wards, zip codes, neighborhoods, and neighborhood clusters) to populate the "what's-within" tables for the web reports.  Views are refreshed when needed.
-</procdesc>
-				<procdate>5/31/03</procdate>
-				<proccont>
-					<cntinfo>
-						<cntorgp>
-							<cntorg>D.C. Office of the Chief Technology Officer</cntorg>
-							<cntper>GIS Data Coordinator</cntper>
-						</cntorgp>
-						<cntfax>(202) 727-5660</cntfax>
-						<cntemail>dcgis@dc.gov</cntemail>
-						<hours>8:30 am - 5 pm</hours>
-					</cntinfo>
-				</proccont>
-			</procstep>
-			<procstep>
-				<procdesc>
-Data Load QA/QC
+          First, staff add primary key and name fields to the layer. Second, personnel register the layer into the
+          appropriate tables and establish the unique feature-ids (the link between the spatial object and its
+          attributes) specific to that layer. Then, staff populate feature, search, address, web url, contact, data
+          source, and other tables, where applicable. For point layers, team members calculate each feature's geographic
+          extent and populate the features table. Lastly, each layer is intersected with the base geography (2002
+          Advisory Neighborhood Commission areas, 2002 wards, zip codes, neighborhoods, and neighborhood clusters) to
+          populate the "what's-within" tables for the web reports. Views are refreshed when needed.
+        </procdesc>
+        <procdate>5/31/03</procdate>
+        <proccont>
+          <cntinfo>
+            <cntorgp>
+              <cntorg>D.C. Office of the Chief Technology Officer</cntorg>
+              <cntper>GIS Data Coordinator</cntper>
+            </cntorgp>
+            <cntfax>(202) 727-5660</cntfax>
+            <cntemail>dcgis@dc.gov</cntemail>
+            <hours>8:30 am - 5 pm</hours>
+          </cntinfo>
+        </proccont>
+      </procstep>
+      <procstep>
+        <procdesc>
+          Data Load QA/QC
 
-OCTO GIS performs spatial checks comparing the test SDE database with source files to check for completeness, spatial integrity, and proper attribution.  First, staff compare the test database contents with documented standards.  Then, team members check the geography and attribution, as well as compare dataset parameters between both layers.
+          OCTO GIS performs spatial checks comparing the test SDE database with source files to check for completeness,
+          spatial integrity, and proper attribution. First, staff compare the test database contents with documented
+          standards. Then, team members check the geography and attribution, as well as compare dataset parameters
+          between both layers.
 
-The data team performs attribute checks on the ORACLE database to ensure the existence and validity of views.  Again, staff compare the database contents with documented standards.  For critical views, personnel check the view structures and data against source files and documentation.
-</procdesc>
-				<procdate>5/31/03</procdate>
-				<proccont>
-					<cntinfo>
-						<cntorgp>
-							<cntorg>D.C. Office of the Chief Technology Officer</cntorg>
-							<cntper>GIS Data Coordinator</cntper>
-						</cntorgp>
-						<cntfax>(202) 727-5660</cntfax>
-						<cntemail>dcgis@dc.gov</cntemail>
-						<hours>8:30 am - 5 pm</hours>
-					</cntinfo>
-				</proccont>
-			</procstep>
-			<procstep><procdesc Sync="TRUE">Metadata imported.</procdesc><srcused Sync="TRUE">C:\DOCUME~1\roew\LOCALS~1\Temp\xml29.tmp</srcused><date Sync="TRUE">20030529</date><time Sync="TRUE">11404800</time></procstep><procstep><procdesc Sync="TRUE">Dataset copied.</procdesc><srcused Sync="TRUE">C:\OCTOGIS\Data\DOH\AmbulatoryPt</srcused><date Sync="TRUE">20030725</date><time Sync="TRUE">15213700</time></procstep></lineage>
-	</dataqual>
-	<spdoinfo>
-		<direct Sync="TRUE">Vector</direct>
-		<ptvctinf>
-			<sdtsterm Name="AmbulatoryPt">
-				<sdtstype Sync="TRUE">Entity point</sdtstype>
-				<ptvctcnt Sync="TRUE">8</ptvctcnt>
-			</sdtsterm>
-			<esriterm Name="AmbulatoryPt"><efeatyp Sync="TRUE">Simple</efeatyp><efeageom Sync="TRUE">Point</efeageom><esritopo Sync="TRUE">FALSE</esritopo><efeacnt Sync="TRUE">8</efeacnt><spindex Sync="TRUE">TRUE</spindex><linrefer Sync="TRUE">FALSE</linrefer></esriterm></ptvctinf>
-	</spdoinfo>
-	<spref>
-		<horizsys>
-			<planar>
-				<planci>
-					<plance Sync="TRUE">coordinate pair</plance>
-					<coordrep>
-						<absres Sync="TRUE">0.000032</absres>
-						<ordres Sync="TRUE">0.000032</ordres>
-					</coordrep>
-					<plandu Sync="TRUE">meters</plandu>
-				</planci>
-				<gridsys><gridsysn Sync="TRUE">State Plane Coordinate System 1983</gridsysn><spcs><spcszone Sync="TRUE">1900</spcszone><lambertc><stdparll Sync="TRUE">38.300000</stdparll><stdparll Sync="TRUE">39.450000</stdparll><longcm Sync="TRUE">-77.000000</longcm><latprjo Sync="TRUE">37.666667</latprjo><feast Sync="TRUE">400000.000000</feast><fnorth Sync="TRUE">0.000000</fnorth></lambertc></spcs></gridsys></planar>
-			<geodetic>
-				<horizdn Sync="TRUE">North American Datum of 1983</horizdn>
-				<ellips Sync="TRUE">Geodetic Reference System 80</ellips>
-				<semiaxis Sync="TRUE">6378137.000000</semiaxis>
-				<denflat Sync="TRUE">298.257222</denflat>
-			</geodetic>
-			<cordsysn><geogcsn Sync="TRUE">GCS_North_American_1983</geogcsn><projcsn Sync="TRUE">NAD_1983_StatePlane_Maryland_FIPS_1900</projcsn></cordsysn></horizsys>
-		<vertdef>
-			<altsys>
-				<altres Sync="TRUE">1.000000</altres>
-				<altenc Sync="TRUE">Explicit elevation coordinate included with horizontal coordinates</altenc>
-			</altsys>
-		</vertdef>
-	</spref>
-	<eainfo>
-		<detailed Name="AmbulatoryPt">
-			<enttyp>
-				<enttypl Sync="TRUE">AmbulatoryPt</enttypl>
-				<enttypt Sync="TRUE">Feature Class</enttypt><enttypc Sync="TRUE">8</enttypc></enttyp>
-			<attr>
-				<attrlabl Sync="TRUE">FID</attrlabl>
-				<attrdef Sync="TRUE">Internal feature number.</attrdef>
-				<attrdefs Sync="TRUE">ESRI</attrdefs>
-				<attrdomv>
-					<udom Sync="TRUE">Sequential unique whole numbers that are automatically generated.</udom>
-				</attrdomv>
-				<attalias Sync="TRUE">FID</attalias><attrtype Sync="TRUE">OID</attrtype><attwidth Sync="TRUE">4</attwidth><atprecis Sync="TRUE">0</atprecis><attscale Sync="TRUE">0</attscale></attr>
-			<attr>
-				<attrlabl Sync="TRUE">Shape</attrlabl>
-				<attrdef Sync="TRUE">Feature geometry.</attrdef>
-				<attrdefs Sync="TRUE">ESRI</attrdefs>
-				<attrdomv>
-					<udom Sync="TRUE">Coordinates defining the features.</udom>
-				</attrdomv>
-				<attalias Sync="TRUE">Shape</attalias><attrtype Sync="TRUE">Geometry</attrtype><attwidth Sync="TRUE">0</attwidth><atprecis Sync="TRUE">0</atprecis><attscale Sync="TRUE">0</attscale></attr>
-			<attr><attrlabl Sync="TRUE">NAME</attrlabl><attalias Sync="TRUE">NAME</attalias><attrtype Sync="TRUE">String</attrtype><attwidth Sync="TRUE">35</attwidth><attrdef>Facility name</attrdef></attr><attr><attrlabl Sync="TRUE">ADDRESS</attrlabl><attalias Sync="TRUE">ADDRESS</attalias><attrtype Sync="TRUE">String</attrtype><attwidth Sync="TRUE">33</attwidth><attrdef>Physical address</attrdef></attr><attr><attrlabl Sync="TRUE">webURL</attrlabl><attalias Sync="TRUE">webURL</attalias><attrtype Sync="TRUE">String</attrtype><attwidth Sync="TRUE">254</attwidth><attrdef>DC Dept of Health - Ambulatory Surgery Centers list</attrdef></attr><attr><attrlabl Sync="TRUE">GIS_ID</attrlabl><attalias Sync="TRUE">GIS_ID</attalias><attrtype Sync="TRUE">String</attrtype><attwidth Sync="TRUE">16</attwidth><attrdef>Sequential OCTO GIS identifier that links points and polygons</attrdef></attr><attr><attrlabl Sync="TRUE">SSL</attrlabl><attalias Sync="TRUE">SSL</attalias><attrtype Sync="TRUE">String</attrtype><attwidth Sync="TRUE">16</attwidth><attrdef>Single square lot</attrdef></attr></detailed>
-	</eainfo>
-	<distinfo>
-		<distrib>
-			<cntinfo>
-				<cntorgp>
-					<cntorg>D.C. Office of the Chief Technology Officer</cntorg>
-					<cntper>GIS Data Coordinator</cntper>
-				</cntorgp>
-				<cntaddr>
-					<addrtype>mailing and physical address</addrtype>
-					<address>441 4th St NW, Suite 930 South</address>
-					<city>Washington</city>
-					<state>DC</state>
-					<postal>20001</postal>
-					<country>USA</country>
-				</cntaddr>
-				<cntfax>(202) 727-5660</cntfax>
-				<cntemail>dcgis@dc.gov</cntemail>
-				<hours>8:30 am - 5 pm</hours>
-			</cntinfo>
-		</distrib>
-		<resdesc Sync="TRUE">Downloadable Data</resdesc>
-		<distliab>OCTO makes no claims as to the completeness, accuracy or content of any data contained hereon, and makes no representation of any kind, including, but not limited to, the warranty of the accuracy or fitness for a particular use, nor are any such warranties to be implied or inferred, with respect to the information or data furnished herein. Subject to terms and conditions of the Memorandum of Agreement. Memorandum of Agreement must have authorized signature.</distliab>
-		<stdorder>
-			<digform>
-				<digtinfo>
-					<transize Sync="TRUE">0.028</transize>
-					<dssize Sync="TRUE">0.028</dssize></digtinfo>
-				<digtopt>
-					<onlinopt>
-						<computer>
-							<networka></networka>
-						</computer>
-					</onlinopt>
-				</digtopt>
-			</digform>
-			<ordering>Most DC GIS datasets can be downloaded from "http://dcgis.dc.gov" on the data center page.  Orders can also be made by contacting OCTO GIS at "dcgis@dc.gov", especially for datasets not available for download.</ordering></stdorder>
-	</distinfo>
-	<metainfo>
-		<metd Sync="TRUE">20040106</metd>
-		<metc>
-			<cntinfo>
-				<cntorgp>
-					<cntorg>D.C. Office of the Chief Technology Officer</cntorg>
-					<cntper>GIS Data Coordinator</cntper>
-				</cntorgp>
-				<cntaddr>
-					<addrtype>mailing and physical address</addrtype>
-					<address>441 4th St NW, Suite 930 South</address>
-					<city>Washington</city>
-					<state>DC</state>
-					<postal>20001</postal>
-					<country>USA</country>
-				</cntaddr>
-				<cntfax>(202) 727-5660</cntfax>
-				<cntemail>dcgis@dc.gov</cntemail>
-				<hours>8:30 am - 5 pm</hours>
-			</cntinfo>
-		</metc>
-		<metstdn Sync="TRUE">FGDC Content Standards for Digital Geospatial Metadata</metstdn>
-		<metstdv Sync="TRUE">FGDC-STD-001-1998</metstdv>
-		<mettc Sync="TRUE">local time</mettc>
-		<metextns>
-			<onlink>http://www.esri.com/metadata/esriprof80.html</onlink>
-			<metprof>ESRI Metadata Profile</metprof>
-		</metextns>
-		<langmeta Sync="TRUE">en</langmeta><metextns><onlink Sync="TRUE">http://www.esri.com/metadata/esriprof80.html</onlink><metprof Sync="TRUE">ESRI Metadata Profile</metprof></metextns><metrd>01/07/04</metrd></metainfo>
-	<Esri><CreaDate>20030725</CreaDate><CreaTime>15213700</CreaTime><SyncOnce>FALSE</SyncOnce><SyncDate>20040106</SyncDate><SyncTime>14301700</SyncTime><ModDate>20040106</ModDate><ModTime>14301700</ModTime><MetaID>{25AB6F12-3363-422E-A5A4-1A85B1952BF7}</MetaID></Esri><dataIdInfo><envirDesc Sync="TRUE">Microsoft Windows 2000 Version 5.0 (Build 2195) Service Pack 4; ESRI ArcCatalog 8.3.0.800</envirDesc><dataLang><languageCode Sync="TRUE" value="en"></languageCode></dataLang><idCitation><resTitle Sync="TRUE">AmbulatoryPt</resTitle><presForm><PresFormCd Sync="TRUE" value="005"></PresFormCd></presForm></idCitation><spatRpType><SpatRepTypCd Sync="TRUE" value="001"></SpatRepTypCd></spatRpType><dataExt><geoEle><GeoBndBox esriExtentType="native"><westBL Sync="TRUE">395751.322075</westBL><eastBL Sync="TRUE">403559.335007</eastBL><northBL Sync="TRUE">145999.017596</northBL><southBL Sync="TRUE">133394.024991</southBL><exTypeCode Sync="TRUE">1</exTypeCode></GeoBndBox></geoEle></dataExt><geoBox esriExtentType="decdegrees"><westBL Sync="TRUE">-77.049036</westBL><eastBL Sync="TRUE">-76.95892</eastBL><northBL Sync="TRUE">38.981919</northBL><southBL Sync="TRUE">38.868359</southBL><exTypeCode Sync="TRUE">1</exTypeCode></geoBox></dataIdInfo><mdLang><languageCode Sync="TRUE" value="en"></languageCode></mdLang><mdStanName Sync="TRUE">ISO 19115 Geographic Information - Metadata</mdStanName><mdStanVer Sync="TRUE">DIS_ESRI1.0</mdStanVer><mdChar><CharSetCd Sync="TRUE" value="004"></CharSetCd></mdChar><mdHrLv><ScopeCd Sync="TRUE" value="005"></ScopeCd></mdHrLv><mdHrLvName Sync="TRUE">dataset</mdHrLvName><distInfo><distributor><distorTran><onLineSrc><orDesc Sync="TRUE">002</orDesc><linkage Sync="TRUE">file://\\OCTO-AWLLX69A6L\C$\OCTOGIS\DataRequest\Data\Hospital\AmbulatoryPt.shp</linkage><protocol Sync="TRUE">Local Area Network</protocol></onLineSrc><transSize Sync="TRUE">0.028</transSize></distorTran><distorFormat><formatName Sync="TRUE">Shapefile</formatName></distorFormat></distributor></distInfo><refSysInfo><RefSystem><refSysID><identCode Sync="TRUE">NAD_1983_StatePlane_Maryland_FIPS_1900</identCode></refSysID></RefSystem></refSysInfo><spatRepInfo><VectSpatRep><topLvl><TopoLevCd Sync="TRUE" value="001"></TopoLevCd></topLvl><geometObjs Name="AmbulatoryPt"><geoObjTyp><GeoObjTypCd Sync="TRUE" value="004"></GeoObjTypCd></geoObjTyp><geoObjCnt Sync="TRUE">8</geoObjCnt></geometObjs></VectSpatRep></spatRepInfo><mdDateSt Sync="TRUE">20040106</mdDateSt></metadata>
+          The data team performs attribute checks on the ORACLE database to ensure the existence and validity of views.
+          Again, staff compare the database contents with documented standards. For critical views, personnel check the
+          view structures and data against source files and documentation.
+        </procdesc>
+        <procdate>5/31/03</procdate>
+        <proccont>
+          <cntinfo>
+            <cntorgp>
+              <cntorg>D.C. Office of the Chief Technology Officer</cntorg>
+              <cntper>GIS Data Coordinator</cntper>
+            </cntorgp>
+            <cntfax>(202) 727-5660</cntfax>
+            <cntemail>dcgis@dc.gov</cntemail>
+            <hours>8:30 am - 5 pm</hours>
+          </cntinfo>
+        </proccont>
+      </procstep>
+      <procstep>
+        <procdesc Sync="TRUE">Metadata imported.</procdesc>
+        <srcused Sync="TRUE">C:\DOCUME~1\roew\LOCALS~1\Temp\xml29.tmp</srcused>
+        <date Sync="TRUE">20030529</date>
+        <time Sync="TRUE">11404800</time>
+      </procstep>
+      <procstep>
+        <procdesc Sync="TRUE">Dataset copied.</procdesc>
+        <srcused Sync="TRUE">C:\OCTOGIS\Data\DOH\AmbulatoryPt</srcused>
+        <date Sync="TRUE">20030725</date>
+        <time Sync="TRUE">15213700</time>
+      </procstep>
+    </lineage>
+  </dataqual>
+  <spdoinfo>
+    <direct Sync="TRUE">Vector</direct>
+    <ptvctinf>
+      <sdtsterm Name="AmbulatoryPt">
+        <sdtstype Sync="TRUE">Entity point</sdtstype>
+        <ptvctcnt Sync="TRUE">8</ptvctcnt>
+      </sdtsterm>
+      <esriterm Name="AmbulatoryPt">
+        <efeatyp Sync="TRUE">Simple</efeatyp>
+        <efeageom Sync="TRUE">Point</efeageom>
+        <esritopo Sync="TRUE">FALSE</esritopo>
+        <efeacnt Sync="TRUE">8</efeacnt>
+        <spindex Sync="TRUE">TRUE</spindex>
+        <linrefer Sync="TRUE">FALSE</linrefer>
+      </esriterm>
+    </ptvctinf>
+  </spdoinfo>
+  <spref>
+    <horizsys>
+      <planar>
+        <planci>
+          <plance Sync="TRUE">coordinate pair</plance>
+          <coordrep>
+            <absres Sync="TRUE">0.000032</absres>
+            <ordres Sync="TRUE">0.000032</ordres>
+          </coordrep>
+          <plandu Sync="TRUE">meters</plandu>
+        </planci>
+        <gridsys>
+          <gridsysn Sync="TRUE">State Plane Coordinate System 1983</gridsysn>
+          <spcs>
+            <spcszone Sync="TRUE">1900</spcszone>
+            <lambertc>
+              <stdparll Sync="TRUE">38.300000</stdparll>
+              <stdparll Sync="TRUE">39.450000</stdparll>
+              <longcm Sync="TRUE">-77.000000</longcm>
+              <latprjo Sync="TRUE">37.666667</latprjo>
+              <feast Sync="TRUE">400000.000000</feast>
+              <fnorth Sync="TRUE">0.000000</fnorth>
+            </lambertc>
+          </spcs>
+        </gridsys>
+      </planar>
+      <geodetic>
+        <horizdn Sync="TRUE">North American Datum of 1983</horizdn>
+        <ellips Sync="TRUE">Geodetic Reference System 80</ellips>
+        <semiaxis Sync="TRUE">6378137.000000</semiaxis>
+        <denflat Sync="TRUE">298.257222</denflat>
+      </geodetic>
+      <cordsysn>
+        <geogcsn Sync="TRUE">GCS_North_American_1983</geogcsn>
+        <projcsn Sync="TRUE">NAD_1983_StatePlane_Maryland_FIPS_1900</projcsn>
+      </cordsysn>
+    </horizsys>
+    <vertdef>
+      <altsys>
+        <altres Sync="TRUE">1.000000</altres>
+        <altenc Sync="TRUE">Explicit elevation coordinate included with horizontal coordinates</altenc>
+      </altsys>
+    </vertdef>
+  </spref>
+  <eainfo>
+    <detailed Name="AmbulatoryPt">
+      <enttyp>
+        <enttypl Sync="TRUE">AmbulatoryPt</enttypl>
+        <enttypt Sync="TRUE">Feature Class</enttypt>
+        <enttypc Sync="TRUE">8</enttypc>
+      </enttyp>
+      <attr>
+        <attrlabl Sync="TRUE">FID</attrlabl>
+        <attrdef Sync="TRUE">Internal feature number.</attrdef>
+        <attrdefs Sync="TRUE">ESRI</attrdefs>
+        <attrdomv>
+          <udom Sync="TRUE">Sequential unique whole numbers that are automatically generated.</udom>
+        </attrdomv>
+        <attalias Sync="TRUE">FID</attalias>
+        <attrtype Sync="TRUE">OID</attrtype>
+        <attwidth Sync="TRUE">4</attwidth>
+        <atprecis Sync="TRUE">0</atprecis>
+        <attscale Sync="TRUE">0</attscale>
+      </attr>
+      <attr>
+        <attrlabl Sync="TRUE">Shape</attrlabl>
+        <attrdef Sync="TRUE">Feature geometry.</attrdef>
+        <attrdefs Sync="TRUE">ESRI</attrdefs>
+        <attrdomv>
+          <udom Sync="TRUE">Coordinates defining the features.</udom>
+        </attrdomv>
+        <attalias Sync="TRUE">Shape</attalias>
+        <attrtype Sync="TRUE">Geometry</attrtype>
+        <attwidth Sync="TRUE">0</attwidth>
+        <atprecis Sync="TRUE">0</atprecis>
+        <attscale Sync="TRUE">0</attscale>
+      </attr>
+      <attr>
+        <attrlabl Sync="TRUE">NAME</attrlabl>
+        <attalias Sync="TRUE">NAME</attalias>
+        <attrtype Sync="TRUE">String</attrtype>
+        <attwidth Sync="TRUE">35</attwidth>
+        <attrdef>Facility name</attrdef>
+      </attr>
+      <attr>
+        <attrlabl Sync="TRUE">ADDRESS</attrlabl>
+        <attalias Sync="TRUE">ADDRESS</attalias>
+        <attrtype Sync="TRUE">String</attrtype>
+        <attwidth Sync="TRUE">33</attwidth>
+        <attrdef>Physical address</attrdef>
+      </attr>
+      <attr>
+        <attrlabl Sync="TRUE">webURL</attrlabl>
+        <attalias Sync="TRUE">webURL</attalias>
+        <attrtype Sync="TRUE">String</attrtype>
+        <attwidth Sync="TRUE">254</attwidth>
+        <attrdef>DC Dept of Health - Ambulatory Surgery Centers list</attrdef>
+      </attr>
+      <attr>
+        <attrlabl Sync="TRUE">GIS_ID</attrlabl>
+        <attalias Sync="TRUE">GIS_ID</attalias>
+        <attrtype Sync="TRUE">String</attrtype>
+        <attwidth Sync="TRUE">16</attwidth>
+        <attrdef>Sequential OCTO GIS identifier that links points and polygons</attrdef>
+      </attr>
+      <attr>
+        <attrlabl Sync="TRUE">SSL</attrlabl>
+        <attalias Sync="TRUE">SSL</attalias>
+        <attrtype Sync="TRUE">String</attrtype>
+        <attwidth Sync="TRUE">16</attwidth>
+        <attrdef>Single square lot</attrdef>
+      </attr>
+    </detailed>
+  </eainfo>
+  <distinfo>
+    <distrib>
+      <cntinfo>
+        <cntorgp>
+          <cntorg>D.C. Office of the Chief Technology Officer</cntorg>
+          <cntper>GIS Data Coordinator</cntper>
+        </cntorgp>
+        <cntaddr>
+          <addrtype>mailing and physical address</addrtype>
+          <address>441 4th St NW, Suite 930 South</address>
+          <city>Washington</city>
+          <state>DC</state>
+          <postal>20001</postal>
+          <country>USA</country>
+        </cntaddr>
+        <cntfax>(202) 727-5660</cntfax>
+        <cntemail>dcgis@dc.gov</cntemail>
+        <hours>8:30 am - 5 pm</hours>
+      </cntinfo>
+    </distrib>
+    <resdesc Sync="TRUE">Downloadable Data</resdesc>
+    <distliab>OCTO makes no claims as to the completeness, accuracy or content of any data contained hereon, and makes
+      no representation of any kind, including, but not limited to, the warranty of the accuracy or fitness for a
+      particular use, nor are any such warranties to be implied or inferred, with respect to the information or data
+      furnished herein. Subject to terms and conditions of the Memorandum of Agreement. Memorandum of Agreement must
+      have authorized signature.
+    </distliab>
+    <stdorder>
+      <digform>
+        <digtinfo>
+          <transize Sync="TRUE">0.028</transize>
+          <dssize Sync="TRUE">0.028</dssize>
+        </digtinfo>
+        <digtopt>
+          <onlinopt>
+            <computer>
+              <networka></networka>
+            </computer>
+          </onlinopt>
+        </digtopt>
+      </digform>
+      <ordering>Most DC GIS datasets can be downloaded from "http://dcgis.dc.gov" on the data center page. Orders can
+        also be made by contacting OCTO GIS at "dcgis@dc.gov", especially for datasets not available for download.
+      </ordering>
+    </stdorder>
+  </distinfo>
+  <metainfo>
+    <metd Sync="TRUE">20040106</metd>
+    <metc>
+      <cntinfo>
+        <cntorgp>
+          <cntorg>D.C. Office of the Chief Technology Officer</cntorg>
+          <cntper>GIS Data Coordinator</cntper>
+        </cntorgp>
+        <cntaddr>
+          <addrtype>mailing and physical address</addrtype>
+          <address>441 4th St NW, Suite 930 South</address>
+          <city>Washington</city>
+          <state>DC</state>
+          <postal>20001</postal>
+          <country>USA</country>
+        </cntaddr>
+        <cntfax>(202) 727-5660</cntfax>
+        <cntemail>dcgis@dc.gov</cntemail>
+        <hours>8:30 am - 5 pm</hours>
+      </cntinfo>
+    </metc>
+    <metstdn Sync="TRUE">FGDC Content Standards for Digital Geospatial Metadata</metstdn>
+    <metstdv Sync="TRUE">FGDC-STD-001-1998</metstdv>
+    <mettc Sync="TRUE">local time</mettc>
+    <metextns>
+      <onlink>http://www.esri.com/metadata/esriprof80.html</onlink>
+      <metprof>ESRI Metadata Profile</metprof>
+    </metextns>
+    <langmeta Sync="TRUE">en</langmeta>
+    <metextns>
+      <onlink Sync="TRUE">http://www.esri.com/metadata/esriprof80.html</onlink>
+      <metprof Sync="TRUE">ESRI Metadata Profile</metprof>
+    </metextns>
+    <metrd>01/07/04</metrd>
+  </metainfo>
+  <Esri>
+    <CreaDate>20030725</CreaDate>
+    <CreaTime>15213700</CreaTime>
+    <SyncOnce>FALSE</SyncOnce>
+    <SyncDate>20040106</SyncDate>
+    <SyncTime>14301700</SyncTime>
+    <ModDate>20040106</ModDate>
+    <ModTime>14301700</ModTime>
+    <MetaID>{25AB6F12-3363-422E-A5A4-1A85B1952BF7}</MetaID>
+  </Esri>
+  <dataIdInfo>
+    <envirDesc Sync="TRUE">Microsoft Windows 2000 Version 5.0 (Build 2195) Service Pack 4; ESRI ArcCatalog 8.3.0.800
+    </envirDesc>
+    <dataLang>
+      <languageCode Sync="TRUE" value="en"></languageCode>
+    </dataLang>
+    <idCitation>
+      <resTitle Sync="TRUE">AmbulatoryPt</resTitle>
+      <presForm>
+        <PresFormCd Sync="TRUE" value="005"></PresFormCd>
+      </presForm>
+    </idCitation>
+    <spatRpType>
+      <SpatRepTypCd Sync="TRUE" value="001"></SpatRepTypCd>
+    </spatRpType>
+    <dataExt>
+      <geoEle>
+        <GeoBndBox esriExtentType="native">
+          <westBL Sync="TRUE">395751.322075</westBL>
+          <eastBL Sync="TRUE">403559.335007</eastBL>
+          <northBL Sync="TRUE">145999.017596</northBL>
+          <southBL Sync="TRUE">133394.024991</southBL>
+          <exTypeCode Sync="TRUE">1</exTypeCode>
+        </GeoBndBox>
+      </geoEle>
+    </dataExt>
+    <geoBox esriExtentType="decdegrees">
+      <westBL Sync="TRUE">-77.049036</westBL>
+      <eastBL Sync="TRUE">-76.95892</eastBL>
+      <northBL Sync="TRUE">38.981919</northBL>
+      <southBL Sync="TRUE">38.868359</southBL>
+      <exTypeCode Sync="TRUE">1</exTypeCode>
+    </geoBox>
+  </dataIdInfo>
+  <mdLang>
+    <languageCode Sync="TRUE" value="en"></languageCode>
+  </mdLang>
+  <mdStanName Sync="TRUE">ISO 19115 Geographic Information - Metadata</mdStanName>
+  <mdStanVer Sync="TRUE">DIS_ESRI1.0</mdStanVer>
+  <mdChar>
+    <CharSetCd Sync="TRUE" value="004"></CharSetCd>
+  </mdChar>
+  <mdHrLv>
+    <ScopeCd Sync="TRUE" value="005"></ScopeCd>
+  </mdHrLv>
+  <mdHrLvName Sync="TRUE">dataset</mdHrLvName>
+  <distInfo>
+    <distributor>
+      <distorTran>
+        <onLineSrc>
+          <orDesc Sync="TRUE">002</orDesc>
+          <linkage Sync="TRUE">file://\\OCTO-AWLLX69A6L\C$\OCTOGIS\DataRequest\Data\Hospital\AmbulatoryPt.shp</linkage>
+          <protocol Sync="TRUE">Local Area Network</protocol>
+        </onLineSrc>
+        <transSize Sync="TRUE">0.028</transSize>
+      </distorTran>
+      <distorFormat>
+        <formatName Sync="TRUE">Shapefile</formatName>
+      </distorFormat>
+    </distributor>
+  </distInfo>
+  <refSysInfo>
+    <RefSystem>
+      <refSysID>
+        <identCode Sync="TRUE">NAD_1983_StatePlane_Maryland_FIPS_1900</identCode>
+      </refSysID>
+    </RefSystem>
+  </refSysInfo>
+  <spatRepInfo>
+    <VectSpatRep>
+      <topLvl>
+        <TopoLevCd Sync="TRUE" value="001"></TopoLevCd>
+      </topLvl>
+      <geometObjs Name="AmbulatoryPt">
+        <geoObjTyp>
+          <GeoObjTypCd Sync="TRUE" value="004"></GeoObjTypCd>
+        </geoObjTyp>
+        <geoObjCnt Sync="TRUE">8</geoObjCnt>
+      </geometObjs>
+    </VectSpatRep>
+  </spatRepInfo>
+  <mdDateSt Sync="TRUE">20040106</mdDateSt>
+</metadata>

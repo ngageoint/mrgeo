@@ -24,27 +24,32 @@ import org.mrgeo.test.LocalRunnerTest
 import org.scalatest.junit.AssertionsForJUnit
 
 @SuppressWarnings(Array("all")) // Test code, not included in production
-class InlineCsvMapOpTest extends LocalRunnerTest with AssertionsForJUnit
-{
+class InlineCsvMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
   val providerProperties = new ProviderProperties()
 
   @Test
-  @Category(Array[Class[_]] { classOf[UnitTest] })
-  def runTestGoodArgs(): Unit = {
+  @Category(Array[Class[_]] {
+    classOf[UnitTest]
+  })
+  def runTestGoodArgs():Unit = {
     Assert.assertTrue(MapAlgebra.validate("InlineCsv(\"GEOMETRY\", \"'POINT(-117.5 38.5)'\")",
       providerProperties))
   }
 
   @Test
-  @Category(Array[Class[_]] { classOf[UnitTest] })
-  def tooManyArgs(): Unit = {
+  @Category(Array[Class[_]] {
+    classOf[UnitTest]
+  })
+  def tooManyArgs():Unit = {
     Assert.assertFalse(MapAlgebra.validate("InlineCsv(3, \"GEOMETRY\", \"'POINT(-117.5 38.5)'\")",
       providerProperties))
   }
 
   @Test
-  @Category(Array[Class[_]] { classOf[UnitTest] })
-  def tooFewArgs(): Unit = {
+  @Category(Array[Class[_]] {
+    classOf[UnitTest]
+  })
+  def tooFewArgs():Unit = {
     Assert.assertFalse(MapAlgebra.validate("InlineCsv(\"GEOMETRY\")",
       providerProperties))
   }

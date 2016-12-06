@@ -26,9 +26,9 @@ import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider
 import org.mrgeo.hdfs.tile.FileSplit
 import org.mrgeo.utils.SparkUtils
 
-abstract class FileSplitPartitioner() extends Partitioner with Externalizable
-{
+abstract class FileSplitPartitioner() extends Partitioner with Externalizable {
   def hasFixedPartitions:Boolean
+
   def calculateNumPartitions(raster:RasterRDD, output:String):Int = 1
 
   def writeSplits(rdd:RasterRDD, pyramid:String, zoom:Int, conf:Configuration) = {
@@ -37,7 +37,7 @@ abstract class FileSplitPartitioner() extends Partitioner with Externalizable
     val splitinfo = SparkUtils.calculateSplitData(rdd)
     fileSplits.generateSplits(splitinfo)
 
-    val dp: HdfsMrsImageDataProvider = new HdfsMrsImageDataProvider(conf, pyramid, null)
+    val dp:HdfsMrsImageDataProvider = new HdfsMrsImageDataProvider(conf, pyramid, null)
     val inputWithZoom = new Path(dp.getResourcePath(false), "" + zoom)
 
     fileSplits.writeSplits(inputWithZoom)

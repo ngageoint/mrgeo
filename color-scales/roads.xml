@@ -14,7 +14,7 @@
   ~
   -->
 <ColorMap name="Roads">
-<!-- Applies a color ramp to values in kph to differentiate roads. Style for OSM roads -->
+  <!-- Applies a color ramp to values in kph to differentiate roads. Style for OSM roads -->
   <Scaling>Absolute</Scaling>
   <ReliefShading>0</ReliefShading>
   <Interpolate>1</Interpolate>

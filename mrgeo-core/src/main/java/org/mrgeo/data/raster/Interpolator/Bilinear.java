@@ -21,7 +21,7 @@ public static void scaleInt(final MrGeoRaster src, final MrGeoRaster dst, final 
 
   for (int b = 0; b < src.bands(); b++)
   {
-    final int nodata = (int)nodatas[b];
+    final int nodata = (int) nodatas[b];
 
     for (int i = 0; i < dst.width(); i++)
     {
@@ -68,7 +68,7 @@ public static void scaleInt(final MrGeoRaster src, final MrGeoRaster dst, final 
         }
         else
         {
-          r1 = (int)(A * (1 - x_diff) + B * (x_diff));
+          r1 = (int) (A * (1 - x_diff) + B * (x_diff));
         }
 
         if (FloatUtils.isNodata(C, nodata))
@@ -81,7 +81,7 @@ public static void scaleInt(final MrGeoRaster src, final MrGeoRaster dst, final 
         }
         else
         {
-          r2 = (int)(C * (1 - x_diff) + D * (x_diff));
+          r2 = (int) (C * (1 - x_diff) + D * (x_diff));
         }
 
         if (r1 == nodata)
@@ -117,7 +117,7 @@ public static void scaleFloat(final MrGeoRaster src, final MrGeoRaster dst, fina
 
   for (int b = 0; b < src.bands(); b++)
   {
-    float nodata = (float)nodatas[b];
+    float nodata = (float) nodatas[b];
 
     for (int i = 0; i < dst.width(); i++)
     {

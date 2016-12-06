@@ -29,7 +29,9 @@ protected int npoints; // number of points
 protected int[] part; // array of parts
 protected Coord[] point; // array of simple points
 
-/** Creates new JLine */
+/**
+ * Creates new JLine
+ */
 public JPolyLine()
 {
   super(POLYLINE);
@@ -55,7 +57,9 @@ public void add(Coord p)
 public boolean add(Coord p, int flag)
 {
   if (p == null)
+  {
     return false;
+  }
   if (flag == NEW_PART)
   {
     // expand array of parts
@@ -76,7 +80,9 @@ public boolean add(Coord p, int flag)
   {
     // ignore redundant coords!
     if (point[point.length - 1].equals(p))
+    {
       return false;
+    }
   }
   // expand array of points
   if (point.length == 0)
@@ -136,7 +142,9 @@ public byte check(boolean clean)
     status = READY;
   }
   if (clean)
+  {
     updateExtent();
+  }
   return status;
 }
 
@@ -144,7 +152,9 @@ public byte check(boolean clean)
 public void debug()
 {
   if (extent != null)
+  {
     System.out.println("Extent: " + extent.toString());
+  }
   System.out.println(toString());
   String extra = "";
   double dist = 0;
@@ -205,7 +215,9 @@ public boolean insert(Coord p, int i)
 {
   // valid?
   if (i < 0 || i > point.length)
+  {
     return false;
+  }
   // insert coord into array
   Coord[] temp = new Coord[++npoints];
   System.arraycopy(point, 0, temp, 0, i);
@@ -218,7 +230,9 @@ public boolean insert(Coord p, int i)
     if (part[j] <= i)
     {
       for (int k = j + 1; k < part.length; k++)
+      {
         part[k]++;
+      }
       break;
     }
   }
@@ -230,7 +244,9 @@ public boolean remove(int i)
 {
   // valid?
   if (i < 0 || i > point.length - 1)
+  {
     return false;
+  }
   // shift parts
   boolean ok = false;
   // determine what part index is in
@@ -249,12 +265,16 @@ public boolean remove(int i)
           System.arraycopy(part, p + 1, temp, p, part.length - p - 1);
         }
         if (p < part.length - 1)
+        {
           temp[p]--; // decrement that part index if not last
+        }
         part = temp;
       }
       // shift part indices by 1 for all successive parts
       for (int k = p + 1; k < part.length; k++)
+      {
         part[k]--;
+      }
       // done!
       ok = true;
       break;
@@ -262,7 +282,9 @@ public boolean remove(int i)
   }
   // check part step ok
   if (!ok)
+  {
     return false;
+  }
   // shift coords
   if (point.length == 1)
   {
@@ -298,20 +320,30 @@ public void updateExtent()
   for (int i = 0; i < point.length; i++)
   {
     if (point[i].x < temp.min.x)
+    {
       temp.min.x = point[i].x;
+    }
     if (point[i].x > temp.max.x)
+    {
       temp.max.x = point[i].x;
+    }
     if (point[i].y < temp.min.y)
+    {
       temp.min.y = point[i].y;
+    }
     if (point[i].y > temp.max.y)
+    {
       temp.max.y = point[i].y;
+    }
     // centroid
     ax += point[i].x;
     ay += point[i].y;
   }
   // calc centroid
   if (centroid == null)
+  {
     centroid = new Coord();
+  }
   centroid.x = ax / point.length;
   centroid.y = ay / point.length;
   extent = temp;

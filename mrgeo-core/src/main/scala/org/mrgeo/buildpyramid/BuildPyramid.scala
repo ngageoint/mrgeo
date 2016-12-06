@@ -47,10 +47,10 @@ object BuildPyramid extends MrGeoDriver with Externalizable {
   private val ProviderProperties = "provider.properties"
 
   @BeanProperty
-  var MIN_TILES_FOR_SPARK = 1000  // made a var so the tests can muck with it...
+  var MIN_TILES_FOR_SPARK = 1000 // made a var so the tests can muck with it...
 
-  def build(pyramidName: String, aggregator: Aggregator, conf: Configuration,
-      providerProperties: ProviderProperties):Boolean = {
+  def build(pyramidName:String, aggregator:Aggregator, conf:Configuration,
+            providerProperties:ProviderProperties):Boolean = {
 
     val name = "BuildPyramid"
 
@@ -61,46 +61,44 @@ object BuildPyramid extends MrGeoDriver with Externalizable {
     true
   }
 
-  def buildlevel(pyramidName: String, level: Int, aggregator: Aggregator,
-      conf: Configuration, providerProperties: Properties):Boolean = {
+  def buildlevel(pyramidName:String, level:Int, aggregator:Aggregator,
+                 conf:Configuration, providerProperties:Properties):Boolean = {
     throw new NotImplementedException("Not yet implemented")
   }
 
   // this build method allows buildpyramid to be called from within an existing spark job...
-  def build(pyramidName: String, aggregator: Aggregator, context:SparkContext,
-      providerProperties: ProviderProperties):Boolean = {
+  def build(pyramidName:String, aggregator:Aggregator, context:SparkContext,
+            providerProperties:ProviderProperties):Boolean = {
     val bp = new BuildPyramid(pyramidName, aggregator, providerProperties)
 
     bp.execute(context)
   }
 
-  private def setupArguments(pyramid: String, aggregator: Aggregator, providerProperties: ProviderProperties):mutable.Map[String, String] = {
+  override def setup(job:JobArguments):Boolean = {
+    job.isMemoryIntensive = true
+    true
+  }
+
+  override def readExternal(in:ObjectInput):Unit = {}
+
+  override def writeExternal(out:ObjectOutput):Unit = {}
+
+  private def setupArguments(pyramid:String, aggregator:Aggregator,
+                             providerProperties:ProviderProperties):mutable.Map[String, String] = {
     val args = mutable.Map[String, String]()
 
     args += Pyramid -> pyramid
     args += Aggregator -> aggregator.getClass.getName
 
-    if (providerProperties != null)
-    {
+    if (providerProperties != null) {
       args += ProviderProperties -> data.ProviderProperties.toDelimitedString(providerProperties)
     }
-    else
-    {
+    else {
       args += ProviderProperties -> ""
     }
 
     args
   }
-
-
-  override def setup(job: JobArguments): Boolean = {
-    job.isMemoryIntensive = true
-    true
-  }
-
-  override def readExternal(in: ObjectInput): Unit = {}
-
-  override def writeExternal(out: ObjectOutput): Unit = {}
 }
 
 class BuildPyramid extends MrGeoJob with Externalizable {
@@ -109,29 +107,13 @@ class BuildPyramid extends MrGeoJob with Externalizable {
   var aggregator:Aggregator = _
   var providerproperties:ProviderProperties = _
 
-  private[buildpyramid] def this(pyramidName: String, aggregator: Aggregator,
-      providerProperties: ProviderProperties) = {
-    this()
-
-    this.pyramidName = pyramidName
-    this.aggregator = aggregator
-    this.providerproperties = providerproperties
-  }
-
-  override def registerClasses(): Array[Class[_]] = {
+  override def registerClasses():Array[Class[_]] = {
     val classes = Array.newBuilder[Class[_]]
 
     classes.result()
   }
 
-  private def makeAggregator(classname: String) = {
-    val cl = getClass.getClassLoader
-    val clazz = cl.loadClass(classname)
-
-    aggregator = clazz.newInstance().asInstanceOf[Aggregator]
-  }
-
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = {
+  override def setup(job:JobArguments, conf:SparkConf):Boolean = {
     pyramidName = job.getSetting(BuildPyramid.Pyramid)
     val aggclass = job.getSetting(BuildPyramid.Aggregator, classOf[MeanAggregator].getName)
 
@@ -143,21 +125,21 @@ class BuildPyramid extends MrGeoJob with Externalizable {
     true
   }
 
-  override def execute(context: SparkContext): Boolean = {
+  override def execute(context:SparkContext):Boolean = {
 
     implicit val tileIdOrdering = new Ordering[TileIdWritable] {
-      override def compare(x: TileIdWritable, y: TileIdWritable): Int = x.compareTo(y)
+      override def compare(x:TileIdWritable, y:TileIdWritable):Int = x.compareTo(y)
     }
 
     log.warn("Building pyramid for " + pyramidName)
-    val provider: MrsImageDataProvider =
+    val provider:MrsImageDataProvider =
       DataProviderFactory.getMrsImageDataProvider(pyramidName, AccessMode.READ, null.asInstanceOf[ProviderProperties])
 
-    var metadata: MrsPyramidMetadata = provider.getMetadataReader.read
+    var metadata:MrsPyramidMetadata = provider.getMetadataReader.read
 
-    val maxLevel: Int = metadata.getMaxZoomLevel
+    val maxLevel:Int = metadata.getMaxZoomLevel
 
-    val tilesize: Int = metadata.getTilesize
+    val tilesize:Int = metadata.getTilesize
 
     val nodatas = metadata.getDefaultValuesDouble
 
@@ -178,21 +160,21 @@ class BuildPyramid extends MrGeoJob with Externalizable {
         // if we have less than 1000 tiles total, we'll use the local buildpyramid
         if (tb.getWidth * tb.getHeight > BuildPyramid.MIN_TILES_FOR_SPARK) {
 
-          val decimated: RDD[(TileIdWritable, RasterWritable)] = pyramid.map(tile => {
+          val decimated:RDD[(TileIdWritable, RasterWritable)] = pyramid.map(tile => {
             val fromkey = tile._1
-            val fromtile: Tile = TMSUtils.tileid(fromkey.get, fromlevel)
-            val frombounds: Bounds = TMSUtils.tileBounds(fromtile.tx, fromtile.ty, fromlevel, tilesize)
+            val fromtile:Tile = TMSUtils.tileid(fromkey.get, fromlevel)
+            val frombounds:Bounds = TMSUtils.tileBounds(fromtile.tx, fromtile.ty, fromlevel, tilesize)
 
             val fromraster = RasterWritable.toMrGeoRaster(tile._2)
 
             // calculate the starting pixel for the from-tile (make sure to use the NW coordinate)
-            val fromcorner: Pixel = TMSUtils.latLonToPixelsUL(frombounds.n, frombounds.w, fromlevel, tilesize)
+            val fromcorner:Pixel = TMSUtils.latLonToPixelsUL(frombounds.n, frombounds.w, fromlevel, tilesize)
 
-            val totile: Tile = TMSUtils.latLonToTile(frombounds.s, frombounds.w, tolevel, tilesize)
-            val tobounds: Bounds = TMSUtils.tileBounds(totile.tx, totile.ty, tolevel, tilesize)
+            val totile:Tile = TMSUtils.latLonToTile(frombounds.s, frombounds.w, tolevel, tilesize)
+            val tobounds:Bounds = TMSUtils.tileBounds(totile.tx, totile.ty, tolevel, tilesize)
 
             // calculate the starting pixel for the to-tile (make sure to use the NW coordinate) in the from-tile's pixel space
-            val tocorner: Pixel = TMSUtils.latLonToPixelsUL(tobounds.n, tobounds.w, fromlevel, tilesize)
+            val tocorner:Pixel = TMSUtils.latLonToPixelsUL(tobounds.n, tobounds.w, fromlevel, tilesize)
 
             val tokey = new TileIdWritable(TMSUtils.tileid(totile.tx, totile.ty, tolevel))
 
@@ -200,9 +182,9 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
             // create a compatible writable raster
             logDebug("from  tx: " + fromtile.tx + " ty: " + fromtile.ty + " (" + fromlevel + ") to tx: " + totile.tx +
-                " ty: " + totile.ty + " (" + tolevel + ") x: "
-                + ((fromcorner.px - tocorner.px) / 2) + " y: " + ((fromcorner.py - tocorner.py) / 2) +
-                " w: " + reduced.width() + " h: " + reduced.height())
+                     " ty: " + totile.ty + " (" + tolevel + ") x: "
+                     + ((fromcorner.px - tocorner.px) / 2) + " y: " + ((fromcorner.py - tocorner.py) / 2) +
+                     " w: " + reduced.width() + " h: " + reduced.height())
 
             val toraster = fromraster.createCompatibleRaster(tilesize, tilesize)
             toraster.fill(nodatas)
@@ -249,8 +231,39 @@ class BuildPyramid extends MrGeoJob with Externalizable {
     true
   }
 
-  private def deletelevel(level: Int, metadata: MrsPyramidMetadata, provider: MrsImageDataProvider) {
-    val imagedata: Array[MrsPyramidMetadata.ImageMetadata] = metadata.getImageMetadata
+  override def teardown(job:JobArguments, conf:SparkConf):Boolean = {
+    true
+  }
+
+  override def readExternal(in:ObjectInput):Unit = {
+    pyramidName = in.readUTF()
+    val ac = in.readUTF()
+    makeAggregator(ac)
+  }
+
+  override def writeExternal(out:ObjectOutput):Unit = {
+    out.writeUTF(pyramidName)
+    out.writeUTF(aggregator.getClass.getName)
+  }
+
+  private[buildpyramid] def this(pyramidName:String, aggregator:Aggregator,
+                                 providerProperties:ProviderProperties) = {
+    this()
+
+    this.pyramidName = pyramidName
+    this.aggregator = aggregator
+    this.providerproperties = providerproperties
+  }
+
+  private def makeAggregator(classname:String) = {
+    val cl = getClass.getClassLoader
+    val clazz = cl.loadClass(classname)
+
+    aggregator = clazz.newInstance().asInstanceOf[Aggregator]
+  }
+
+  private def deletelevel(level:Int, metadata:MrsPyramidMetadata, provider:MrsImageDataProvider) {
+    val imagedata:Array[MrsPyramidMetadata.ImageMetadata] = metadata.getImageMetadata
 
     // delete the level
     provider.delete(level)
@@ -262,19 +275,21 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
   // this method was stolen from the old Hadoop M/R version of BuildPyramid.  I really haven't looked much
   // into it to see if it really is still OK or could be improved
-  @SuppressFBWarnings(value = Array("RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"), justification = "tileIdOrdering() - false positivie")
-  private def buildlevellocal(provider:MrsImageDataProvider, pyramid:RasterRDD, maxlevel: Int, minlevel:Int): Boolean = {
+  @SuppressFBWarnings(value = Array("RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"),
+    justification = "tileIdOrdering() - false positivie")
+  private def buildlevellocal(provider:MrsImageDataProvider, pyramid:RasterRDD, maxlevel:Int,
+                              minlevel:Int):Boolean = {
     var inputTiles = mutable.HashMap.empty[TileIdWritable, MrGeoRaster]
 
     pyramid.collect.foreach(tile => {
       inputTiles.put(tile._1, RasterWritable.toMrGeoRaster(tile._2))
     })
 
-    var metadata: MrsPyramidMetadata = provider.getMetadataReader.read
+    var metadata:MrsPyramidMetadata = provider.getMetadataReader.read
     val nodatas = metadata.getDefaultValuesDouble
 
-    val bounds: Bounds = metadata.getBounds
-    val tilesize: Int = metadata.getTilesize
+    val bounds:Bounds = metadata.getBounds
+    val tilesize:Int = metadata.getTilesize
 
     var fromlevel = maxlevel
     while (fromlevel > minlevel) {
@@ -286,20 +301,20 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
       inputTiles.foreach(tile => {
         val fromkey = tile._1
-        val fromtile: Tile = TMSUtils.tileid(fromkey.get, fromlevel)
-        val frombounds: Bounds = TMSUtils.tileBounds(fromtile.tx, fromtile.ty, fromlevel, tilesize)
+        val fromtile:Tile = TMSUtils.tileid(fromkey.get, fromlevel)
+        val frombounds:Bounds = TMSUtils.tileBounds(fromtile.tx, fromtile.ty, fromlevel, tilesize)
 
         val fromraster = tile._2
 
         // calculate the starting pixel for the from-tile (make sure to use the NW coordinate)
-        val fromcorner: Pixel = TMSUtils.latLonToPixelsUL(frombounds.n, frombounds.w, fromlevel, tilesize)
+        val fromcorner:Pixel = TMSUtils.latLonToPixelsUL(frombounds.n, frombounds.w, fromlevel, tilesize)
 
-        val totile: Tile = TMSUtils.latLonToTile(frombounds.s, frombounds.w, tolevel, tilesize)
-        val tobounds: Bounds = TMSUtils.tileBounds(totile.tx, totile.ty, tolevel, tilesize)
+        val totile:Tile = TMSUtils.latLonToTile(frombounds.s, frombounds.w, tolevel, tilesize)
+        val tobounds:Bounds = TMSUtils.tileBounds(totile.tx, totile.ty, tolevel, tilesize)
 
         // calculate the starting pixel for the to-tile (make sure to use the NW coordinate)
         // in the from-tile's pixel space
-        val tocorner: Pixel = TMSUtils.latLonToPixelsUL(tobounds.n, tobounds.w, fromlevel, tilesize)
+        val tocorner:Pixel = TMSUtils.latLonToPixelsUL(tobounds.n, tobounds.w, fromlevel, tilesize)
 
         val tokey = new TileIdWritable(TMSUtils.tileid(totile.tx, totile.ty, tolevel))
 
@@ -307,9 +322,9 @@ class BuildPyramid extends MrGeoJob with Externalizable {
 
         // create a compatible writable raster
         logDebug("from  tx: " + fromtile.tx + " ty: " + fromtile.ty + " (" + fromlevel + ") to tx: " + totile.tx +
-            " ty: " + totile.ty + " (" + tolevel + ") x: "
-            + ((fromcorner.px - tocorner.px) / 2) + " y: " + ((fromcorner.py - tocorner.py) / 2) +
-            " w: " + reduced.width() + " h: " + reduced.height())
+                 " ty: " + totile.ty + " (" + tolevel + ") x: "
+                 + ((fromcorner.px - tocorner.px) / 2) + " y: " + ((fromcorner.py - tocorner.py) / 2) +
+                 " w: " + reduced.width() + " h: " + reduced.height())
 
         val toraster = if (!outputTiles.contains(tokey)) {
           val raster = fromraster.createCompatibleRaster(tilesize, tilesize)
@@ -326,11 +341,11 @@ class BuildPyramid extends MrGeoJob with Externalizable {
           (fromcorner.px - tocorner.px).toInt / 2, (fromcorner.py - tocorner.py).toInt / 2)
       })
 
-      val stats: Array[ImageStats] = ImageStats.initializeStatsArray(metadata.getBands)
+      val stats:Array[ImageStats] = ImageStats.initializeStatsArray(metadata.getBands)
 
       log.debug("Writing output file: " + provider.getResourceName + " level: " + tolevel)
 
-      val writer: MrsImageWriter = provider.getMrsTileWriter(tolevel, metadata.getProtectionLevel)
+      val writer:MrsImageWriter = provider.getMrsTileWriter(tolevel, metadata.getProtectionLevel)
 
       outputTiles.toSeq.sortBy(_._1.get()).foreach(tile => {
         logDebug("  writing tile: " + tile._1.get)
@@ -339,10 +354,10 @@ class BuildPyramid extends MrGeoJob with Externalizable {
       })
       writer.close()
 
-      val tb: TileBounds = TMSUtils.boundsToTile(bounds, tolevel, tilesize)
-      val b: LongRectangle = new LongRectangle(tb.w, tb.s, tb.e, tb.n)
-      val psw: Pixel = TMSUtils.latLonToPixels(bounds.s, bounds.w, tolevel, tilesize)
-      val pne: Pixel = TMSUtils.latLonToPixels(bounds.n, bounds.e, tolevel, tilesize)
+      val tb:TileBounds = TMSUtils.boundsToTile(bounds, tolevel, tilesize)
+      val b:LongRectangle = new LongRectangle(tb.w, tb.s, tb.e, tb.n)
+      val psw:Pixel = TMSUtils.latLonToPixels(bounds.s, bounds.w, tolevel, tilesize)
+      val pne:Pixel = TMSUtils.latLonToPixels(bounds.n, bounds.e, tolevel, tilesize)
 
       metadata = provider.getMetadataReader.reload()
 
@@ -371,20 +386,5 @@ class BuildPyramid extends MrGeoJob with Externalizable {
     }
 
     true
-  }
-
-  override def teardown(job: JobArguments, conf: SparkConf): Boolean = {
-    true
-  }
-
-  override def readExternal(in: ObjectInput): Unit = {
-    pyramidName = in.readUTF()
-    val ac = in.readUTF()
-    makeAggregator(ac)
-  }
-
-  override def writeExternal(out: ObjectOutput): Unit = {
-    out.writeUTF(pyramidName)
-    out.writeUTF(aggregator.getClass.getName)
   }
 }

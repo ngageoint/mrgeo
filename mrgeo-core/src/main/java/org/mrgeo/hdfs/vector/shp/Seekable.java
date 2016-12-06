@@ -20,9 +20,9 @@ import java.io.IOException;
 
 public interface Seekable
 {
-  public void close() throws IOException;
+public void close() throws IOException;
 
-  public long getPos() throws IOException;
+public long getPos() throws IOException;
 
-  public void seek(long pos) throws IOException;
+public void seek(long pos) throws IOException;
 }

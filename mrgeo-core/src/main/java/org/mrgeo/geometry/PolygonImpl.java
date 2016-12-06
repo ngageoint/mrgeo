@@ -25,7 +25,6 @@ import java.util.*;
 
 /**
  * @author jason.surratt
- *
  */
 public class PolygonImpl extends GeometryImpl implements WritablePolygon
 {
@@ -39,7 +38,7 @@ PolygonImpl()
 
 }
 
-PolygonImpl(Map<String, String>attributes)
+PolygonImpl(Map<String, String> attributes)
 {
   this.attributes.putAll(attributes);
 }
@@ -110,6 +109,12 @@ public LinearRing getExteriorRing()
   return exteriorRing;
 }
 
+@Override
+public void setExteriorRing(LinearRing ring)
+{
+  exteriorRing = (WritableLinearRing) ring.createWritableClone();
+}
+
 /*
  * (non-Javadoc)
  *
@@ -158,12 +163,6 @@ public boolean isValid()
 }
 
 @Override
-public void setExteriorRing(LinearRing ring)
-{
-  exteriorRing = (WritableLinearRing) ring.createWritableClone();
-}
-
-@Override
 public void read(DataInputStream stream) throws IOException
 {
   exteriorRing = GeometryFactory.createLinearRing();
@@ -189,20 +188,6 @@ public void write(DataOutputStream stream) throws IOException
   {
     ring.write(stream);
   }
-}
-
-private void writeObject(ObjectOutputStream stream) throws IOException
-{
-  DataOutputStream dos = new DataOutputStream(stream);
-  write(dos);
-  writeAttributes(dos);
-}
-
-private void readObject(ObjectInputStream stream) throws IOException
-{
-  DataInputStream dis = new DataInputStream(stream);
-  read(dis);
-  readAttributes(dis);
 }
 
 @Override
@@ -245,7 +230,7 @@ public com.vividsolutions.jts.geom.Polygon toJTS()
   com.vividsolutions.jts.geom.LinearRing exterior = exteriorRing.toJTS();
   com.vividsolutions.jts.geom.LinearRing[] interior = null;
 
-  if( getNumInteriorRings() > 0)
+  if (getNumInteriorRings() > 0)
   {
     interior = new com.vividsolutions.jts.geom.LinearRing[getNumInteriorRings()];
     for (int i = 0; i < getNumInteriorRings(); i++)
@@ -311,6 +296,20 @@ public Geometry clip(Polygon geom)
     return collection;
   }
   return null;
+}
+
+private void writeObject(ObjectOutputStream stream) throws IOException
+{
+  DataOutputStream dos = new DataOutputStream(stream);
+  write(dos);
+  writeAttributes(dos);
+}
+
+private void readObject(ObjectInputStream stream) throws IOException
+{
+  DataInputStream dis = new DataInputStream(stream);
+  read(dis);
+  readAttributes(dis);
 }
 
 

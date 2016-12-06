@@ -18,25 +18,25 @@ package org.mrgeo.data.tile;
 
 public class TileNotFoundException extends RuntimeException
 {
-  private static final long serialVersionUID = 1L;
+private static final long serialVersionUID = 1L;
 
-  public TileNotFoundException()
-  {
-  }
-  
-  public TileNotFoundException(String message)
-  {
-    super(message);
-  }
+public TileNotFoundException()
+{
+}
 
-  public TileNotFoundException(Throwable cause)
-  {
-    super(cause);
-  }
+public TileNotFoundException(String message)
+{
+  super(message);
+}
 
-  public TileNotFoundException(String message, Throwable cause)
-  {
-    super(message, cause);
-  }
+public TileNotFoundException(Throwable cause)
+{
+  super(cause);
+}
+
+public TileNotFoundException(String message, Throwable cause)
+{
+  super(message, cause);
+}
 
 }

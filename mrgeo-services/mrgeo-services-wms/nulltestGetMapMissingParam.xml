@@ -16,5 +16,5 @@
   -->
 
 <ServiceExceptionReport version="1.3.0">
-<ServiceException><![CDATA[Missing required HEIGHT parameter]]></ServiceException>
+  <ServiceException><![CDATA[Missing required HEIGHT parameter]]></ServiceException>
 </ServiceExceptionReport>

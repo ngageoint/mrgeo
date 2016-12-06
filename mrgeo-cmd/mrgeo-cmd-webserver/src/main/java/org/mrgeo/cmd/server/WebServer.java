@@ -45,9 +45,8 @@ import java.net.UnknownHostException;
 public class WebServer extends Command
 {
 
-private Options options;
-
 private static Logger log = LoggerFactory.getLogger(WebServer.class);
+private Options options;
 
 public WebServer()
 {
@@ -132,7 +131,7 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
   }
   catch (Exception e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
   }
 
   return -1;
@@ -165,7 +164,8 @@ private Server startWebServer(int httpPort) throws Exception
       }
       else
       {
-        System.out.println("Not serving static web content because web.server.static.root is not a directory: " + webRoot);
+        System.out
+            .println("Not serving static web content because web.server.static.root is not a directory: " + webRoot);
       }
     }
     else
@@ -209,7 +209,7 @@ private String getHostName()
   }
   catch (UnknownHostException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     System.err.println("Unknown host");
   }
   return "localhost";

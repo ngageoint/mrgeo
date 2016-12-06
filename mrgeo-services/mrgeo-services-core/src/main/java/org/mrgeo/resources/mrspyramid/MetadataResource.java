@@ -49,17 +49,17 @@ public Response getMetadata(@PathParam("output") final String imgName)
   try
   {
     getService();
-    return Response.status(Status.OK).entity( service.getMetadata(imgName) ).build();
+    return Response.status(Status.OK).entity(service.getMetadata(imgName)).build();
   }
   catch (final NotFoundException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     final String error = e.getMessage() != null ? e.getMessage() : "";
     return Response.status(Status.NOT_FOUND).entity(error).build();
   }
   catch (Exception e1)
   {
-    log.error("Exception thrown {}", e1);
+    log.error("Exception thrown", e1);
 
     final String error = e1.getMessage() != null ? e1.getMessage() : "";
     return Response.serverError().entity(error).build();
@@ -73,7 +73,9 @@ private void getService()
     ContextResolver<MrsPyramidService> resolver =
         providers.getContextResolver(MrsPyramidService.class, MediaType.WILDCARD_TYPE);
     if (resolver != null)
+    {
       service = resolver.getContext(MrsPyramidService.class);
+    }
   }
 }
 

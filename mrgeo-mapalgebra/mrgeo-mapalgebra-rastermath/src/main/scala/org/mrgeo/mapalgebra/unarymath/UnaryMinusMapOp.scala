@@ -21,28 +21,29 @@ import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object UnaryMinusMapOp extends MapOpRegistrar {
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("UMinus")
   }
+
   def create(raster:RasterMapOp):MapOp =
     new UnaryMinusMapOp(Some(raster))
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new UnaryMinusMapOp(node, variables)
 }
 
 class UnaryMinusMapOp extends RawUnaryMathMapOp {
 
-  private[unarymath] def this(raster: Option[RasterMapOp]) = {
+  private[unarymath] def this(raster:Option[RasterMapOp]) = {
     this()
     input = raster
   }
 
-  private[unarymath] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
-     this()
+  private[unarymath] def this(node:ParserNode, variables:String => Option[ParserNode]) = {
+    this()
 
-     initialize(node, variables)
-   }
+    initialize(node, variables)
+  }
 
-  override private[unarymath] def function(a: Double): Double = -a
+  override private[unarymath] def function(a:Double):Double = -a
 }

@@ -40,20 +40,6 @@ public class ClassLoaderUtil
 {
 private static final Logger log = LoggerFactory.getLogger(ClassLoaderUtil.class);
 
-private static class Thief extends ClassLoader
-{
-  Thief(ClassLoader cl)
-  {
-    super(cl);
-  }
-
-  @Override
-  public Package[] getPackages()
-  {
-    return super.getPackages();
-  }
-}
-
 public static Collection<String> getMostJars()
 {
 
@@ -67,7 +53,7 @@ public static Collection<String> getMostJars()
   }
   catch (Exception e1)
   {
-    log.error("Exception thrown {}", e1);
+    log.error("Exception thrown", e1);
   }
 
   final TreeSet<String> result = new TreeSet<>();
@@ -99,7 +85,7 @@ public static Collection<String> getMostJars()
         }
         catch (IOException e)
         {
-          log.error("Exception Thrown {}", e);
+          log.error("Exception thrown", e);
         }
       }
       return true;
@@ -129,7 +115,7 @@ public static List<URL> getChildResources(String path) throws IOException, Class
     }
     else if (resource.getProtocol().equalsIgnoreCase("VFS"))
     {
-      result.addAll( loadVfs( resource ));
+      result.addAll(loadVfs(resource));
     }
     else
     {
@@ -141,21 +127,25 @@ public static List<URL> getChildResources(String path) throws IOException, Class
   return result;
 }
 
-public static List<URL> loadVfs( URL resource ) throws IOException
+public static List<URL> loadVfs(URL resource) throws IOException
 {
   List<URL> result = new LinkedList<URL>();
 
-  try {
-    VirtualFile r = VFS.getChild( resource.toURI() );
-    if ( r.exists() && r.isDirectory() ) {
-      for ( VirtualFile f : r.getChildren() )
+  try
+  {
+    VirtualFile r = VFS.getChild(resource.toURI());
+    if (r.exists() && r.isDirectory())
+    {
+      for (VirtualFile f : r.getChildren())
       {
-        result.add( f.asFileURL() );
+        result.add(f.asFileURL());
       }
     }
-  } catch (URISyntaxException e) {
-    System.out.println( "Problem reading resource '" + resource + "':\n " + e.getMessage() );
-    log.error("Exception Thrown {}", e);
+  }
+  catch (URISyntaxException e)
+  {
+    System.out.println("Problem reading resource '" + resource + "':\n " + e.getMessage());
+    log.error("Exception thrown", e);
   }
 
   return result;
@@ -218,7 +208,8 @@ public static List<URL> loadDirectory(String filePath) throws IOException
 }
 
 @SuppressWarnings("squid:S1166") // exceptions are caught and returned as false
-public static void addLibraryPath(final String pathToAdd) {
+public static void addLibraryPath(final String pathToAdd)
+{
   try
   {
     final Field usrPathsField = ClassLoader.class.getDeclaredField("usr_paths");
@@ -271,18 +262,6 @@ public static void addLibraryPath(final String pathToAdd) {
   }
 }
 
-private static String indent(int level)
-{
-  StringBuilder s = new StringBuilder();
-  for (int i = 0; i < level * 3; i++)
-  {
-    s.append(" ");
-  }
-
-  return s.toString();
-}
-
-
 @SuppressFBWarnings(value = "WEAK_FILENAMEUTILS", justification = "filename comes from classloader")
 public static void dumpClasspath(ClassLoader loader, int level)
 {
@@ -313,13 +292,15 @@ public static void dumpClasspath(ClassLoader loader, int level)
     }
     Arrays.sort(names);
 
-    for (String name: names)
+    for (String name : names)
     {
       System.out.println(indent(level + 1) + name);
     }
   }
   else
+  {
     System.out.println("\t(cannot display components as not a URLClassLoader)");
+  }
 
   System.out.println("");
   if (loader.getParent() != null)
@@ -327,5 +308,30 @@ public static void dumpClasspath(ClassLoader loader, int level)
     dumpClasspath(loader.getParent(), level + 1);
   }
 
+}
+
+private static String indent(int level)
+{
+  StringBuilder s = new StringBuilder();
+  for (int i = 0; i < level * 3; i++)
+  {
+    s.append(" ");
+  }
+
+  return s.toString();
+}
+
+private static class Thief extends ClassLoader
+{
+  Thief(ClassLoader cl)
+  {
+    super(cl);
+  }
+
+  @Override
+  public Package[] getPackages()
+  {
+    return super.getPackages();
+  }
 }
 }

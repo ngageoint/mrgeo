@@ -23,7 +23,6 @@ import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
-import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.image.MrsImageDataProvider;
@@ -48,8 +47,9 @@ private Connector conn = null;
 
 /**
  * Constructor for HdfsMrsPyramidMetadataWriter.
+ *
  * @param provider MrsImageDataProvider
- * @param context MrsPyramidMetadataWriterContext
+ * @param context  MrsPyramidMetadataWriterContext
  */
 public AccumuloMrsPyramidMetadataWriter(MrsImageDataProvider provider,
     MrsPyramidMetadataWriterContext context)
@@ -61,6 +61,7 @@ public AccumuloMrsPyramidMetadataWriter(MrsImageDataProvider provider,
 
 /**
  * Write the (already loaded) metadata for the provider to Accumulo
+ *
  * @throws IOException
  * @see MrsPyramidMetadataWriter#write()
  */
@@ -73,24 +74,20 @@ public void write() throws IOException
 } // end write
 
 /**
- *
  * need to know the type of table/image this is
  * if it is a standalone - then there is one table
  * if not - we write to a table that has a bunch of data in it
- *
- *
- *
- *
- *
  */
 @Override
 @SuppressWarnings("squid:S1166") // Exception caught and handled
-public void write(MrsPyramidMetadata metadata) throws IOException{
+public void write(MrsPyramidMetadata metadata) throws IOException
+{
   Properties mrgeoAccProps = AccumuloConnector.getAccumuloProperties();
 
   String pl = metadata.getProtectionLevel();
 
-  if(conn == null){
+  if (conn == null)
+  {
     conn = AccumuloConnector.getConnector();
   }
     
@@ -104,7 +101,8 @@ public void write(MrsPyramidMetadata metadata) throws IOException{
      */
 
   String table = provider.getResourceName();
-  if(table == null || table.length() == 0){
+  if (table == null || table.length() == 0)
+  {
     throw new IOException("Can not load metadata, resource name is empty!");
   }
 
@@ -148,10 +146,10 @@ public void write(MrsPyramidMetadata metadata) throws IOException{
         new Value(metadataStr.getBytes()));
 
     BatchWriter bw = null;
-      bw = conn.createBatchWriter(table, 10000000L, 1000, 2);
-      bw.addMutation(m);
-      bw.flush();
-      bw.close();
+    bw = conn.createBatchWriter(table, 10000000L, 1000, 2);
+    bw.addMutation(m);
+    bw.flush();
+    bw.close();
   }
   catch (TableNotFoundException | MutationsRejectedException e)
   {
@@ -162,7 +160,8 @@ public void write(MrsPyramidMetadata metadata) throws IOException{
 } // end write
 
 
-public void setConnector(Connector conn){
+public void setConnector(Connector conn)
+{
   this.conn = conn;
 } // end setConnector
 

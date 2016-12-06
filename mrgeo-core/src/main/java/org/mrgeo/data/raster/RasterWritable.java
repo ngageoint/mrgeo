@@ -43,79 +43,6 @@ private static final long serialVersionUID = 1L;
 private byte[] bytes;
 
 
-public static class RasterWritableException extends RuntimeException
-{
-  private static final long serialVersionUID = 1L;
-
-  private final Exception origException;
-
-//  public RasterWritableException(final Exception e)
-//  {
-//    this.origException = e;
-//  }
-
-  RasterWritableException(final String msg)
-  {
-    this.origException = new Exception(msg);
-  }
-
-  @Override
-  public void printStackTrace()
-  {
-    origException.printStackTrace();
-  }
-}
-
-public int compareTo(RasterWritable other)
-{
-  return Arrays.equals(bytes, other.bytes) ? 0 : 1;
-}
-
-@Override
-public boolean equals(Object other)
-{
-  return other instanceof RasterWritable && Arrays.equals(bytes, ((RasterWritable) other).bytes);
-}
-
-@Override
-public int hashCode()
-{
-  return new HashCodeBuilder(17, 31). // two randomly chosen prime numbers
-      // if deriving: appendSuper(super.hashCode()).
-          appendSuper(super.hashCode()).toHashCode();
-}
-
-@Override
-public void write(DataOutput out) throws IOException
-{
-  if (bytes == null)
-  {
-    out.writeInt(0);
-  }
-  else
-  {
-    out.writeInt(bytes.length);
-    out.write(bytes);
-  }
-
-}
-
-@Override
-public void readFields(DataInput in) throws IOException
-{
-  int len = in.readInt();
-  if (len > 0)
-  {
-    bytes = new byte[len];
-    in.readFully(bytes);
-  }
-}
-
-
-private enum SampleModelType {
-  PIXELINTERLEAVED, BANDED, SINGLEPIXELPACKED, MULTIPIXELPACKED, COMPONENT
-}
-
 public RasterWritable()
 {
   this.bytes = null;
@@ -126,65 +53,6 @@ protected RasterWritable(final byte[] bytes)
   this.bytes = bytes;
 }
 
-@SuppressFBWarnings(value = "CN_IDIOM_NO_SUPER_CALL", justification = "No super.clone() to call")
-@Override
-public Object clone()
-{
-  return new RasterWritable(copyBytes());
-}
-
-public RasterWritable copy()
-{
-  return new RasterWritable(copyBytes());
-}
-
-// we could use the default serializations here, but instead we'll just do it manually
-private void writeObject(ObjectOutputStream stream) throws IOException
-{
-  if (bytes == null)
-  {
-    stream.writeInt(0);
-  }
-  else
-  {
-    stream.writeInt(bytes.length);
-    stream.write(bytes, 0, bytes.length);
-  }
-}
-
-private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException
-{
-  int len = stream.readInt();
-  if (len > 0)
-  {
-    bytes = new byte[len];
-    stream.readFully(bytes, 0, len);
-  }
-}
-
-public int getSize()
-{
-  if (bytes == null)
-  {
-    return 0;
-  }
-  return bytes.length;
-}
-
-@SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS", justification = "API")
-public byte[] copyBytes()
-{
-  if (bytes == null)
-  {
-    return null;
-  }
-
-  byte[] copy = new byte[bytes.length];
-  System.arraycopy(bytes, 0, copy, 0, bytes.length);
-
-  return copy;
-}
-
 // should this do a copy of the bytes?
 public static RasterWritable fromBytes(byte[] bytes)
 {
@@ -193,13 +61,13 @@ public static RasterWritable fromBytes(byte[] bytes)
 
 public static MrGeoRaster toMrGeoRaster(final RasterWritable writable) throws IOException
 {
-    int version = ByteArrayUtils.getByte(writable.bytes);
-    if (version == 0)
-    {
-      // this is an old MrsPyramid v2 image, read it into a MrGeoRaster
-      return RasterWritable.convertFromV2(writable.bytes);
-    }
-    return MrGeoRaster.createRaster(writable.bytes);
+  int version = ByteArrayUtils.getByte(writable.bytes);
+  if (version == 0)
+  {
+    // this is an old MrsPyramid v2 image, read it into a MrGeoRaster
+    return RasterWritable.convertFromV2(writable.bytes);
+  }
+  return MrGeoRaster.createRaster(writable.bytes);
 }
 
 public static MrGeoRaster toMrGeoRaster(final RasterWritable writable,
@@ -216,7 +84,7 @@ public static MrGeoRaster toMrGeoRaster(final RasterWritable writable,
 
 public static RasterWritable toWritable(MrGeoRaster raster) throws IOException
 {
-    return new RasterWritable(raster.data());
+  return new RasterWritable(raster.data());
 }
 
 private static MrGeoRaster convertFromV2(byte[] data) throws MrGeoRaster.MrGeoRasterException
@@ -341,6 +209,138 @@ private static MrGeoRaster convertFromV2(byte[] data) throws MrGeoRaster.MrGeoRa
   ByteArrayUtils.swapBytes(raster.data, datatype, raster.dataoffset());
 
   return raster;
+}
+
+public int compareTo(RasterWritable other)
+{
+  return Arrays.equals(bytes, other.bytes) ? 0 : 1;
+}
+
+@Override
+public boolean equals(Object other)
+{
+  return other instanceof RasterWritable && Arrays.equals(bytes, ((RasterWritable) other).bytes);
+}
+
+@Override
+public int hashCode()
+{
+  return new HashCodeBuilder(17, 31). // two randomly chosen prime numbers
+      // if deriving: appendSuper(super.hashCode()).
+          appendSuper(super.hashCode()).toHashCode();
+}
+
+@Override
+public void write(DataOutput out) throws IOException
+{
+  if (bytes == null)
+  {
+    out.writeInt(0);
+  }
+  else
+  {
+    out.writeInt(bytes.length);
+    out.write(bytes);
+  }
+
+}
+
+@Override
+public void readFields(DataInput in) throws IOException
+{
+  int len = in.readInt();
+  if (len > 0)
+  {
+    bytes = new byte[len];
+    in.readFully(bytes);
+  }
+}
+
+@SuppressFBWarnings(value = "CN_IDIOM_NO_SUPER_CALL", justification = "No super.clone() to call")
+@Override
+public Object clone()
+{
+  return new RasterWritable(copyBytes());
+}
+
+public RasterWritable copy()
+{
+  return new RasterWritable(copyBytes());
+}
+
+public int getSize()
+{
+  if (bytes == null)
+  {
+    return 0;
+  }
+  return bytes.length;
+}
+
+@SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS", justification = "API")
+public byte[] copyBytes()
+{
+  if (bytes == null)
+  {
+    return null;
+  }
+
+  byte[] copy = new byte[bytes.length];
+  System.arraycopy(bytes, 0, copy, 0, bytes.length);
+
+  return copy;
+}
+
+// we could use the default serializations here, but instead we'll just do it manually
+private void writeObject(ObjectOutputStream stream) throws IOException
+{
+  if (bytes == null)
+  {
+    stream.writeInt(0);
+  }
+  else
+  {
+    stream.writeInt(bytes.length);
+    stream.write(bytes, 0, bytes.length);
+  }
+}
+
+private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException
+{
+  int len = stream.readInt();
+  if (len > 0)
+  {
+    bytes = new byte[len];
+    stream.readFully(bytes, 0, len);
+  }
+}
+
+private enum SampleModelType
+{
+  PIXELINTERLEAVED, BANDED, SINGLEPIXELPACKED, MULTIPIXELPACKED, COMPONENT
+}
+
+public static class RasterWritableException extends RuntimeException
+{
+  private static final long serialVersionUID = 1L;
+
+  private final Exception origException;
+
+//  public RasterWritableException(final Exception e)
+//  {
+//    this.origException = e;
+//  }
+
+  RasterWritableException(final String msg)
+  {
+    this.origException = new Exception(msg);
+  }
+
+  @Override
+  public void printStackTrace()
+  {
+    origException.printStackTrace();
+  }
 }
 
 }

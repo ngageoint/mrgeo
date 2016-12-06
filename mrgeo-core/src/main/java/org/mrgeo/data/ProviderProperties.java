@@ -55,21 +55,6 @@ public ProviderProperties(String userName, String commaDelimitedRoles)
   }
 }
 
-public String getUserName()
-{
-  return userName;
-}
-
-public List<String> getRoles()
-{
-  return roles;
-}
-
-public String toDelimitedString()
-{
-  return userName + "||" + StringUtils.join(roles, "||");
-}
-
 public static String toDelimitedString(ProviderProperties properties)
 {
   if (properties == null)
@@ -97,6 +82,21 @@ public static ProviderProperties fromDelimitedString(String value)
   return new ProviderProperties(userName, roles);
 }
 
+public String getUserName()
+{
+  return userName;
+}
+
+public List<String> getRoles()
+{
+  return roles;
+}
+
+public String toDelimitedString()
+{
+  return userName + "||" + StringUtils.join(roles, "||");
+}
+
 @Override
 public void writeExternal(ObjectOutput out) throws IOException
 {
@@ -114,7 +114,7 @@ public void readExternal(ObjectInput in) throws IOException, ClassNotFoundExcept
   userName = in.readUTF();
   int roleCount = in.readInt();
   roles = new ArrayList<String>();
-  for (int i=0; i < roleCount; i++)
+  for (int i = 0; i < roleCount; i++)
   {
     roles.add(in.readUTF());
   }

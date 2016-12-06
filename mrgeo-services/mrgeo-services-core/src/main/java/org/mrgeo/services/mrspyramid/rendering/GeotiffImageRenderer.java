@@ -21,26 +21,26 @@ import org.gdal.osr.SpatialReference;
 public class GeotiffImageRenderer extends TiffImageRenderer
 {
 
-  public GeotiffImageRenderer()
-  {
-    super();
-  }
+public GeotiffImageRenderer()
+{
+  super();
+}
 
-  public GeotiffImageRenderer(final SpatialReference srs)
-  {
-    super(srs);
-  }
+public GeotiffImageRenderer(final SpatialReference srs)
+{
+  super(srs);
+}
 
-  @Override
-  public String[] getMimeTypes()
-  {
-    return new String[] { "image/geotiff", "image/geotif" };
-  }
+@Override
+public String[] getMimeTypes()
+{
+  return new String[]{"image/geotiff", "image/geotif"};
+}
 
-  @Override
-  public String[] getWmsFormats()
-  {
-    return new String[] { "geotiff", "geotif" };
-  }
+@Override
+public String[] getWmsFormats()
+{
+  return new String[]{"geotiff", "geotif"};
+}
 
 }

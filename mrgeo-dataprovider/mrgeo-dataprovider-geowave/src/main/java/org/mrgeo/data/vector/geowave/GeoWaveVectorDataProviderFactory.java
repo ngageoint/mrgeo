@@ -13,99 +13,99 @@ import java.util.Map;
 
 public class GeoWaveVectorDataProviderFactory implements VectorDataProviderFactory
 {
-  static Logger log = LoggerFactory.getLogger(GeoWaveVectorDataProviderFactory.class);
-  static Configuration conf;
+static Logger log = LoggerFactory.getLogger(GeoWaveVectorDataProviderFactory.class);
+static Configuration conf;
 
-  @Override
-  public boolean isValid(Configuration conf)
+private static Configuration getConf()
+{
+  if (conf == null)
   {
-    return GeoWaveVectorDataProvider.isValid(conf);
+    throw new IllegalArgumentException("The configuration was not initialized");
   }
+  return conf;
+}
 
-  @Override
-  @SuppressWarnings("squid:S2696") // Exception caught and handled
-  public void initialize(Configuration config) throws DataProviderException
-  {
-    if (conf == null)
-    {
-      conf = config;
-    }
-  }
+@Override
+public boolean isValid(Configuration conf)
+{
+  return GeoWaveVectorDataProvider.isValid(conf);
+}
 
-  @Override
-  public boolean isValid()
+@Override
+@SuppressWarnings("squid:S2696") // Exception caught and handled
+public void initialize(Configuration config) throws DataProviderException
+{
+  if (conf == null)
   {
-    return GeoWaveVectorDataProvider.isValid();
+    conf = config;
   }
+}
 
-  @Override
-  public String getPrefix()
-  {
-    return "geowave";
-  }
+@Override
+public boolean isValid()
+{
+  return GeoWaveVectorDataProvider.isValid();
+}
 
-  @Override
-  public Map<String, String> getConfiguration()
-  {
-    GeoWaveConnectionInfo connInfo = GeoWaveVectorDataProvider.getConnectionInfo();
-    if (connInfo != null)
-    {
-      return connInfo.toMap();
-    }
-    return null;
-  }
+@Override
+public String getPrefix()
+{
+  return "geowave";
+}
 
-  @Override
-  public void setConfiguration(Map<String, String> settings)
+@Override
+public Map<String, String> getConfiguration()
+{
+  GeoWaveConnectionInfo connInfo = GeoWaveVectorDataProvider.getConnectionInfo();
+  if (connInfo != null)
   {
-    log.error("GeoWave classpath is: " + System.getProperty("java.class.path"));
-    GeoWaveConnectionInfo connInfo = GeoWaveConnectionInfo.fromMap(settings);
-    GeoWaveVectorDataProvider.setConnectionInfo(connInfo);
+    return connInfo.toMap();
   }
+  return null;
+}
 
-  @Override
-  public VectorDataProvider createVectorDataProvider(String prefix, String input,
-      ProviderProperties providerProperties)
-  {
-    return new GeoWaveVectorDataProvider(getConf(), prefix, input, providerProperties);
-  }
+@Override
+public void setConfiguration(Map<String, String> settings)
+{
+  log.error("GeoWave classpath is: " + System.getProperty("java.class.path"));
+  GeoWaveConnectionInfo connInfo = GeoWaveConnectionInfo.fromMap(settings);
+  GeoWaveVectorDataProvider.setConnectionInfo(connInfo);
+}
 
-  @Override
-  public String[] listVectors(final ProviderProperties providerProperties) throws IOException
-  {
-    return GeoWaveVectorDataProvider.listVectors(providerProperties);
-  }
+@Override
+public VectorDataProvider createVectorDataProvider(String prefix, String input,
+    ProviderProperties providerProperties)
+{
+  return new GeoWaveVectorDataProvider(getConf(), prefix, input, providerProperties);
+}
 
-  @Override
-  public boolean canOpen(String input, ProviderProperties providerProperties) throws IOException
-  {
-    return GeoWaveVectorDataProvider.canOpen(input, providerProperties);
-  }
+@Override
+public String[] listVectors(final ProviderProperties providerProperties) throws IOException
+{
+  return GeoWaveVectorDataProvider.listVectors(providerProperties);
+}
 
-  @Override
-  public boolean canWrite(String input, ProviderProperties providerProperties) throws IOException
-  {
-    throw new IOException("GeoWave provider does not support writing vectors");
-  }
+@Override
+public boolean canOpen(String input, ProviderProperties providerProperties) throws IOException
+{
+  return GeoWaveVectorDataProvider.canOpen(input, providerProperties);
+}
 
-  @Override
-  public boolean exists(String name, ProviderProperties providerProperties) throws IOException
-  {
-    return canOpen(name, providerProperties);
-  }
+@Override
+public boolean canWrite(String input, ProviderProperties providerProperties) throws IOException
+{
+  throw new IOException("GeoWave provider does not support writing vectors");
+}
 
-  @Override
-  public void delete(String name, ProviderProperties providerProperties) throws IOException
-  {
-    throw new IOException("GeoWave provider does not support deleting vectors");
-  }
+@Override
+public boolean exists(String name, ProviderProperties providerProperties) throws IOException
+{
+  return canOpen(name, providerProperties);
+}
 
-  private static Configuration getConf()
-  {
-    if (conf == null)
-    {
-      throw new IllegalArgumentException("The configuration was not initialized");
-    }
-    return conf;
-  }
+@Override
+public void delete(String name, ProviderProperties providerProperties) throws IOException
+{
+  throw new IOException("GeoWave provider does not support deleting vectors");
+}
 }

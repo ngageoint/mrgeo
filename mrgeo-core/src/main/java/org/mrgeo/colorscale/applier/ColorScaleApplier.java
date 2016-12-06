@@ -26,6 +26,21 @@ import org.mrgeo.data.raster.MrGeoRaster;
  */
 public abstract class ColorScaleApplier
 {
+/**
+ * Applies a color scale to a rendered image
+ */
+public abstract MrGeoRaster applyColorScale(MrGeoRaster raster, ColorScale colorScale, double[] extrema,
+    double[] defaultValue) throws ColorScale.ColorScaleException;
+
+/**
+ * Returns the mime type for the color scale applier
+ *
+ * @return a mime type string
+ */
+public abstract String[] getMimeTypes();
+
+public abstract String[] getWmsFormats();
+
 protected void apply(final MrGeoRaster source, final MrGeoRaster dest, ColorScale colorScale)
 {
   if (source.bands() == dest.bands() && (source.bands() == 3 || source.bands() == 4))
@@ -73,21 +88,4 @@ void setupExtrema(ColorScale colorScale, double[] extrema, double defaultValue)
 
   colorScale.setTransparent(defaultValue);
 }
-
-
-/**
- * Applies a color scale to a rendered image
- *
- */
-public abstract MrGeoRaster applyColorScale(MrGeoRaster raster, ColorScale colorScale, double[] extrema,
-    double[] defaultValue) throws ColorScale.ColorScaleException;
-
-/**
- * Returns the mime type for the color scale applier
- *
- * @return a mime type string
- */
-public abstract String[] getMimeTypes();
-
-public abstract String[] getWmsFormats();
 }

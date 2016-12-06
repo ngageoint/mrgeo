@@ -16,7 +16,6 @@
 
 package org.mrgeo.services.mrspyramid;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -42,14 +41,14 @@ import javax.ws.rs.core.Response;
 import java.awt.image.DataBuffer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
 @SuppressWarnings("static-method")
 @Singleton
-public class MrsPyramidService {
+public class MrsPyramidService
+{
 
 private static final Logger log = LoggerFactory.getLogger(MrsPyramidService.class);
 private static final MimetypesFileTypeMap mimeTypeMap = new MimetypesFileTypeMap();
@@ -57,11 +56,15 @@ private static final MimetypesFileTypeMap mimeTypeMap = new MimetypesFileTypeMap
 private JobManager jobManager = JobManager.getInstance();
 private Properties config;
 
-public MrsPyramidService(Properties configuration) {
+public MrsPyramidService(Properties configuration)
+{
   config = configuration;
 }
 
-public JobManager getJobManager() { return jobManager; }
+public JobManager getJobManager()
+{
+  return jobManager;
+}
 
 public ColorScale getColorScaleFromName(String colorScaleName) throws MrsPyramidServiceException
 {
@@ -117,7 +120,7 @@ public MrGeoRaster createColorScaleSwatch(String name, String format, int width,
   }
   catch (Exception e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     throw new MrsPyramidServiceException("Error creating color scale " + name, e);
   }
 }
@@ -158,7 +161,7 @@ public MrGeoRaster createColorScaleSwatch(ColorScale cs, String format, int widt
 
     return applier.applyColorScale(wr, cs, extrema, new double[]{-9999, 0});
   }
-  catch (Exception e)
+  catch (IllegalAccessException | InstantiationException | ColorScale.ColorScaleException | MrGeoRaster.MrGeoRasterException e)
   {
     throw new MrsPyramidServiceException("Error creating color scale swatch", e);
   }
@@ -229,7 +232,10 @@ public Response renderKml(String pyramidPathStr, Bounds bounds, int width, int h
       providerProperties);
 }
 
-public Properties getConfig() { return config; }
+public Properties getConfig()
+{
+  return config;
+}
 
 //    private ImageWriter getWriterFor(String format) throws IOException {
 //        if ( StringUtils.isNotEmpty(format) ) {
@@ -278,7 +284,8 @@ public byte[] getEmptyTile(int width, int height, String format) throws MrsPyram
 
 }
 
-public String getContentType(String format) {
+public String getContentType(String format)
+{
   return mimeTypeMap.getContentType("output." + format);
 }
 
@@ -316,44 +323,67 @@ public MrsPyramid getPyramid(String name,
   }
 }
 
-public String formatValue(Double value, String units) {
+public String formatValue(Double value, String units)
+{
   String formatted = String.valueOf(value) + units;
-  if (units.equalsIgnoreCase("seconds")) {
+  if (units.equalsIgnoreCase("seconds"))
+  {
     formatted = formatElapsedTime(value);
-  } else if (units.equalsIgnoreCase("meters")) {
+  }
+  else if (units.equalsIgnoreCase("meters"))
+  {
     formatted = Math.round(value) + "m";
-  } else if (units.equalsIgnoreCase("degrees")) {
+  }
+  else if (units.equalsIgnoreCase("degrees"))
+  {
     formatted = Math.round(value) + "deg";
-  } else if (units.equalsIgnoreCase("percent")) {
-    formatted = Math.round(value*100) + "%";
+  }
+  else if (units.equalsIgnoreCase("percent"))
+  {
+    formatted = Math.round(value * 100) + "%";
   }
   return formatted;
 }
 
 // Function to format the elapsed time (in sec) of the completed WPS job
-public String formatElapsedTime(Double elapsedTime) {
+public String formatElapsedTime(Double elapsedTime)
+{
   List<String> output = new ArrayList<>();
   int secPerMinute = 60;
   int minPerHour = 60;
   int hourPerDay = 24;
 
-  if (elapsedTime == null) {
+  if (elapsedTime == null)
+  {
     elapsedTime = 0d;
   }
-  if (elapsedTime == 0) {
-    return("0s");
+  if (elapsedTime == 0)
+  {
+    return ("0s");
   }
 
-  double seconds = elapsedTime%secPerMinute;
-  if (seconds > 0) output.add(0,(int)seconds + "s");
-  elapsedTime = Math.floor(elapsedTime/secPerMinute);
-  double minutes = elapsedTime%minPerHour;
-  if (minutes > 0) output.add(0,(int)minutes + "m");
-  elapsedTime = Math.floor(elapsedTime/minPerHour);
-  double hours = elapsedTime%hourPerDay;
-  if (hours > 0) output.add(0,(int)hours + "h");
-  double days = Math.floor(elapsedTime/hourPerDay);
-  if (days > 0) output.add(0,(int)days + "d");
+  double seconds = elapsedTime % secPerMinute;
+  if (seconds > 0)
+  {
+    output.add(0, (int) seconds + "s");
+  }
+  elapsedTime = Math.floor(elapsedTime / secPerMinute);
+  double minutes = elapsedTime % minPerHour;
+  if (minutes > 0)
+  {
+    output.add(0, (int) minutes + "m");
+  }
+  elapsedTime = Math.floor(elapsedTime / minPerHour);
+  double hours = elapsedTime % hourPerDay;
+  if (hours > 0)
+  {
+    output.add(0, (int) hours + "h");
+  }
+  double days = Math.floor(elapsedTime / hourPerDay);
+  if (days > 0)
+  {
+    output.add(0, (int) days + "d");
+  }
 
   return StringUtils.join(output, ":");
 }

@@ -47,7 +47,7 @@ public GeotiffImageResponseWriter()
 @Override
 public String[] getMimeTypes()
 {
-  return new String[] { "image/geotiff", "image/geotif" };
+  return new String[]{"image/geotiff", "image/geotif"};
 }
 
 @Override
@@ -59,7 +59,7 @@ public String getResponseMimeType()
 @Override
 public String[] getWmsFormats()
 {
-  return new String[] { "geotiff", "geotif" };
+  return new String[]{"geotiff", "geotif"};
 }
 
 @Override
@@ -81,7 +81,7 @@ public Response.ResponseBuilder write(final MrGeoRaster raster)
   }
   catch (IOException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     if (e.getMessage() != null)
     {
       return Response.serverError().entity(e.getMessage());
@@ -130,7 +130,7 @@ public Response.ResponseBuilder write(final MrGeoRaster raster, final int tileCo
   }
   catch (final Exception e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     if (e.getMessage() != null)
     {
       return Response.serverError().entity(e.getMessage());
@@ -172,8 +172,9 @@ public Response.ResponseBuilder write(final MrGeoRaster raster, final String ima
   {
     final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
 
-    MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(imageName, DataProviderFactory.AccessMode.READ,
-        (ProviderProperties) null);
+    MrsImageDataProvider dp =
+        DataProviderFactory.getMrsImageDataProvider(imageName, DataProviderFactory.AccessMode.READ,
+            (ProviderProperties) null);
     MrsPyramidMetadata metadata = dp.getMetadataReader().read();
 
     writeStream(raster, bounds, metadata.getDefaultValue(0), byteStream);
@@ -188,7 +189,7 @@ public Response.ResponseBuilder write(final MrGeoRaster raster, final String ima
   }
   catch (IOException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     if (e.getMessage() != null)
     {
       return Response.serverError().entity(e.getMessage());

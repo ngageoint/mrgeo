@@ -18,21 +18,22 @@ package org.mrgeo.job;
 
 public class JobTestManager extends JobManager
 {
-  protected JobTestManager() {
-    super();
-  }
+protected JobTestManager()
+{
+  super();
+}
 
-  synchronized public static JobManager getInstance()
+synchronized public static JobManager getInstance()
+{
+  if (theInstance == null || !(theInstance instanceof JobTestManager))
   {
-    if (theInstance == null || ! (theInstance instanceof JobTestManager))
-    {
-      theInstance = new JobTestManager();
-    }
-    return theInstance;
+    theInstance = new JobTestManager();
   }
-  
-  synchronized public static void reset()
-  {
-    theInstance = null;
-  }
+  return theInstance;
+}
+
+synchronized public static void reset()
+{
+  theInstance = null;
+}
 }

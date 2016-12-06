@@ -26,13 +26,13 @@ public class GeometryWritableToGeometryReducer extends
     Reducer<LongWritable, GeometryWritable, LongWritable, Geometry>
 {
 
-  @Override
-  public void reduce(LongWritable key, Iterable<GeometryWritable> values, Context context)
-      throws IOException, InterruptedException
+@Override
+public void reduce(LongWritable key, Iterable<GeometryWritable> values, Context context)
+    throws IOException, InterruptedException
+{
+  for (GeometryWritable f : values)
   {
-    for (GeometryWritable f : values)
-    {
-      context.write(key, f.getGeometry());
-    }
+    context.write(key, f.getGeometry());
   }
+}
 }

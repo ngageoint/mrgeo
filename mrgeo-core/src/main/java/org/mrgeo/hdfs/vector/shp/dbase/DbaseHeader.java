@@ -43,7 +43,8 @@ DbaseHeader()
 }
 
 @Override
-@SuppressWarnings("squid:S00112") // I didn't write this code, so I'm not sure why it throws the RuntimeException.  Keeping it
+@SuppressWarnings("squid:S00112")
+// I didn't write this code, so I'm not sure why it throws the RuntimeException.  Keeping it
 public Object clone()
 {
   DbaseHeader hdr;
@@ -73,15 +74,18 @@ public synchronized int getColumn(String name)
   return col;
 }
 
-public synchronized int getRecordCount() {
+public synchronized int getRecordCount()
+{
   return recordCount;
 }
 
-public synchronized int getRecordLength() {
+public synchronized int getRecordLength()
+{
   return recordLength;
 }
 
-public synchronized int getHeaderLength() {
+public synchronized int getHeaderLength()
+{
   return headerLength;
 }
 
@@ -106,7 +110,9 @@ public synchronized Vector<DbaseField> getFields()
 {
   return fields;
 }
-public synchronized void addField(DbaseField newField) {
+
+public synchronized void addField(DbaseField newField)
+{
   fields.add(newField);
 }
 
@@ -119,54 +125,6 @@ public synchronized void insertField(DbaseField field, int position)
 public synchronized Vector<DbaseField> getFieldsCopy()
 {
   return (Vector<DbaseField>) fields.clone();
-}
-
-protected synchronized void load(SeekableDataInput is) throws IOException, DbaseException
-{
-  byte[] header = new byte[32];
-  is.readFully(header, 0, 32);
-  // core data
-  format = Convert.getByte(header, 0);
-  if (format != 3 && format != 4)
-    throw new DbaseException("DBase 3.x/4.x are only supported!");
-  recordCount = Convert.getLEInteger(header, 4);
-  headerLength = Convert.getLEShort(header, 8);
-  recordLength = Convert.getLEShort(header, 10);
-  langDriverID = Convert.getByte(header, 29);
-  // fields
-  int fieldCount = (headerLength - 32 - 1) / 32;
-  int offset = 1; // would be zero, but there is the deleted flag character
-  for (int i = 0; i < fieldCount; i++)
-  {
-    header = new byte[32];
-    is.readFully(header, 0, 32);
-    DbaseField field = new DbaseField();
-    field.name = Convert.getString(header, 0, 10);
-    field.type = Convert.getByte(header, 11);
-    switch (field.type)
-    {
-    case DbaseField.CHARACTER:
-      break;
-    case DbaseField.DATE:
-      break;
-    case DbaseField.FLOAT:
-      break;
-    case DbaseField.LOGICAL:
-      break;
-    case DbaseField.NUMERIC:
-      break;
-    default:
-      throw new DbaseException("Unsupported DBF type: " + field.type);
-    }
-    field.length = Convert.getByte(header, 16);
-    field.decimal = Convert.getByte(header, 17);
-    field.offset = offset;
-    offset = offset + field.length;
-    fields.add(field);
-  }
-  // read end of header character (keeps fis position correct)
-  byte[] marker = new byte[1];
-  is.readFully(marker, 0, 1); // 0Dh
 }
 
 public synchronized void save(RandomAccessFile os) throws IOException
@@ -218,6 +176,56 @@ public synchronized String toString()
     s = s + "  " + StringUtils.pad(i + ")", 5) + field.toString() + "\n";
   }
   return s;
+}
+
+protected synchronized void load(SeekableDataInput is) throws IOException, DbaseException
+{
+  byte[] header = new byte[32];
+  is.readFully(header, 0, 32);
+  // core data
+  format = Convert.getByte(header, 0);
+  if (format != 3 && format != 4)
+  {
+    throw new DbaseException("DBase 3.x/4.x are only supported!");
+  }
+  recordCount = Convert.getLEInteger(header, 4);
+  headerLength = Convert.getLEShort(header, 8);
+  recordLength = Convert.getLEShort(header, 10);
+  langDriverID = Convert.getByte(header, 29);
+  // fields
+  int fieldCount = (headerLength - 32 - 1) / 32;
+  int offset = 1; // would be zero, but there is the deleted flag character
+  for (int i = 0; i < fieldCount; i++)
+  {
+    header = new byte[32];
+    is.readFully(header, 0, 32);
+    DbaseField field = new DbaseField();
+    field.name = Convert.getString(header, 0, 10);
+    field.type = Convert.getByte(header, 11);
+    switch (field.type)
+    {
+    case DbaseField.CHARACTER:
+      break;
+    case DbaseField.DATE:
+      break;
+    case DbaseField.FLOAT:
+      break;
+    case DbaseField.LOGICAL:
+      break;
+    case DbaseField.NUMERIC:
+      break;
+    default:
+      throw new DbaseException("Unsupported DBF type: " + field.type);
+    }
+    field.length = Convert.getByte(header, 16);
+    field.decimal = Convert.getByte(header, 17);
+    field.offset = offset;
+    offset = offset + field.length;
+    fields.add(field);
+  }
+  // read end of header character (keeps fis position correct)
+  byte[] marker = new byte[1];
+  is.readFully(marker, 0, 1); // 0Dh
 }
 
 protected synchronized int update()

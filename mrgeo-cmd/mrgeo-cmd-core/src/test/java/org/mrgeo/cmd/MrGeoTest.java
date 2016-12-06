@@ -33,185 +33,186 @@ import java.security.Permission;
 @SuppressWarnings("all") // Test code, not included in production
 public class MrGeoTest extends LocalRunnerTest
 {
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
+@Rule
+public ExpectedException thrown = ExpectedException.none();
 
-  
-  MrGeo mrgeo = new MrGeo();
-  private SecurityManager sm;
-  ByteArrayOutputStream output;
 
-  /********************
-   * This sets up JUnit to be able to test the System.exit() value...
-   */
-  protected static class ExitException extends SecurityException 
+MrGeo mrgeo = new MrGeo();
+ByteArrayOutputStream output;
+private SecurityManager sm;
+
+@Before
+public void setup()
+{
+  sm = System.getSecurityManager();
+  output = new ByteArrayOutputStream();
+  System.setOut(new PrintStream(output));
+}
+
+@After
+public void teardown()
+{
+  System.setSecurityManager(sm);
+}
+
+@Test(expected = NullPointerException.class)
+@Category(UnitTest.class)
+public void testRunNull() throws Exception
+{
+  mrgeo.run(null);
+
+}
+
+@Test()
+@Category(UnitTest.class)
+public void testRunEmpty() throws Exception
+{
+  int ret = mrgeo.run(new String[]{});
+  Assert.assertEquals("Unexpected return value", -1, ret);
+}
+
+@Test()
+@Category(UnitTest.class)
+public void testHasCommand() throws Exception
+{
+  int ret = mrgeo.run(new String[]{});
+  Assert.assertEquals("Unexpected return value", -1, ret);
+
+  final String stdout = output.toString();
+
+  // verify the testcommand is in the list...
+  Assert.assertTrue("Missing test command", stdout.contains("\n  testcommand  command for junit tests\n"));
+
+}
+
+@Test()
+@Category(UnitTest.class)
+public void testRunInvalidCmd() throws Exception
+{
+  int ret = mrgeo.run(new String[]{"foo"});
+  Assert.assertEquals("Unexpected return value", -1, ret);
+}
+
+@Test
+@Category(UnitTest.class)
+public void testMainNoParams()
+{
+  System.setSecurityManager(new CaptureExitSecurityManager());
+  thrown.expect(ExitException.class);
+  thrown.expectMessage("-1");
+  MrGeo.main(null);
+}
+
+@Test
+@Category(UnitTest.class)
+public void testMainHelpParam()
+{
+
+  System.setSecurityManager(new CaptureExitSecurityManager());
+  thrown.expect(ExitException.class);
+  thrown.expectMessage("0");
+  MrGeo.main(new String[]{"-h"});
+}
+
+@Test
+@Category(UnitTest.class)
+public void testMainVerboseParam()
+{
+  System.setSecurityManager(new CaptureExitSecurityManager());
+  thrown.expect(ExitException.class);
+  thrown.expectMessage("-1");
+  MrGeo.main(new String[]{"-v"});
+}
+
+@Test
+@Category(UnitTest.class)
+public void testMainDebugParam()
+{
+  System.setSecurityManager(new CaptureExitSecurityManager());
+  thrown.expect(ExitException.class);
+  thrown.expectMessage("-1");
+  MrGeo.main(new String[]{"-d"});
+}
+
+@Test
+@Category(UnitTest.class)
+public void testMainInvalidCmdParam()
+{
+  System.setSecurityManager(new CaptureExitSecurityManager());
+  thrown.expect(ExitException.class);
+  thrown.expectMessage("-1");
+  MrGeo.main(new String[]{"foo"});
+}
+
+/********************
+ * This sets up JUnit to be able to test the System.exit() value...
+ */
+protected static class ExitException extends SecurityException
+{
+  private static final long serialVersionUID = 1L;
+  public final int status;
+
+  public ExitException(int status)
   {
-    private static final long serialVersionUID = 1L;
-    public final int status;
-
-    public ExitException(int status) {
-      super("" + status);
-      this.status = status;
-    }
-    
-    @Override
-    public void printStackTrace()
-    {
-      // no-op
-    }
+    super("" + status);
+    this.status = status;
   }
 
-  private static class CaptureExitSecurityManager extends SecurityManager 
+  @Override
+  public void printStackTrace()
   {
-    public CaptureExitSecurityManager()
-    {
-      super();
-    }
-
-    @Override
-    public void checkPermission(Permission perm) 
-    {
-      // allow anything.
-    }
-
-    @Override
-    public void checkPermission(Permission perm, Object context) 
-    {
-      // allow anything.
-    }
-
-    @Override
-    public void checkExit(int status) 
-    {
-      super.checkExit(status);
-      throw new ExitException(status);
-    }
+    // no-op
   }
-  
-  public static class FakeCommandSpi extends CommandSpi
-  {
+}
 
-    @Override
-    public Class<? extends Command> getCommandClass()
-    {
-      return null;
-    }
-
-    @Override
-    public String getCommandName()
-    {
-      return "testcommand";
-    }
-
-    @Override
-    public String getDescription()
-    {
-      return "command for junit tests";
-    }
-    
-  }
-  
-  @Before
-  public void setup()
+private static class CaptureExitSecurityManager extends SecurityManager
+{
+  public CaptureExitSecurityManager()
   {
-    sm = System.getSecurityManager();
-    output = new ByteArrayOutputStream();
-    System.setOut(new PrintStream(output));
-  }
-  
-  @After
-  public void teardown()
-  {
-    System.setSecurityManager(sm);
+    super();
   }
 
-  @Test(expected = NullPointerException.class)
-  @Category(UnitTest.class)
-  public void testRunNull() throws Exception
+  @Override
+  public void checkPermission(Permission perm)
   {
-    mrgeo.run(null);
-        
+    // allow anything.
   }
 
-  @Test()
-  @Category(UnitTest.class)
-  public void testRunEmpty() throws Exception
+  @Override
+  public void checkPermission(Permission perm, Object context)
   {
-    int ret = mrgeo.run(new String[]{});
-    Assert.assertEquals("Unexpected return value", -1, ret);
-  }
-  
-  @Test()
-  @Category(UnitTest.class)
-  public void testHasCommand() throws Exception
-  {
-    int ret = mrgeo.run(new String[]{});
-    Assert.assertEquals("Unexpected return value", -1, ret);
-    
-    final String stdout = output.toString();
-    
-    // verify the testcommand is in the list...
-    Assert.assertTrue("Missing test command", stdout.contains("\n  testcommand  command for junit tests\n"));
-
+    // allow anything.
   }
 
-  @Test()
-  @Category(UnitTest.class)
-  public void testRunInvalidCmd() throws Exception
+  @Override
+  public void checkExit(int status)
   {
-    int ret = mrgeo.run(new String[]{"foo"});
-    Assert.assertEquals("Unexpected return value", -1, ret);
+    super.checkExit(status);
+    throw new ExitException(status);
+  }
+}
+
+public static class FakeCommandSpi extends CommandSpi
+{
+
+  @Override
+  public Class<? extends Command> getCommandClass()
+  {
+    return null;
   }
 
-  @Test
-  @Category(UnitTest.class)
-  public void testMainNoParams()
+  @Override
+  public String getCommandName()
   {
-    System.setSecurityManager(new CaptureExitSecurityManager());
-    thrown.expect(ExitException.class);
-    thrown.expectMessage("-1");
-    MrGeo.main(null);
+    return "testcommand";
   }
 
-  @Test
-  @Category(UnitTest.class)
-  public void testMainHelpParam()
+  @Override
+  public String getDescription()
   {
-    
-    System.setSecurityManager(new CaptureExitSecurityManager());
-    thrown.expect(ExitException.class);
-    thrown.expectMessage("0");
-    MrGeo.main(new String[]{"-h"});
+    return "command for junit tests";
   }
 
-  @Test
-  @Category(UnitTest.class)
-  public void testMainVerboseParam()
-  {
-    System.setSecurityManager(new CaptureExitSecurityManager());
-    thrown.expect(ExitException.class);
-    thrown.expectMessage("-1");
-    MrGeo.main(new String[]{"-v"});
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testMainDebugParam()
-  {
-    System.setSecurityManager(new CaptureExitSecurityManager());
-    thrown.expect(ExitException.class);
-    thrown.expectMessage("-1");
-    MrGeo.main(new String[]{"-d"});
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testMainInvalidCmdParam()
-  {
-    System.setSecurityManager(new CaptureExitSecurityManager());
-    thrown.expect(ExitException.class);
-    thrown.expectMessage("-1");
-    MrGeo.main(new String[]{"foo"});
-  }
+}
 
 }

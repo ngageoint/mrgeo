@@ -29,79 +29,81 @@ public static boolean isBase64(String encoded)
       encoded.matches("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$");
 
 }
-  public static String encodeObject(Object obj) throws IOException
-  {
-    byte[] bytes = ObjectUtils.encodeObject(obj);
-    return DatatypeConverter.printBase64Binary(bytes);
-  }
-public static String decodeToString(String encoded) throws IOException, ClassNotFoundException
+
+public static String encodeObject(Object obj) throws IOException
 {
-  return (String)decodeToObject(encoded);
+  byte[] bytes = ObjectUtils.encodeObject(obj);
+  return DatatypeConverter.printBase64Binary(bytes);
 }
 
-  public static Object decodeToObject(String encoded) throws IOException, ClassNotFoundException
+public static String decodeToString(String encoded) throws IOException, ClassNotFoundException
+{
+  return (String) decodeToObject(encoded);
+}
+
+public static Object decodeToObject(String encoded) throws IOException, ClassNotFoundException
+{
+  byte[] bytes = DatatypeConverter.parseBase64Binary(encoded);
+  return ObjectUtils.decodeObject(bytes);
+}
+
+public static String encodeDoubleArray(double[] noData) throws IOException
+{
+  ByteArrayOutputStream baos = new ByteArrayOutputStream();
+  ObjectOutputStream oos = null;
+  byte[] rawBytes;
+  try
   {
-    byte[] bytes = DatatypeConverter.parseBase64Binary(encoded);
-    return ObjectUtils.decodeObject(bytes);
+    oos = new ObjectOutputStream(baos);
+    oos.writeInt(noData.length);
+    for (int i = 0; i < noData.length; i++)
+    {
+      oos.writeDouble(noData[i]);
+    }
+    oos.flush();
+    rawBytes = baos.toByteArray();
+  }
+  finally
+  {
+    if (oos != null)
+    {
+      oos.close();
+    }
+    baos.close();
   }
 
-  public static String encodeDoubleArray(double[] noData) throws IOException
+  return DatatypeConverter.printBase64Binary(rawBytes);
+}
+
+public static double[] decodeToDoubleArray(String encoded) throws IOException
+{
+  byte[] objBytes = DatatypeConverter.parseBase64Binary(encoded);
+
+  ByteArrayInputStream bais = null;
+  ObjectInputStream ois = null;
+
+  try
   {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    ObjectOutputStream oos = null;
-    byte[] rawBytes;
-    try
+    bais = new ByteArrayInputStream(objBytes);
+    ois = new ObjectInputStream(bais);
+    int arrayLength = ois.readInt();
+    double result[] = new double[arrayLength];
+    for (int i = 0; i < arrayLength; i++)
     {
-      oos = new ObjectOutputStream( baos );
-      oos.writeInt(noData.length);
-      for (int i = 0; i < noData.length; i++)
-      {
-        oos.writeDouble(noData[i]);
-      }
-      oos.flush();
-      rawBytes = baos.toByteArray();
+      result[i] = ois.readDouble();
     }
-    finally
-    {
-      if (oos != null)
-      {
-        oos.close();
-      }
-      baos.close();
-    }
-  
-    return DatatypeConverter.printBase64Binary(rawBytes);
+    return result;
   }
-
-  public static double[] decodeToDoubleArray(String encoded) throws IOException
+  finally
   {
-    byte[] objBytes = DatatypeConverter.parseBase64Binary(encoded);
-
-    ByteArrayInputStream bais = null;
-    ObjectInputStream ois = null;
-
-    try
+    if (ois != null)
     {
-      bais = new ByteArrayInputStream(objBytes);
-      ois = new ObjectInputStream(bais);
-      int arrayLength = ois.readInt();
-      double result[] = new double[arrayLength];
-      for (int i = 0; i < arrayLength; i++)
-      {
-        result[i] = ois.readDouble();
-      }
-      return result;
+      ois.close();
     }
-    finally
+    if (bais != null)
     {
-      if (ois != null)
-      {
-        ois.close();
-      }
-      if (bais != null)
-      {
-        bais.close();
-      }
+      bais.close();
     }
   }
+}
 }

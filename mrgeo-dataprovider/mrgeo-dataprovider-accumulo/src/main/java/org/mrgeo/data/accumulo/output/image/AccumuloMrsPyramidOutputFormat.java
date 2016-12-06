@@ -29,8 +29,6 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.compress.CompressionCodec;
-import org.apache.hadoop.io.compress.Compressor;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.mrgeo.core.MrGeoConstants;
@@ -47,31 +45,29 @@ import java.nio.ByteBuffer;
 
 public class AccumuloMrsPyramidOutputFormat extends OutputFormat<TileIdWritable, RasterWritable>
 {
+private static final Logger log = LoggerFactory.getLogger(AccumuloMrsPyramidOutputFormat.class);
+private static boolean outputInfoSet = false;
+private static Job job;
 private int zoomLevel = -1;
 private String table = null;
-
 private String username = null;
 private String password = null;
 private String instanceName = null;
 private String zooKeepers = null;
-private static boolean outputInfoSet = false;
 private String vizStr = null;
-
 private ColumnVisibility colViz = null;
-
-private AccumuloOutputFormat _innerFormat = null;
-private RecordWriter _innerRecordWriter;
 
 // do compression!!!
 //  private boolean useCompression = false;
 //  private CompressionCodec codec;
 //  private Compressor decompressor;
-
-private static Job job;
+private AccumuloOutputFormat _innerFormat = null;
+private RecordWriter _innerRecordWriter;
 
 public AccumuloMrsPyramidOutputFormat()
 {
 }
+
 
 public AccumuloMrsPyramidOutputFormat(int z, ColumnVisibility cv)
 {
@@ -79,17 +75,14 @@ public AccumuloMrsPyramidOutputFormat(int z, ColumnVisibility cv)
   colViz = cv;
 }
 
+public static void setJob(Job j)
+{
+  job = j;
+}
 
 public void setZoomLevel(int z)
 {
   zoomLevel = z;
-}
-
-private static final Logger log = LoggerFactory.getLogger(AccumuloMrsPyramidOutputFormat.class);
-
-public static void setJob(Job j)
-{
-  job = j;
 }
 
 @Override
@@ -116,6 +109,39 @@ public OutputCommitter getOutputCommitter(TaskAttemptContext context) throws IOE
   return new NullOutputFormat<TileIdWritable, RasterWritable>().getOutputCommitter(context);
 } // end getOutputCommitter
 
+/**
+ * Instantiate a RecordWriter as required.  This will create an RecordWriter
+ * from the internal AccumuloOutputFormat
+ */
+@Override
+public RecordWriter getRecordWriter(TaskAttemptContext context) throws IOException,
+    InterruptedException
+{
+
+  if (zoomLevel == -1)
+  {
+    zoomLevel = Integer.parseInt(context.getConfiguration().get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOMLEVEL));
+  }
+
+  if (_innerFormat == null)
+  {
+    initialize(context);
+  }
+
+  if (_innerRecordWriter == null)
+  {
+    _innerRecordWriter = _innerFormat.getRecordWriter(context);
+  }
+  String pl = context.getConfiguration().get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ);
+  if (colViz == null)
+  {
+    colViz = new ColumnVisibility(pl);
+  }
+  AccumuloMrGeoRecordWriter outRW =
+      new AccumuloMrGeoRecordWriter(zoomLevel, table, _innerRecordWriter, new String(colViz.getExpression()));
+
+  return outRW;
+} // end getRecordWriter
 
 /**
  * Set all the initial parameters needed in this class for connectivity
@@ -201,45 +227,10 @@ private void initialize(JobContext context)
   catch (InstantiationException | IOException | ClassNotFoundException |
       AccumuloSecurityException | IllegalAccessException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
   }
 
 } // end initialize
-
-/**
- * Instantiate a RecordWriter as required.  This will create an RecordWriter
- * from the internal AccumuloOutputFormat
- */
-@Override
-public RecordWriter getRecordWriter(TaskAttemptContext context) throws IOException,
-    InterruptedException
-{
-
-  if (zoomLevel == -1)
-  {
-    zoomLevel = Integer.parseInt(context.getConfiguration().get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOMLEVEL));
-  }
-
-  if (_innerFormat == null)
-  {
-    initialize(context);
-  }
-
-  if (_innerRecordWriter == null)
-  {
-    _innerRecordWriter = _innerFormat.getRecordWriter(context);
-  }
-  String pl = context.getConfiguration().get(MrGeoAccumuloConstants.MRGEO_ACC_KEY_VIZ);
-  if (colViz == null)
-  {
-    colViz = new ColumnVisibility(pl);
-  }
-  AccumuloMrGeoRecordWriter outRW =
-      new AccumuloMrGeoRecordWriter(zoomLevel, table, _innerRecordWriter, new String(colViz.getExpression()));
-
-  return outRW;
-} // end getRecordWriter
-
 
 /**
  * The AccumuloGaSurRecordWriter wraps the AccumuloOutputFormat RecordWriter class.  When

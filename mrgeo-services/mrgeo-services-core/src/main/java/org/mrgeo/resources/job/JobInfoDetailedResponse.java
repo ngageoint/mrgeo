@@ -16,22 +16,21 @@
 
 package org.mrgeo.resources.job;
 
-import org.apache.hadoop.mapreduce.Job;
-
-import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.ArrayList;
-import java.util.List;
 
 @XmlRootElement
 public class JobInfoDetailedResponse extends JobInfoResponse
 {
-  //this class will contain the hadoop jobs list in the future
-  String _instructions;
-  public String getInstructions() {
-    return _instructions;
-  }
-  public void setInstructions(String instructions) {
-    _instructions = instructions;
-  }
+//this class will contain the hadoop jobs list in the future
+String _instructions;
+
+public String getInstructions()
+{
+  return _instructions;
+}
+
+public void setInstructions(String instructions)
+{
+  _instructions = instructions;
+}
 }

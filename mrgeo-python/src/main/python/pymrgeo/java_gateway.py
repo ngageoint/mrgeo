@@ -25,20 +25,19 @@ https://spark.apache.org/docs/latest/api/python/index.html
 import atexit
 import fnmatch
 import os
-import sys
 import select
 import signal
 import socket
 import struct
-from subprocess import Popen, PIPE
+import sys
 import time
+from subprocess import Popen, PIPE
 
-from py4j.java_gateway import java_import, JavaGateway, GatewayClient, get_method
 from py4j.java_collections import ListConverter
+from py4j.java_gateway import java_import, JavaGateway, GatewayClient, get_method
 
 if sys.version >= '3':
     xrange = range
-
 
 _forked_proc = None
 _isremote = False
@@ -148,7 +147,8 @@ def launch_gateway(host=None, port=None):
             os.setsid()
             signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-        _forked_proc = Popen(command, stdin=PIPE, preexec_fn=preexec_func, env=environ, bufsize=1, universal_newlines=True)
+        _forked_proc = Popen(command, stdin=PIPE, preexec_fn=preexec_func, env=environ, bufsize=1,
+                             universal_newlines=True)
 
         # while True:
         #     out = _forked_proc.stdout.read(1)
@@ -202,7 +202,7 @@ def launch_gateway(host=None, port=None):
     _isremote = not fork
 
     if java_python_port is None:
-                raise Exception("Java gateway process exited before sending the driver its port number")
+        raise Exception("Java gateway process exited before sending the driver its port number")
 
     print("Talking with MrGeo on port " + str(java_python_port))
 

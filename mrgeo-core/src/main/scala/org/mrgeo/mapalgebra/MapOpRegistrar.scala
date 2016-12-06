@@ -26,11 +26,12 @@ trait MapOpRegistrar extends Externalizable {
   def register:Array[String]
 
   // apply should call the mapop constructor, which needs to throw ParserExceptions on errors
-  def apply(node: ParserNode, variables: String => Option[ParserNode]):MapOp
+  def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp
 
-  override def toString: String = getClass.getSimpleName.replace("$", "")
+  override def toString:String = getClass.getSimpleName.replace("$", "")
 
   // no ops. This prevents accidental serialization
-  override def readExternal(in: ObjectInput): Unit = {}
-  override def writeExternal(out: ObjectOutput): Unit = {}
+  override def readExternal(in:ObjectInput):Unit = {}
+
+  override def writeExternal(out:ObjectOutput):Unit = {}
 }

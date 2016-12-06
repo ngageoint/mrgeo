@@ -22,9 +22,8 @@ import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.serializers.{BoundsSerializer, PixelSerializer}
 import org.mrgeo.utils.tms.{Bounds, Pixel}
 
-class KryoRegistrar extends KryoRegistrator
-{
-  override def registerClasses(kryo: Kryo) {
+class KryoRegistrar extends KryoRegistrator {
+  override def registerClasses(kryo:Kryo) {
     //    kryo.setReferences(false)
 
     kryo.register(classOf[TileIdWritable])

@@ -20,13 +20,12 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.junit.{After, Before}
 
 @SuppressWarnings(Array("all")) // test code, not included in production
-class SparkLocalRunnerTest
-{
+class SparkLocalRunnerTest {
   var sparkConf:SparkConf = _
   var sparkContext:SparkContext = _
 
   @Before
-  def initLocalRunner(): Unit = {
+  def initLocalRunner():Unit = {
     sparkConf = new SparkConf()
 
     sparkConf.setMaster("local")
@@ -36,7 +35,9 @@ class SparkLocalRunnerTest
   }
 
   @After
-  def teardown(): Unit = {
-    if (sparkContext != null) sparkContext.stop()
+  def teardown():Unit = {
+    if (sparkContext != null) {
+      sparkContext.stop()
+    }
   }
 }

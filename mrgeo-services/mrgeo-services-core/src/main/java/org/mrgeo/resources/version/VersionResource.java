@@ -33,7 +33,8 @@ import javax.ws.rs.ext.Providers;
  *         Date: 11/18/13
  */
 @Path("/")
-public class VersionResource {
+public class VersionResource
+{
 
 @Context
 Providers providers;
@@ -43,7 +44,8 @@ VersionService service;
 
 @GET
 @Produces("application/json")
-public Response getVersionAtApiRoot() {
+public Response getVersionAtApiRoot()
+{
   getService();
   return Response.ok().entity(service.getVersionJson()).type("application/json").build();
 }
@@ -52,9 +54,10 @@ public Response getVersionAtApiRoot() {
 @GET
 @Path("/version")
 @Produces("application/json")
-public Response getVersion() {
+public Response getVersion()
+{
   getService();
-  return Response.ok().entity( service.getVersionJson() ).type("application/json").build();
+  return Response.ok().entity(service.getVersionJson()).type("application/json").build();
 }
 
 private void getService()

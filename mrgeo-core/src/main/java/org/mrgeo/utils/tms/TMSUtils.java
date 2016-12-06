@@ -219,7 +219,6 @@ public static long numYTiles(final int zoomlevel)
 /**
  * Compute the worldwide tile in which the specified pixel resides. The pixel coordinates are
  * provided based on 0, 0 being bottom, left.
- *
  */
 public static Tile pixelsToTile(final double px, final double py, final int tilesize)
 {
@@ -229,7 +228,6 @@ public static Tile pixelsToTile(final double px, final double py, final int tile
 /**
  * Compute the worldwide tile in which the specified pixel resides. The pixel coordinates are
  * provided based on 0, 0 being top, left.
- *
  */
 public static Tile pixelsULToTile(final double px, final double py, final int zoom,
     final int tilesize)

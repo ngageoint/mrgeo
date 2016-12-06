@@ -21,56 +21,38 @@ import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 
 object TpiMapOp extends MapOpRegistrar {
-  def create(raster: RasterMapOp): MapOp =
+  def create(raster:RasterMapOp):MapOp =
     new TpiMapOp(Some(raster))
 
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("tpi")
   }
 
-  override def apply(node: ParserNode, variables: String => Option[ParserNode]): MapOp =
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new TpiMapOp(node, variables)
 }
 
-class TpiMapOp extends RawFocalMapOp
-{
+class TpiMapOp extends RawFocalMapOp {
   // Chad suggested a 33 pixel "radius" by default for TPI for good results
-  private var neighborhoodSize: Int = 67
+  private var neighborhoodSize:Int = 67
 
-  private[mapalgebra] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
-    this()
-
-    if (node.getNumChildren != 1 && node.getNumChildren != 2) {
-      throw new ParserException("tpi usage: tpi(rasterInput, [neighborhood size])")
-    }
-    inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
-    if (node.getNumChildren == 2) {
-      val neighborhoodArg = MapOp.decodeInt(node.getChild(1), variables)
-      neighborhoodArg match {
-        case Some(k) => neighborhoodSize = k
-        case None => throw new ParserException("Expected a number for the neighborhood size")
-      }
-    }
-  }
-
-  def this(input: Option[RasterMapOp]) {
+  def this(input:Option[RasterMapOp]) {
     this()
     inputMapOp = input
   }
 
-  override protected def computePixelValue(raster: MrGeoRaster, notnodata: MrGeoRaster,
-                                           outNoData: Double, rasterWidth: Int,
-                                           processX: Int, processY: Int, processBand: Int,
-                                           xLeftOffset: Int, neighborhoodWidth: Int,
-                                           yAboveOffset: Int, neighborhoodHeight: Int, tileId: Long): Double =
-  {
-    var x: Int = processX - xLeftOffset
+  override protected def computePixelValue(raster:MrGeoRaster, notnodata:MrGeoRaster,
+                                           outNoData:Double, rasterWidth:Int,
+                                           processX:Int, processY:Int, processBand:Int,
+                                           xLeftOffset:Int, neighborhoodWidth:Int,
+                                           yAboveOffset:Int, neighborhoodHeight:Int, tileId:Long):Double = {
+    var x:Int = processX - xLeftOffset
     val maxX = x + neighborhoodWidth
-    var y: Int = processY - yAboveOffset
+    var y:Int = processY - yAboveOffset
     val maxY = y + neighborhoodHeight
     val processPixel = raster.getPixelDouble(processX, processY, processBand)
-    var sum: Double = 0.0
-    var count: Int = 0
+    var sum:Double = 0.0
+    var count:Int = 0
     while (y < maxY) {
       x = processX - xLeftOffset
       while (x < maxX) {
@@ -99,7 +81,23 @@ class TpiMapOp extends RawFocalMapOp
     *
     * @return
     */
-  override protected def getNeighborhoodInfo: (Int, Int) = {
+  override protected def getNeighborhoodInfo:(Int, Int) = {
     (neighborhoodSize, neighborhoodSize)
+  }
+
+  private[mapalgebra] def this(node:ParserNode, variables:String => Option[ParserNode]) = {
+    this()
+
+    if (node.getNumChildren != 1 && node.getNumChildren != 2) {
+      throw new ParserException("tpi usage: tpi(rasterInput, [neighborhood size])")
+    }
+    inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
+    if (node.getNumChildren == 2) {
+      val neighborhoodArg = MapOp.decodeInt(node.getChild(1), variables)
+      neighborhoodArg match {
+        case Some(k) => neighborhoodSize = k
+        case None => throw new ParserException("Expected a number for the neighborhood size")
+      }
+    }
   }
 }

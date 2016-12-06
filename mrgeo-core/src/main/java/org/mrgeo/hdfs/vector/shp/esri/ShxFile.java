@@ -26,34 +26,16 @@ import java.io.IOException;
 public class ShxFile
 {
 public final static int DEFAULT_CACHE_SIZE = 500;
-
-/**
- * Opens a SHX file as read-only.
- */
-protected static ShxFile open(SeekableDataInput in, boolean cachemode, int cachesize)
-{
-  return new ShxFile(in, cachemode, cachesize);
-}
-
 protected boolean cachemode = false; // cache mode indicator flag
 protected int cachepos; // cache position (inclusive); dynamic access only
 protected int cachesize; // size of cache - represents all rows if not dynamic
 protected int[] contentLength = null;
 protected Header header = null;
-private SeekableDataInput in = null;
 protected boolean modData = false;
 protected int[] offset = null;
-
 protected int recordCount;
+private SeekableDataInput in = null;
 
-
-public void close() throws IOException
-{
-  if (in != null)
-  {
-    in.close();
-  }
-}
 /**
  * Opens a SHX file as read-only. Made private for clarity's sake.
  */
@@ -69,7 +51,24 @@ private ShxFile(SeekableDataInput in, boolean cachemode, int cachesize)
   this.cachesize = cachesize;
 }
 
-@SuppressWarnings("squid:S00112") // I didn't write this code, so I'm not sure why it throws the RuntimeException.  Keeping it
+/**
+ * Opens a SHX file as read-only.
+ */
+protected static ShxFile open(SeekableDataInput in, boolean cachemode, int cachesize)
+{
+  return new ShxFile(in, cachemode, cachesize);
+}
+
+public void close() throws IOException
+{
+  if (in != null)
+  {
+    in.close();
+  }
+}
+
+@SuppressWarnings("squid:S00112")
+// I didn't write this code, so I'm not sure why it throws the RuntimeException.  Keeping it
 public void addRow(int i, JShape obj)
 {
   // i is # of rows, for verification purposes only
@@ -105,22 +104,15 @@ public void addRow(int i, JShape obj)
   }
   temp[offset.length] = prev[0] + prev[1] + 4;
   if ((i - 1) != (offset.length + cachepos))
+  {
     throw new RuntimeException("ShxFile Add Row Inconsistency");
+  }
   offset = temp;
   // contentlength
   temp = new int[contentLength.length + 1];
   System.arraycopy(contentLength, 0, temp, 0, contentLength.length);
   temp[contentLength.length] = obj.getRecordLength() / 2;
   contentLength = temp;
-}
-
-@Override
-protected void finalize() throws IOException
-{
-  if (modData)
-    save();
-  if (in != null)
-    in.close();
 }
 
 public int getCachePos()
@@ -133,7 +125,21 @@ public int getCacheSize()
   return cachesize;
 }
 
-@SuppressWarnings("squid:S00112") // I didn't write this code, so I'm not sure why it throws the RuntimeException.  Keeping it
+public void setCacheSize(int size)
+{
+  if (!cachemode)
+  {
+    return;
+  }
+  if (size < 1)
+  {
+    size = 1;
+  }
+  cachesize = size;
+}
+
+@SuppressWarnings("squid:S00112")
+// I didn't write this code, so I'm not sure why it throws the RuntimeException.  Keeping it
 public int getContentLength(int i)
 {
   try
@@ -141,7 +147,9 @@ public int getContentLength(int i)
     if (i < cachepos || i > (cachepos + contentLength.length - 1))
     {
       if (modData)
+      {
         saveRows(cachepos);
+      }
       loadData(i);
     }
     return contentLength[i - cachepos];
@@ -162,7 +170,8 @@ public int getNumRecords()
   return recordCount;
 }
 
-@SuppressWarnings("squid:S00112") // I didn't write this code, so I'm not sure why it throws the RuntimeException.  Keeping it
+@SuppressWarnings("squid:S00112")
+// I didn't write this code, so I'm not sure why it throws the RuntimeException.  Keeping it
 public int getOffset(int i)
 {
   try
@@ -170,7 +179,9 @@ public int getOffset(int i)
     if (i < cachepos || i > (cachepos + offset.length - 1))
     {
       if (modData)
+      {
         saveRows(cachepos);
+      }
       loadData(i);
     }
     return offset[i - cachepos];
@@ -197,34 +208,43 @@ public void load() throws IOException, FormatException
   // initialize
   cachepos = -1;
   if (!cachemode)
+  {
     cachesize = recordCount;
+  }
   // read data
   loadData(in, 0);
+}
+
+public void save()
+{
+  throw new UnsupportedOperationException();
+}
+
+public void saveRows(int i)
+{
+  throw new UnsupportedOperationException();
+}
+
+@Override
+protected void finalize() throws IOException
+{
+  if (modData)
+  {
+    save();
+  }
+  if (in != null)
+  {
+    in.close();
+  }
 }
 
 protected void loadData(int i) throws IOException
 {
   if (header == null)
-    throw new IOException("Header never read.  Cannot load!");
-  loadData(in, i);
-}
-
-private void loadData(SeekableDataInput is, int i) throws IOException
-{
-  // new position
-  cachepos = i;
-  // reset row array
-  int max = (((recordCount - i) > cachesize) ? cachesize : (recordCount - i));
-  offset = new int[max];
-  contentLength = new int[max];
-  int pos = 100 + (8 * i);
-  is.seek(pos);
-  // read data
-  for (int j = 0; j < offset.length; j++)
   {
-    // initialize row data
-    loadRecord(is, j);
+    throw new IOException("Header never read.  Cannot load!");
   }
+  loadData(in, i);
 }
 
 protected void loadRecord(SeekableDataInput is, int i) throws IOException
@@ -251,22 +271,21 @@ protected int[] lookupRecordData(SeekableDataInput is, int i) throws IOException
   return temp;
 }
 
-public void save()
+private void loadData(SeekableDataInput is, int i) throws IOException
 {
-  throw new UnsupportedOperationException();
-}
-
-public void saveRows(int i)
-{
-  throw new UnsupportedOperationException();
-}
-
-public void setCacheSize(int size)
-{
-  if (!cachemode)
-    return;
-  if (size < 1)
-    size = 1;
-  cachesize = size;
+  // new position
+  cachepos = i;
+  // reset row array
+  int max = (((recordCount - i) > cachesize) ? cachesize : (recordCount - i));
+  offset = new int[max];
+  contentLength = new int[max];
+  int pos = 100 + (8 * i);
+  is.seek(pos);
+  // read data
+  for (int j = 0; j < offset.length; j++)
+  {
+    // initialize row data
+    loadRecord(is, j);
+  }
 }
 }

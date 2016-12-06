@@ -25,19 +25,20 @@ import javax.ws.rs.core.UriInfo;
 
 @Path("/job/")
 public class JobResource
-{  
-    
-  @Context
-  UriInfo uriInfo;
+{
 
-  @Context
-  HttpServletRequest request;
+@Context
+UriInfo uriInfo;
 
-  // TODO: Commented out until we decide to revisit after Spark changes.
-  @GET
-  @Produces(MediaType.APPLICATION_JSON)
-  public JobsListResponse getAllJobs(@QueryParam("pagesize") @DefaultValue("20") String sPageSize, 
-      @QueryParam("start") @DefaultValue("1") String sStartNdx) {
+@Context
+HttpServletRequest request;
+
+// TODO: Commented out until we decide to revisit after Spark changes.
+@GET
+@Produces(MediaType.APPLICATION_JSON)
+public JobsListResponse getAllJobs(@QueryParam("pagesize") @DefaultValue("20") String sPageSize,
+    @QueryParam("start") @DefaultValue("1") String sStartNdx)
+{
 //    String jobUri = uriInfo.getAbsolutePath().toString();
 //    jobUri = HttpUtil.updateSchemeFromHeaders( jobUri, request );
 //    JobDetails[] jobDetails = null;
@@ -92,9 +93,9 @@ public class JobResource
 //            .entity(e.getMessage())
 //            .build());
 //    }
-    return new JobsListResponse();
-  } 
-  
+  return new JobsListResponse();
+}
+
 //  @PUT
 //  @Produces(MediaType.APPLICATION_JSON)
 //  @Path("/{jobid: [0-9]+}/cancel/")

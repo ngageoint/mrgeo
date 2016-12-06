@@ -16,49 +16,49 @@ import java.io.IOException;
 
 public class GeoWaveVectorInputFormatProvider extends VectorInputFormatProvider
 {
-  private GeoWaveVectorDataProvider dataProvider;
+private GeoWaveVectorDataProvider dataProvider;
 
-  public GeoWaveVectorInputFormatProvider(VectorInputFormatContext context,
-      GeoWaveVectorDataProvider dataProvider)
-  {
-    super(context);
-    this.dataProvider = dataProvider;
-  }
+public GeoWaveVectorInputFormatProvider(VectorInputFormatContext context,
+    GeoWaveVectorDataProvider dataProvider)
+{
+  super(context);
+  this.dataProvider = dataProvider;
+}
 
-  @Override
-  public InputFormat<FeatureIdWritable, Geometry> getInputFormat(String input)
-  {
-    return new GeoWaveVectorInputFormat();
-  }
+@Override
+public InputFormat<FeatureIdWritable, Geometry> getInputFormat(String input)
+{
+  return new GeoWaveVectorInputFormat();
+}
 
-  @Override
-  public void setupJob(Job job, ProviderProperties providerProperties) throws DataProviderException
+@Override
+public void setupJob(Job job, ProviderProperties providerProperties) throws DataProviderException
+{
+  super.setupJob(job, providerProperties);
+  Configuration conf = job.getConfiguration();
+  GeoWaveConnectionInfo connectionInfo = GeoWaveVectorDataProvider.getConnectionInfo();
+  try
   {
-    super.setupJob(job, providerProperties);
-    Configuration conf = job.getConfiguration();
-    GeoWaveConnectionInfo connectionInfo = GeoWaveVectorDataProvider.getConnectionInfo();
-    try
+    DataStorePluginOptions dspOptions = dataProvider.getDataStorePluginOptions();
+    GeoWaveInputFormat.setDataStoreName(conf, dspOptions.getType());
+    GeoWaveInputFormat.setStoreConfigOptions(conf, dspOptions.getFactoryOptionsAsMap());
+    connectionInfo.writeToConfig(conf);
+
+    // Configure CQL filtering if specified in the data provider
+    String cql = dataProvider.getCqlFilter();
+    if (cql != null && !cql.isEmpty())
     {
-      DataStorePluginOptions dspOptions = dataProvider.getDataStorePluginOptions();
-      GeoWaveInputFormat.setDataStoreName(conf, dspOptions.getType());
-      GeoWaveInputFormat.setStoreConfigOptions(conf, dspOptions.getFactoryOptionsAsMap());
-      connectionInfo.writeToConfig(conf);
-
-      // Configure CQL filtering if specified in the data provider
-      String cql = dataProvider.getCqlFilter();
-      if (cql != null && !cql.isEmpty())
-      {
-        conf.set(GeoWaveVectorRecordReader.CQL_FILTER, cql);
-      }
-    }
-    catch (IOException e)
-    {
-      throw new DataProviderException(e);
+      conf.set(GeoWaveVectorRecordReader.CQL_FILTER, cql);
     }
   }
-
-  @Override
-  public void teardown(Job job) throws DataProviderException
+  catch (IOException e)
   {
+    throw new DataProviderException(e);
   }
+}
+
+@Override
+public void teardown(Job job) throws DataProviderException
+{
+}
 }

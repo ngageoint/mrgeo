@@ -35,7 +35,10 @@ import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImageException;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.MrsPyramidMetadata;
-import org.mrgeo.utils.*;
+import org.mrgeo.utils.FileUtils;
+import org.mrgeo.utils.GDALJavaUtils;
+import org.mrgeo.utils.HadoopUtils;
+import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.logging.LoggingUtils;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.TMSUtils;
@@ -51,15 +54,13 @@ import java.util.Set;
 
 public class Export extends Command
 {
-private static Logger log = LoggerFactory.getLogger(Export.class);
-
 private final static String X = "$X";
 private final static String Y = "$Y";
 private final static String ZOOM = "$ZOOM";
 private final static String ID = "$ID";
 private final static String LAT = "$LAT";
 private final static String LON = "$LON";
-
+private static Logger log = LoggerFactory.getLogger(Export.class);
 private int maxTiles = -1;
 private boolean useRand = false;
 private int mosaicTileCount = -1;
@@ -69,228 +70,6 @@ private boolean useBounds = false;
 private Set<Long> tileset = null;
 private ColorScale colorscale = null;
 private boolean useTMS;
-
-private Options createOptions()
-{
-  Options result = MrGeo.createOptions();
-
-  final Option output = new Option("o", "output", true, "Output directory");
-  output.setRequired(true);
-  result.addOption(output);
-
-  final Option zoom = new Option("z", "zoom", true, "Zoom level");
-  zoom.setRequired(false);
-  result.addOption(zoom);
-
-  final Option count = new Option("c", "count", true, "Number of tiles to export");
-  count.setRequired(false);
-  result.addOption(count);
-
-  final Option mosaic = new Option("m", "mosaic", true, "Number of adjacent tiles to mosaic");
-  mosaic.setRequired(false);
-  result.addOption(mosaic);
-
-  final Option fmt = new Option("f", "format", true, "Output format (tif, jpg, png)");
-  fmt.setRequired(false);
-  result.addOption(fmt);
-
-  final Option random = new Option("r", "random", false, "Randomize export");
-  random.setRequired(false);
-  result.addOption(random);
-
-  final Option single = new Option("s", "single", false, "Export as a single image");
-  single.setRequired(false);
-  result.addOption(single);
-
-  final Option tms = new Option("tms", "tms", false, "Export in TMS tile naming scheme");
-  tms.setRequired(false);
-  result.addOption(tms);
-
-  final Option color = new Option("cs", "colorscale", true, "Color scale to apply");
-  color.setRequired(false);
-  result.addOption(color);
-
-  final Option tileIds = new Option("t", "tileids", true,
-      "A comma separated list of tile ID's to export");
-  tileIds.setRequired(false);
-  result.addOption(tileIds);
-
-  final Option points = new Option("p", "points", true,
-                                    "A comma separated list of lon, lat, lon, lat, ... for which to export tiles");
-  points.setRequired(false);
-  result.addOption(points);
-
-  final Option bounds = new Option("b", "bounds", true,
-      "Returns the tiles intersecting and interior to"
-          + "the bounds specified.  Lat/Lon Bounds in w, s, e, n format "
-          + "(e.g., \"-180\",\"-90\",180,90). Does not honor \"-r\"");
-  bounds.setRequired(false);
-  result.addOption(bounds);
-
-  final Option all = new Option("a", "all-levels", false, "Output all levels");
-  all.setRequired(false);
-  result.addOption(all);
-
-  return result;
-}
-
-private Bounds parseBounds(String boundsOption)
-{
-  // since passed the arg parser, now can remove the " " around negative numbers
-  boundsOption = boundsOption.replace("\"", "");
-  final String[] bounds = boundsOption.split(",");
-  assert (bounds.length == 4);
-  final double w = Double.valueOf(bounds[0]);
-  final double s = Double.valueOf(bounds[1]);
-  final double e = Double.valueOf(bounds[2]);
-  final double n = Double.valueOf(bounds[3]);
-
-  assert (w >= -180 && w <= 180);
-  assert (s >= -90 && s <= 90);
-  assert (e >= -180 && e <= 180);
-  assert (n >= -90 && n <= 90);
-  assert (s <= n);
-  assert (w <= e);
-
-  return new Bounds(w, s, e, n);
-}
-
-private boolean saveSingleTile(final String output, final String pyramidName, final MrsImage image,
-    String format, final long tileid, final int zoom, int tilesize)
-{
-  try
-  {
-    final MrsPyramidMetadata metadata = image.getMetadata();
-
-    final Tile t = TMSUtils.tileid(tileid, zoom);
-
-    MrGeoRaster raster = image.getTile(t.tx, t.ty);
-
-    log.info("Saving tile tx: " + t.tx + " ty: " + t.ty);
-
-    if (raster != null)
-    {
-      String out = makeOutputName(output, pyramidName, format, tileid, zoom, tilesize, true);
-
-      if (colorscale != null || !format.equals("tif"))
-      {
-        raster = colorRaster(image, format, raster);
-      }
-
-      Bounds bnds = TMSUtils.tileBounds(t.tx, t.ty, image.getZoomlevel(), metadata.getTilesize());
-      GDALJavaUtils.saveRasterTile(raster.toDataset(bnds, metadata.getDefaultValues()),
-          out, t.tx, t.ty, image.getZoomlevel(), metadata.getDefaultValue(0), format);
-
-      System.out.println("Wrote output to " + out);
-      return true;
-    }
-
-    log.info("no raster!");
-
-  }
-  catch (IOException e)
-  {
-    log.error("Exception thrown {}", e);
-  }
-  return false;
-}
-
-private MrGeoRaster colorRaster(MrsImage image, String format, MrGeoRaster raster)
-{
-  final ColorScaleApplier applier;
-  switch (format)
-  {
-  case "jpg":
-  case "jpeg":
-    applier = new JpegColorScaleApplier();
-    break;
-  case "tif":
-  case "png":
-  default:
-    applier = new PngColorScaleApplier();
-    break;
-  }
-
-  try
-  {
-    raster = applier.applyColorScale(raster, colorscale, image.getExtrema(), image.getMetadata().getDefaultValues());
-  }
-  catch (Exception e)
-  {
-    log.error("Exception thrown {}", e);
-  }
-
-  return raster;
-}
-
-
-private boolean saveMultipleTiles(String output, String pyramidName, String format, final MrsImage image,
-    final long[] tiles)
-{
-  try
-  {
-    final int tilesize = image.getTilesize();
-    final int zoomlevel = image.getZoomlevel();
-
-    final MrsPyramidMetadata metadata = image.getMetadata();
-
-    MrGeoRaster raster;
-    if (useBounds)
-    {
-      TileBounds tb = TMSUtils.boundsToTile(bounds, zoomlevel, tilesize);
-      raster = image.getRaster(tb);
-    }
-    else
-    {
-       raster = image.getRaster(tiles);
-    }
-
-    Bounds imageBounds = null;
-
-    long minId = tiles[0];
-    for (final long lid : tiles)
-    {
-      if (minId > lid)
-      {
-        minId = lid;
-      }
-      final Tile tile = TMSUtils.tileid(lid, zoomlevel);
-      final Bounds bounds = TMSUtils.tileBounds(tile.tx, tile.ty, zoomlevel, tilesize);
-
-      // expand the image bounds by the tile
-      if (imageBounds == null)
-      {
-        imageBounds = bounds;
-      }
-      else
-      {
-        imageBounds = imageBounds.expand(bounds);
-      }
-
-    }
-
-    if (imageBounds == null)
-    {
-      throw new MrsImageException("Error, could not load any tiles");
-    }
-    String out = makeOutputName(output, pyramidName, format, minId, zoomlevel, tilesize, false);
-
-    if (colorscale != null || !format.equals("tif"))
-    {
-      raster = colorRaster(image, format, raster);
-    }
-
-    GDALJavaUtils.saveRaster(raster.toDataset(imageBounds, metadata.getDefaultValues()), out, null, metadata.getDefaultValue(0), format);
-
-    System.out.println("Wrote output to " + out);
-    return true;
-  }
-  catch (IOException e)
-  {
-    log.error("Exception thrown {}", e);
-  }
-  return false;
-}
 
 @Override
 @SuppressWarnings("squid:S1166") // Exception caught and handled
@@ -307,7 +86,8 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
       final CommandLineParser parser = new PosixParser();
       line = parser.parse(options, args);
 
-      if (line == null || line.hasOption("h")) {
+      if (line == null || line.hasOption("h"))
+      {
         new HelpFormatter().printHelp("Export", options);
         return 1;
       }
@@ -407,12 +187,13 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
         String pyramidName = "";
         try
         {
-          MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(arg, DataProviderFactory.AccessMode.READ, providerProperties);
+          MrsImageDataProvider dp =
+              DataProviderFactory.getMrsImageDataProvider(arg, DataProviderFactory.AccessMode.READ, providerProperties);
           imagePyramid = MrsPyramid.open(dp);
           pyramidName = dp.getSimpleResourceName();
           pyramid = imagePyramid;
         }
-        catch(IOException e)
+        catch (IOException e)
         {
           imagePyramid = null;
         }
@@ -438,17 +219,19 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
 
           // If tile id's were not specified with -t, but -p is specified, then we
           // need to re-compute the tiles for the specified points for each zoom level.
-          if (!useTileSet && line.hasOption("p")) {
+          if (!useTileSet && line.hasOption("p"))
+          {
             tileset = new HashSet<Long>();
             final String pointsOption = line.getOptionValue("p");
             final String[] points = pointsOption.split(",");
-            if (points.length % 2 != 0) {
+            if (points.length % 2 != 0)
+            {
               throw new IOException("The -p option requires lon/lat pairs");
             }
-            for (int i=0; i < points.length; i += 2)
+            for (int i = 0; i < points.length; i += 2)
             {
               double lon = Double.valueOf(points[i].trim());
-              double lat = Double.valueOf(points[i+1].trim());
+              double lat = Double.valueOf(points[i + 1].trim());
               Tile pointTile = TMSUtils.latLonToTile(lat, lon, zoomlevel, pyramid.getTileSize());
               tileset.add(Long.valueOf(TMSUtils.tileid(pointTile.getTx(), pointTile.getTy(), zoomlevel)));
             }
@@ -495,8 +278,8 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
                 }
 //                final String mosaicOutput = output + "/" + t.ty + "-" + t.tx + "-" +
 //                    TMSUtils.tileid(t.tx, t.ty, zoomlevel);
-                  saveMultipleTiles(outputbase, pyramidName, format,
-                      image, ArrayUtils.toPrimitive(tilesToMosaic.toArray(new Long[tilesToMosaic.size()])));
+                saveMultipleTiles(outputbase, pyramidName, format,
+                    image, ArrayUtils.toPrimitive(tilesToMosaic.toArray(new Long[tilesToMosaic.size()])));
               }
             }
             else
@@ -529,10 +312,233 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
   }
   catch (ColorScale.ColorScaleException | IOException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
   }
 
   return -1;
+}
+
+private Options createOptions()
+{
+  Options result = MrGeo.createOptions();
+
+  final Option output = new Option("o", "output", true, "Output directory");
+  output.setRequired(true);
+  result.addOption(output);
+
+  final Option zoom = new Option("z", "zoom", true, "Zoom level");
+  zoom.setRequired(false);
+  result.addOption(zoom);
+
+  final Option count = new Option("c", "count", true, "Number of tiles to export");
+  count.setRequired(false);
+  result.addOption(count);
+
+  final Option mosaic = new Option("m", "mosaic", true, "Number of adjacent tiles to mosaic");
+  mosaic.setRequired(false);
+  result.addOption(mosaic);
+
+  final Option fmt = new Option("f", "format", true, "Output format (tif, jpg, png)");
+  fmt.setRequired(false);
+  result.addOption(fmt);
+
+  final Option random = new Option("r", "random", false, "Randomize export");
+  random.setRequired(false);
+  result.addOption(random);
+
+  final Option single = new Option("s", "single", false, "Export as a single image");
+  single.setRequired(false);
+  result.addOption(single);
+
+  final Option tms = new Option("tms", "tms", false, "Export in TMS tile naming scheme");
+  tms.setRequired(false);
+  result.addOption(tms);
+
+  final Option color = new Option("cs", "colorscale", true, "Color scale to apply");
+  color.setRequired(false);
+  result.addOption(color);
+
+  final Option tileIds = new Option("t", "tileids", true,
+      "A comma separated list of tile ID's to export");
+  tileIds.setRequired(false);
+  result.addOption(tileIds);
+
+  final Option points = new Option("p", "points", true,
+      "A comma separated list of lon, lat, lon, lat, ... for which to export tiles");
+  points.setRequired(false);
+  result.addOption(points);
+
+  final Option bounds = new Option("b", "bounds", true,
+      "Returns the tiles intersecting and interior to"
+          + "the bounds specified.  Lat/Lon Bounds in w, s, e, n format "
+          + "(e.g., \"-180\",\"-90\",180,90). Does not honor \"-r\"");
+  bounds.setRequired(false);
+  result.addOption(bounds);
+
+  final Option all = new Option("a", "all-levels", false, "Output all levels");
+  all.setRequired(false);
+  result.addOption(all);
+
+  return result;
+}
+
+private Bounds parseBounds(String boundsOption)
+{
+  // since passed the arg parser, now can remove the " " around negative numbers
+  boundsOption = boundsOption.replace("\"", "");
+  final String[] bounds = boundsOption.split(",");
+  assert (bounds.length == 4);
+  final double w = Double.valueOf(bounds[0]);
+  final double s = Double.valueOf(bounds[1]);
+  final double e = Double.valueOf(bounds[2]);
+  final double n = Double.valueOf(bounds[3]);
+
+  assert (w >= -180 && w <= 180);
+  assert (s >= -90 && s <= 90);
+  assert (e >= -180 && e <= 180);
+  assert (n >= -90 && n <= 90);
+  assert (s <= n);
+  assert (w <= e);
+
+  return new Bounds(w, s, e, n);
+}
+
+private boolean saveSingleTile(final String output, final String pyramidName, final MrsImage image,
+    String format, final long tileid, final int zoom, int tilesize)
+{
+  try
+  {
+    final MrsPyramidMetadata metadata = image.getMetadata();
+
+    final Tile t = TMSUtils.tileid(tileid, zoom);
+
+    MrGeoRaster raster = image.getTile(t.tx, t.ty);
+
+    log.info("Saving tile tx: " + t.tx + " ty: " + t.ty);
+
+    if (raster != null)
+    {
+      String out = makeOutputName(output, pyramidName, format, tileid, zoom, tilesize, true);
+
+      if (colorscale != null || !format.equals("tif"))
+      {
+        raster = colorRaster(image, format, raster);
+      }
+
+      Bounds bnds = TMSUtils.tileBounds(t.tx, t.ty, image.getZoomlevel(), metadata.getTilesize());
+      GDALJavaUtils.saveRasterTile(raster.toDataset(bnds, metadata.getDefaultValues()),
+          out, t.tx, t.ty, image.getZoomlevel(), metadata.getDefaultValue(0), format);
+
+      System.out.println("Wrote output to " + out);
+      return true;
+    }
+
+    log.info("no raster!");
+
+  }
+  catch (IOException e)
+  {
+    log.error("Exception thrown", e);
+  }
+  return false;
+}
+
+private MrGeoRaster colorRaster(MrsImage image, String format, MrGeoRaster raster)
+{
+  final ColorScaleApplier applier;
+  switch (format)
+  {
+  case "jpg":
+  case "jpeg":
+    applier = new JpegColorScaleApplier();
+    break;
+  case "tif":
+  case "png":
+  default:
+    applier = new PngColorScaleApplier();
+    break;
+  }
+
+  try
+  {
+    raster = applier.applyColorScale(raster, colorscale, image.getExtrema(), image.getMetadata().getDefaultValues());
+  }
+  catch (Exception e)
+  {
+    log.error("Exception thrown", e);
+  }
+
+  return raster;
+}
+
+private boolean saveMultipleTiles(String output, String pyramidName, String format, final MrsImage image,
+    final long[] tiles)
+{
+  try
+  {
+    final int tilesize = image.getTilesize();
+    final int zoomlevel = image.getZoomlevel();
+
+    final MrsPyramidMetadata metadata = image.getMetadata();
+
+    MrGeoRaster raster;
+    if (useBounds)
+    {
+      TileBounds tb = TMSUtils.boundsToTile(bounds, zoomlevel, tilesize);
+      raster = image.getRaster(tb);
+    }
+    else
+    {
+      raster = image.getRaster(tiles);
+    }
+
+    Bounds imageBounds = null;
+
+    long minId = tiles[0];
+    for (final long lid : tiles)
+    {
+      if (minId > lid)
+      {
+        minId = lid;
+      }
+      final Tile tile = TMSUtils.tileid(lid, zoomlevel);
+      final Bounds bounds = TMSUtils.tileBounds(tile.tx, tile.ty, zoomlevel, tilesize);
+
+      // expand the image bounds by the tile
+      if (imageBounds == null)
+      {
+        imageBounds = bounds;
+      }
+      else
+      {
+        imageBounds = imageBounds.expand(bounds);
+      }
+
+    }
+
+    if (imageBounds == null)
+    {
+      throw new MrsImageException("Error, could not load any tiles");
+    }
+    String out = makeOutputName(output, pyramidName, format, minId, zoomlevel, tilesize, false);
+
+    if (colorscale != null || !format.equals("tif"))
+    {
+      raster = colorRaster(image, format, raster);
+    }
+
+    GDALJavaUtils
+        .saveRaster(raster.toDataset(imageBounds, metadata.getDefaultValues()), out, null, metadata.getDefaultValue(0),
+            format);
+
+    System.out.println("Wrote output to " + out);
+    return true;
+  }
+  catch (IOException e)
+  {
+    log.error("Exception thrown", e);
+  }
+  return false;
 }
 
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File() constructing a filename and checking for existence")
@@ -689,7 +695,7 @@ private Set<Long> calculateTiles(final MrsPyramid pyramid, int zoomlevel)
     {
       for (long y = tb.s; y <= tb.n; y++)
       {
-         tiles.add(TMSUtils.tileid(x, y, zoomlevel));
+        tiles.add(TMSUtils.tileid(x, y, zoomlevel));
       }
     }
     return tiles;

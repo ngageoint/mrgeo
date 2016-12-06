@@ -29,28 +29,29 @@ import org.mrgeo.utils.SparkUtils
 import org.mrgeo.utils.tms.Bounds
 
 object MrsPyramidMapOp {
-  def apply(dataprovider: MrsImageDataProvider) = {
+  def apply(dataprovider:MrsImageDataProvider) = {
     new MrsPyramidMapOp(dataprovider)
   }
 
   def apply(mapop:MapOp):Option[MrsPyramidMapOp] = {
     mapop match {
-    case rmo:MrsPyramidMapOp => Some(rmo)
-    case _ => None
+      case rmo:MrsPyramidMapOp => Some(rmo)
+      case _ => None
     }
   }
 }
 
-@SuppressFBWarnings(value = Array("CN_IMPLEMENTS_CLONE_BUT_NOT_CLONEABLE"), justification = "_Does_ implement Cloneable()")
-class MrsPyramidMapOp private[raster] (dataprovider: MrsImageDataProvider)
+@SuppressFBWarnings(value = Array("CN_IMPLEMENTS_CLONE_BUT_NOT_CLONEABLE"),
+  justification = "_Does_ implement Cloneable()")
+class MrsPyramidMapOp private[raster](dataprovider:MrsImageDataProvider)
     extends RasterMapOp with Cloneable {
   private var rasterRDD:Option[RasterRDD] = None
-  private var zoomForRDD: Option[Int] = None
-  private var maxZoomForRDD: Option[Int] = None
-  private var bounds: Option[Bounds] = None
-  private var mapOpForBounds: Option[RasterMapOp] = None
+  private var zoomForRDD:Option[Int] = None
+  private var maxZoomForRDD:Option[Int] = None
+  private var bounds:Option[Bounds] = None
+  private var mapOpForBounds:Option[RasterMapOp] = None
 
-  override def rdd(zoom:Int):Option[RasterRDD]  = {
+  override def rdd(zoom:Int):Option[RasterRDD] = {
     load(zoom)
     rasterRDD
   }
@@ -63,7 +64,43 @@ class MrsPyramidMapOp private[raster] (dataprovider: MrsImageDataProvider)
   @SuppressFBWarnings(value = Array("CN_IDIOM_NO_SUPER_CALL"), justification = "No need to call super.clone()")
   override def clone = MrsPyramidMapOp(dataprovider)
 
-  private def getBounds: Option[Bounds] = {
+  def setBounds(bounds:Bounds):Unit = {
+    this.bounds = Some(bounds)
+    rasterRDD = None
+  }
+
+  def setBounds(mapOpForBounds:RasterMapOp):Unit = {
+    this.mapOpForBounds = Some(mapOpForBounds)
+    rasterRDD = None
+  }
+
+  def zoom():Int = {
+    zoomForRDD.get
+  }
+
+  override def metadata():Option[MrsPyramidMetadata] = {
+    load()
+    getBounds match {
+      case Some(b) =>
+        val meta = super.metadata()
+        meta match {
+          case Some(m) =>
+            m.setBounds(b)
+            Some(m)
+          case None => meta
+        }
+      case None => super.metadata()
+    }
+  }
+
+  // nothing to do here...
+  override def setup(job:JobArguments, conf:SparkConf):Boolean = true
+
+  override def execute(context:SparkContext):Boolean = true
+
+  override def teardown(job:JobArguments, conf:SparkConf):Boolean = true
+
+  private def getBounds:Option[Bounds] = {
     mapOpForBounds match {
       case Some(op) =>
         Some(op.metadata().getOrElse(
@@ -72,7 +109,7 @@ class MrsPyramidMapOp private[raster] (dataprovider: MrsImageDataProvider)
     }
   }
 
-  private def load(zoom:Int = -1)  = {
+  private def load(zoom:Int = -1) = {
 
     if (context == null) {
       throw new IOException("Error creating RasterRDD, can not create an RDD without a SparkContext")
@@ -96,7 +133,12 @@ class MrsPyramidMapOp private[raster] (dataprovider: MrsImageDataProvider)
       metadata(data._2)
       rasterRDD = Some(data._1)
       maxZoomForRDD = Some(data._2.getMaxZoomLevel)
-      zoomForRDD = Some(if (zoom > 0) zoom else data._2.getMaxZoomLevel)
+      zoomForRDD = Some(if (zoom > 0) {
+        zoom
+      }
+      else {
+        data._2.getMaxZoomLevel
+      })
     }
     // if we sent in a zoom and it is different than the current loaded one
     else if (zoom > 0 && zoom != zoomForRDD.get) {
@@ -118,39 +160,5 @@ class MrsPyramidMapOp private[raster] (dataprovider: MrsImageDataProvider)
       zoomForRDD = Some(maxZoomForRDD.get)
     }
   }
-
-  def setBounds(bounds: Bounds): Unit = {
-    this.bounds = Some(bounds)
-    rasterRDD = None
-  }
-
-  def setBounds(mapOpForBounds: RasterMapOp): Unit = {
-    this.mapOpForBounds = Some(mapOpForBounds)
-    rasterRDD = None
-  }
-
-  def zoom():Int = {
-    zoomForRDD.get
-  }
-
-  override def metadata():Option[MrsPyramidMetadata] =  {
-    load()
-    getBounds match {
-      case Some(b) =>
-        val meta = super.metadata()
-        meta match {
-          case Some(m) =>
-            m.setBounds(b)
-            Some(m)
-          case None => meta
-        }
-      case None => super.metadata()
-    }
-  }
-
-  // nothing to do here...
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = true
-  override def execute(context: SparkContext): Boolean = true
-  override def teardown(job: JobArguments, conf: SparkConf): Boolean = true
 
 }

@@ -30,109 +30,106 @@ import org.mrgeo.utils.tms.Bounds;
  */
 public class ImageInputFormatContext
 {
-  private int zoomLevel;
-  private int tileSize;
-  private String input;
-  private Bounds bounds;
-  private ProviderProperties inputProviderProperties;
+private static final String className = ImageInputFormatContext.class.getSimpleName();
+private static final String ZOOM_LEVEL = className + ".zoomLevel";
+private static final String TILE_SIZE = className + ".tileSize";
+private static final String INPUT = className + ".input";
+private static final String BOUNDS = className + ".bounds";
+private static final String PROVIDER_PROPERTY_KEY = className + "provProps";
+private int zoomLevel;
+private int tileSize;
+private String input;
+private Bounds bounds;
+private ProviderProperties inputProviderProperties;
 
-  private static final String className = ImageInputFormatContext.class.getSimpleName();
-  private static final String ZOOM_LEVEL = className + ".zoomLevel";
-  private static final String TILE_SIZE = className + ".tileSize";
-  private static final String INPUT = className + ".input";
-  private static final String BOUNDS = className + ".bounds";
-  private static final String PROVIDER_PROPERTY_KEY = className + "provProps";
+/**
+ * Use this constructor to include input at a zoom level from all of the specified
+ * image pyramids. The map/reduce job will have access to all the tiles from those
+ * input.
+ */
+public ImageInputFormatContext(final int zoomlevel, final int tileSize,
+    final String input, final ProviderProperties inputProviderProperties)
+{
+  this.zoomLevel = zoomlevel;
+  this.tileSize = tileSize;
+  this.input = input;
+  this.bounds = null;
+  this.inputProviderProperties = inputProviderProperties;
+}
 
-  /**
-   * Use this constructor to include input at a zoom level from all of the specified
-   * image pyramids. The map/reduce job will have access to all the tiles from those
-   * input.
-   *
-   * */
-  public ImageInputFormatContext(final int zoomlevel, final int tileSize,
-                                 final String input, final ProviderProperties inputProviderProperties)
+/**
+ * Use this constructor to include input at a zoom level from all of the specified
+ * image pyramids. The map/reduce job will have access to all the tiles from those
+ * input.
+ */
+public ImageInputFormatContext(final int zoomlevel, final int tileSize,
+    final String input, final Bounds bounds,
+    final ProviderProperties inputProviderProperties)
+{
+  this.zoomLevel = zoomlevel;
+  this.tileSize = tileSize;
+  this.input = input;
+  this.bounds = bounds;
+  this.inputProviderProperties = inputProviderProperties;
+}
+
+protected ImageInputFormatContext()
+{
+}
+
+public static ImageInputFormatContext load(final Configuration conf)
+{
+  ImageInputFormatContext context = new ImageInputFormatContext();
+  context.input = conf.get(INPUT);
+  context.zoomLevel = conf.getInt(ZOOM_LEVEL, 1);
+  context.tileSize = conf.getInt(TILE_SIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
+  String confBounds = conf.get(BOUNDS);
+  if (confBounds != null)
   {
-    this.zoomLevel = zoomlevel;
-    this.tileSize = tileSize;
-    this.input = input;
-    this.bounds = null;
-    this.inputProviderProperties = inputProviderProperties;
+    context.bounds = Bounds.fromCommaString(confBounds);
   }
-
-  /**
-   * Use this constructor to include input at a zoom level from all of the specified
-   * image pyramids. The map/reduce job will have access to all the tiles from those
-   * input.
-   * 
-   */
-  public ImageInputFormatContext(final int zoomlevel, final int tileSize,
-                                 final String input, final Bounds bounds,
-                                 final ProviderProperties inputProviderProperties)
+  String strProviderProperties = conf.get(PROVIDER_PROPERTY_KEY);
+  if (strProviderProperties != null)
   {
-    this.zoomLevel = zoomlevel;
-    this.tileSize = tileSize;
-    this.input = input;
-    this.bounds = bounds;
-    this.inputProviderProperties = inputProviderProperties;
+    context.inputProviderProperties = ProviderProperties.fromDelimitedString(strProviderProperties);
   }
+  return context;
+}
 
-  protected ImageInputFormatContext()
-  {
-  }
+public String getInput()
+{
+  return input;
+}
 
-  public String getInput()
-  {
-    return input;
-  }
+public ProviderProperties getProviderProperties()
+{
+  return inputProviderProperties;
+}
 
-  public ProviderProperties getProviderProperties()
-  {
-    return inputProviderProperties;
-  }
+public int getZoomLevel()
+{
+  return zoomLevel;
+}
 
-  public int getZoomLevel()
-  {
-    return zoomLevel;
-  }
+public int getTileSize()
+{
+  return tileSize;
+}
 
-  public int getTileSize()
-  {
-    return tileSize;
-  }
+public Bounds getBounds()
+{
+  return bounds;
+}
 
-  public Bounds getBounds()
+public void save(final Configuration conf)
+{
+  conf.set(INPUT, input);
+  conf.setInt(ZOOM_LEVEL, zoomLevel);
+  conf.setInt(TILE_SIZE, tileSize);
+  if (bounds != null)
   {
-    return bounds;
+    conf.set(BOUNDS, bounds.toCommaString());
   }
-
-  public void save(final Configuration conf)
-  {
-    conf.set(INPUT, input);
-    conf.setInt(ZOOM_LEVEL, zoomLevel);
-    conf.setInt(TILE_SIZE, tileSize);
-    if (bounds != null)
-    {
-      conf.set(BOUNDS, bounds.toCommaString());
-    }
-      conf.set(PROVIDER_PROPERTY_KEY, ProviderProperties.toDelimitedString(inputProviderProperties));
-  }
-
-  public static ImageInputFormatContext load(final Configuration conf)
-  {
-    ImageInputFormatContext context = new ImageInputFormatContext();
-    context.input = conf.get(INPUT);
-    context.zoomLevel = conf.getInt(ZOOM_LEVEL, 1);
-    context.tileSize = conf.getInt(TILE_SIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
-    String confBounds = conf.get(BOUNDS);
-    if (confBounds != null)
-    {
-      context.bounds = Bounds.fromCommaString(confBounds);
-    }
-    String strProviderProperties = conf.get(PROVIDER_PROPERTY_KEY);
-    if (strProviderProperties != null)
-    {
-      context.inputProviderProperties = ProviderProperties.fromDelimitedString(strProviderProperties);
-    }
-    return context;
-  }
+  conf.set(PROVIDER_PROPERTY_KEY, ProviderProperties.toDelimitedString(inputProviderProperties));
+}
 }

@@ -44,7 +44,7 @@ object StatisticsMapOp extends MapOpRegistrar {
 
   private val methods = Array[String](Min, Max, Mean, Median, Mode, StdDev, Sum, Count)
 
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("statistics", "stats")
   }
 
@@ -80,70 +80,21 @@ object StatisticsMapOp extends MapOpRegistrar {
   //    new StatisticsMapOp(inputs.toArray, method)
   //  }
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new StatisticsMapOp(node, variables)
 }
 
 class StatisticsMapOp extends RasterMapOp with Externalizable {
 
 
-  private var method: String = null
-  private var inputs: Option[Array[Either[Option[RasterMapOp], Option[String]]]] = None
-
-  private var rasterRDD: Option[RasterRDD] = None
-
-  private[mapalgebra] def this(inputs:Array[Either[Option[RasterMapOp], Option[String]]], method:String) = {
-    this()
-    this.inputs = Some(inputs)
-    this.method = method
-  }
-
-  private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
-    this()
-
-    if (node.getNumChildren < 2) {
-      throw new ParserException("Usage: statistics(\"method\", raster1, raster2, ...)")
-    }
-
-    method = {
-      val m = MapOp.decodeString(node.getChild(0), variables)
-
-      if (m.isEmpty || !StatisticsMapOp.methods.exists(_.equals(m.get.toLowerCase))) {
-        throw new ParserException("Invalid stastics method")
-      }
-      m.get.toLowerCase
-    }
-
-    val inputbuilder = Array.newBuilder[Either[Option[RasterMapOp], Option[String]]]
-    var i: Int = 1
-    while (i < node.getNumChildren) {
-      try {
-        val raster = RasterMapOp.decodeToRaster(node.getChild(i), variables)
-        inputbuilder += Left(raster)
-      }
-      catch {
-        case e:ParserException =>
-          try {
-            val str = MapOp.decodeString(node.getChild(i), variables)
-            inputbuilder += Right(str)
-          }
-          catch {
-            case pe:ParserException =>
-              throw new ParserException(node.getChild(i).getName + " is not a string or raster")
-          }
-      }
-      i += 1
-    }
-    inputs = if (inputbuilder.result().length > 0) Some(inputbuilder.result()) else None
-  }
-
-  override def rdd(): Option[RasterRDD] = rasterRDD
-
-
   var providerProperties:ProviderProperties = null
+  private var method:String = null
+  private var inputs:Option[Array[Either[Option[RasterMapOp], Option[String]]]] = None
+  private var rasterRDD:Option[RasterRDD] = None
 
+  override def rdd():Option[RasterRDD] = rasterRDD
 
-  override def execute(context: SparkContext): Boolean = {
+  override def execute(context:SparkContext):Boolean = {
 
     val mapopbuilder = Array.newBuilder[RasterMapOp]
     val nodatabuilder = Array.newBuilder[Double]
@@ -155,60 +106,61 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
       inputs.get.foreach {
         case Left(left) =>
           left match {
-          case Some(raster) =>
-            mapopbuilder += raster
-
-            val meta = raster.metadata() getOrElse
-                (throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName))
-
-            if (zoom <= 0 || zoom > meta.getMaxZoomLevel) {
-              zoom = meta.getMaxZoomLevel
-            }
-
-            if (tilesize < 0) {
-              tilesize = meta.getTilesize
-            }
-
-            nodatabuilder += meta.getDefaultValue(0)
-          case _ =>
-          }
-        case Right(right) =>
-          right match {
-          case Some(str) =>
-            val regex = str.replace("?", ".?").replace("*", ".*?")
-            val hits = layers.getOrElse({
-              layers = Some(DataProviderFactory.listImages(providerProperties))
-              layers.get
-            }).filter(_.matches(regex))
-
-            hits.foreach(layer => {
-              val dp = DataProviderFactory.getMrsImageDataProvider(layer, AccessMode.READ, providerProperties)
-
-              val raster = MrsPyramidMapOp.apply(dp)
-              raster.context(context)
-
+            case Some(raster) =>
               mapopbuilder += raster
 
               val meta = raster.metadata() getOrElse
-                  (throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName))
+                         (throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName))
 
               if (zoom <= 0 || zoom > meta.getMaxZoomLevel) {
                 zoom = meta.getMaxZoomLevel
               }
+
               if (tilesize < 0) {
                 tilesize = meta.getTilesize
               }
 
               nodatabuilder += meta.getDefaultValue(0)
-            })
-          case _ =>
+            case _ =>
+          }
+        case Right(right) =>
+          right match {
+            case Some(str) =>
+              val regex = str.replace("?", ".?").replace("*", ".*?")
+              val hits = layers.getOrElse({
+                layers = Some(DataProviderFactory.listImages(providerProperties))
+                layers.get
+              }).filter(_.matches(regex))
+
+              hits.foreach(layer => {
+                val dp = DataProviderFactory.getMrsImageDataProvider(layer, AccessMode.READ, providerProperties)
+
+                val raster = MrsPyramidMapOp.apply(dp)
+                raster.context(context)
+
+                mapopbuilder += raster
+
+                val meta = raster.metadata() getOrElse
+                           (throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName))
+
+                if (zoom <= 0 || zoom > meta.getMaxZoomLevel) {
+                  zoom = meta.getMaxZoomLevel
+                }
+                if (tilesize < 0) {
+                  tilesize = meta.getTilesize
+                }
+
+                nodatabuilder += meta.getDefaultValue(0)
+              })
+            case _ =>
           }
       }
     }
 
     val nodatas = nodatabuilder.result()
 
-    val pyramids = mapopbuilder.result().map(_.rdd(zoom) getOrElse (throw new IOException("Can't load RDD! Ouch! " + getClass.getName)))
+    val pyramids = mapopbuilder.result()
+        .map(_.rdd(zoom) getOrElse (throw new IOException("Can't load RDD! Ouch! " + getClass.getName)))
 
     // cogroup needs a partitioner, so we'll give one here...
     var maxpartitions = 0
@@ -224,10 +176,10 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
 
       val epsilon = 1e-8
 
-      def count(raster: MrGeoRaster, result: MrGeoRaster, nodata: Double) = {
-        var y: Int = 0
+      def count(raster:MrGeoRaster, result:MrGeoRaster, nodata:Double) = {
+        var y:Int = 0
         while (y < raster.height) {
-          var x: Int = 0
+          var x:Int = 0
           while (x < raster.width()) {
             val px = raster.getPixelDouble(x, y, 0)
 
@@ -246,10 +198,10 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
         }
       }
 
-      def min(raster: MrGeoRaster, result: MrGeoRaster, nodata: Double) = {
-        var y: Int = 0
+      def min(raster:MrGeoRaster, result:MrGeoRaster, nodata:Double) = {
+        var y:Int = 0
         while (y < raster.height()) {
-          var x: Int = 0
+          var x:Int = 0
           while (x < raster.width()) {
             val px = raster.getPixelDouble(x, y, 0)
 
@@ -268,10 +220,10 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
         }
       }
 
-      def max(raster: MrGeoRaster, result: MrGeoRaster, nodata: Double) = {
-        var y: Int = 0
+      def max(raster:MrGeoRaster, result:MrGeoRaster, nodata:Double) = {
+        var y:Int = 0
         while (y < raster.height()) {
-          var x: Int = 0
+          var x:Int = 0
           while (x < raster.width()) {
             val px = raster.getPixelDouble(x, y, 0)
 
@@ -290,10 +242,10 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
         }
       }
 
-      def mean(raster: MrGeoRaster, result: MrGeoRaster, nodata: Double) = {
-        var y: Int = 0
+      def mean(raster:MrGeoRaster, result:MrGeoRaster, nodata:Double) = {
+        var y:Int = 0
         while (y < raster.height()) {
-          var x: Int = 0
+          var x:Int = 0
           while (x < raster.width()) {
             val px = raster.getPixelDouble(x, y, 0)
 
@@ -315,10 +267,10 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
         }
       }
 
-      def sum(raster: MrGeoRaster, result: MrGeoRaster, nodata: Double) = {
-        var y: Int = 0
+      def sum(raster:MrGeoRaster, result:MrGeoRaster, nodata:Double) = {
+        var y:Int = 0
         while (y < raster.height()) {
-          var x: Int = 0
+          var x:Int = 0
           while (x < raster.width()) {
             val px = raster.getPixelDouble(x, y, 0)
 
@@ -337,7 +289,7 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
         }
       }
 
-      def mode(tiles: Array[Iterable[_]], result: MrGeoRaster, nodatas: Array[Double]) = {
+      def mode(tiles:Array[Iterable[_]], result:MrGeoRaster, nodatas:Array[Double]) = {
         val rasterbuilder = Array.newBuilder[MrGeoRaster]
         tiles.foreach(wr => {
           if (wr != null && wr.nonEmpty) {
@@ -352,13 +304,13 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
 
         val valuebuilder = Array.newBuilder[Double]
         valuebuilder.sizeHint(rasters.length)
-        var y: Int = 0
+        var y:Int = 0
         while (y < result.height()) {
-          var x: Int = 0
+          var x:Int = 0
           while (x < result.width()) {
             valuebuilder.clear
 
-            var ndx: Int = 0
+            var ndx:Int = 0
             while (ndx < rasters.length) {
               if (rasters(ndx) != null) {
                 val px = rasters(ndx).getPixelDouble(x, y, 0)
@@ -379,7 +331,7 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
               var curval = mode
               var curcount = modecount
 
-              var i: Int = 1
+              var i:Int = 1
               while (i < values.length) {
                 if (values(i) > (curval - epsilon) && values(i) < (curval + epsilon)) {
                   curcount += 1
@@ -406,7 +358,7 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
         }
       }
 
-      def median(tiles: Array[Iterable[_]], result: MrGeoRaster, nodatas: Array[Double]) = {
+      def median(tiles:Array[Iterable[_]], result:MrGeoRaster, nodatas:Array[Double]) = {
         val rasterbuilder = Array.newBuilder[MrGeoRaster]
         tiles.foreach(wr => {
           if (wr != null && wr.nonEmpty) {
@@ -421,13 +373,13 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
 
         val valuebuilder = Array.newBuilder[Double]
         valuebuilder.sizeHint(rasters.length)
-        var y: Int = 0
+        var y:Int = 0
         while (y < result.height()) {
-          var x: Int = 0
+          var x:Int = 0
           while (x < result.width()) {
             valuebuilder.clear
 
-            var ndx: Int = 0
+            var ndx:Int = 0
             while (ndx < rasters.length) {
               if (rasters(ndx) != null) {
                 val px = rasters(ndx).getPixelDouble(x, y, 0)
@@ -448,7 +400,7 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
         }
       }
 
-      def stddev(tiles: Array[Iterable[_]], result: MrGeoRaster, nodatas: Array[Double]) = {
+      def stddev(tiles:Array[Iterable[_]], result:MrGeoRaster, nodatas:Array[Double]) = {
         val rasterbuilder = Array.newBuilder[MrGeoRaster]
         tiles.foreach(wr => {
           if (wr != null && wr.nonEmpty) {
@@ -461,16 +413,16 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
 
         val rasters = rasterbuilder.result()
 
-        var y: Int = 0
+        var y:Int = 0
         while (y < result.height()) {
-          var x: Int = 0
+          var x:Int = 0
           while (x < result.width()) {
 
             var sum1:Double = 0
             var sum2:Double = 0
 
             var cnt = 0
-            var ndx: Int = 0
+            var ndx:Int = 0
             while (ndx < rasters.length) {
               if (rasters(ndx) != null) {
                 val px = rasters(ndx).getPixelDouble(x, y, 0)
@@ -491,54 +443,54 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
       }
 
       val bands = method match {
-      case StatisticsMapOp.Mean => 2
-      case _ => 1
+        case StatisticsMapOp.Mean => 2
+        case _ => 1
       }
 
       val result = MrGeoRaster.createEmptyRaster(tilesize, tilesize, bands, DataBuffer.TYPE_FLOAT, Float.NaN)
 
-      var ndx: Int = 0
+      var ndx:Int = 0
       method match {
-      case StatisticsMapOp.Mode => mode(tile._2, result, nodatas)
-      case StatisticsMapOp.Median => median(tile._2, result, nodatas)
-      case StatisticsMapOp.StdDev => stddev(tile._2, result, nodatas)
-      case _ =>
-        tile._2.foreach(wr => {
+        case StatisticsMapOp.Mode => mode(tile._2, result, nodatas)
+        case StatisticsMapOp.Median => median(tile._2, result, nodatas)
+        case StatisticsMapOp.StdDev => stddev(tile._2, result, nodatas)
+        case _ =>
+          tile._2.foreach(wr => {
 
-          val modebuilder = Array.newBuilder[Double]
-          if (wr != null && wr.nonEmpty) {
-            val raster = RasterWritable.toMrGeoRaster(wr.asInstanceOf[Seq[RasterWritable]].head)
+            val modebuilder = Array.newBuilder[Double]
+            if (wr != null && wr.nonEmpty) {
+              val raster = RasterWritable.toMrGeoRaster(wr.asInstanceOf[Seq[RasterWritable]].head)
 
-            method match {
-            case StatisticsMapOp.Count => count(raster, result, nodatas(ndx))
-            case StatisticsMapOp.Max => max(raster, result, nodatas(ndx))
-            case StatisticsMapOp.Mean => mean(raster, result, nodatas(ndx))
-            case StatisticsMapOp.Min => min(raster, result, nodatas(ndx))
-            case StatisticsMapOp.Sum => sum(raster, result, nodatas(ndx))
+              method match {
+                case StatisticsMapOp.Count => count(raster, result, nodatas(ndx))
+                case StatisticsMapOp.Max => max(raster, result, nodatas(ndx))
+                case StatisticsMapOp.Mean => mean(raster, result, nodatas(ndx))
+                case StatisticsMapOp.Min => min(raster, result, nodatas(ndx))
+                case StatisticsMapOp.Sum => sum(raster, result, nodatas(ndx))
 
+              }
             }
-          }
-          ndx += 1
-        })
+            ndx += 1
+          })
       }
 
       (tile._1, method match {
-      case StatisticsMapOp.Mean =>
-        val mean = MrGeoRaster.createEmptyRaster(tilesize, tilesize, 1, DataBuffer.TYPE_FLOAT, Float.NaN)
-        var y: Int = 0
-        while (y < result.height()) {
-          var x: Int = 0
-          while (x < result.width()) {
-            val total = result.getPixelDouble(x, y, 0)
-            if (RasterMapOp.isNotNodata(total, Float.NaN)) {
-              mean.setPixel(x, y, 0, total / result.getPixelDouble(x, y, 1))
+        case StatisticsMapOp.Mean =>
+          val mean = MrGeoRaster.createEmptyRaster(tilesize, tilesize, 1, DataBuffer.TYPE_FLOAT, Float.NaN)
+          var y:Int = 0
+          while (y < result.height()) {
+            var x:Int = 0
+            while (x < result.width()) {
+              val total = result.getPixelDouble(x, y, 0)
+              if (RasterMapOp.isNotNodata(total, Float.NaN)) {
+                mean.setPixel(x, y, 0, total / result.getPixelDouble(x, y, 1))
+              }
+              x += 1
             }
-            x += 1
+            y += 1
           }
-          y += 1
-        }
-        RasterWritable.toWritable(mean)
-      case _ => RasterWritable.toWritable(result)
+          RasterWritable.toWritable(mean)
+        case _ => RasterWritable.toWritable(result)
       })
 
     })))
@@ -549,20 +501,69 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
     true
   }
 
-  override def setup(job: JobArguments, conf:SparkConf): Boolean = {
+  override def setup(job:JobArguments, conf:SparkConf):Boolean = {
     providerProperties = ProviderProperties.fromDelimitedString(job.getSetting(MapAlgebra.ProviderProperties, ""))
     true
   }
 
-  override def teardown(job: JobArguments, conf: SparkConf): Boolean = true
+  override def teardown(job:JobArguments, conf:SparkConf):Boolean = true
 
-  override def readExternal(in: ObjectInput): Unit =
-  {
+  override def readExternal(in:ObjectInput):Unit = {
     method = in.readUTF()
   }
 
-  override def writeExternal(out: ObjectOutput): Unit = {
+  override def writeExternal(out:ObjectOutput):Unit = {
     out.writeUTF(method)
+  }
+
+  private[mapalgebra] def this(inputs:Array[Either[Option[RasterMapOp], Option[String]]], method:String) = {
+    this()
+    this.inputs = Some(inputs)
+    this.method = method
+  }
+
+  private[mapalgebra] def this(node:ParserNode, variables:String => Option[ParserNode]) = {
+    this()
+
+    if (node.getNumChildren < 2) {
+      throw new ParserException("Usage: statistics(\"method\", raster1, raster2, ...)")
+    }
+
+    method = {
+      val m = MapOp.decodeString(node.getChild(0), variables)
+
+      if (m.isEmpty || !StatisticsMapOp.methods.exists(_.equals(m.get.toLowerCase))) {
+        throw new ParserException("Invalid stastics method")
+      }
+      m.get.toLowerCase
+    }
+
+    val inputbuilder = Array.newBuilder[Either[Option[RasterMapOp], Option[String]]]
+    var i:Int = 1
+    while (i < node.getNumChildren) {
+      try {
+        val raster = RasterMapOp.decodeToRaster(node.getChild(i), variables)
+        inputbuilder += Left(raster)
+      }
+      catch {
+        case e:ParserException =>
+          try {
+            val str = MapOp.decodeString(node.getChild(i), variables)
+            inputbuilder += Right(str)
+          }
+          catch {
+            case pe:ParserException =>
+              throw new ParserException(node.getChild(i).getName + " is not a string or raster")
+          }
+      }
+      i += 1
+    }
+    inputs = if (inputbuilder.result().length > 0) {
+      Some(inputbuilder.result())
+    }
+    else {
+      None
+    }
   }
 
 }

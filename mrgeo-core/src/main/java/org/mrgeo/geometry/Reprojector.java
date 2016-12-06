@@ -28,6 +28,17 @@ import java.io.ObjectOutputStream;
 public class Reprojector implements PointFilter
 {
 private static final long serialVersionUID = 1L;
+transient CoordinateTransformation coordinateTransformation;
+private String srcSRSWKT = null;
+private String dstSRSWKT = null;
+
+private Reprojector(SpatialReference sourceSrs, SpatialReference destSrs)
+{
+  coordinateTransformation = new CoordinateTransformation(sourceSrs, destSrs);
+
+  srcSRSWKT = sourceSrs.ExportToWkt();
+  dstSRSWKT = sourceSrs.ExportToWkt();
+}
 
 /**
  * Creates a Reprojector from a specified code to another code. The codes take
@@ -73,28 +84,17 @@ private static int parseEpsgCode(String epsg)
 {
   String prefix = "epsg:";
   int index = epsg.toLowerCase().indexOf(prefix);
-  if (index >= 0) {
+  if (index >= 0)
+  {
     try
     {
       return Integer.parseInt(epsg.substring(index + prefix.length()));
     }
-    catch(NumberFormatException nfe)
+    catch (NumberFormatException nfe)
     {
     }
   }
   throw new IllegalArgumentException("Invalid EPSG code: " + epsg);
-}
-
-transient CoordinateTransformation coordinateTransformation;
-private String srcSRSWKT = null;
-private String dstSRSWKT = null;
-
-private Reprojector(SpatialReference sourceSrs, SpatialReference destSrs)
-{
-  coordinateTransformation = new CoordinateTransformation(sourceSrs, destSrs);
-
-  srcSRSWKT = sourceSrs.ExportToWkt();
-  dstSRSWKT = sourceSrs.ExportToWkt();
 }
 
 @Override

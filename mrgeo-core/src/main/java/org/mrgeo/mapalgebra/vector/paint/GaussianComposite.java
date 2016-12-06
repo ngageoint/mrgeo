@@ -50,6 +50,7 @@ public GaussianComposite(double weight)
 {
   super(weight);
 }
+
 public GaussianComposite(double weight, double nodata)
 {
   super(weight, nodata);
@@ -68,6 +69,19 @@ public void setEllipse(Point center, double majorWidth, double minorWidth,
 
   // orientation of the ellipse
   this.rotate = AffineTransform.getRotateInstance(-orientation);
+}
+
+/*
+ * (non-Javadoc)
+ *
+ * @see java.awt.Composite#createContext(java.awt.image.ColorModel,
+ * java.awt.image.ColorModel, java.awt.RenderingHints)
+ */
+@Override
+public CompositeContext createContext(ColorModel srcColorModel, ColorModel dstColorModel,
+    RenderingHints hints)
+{
+  return new GaussianCompositeContext();
 }
 
 private class GaussianCompositeContext implements CompositeContext
@@ -160,7 +174,7 @@ private class GaussianCompositeContext implements CompositeContext
     }
     catch (NoninvertibleTransformException e)
     {
-      log.error("Exception thrown {}", e);
+      log.error("Exception thrown", e);
     }
 
     // calculate the lat/lon delta of the src point
@@ -172,22 +186,9 @@ private class GaussianCompositeContext implements CompositeContext
 
 
     double gaussian = Gaussian.phi(delta.getX(), major) *
-        Gaussian.phi(delta.getY(),minor);
+        Gaussian.phi(delta.getY(), minor);
 
     return v * (gaussian * multiplier);
   }
-}
-
-/*
- * (non-Javadoc)
- *
- * @see java.awt.Composite#createContext(java.awt.image.ColorModel,
- * java.awt.image.ColorModel, java.awt.RenderingHints)
- */
-@Override
-public CompositeContext createContext(ColorModel srcColorModel, ColorModel dstColorModel,
-    RenderingHints hints)
-{
-  return new GaussianCompositeContext();
 }
 }

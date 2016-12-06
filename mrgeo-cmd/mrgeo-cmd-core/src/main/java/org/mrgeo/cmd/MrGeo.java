@@ -42,6 +42,51 @@ private static Logger log = LoggerFactory.getLogger(MrGeo.class);
 private static Map<String, CommandSpi> commands = null;
 
 /**
+ * This is the main method for executing mrgeo commands.  All commands come through this method.
+ * <p/>
+ * Instead of returning an integer denoting return status.  This method uses
+ * {@link System#exit(int)} for the return status.
+ *
+ * @param args String[] Command line arguments
+ */
+public static void main(String[] args)
+{
+  Configuration conf = HadoopUtils.createConfiguration();
+
+  int res = 0;
+  try
+  {
+    res = ToolRunner.run(conf, new MrGeo(), args);
+  }
+  catch (Exception e)
+  {
+    log.error("Exception thrown", e);
+    System.exit(-1);
+  }
+
+  System.exit(res);
+}
+
+/**
+ * Create and return the options available as generic options for all commands.
+ *
+ * @return Options The generic {@link Options} for all commands.
+ */
+public static Options createOptions()
+{
+  Options result = new Options();
+
+  result.addOption(new Option("np", "no-persistance", false, "Disable Spark Autopersisting MrGeo RDDs"));
+
+  result.addOption(new Option("l", "local-runner", false, "Use Hadoop & Spark's local runner (used for debugging)"));
+  result.addOption(new Option("v", "verbose", false, "Verbose logging"));
+  result.addOption(new Option("d", "debug", false, "Debug (very verbose) logging"));
+  result.addOption(new Option("h", "help", false, "Display help for this command"));
+
+  return result;
+}
+
+/**
  * Print generic usage to std out.
  */
 private static void usage()
@@ -82,51 +127,6 @@ private static void loadCommands()
     commands.put(cmd.getCommandName(), cmd);
   }
 
-}
-
-/**
- * This is the main method for executing mrgeo commands.  All commands come through this method.
- * <p/>
- * Instead of returning an integer denoting return status.  This method uses
- * {@link System#exit(int)} for the return status.
- *
- * @param args String[] Command line arguments
- */
-public static void main(String[] args)
-{
-  Configuration conf = HadoopUtils.createConfiguration();
-
-  int res = 0;
-  try
-  {
-    res = ToolRunner.run(conf, new MrGeo(), args);
-  }
-  catch (Exception e)
-  {
-    log.error("Exception thrown {}", e);
-    System.exit(-1);
-  }
-
-  System.exit(res);
-}
-
-/**
- * Create and return the options available as generic options for all commands.
- *
- * @return Options The generic {@link Options} for all commands.
- */
-public static Options createOptions()
-{
-  Options result = new Options();
-
-  result.addOption(new Option("np", "no-persistance", false, "Disable Spark Autopersisting MrGeo RDDs"));
-
-  result.addOption(new Option("l", "local-runner", false, "Use Hadoop & Spark's local runner (used for debugging)"));
-  result.addOption(new Option("v", "verbose", false, "Verbose logging"));
-  result.addOption(new Option("d", "debug", false, "Debug (very verbose) logging"));
-  result.addOption(new Option("h", "help", false, "Display help for this command"));
-
-  return result;
 }
 
 /**
@@ -239,7 +239,7 @@ public int run(String[] args) throws IOException
   }
   catch (InstantiationException | IllegalAccessException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     return -1;
   }
 

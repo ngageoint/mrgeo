@@ -35,7 +35,6 @@ import java.awt.image.WritableRaster;
  * This class is not thread safe or re-entrant. The final is here to help out the compiler.
  *
  * @author jason.surratt
- *
  */
 public final class GeometryPainter
 {
@@ -80,7 +79,16 @@ public Color getFillColor()
 {
   return fillColor;
 }
-public AffineTransform getTransform() { return transform; }
+
+public void setFillColor(final Color color)
+{
+  fillColor = color;
+}
+
+public AffineTransform getTransform()
+{
+  return transform;
+}
 
 public void paint(final Geometry g)
 {
@@ -219,7 +227,8 @@ public void paintRings(final GeometryCollection gc)
   }
 }
 
-public void paintEllipse(Point center, double major, double minor, double orientation) {
+public void paintEllipse(Point center, double major, double minor, double orientation)
+{
   gr.setColor(fillColor);
   gr.setStroke(new BasicStroke(1));
 
@@ -245,7 +254,6 @@ public void paintEllipse(Point center, double major, double minor, double orient
   }
 }
 
-
 public void setBackGroundColor(final Color color)
 {
   backgroundColor = color;
@@ -254,7 +262,6 @@ public void setBackGroundColor(final Color color)
 /**
  * Set the real world boundary (e.g. lat/lng) of the image that is being painted. This
  * reconfigures the matrix of the graphics object to make painting in real coordinates work.
- *
  */
 public void setBounds(final Bounds b)
 {
@@ -270,11 +277,6 @@ public void setBounds(final Bounds b)
   transform = new AffineTransform(scaleX, 0.0, 0.0, -scaleY, xlateX, xlateY);
 
   // System.out.println("xform: " + transform);
-}
-
-public void setFillColor(final Color color)
-{
-  fillColor = color;
 }
 
 private void buildRing(final Path2D.Double path, final LineString ring)

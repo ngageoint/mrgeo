@@ -17,10 +17,8 @@
 package org.mrgeo.core;
 
 /**
- *
  * MrGeoConstants is a class for maintaining the constants
  * for the runtime environment of MrGeo.
- *
  */
 public class MrGeoConstants
 {

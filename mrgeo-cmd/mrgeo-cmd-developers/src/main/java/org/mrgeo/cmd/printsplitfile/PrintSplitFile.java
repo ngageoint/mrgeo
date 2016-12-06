@@ -21,9 +21,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.MrGeo;
-import org.mrgeo.cmd.mrsimageinfo.MrsImageInfo;
 import org.mrgeo.data.DataProviderFactory;
-import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
@@ -37,7 +35,7 @@ import java.io.IOException;
 
 /**
  * A utility class to print split files on the command line
- *
+ * <p>
  * PrintSplitFile <split filename>
  **/
 
@@ -136,7 +134,7 @@ public int run(final String[] args, final Configuration conf,
   }
   catch (ParseException | IOException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
   }
 
   return 0;

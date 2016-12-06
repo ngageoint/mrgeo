@@ -23,17 +23,17 @@ import java.io.IOException;
 
 public interface ShpData
 {
-  void addShape(JShape obj) throws FormatException;
+void addShape(JShape obj) throws FormatException;
 
-  int getCount();
+int getCount();
 
-  JShape getShape(int i) throws IOException;
+JShape getShape(int i) throws IOException;
 
-  void load(int i, byte[] record);
+void load(int i, byte[] record);
 
-  void resizeCache(int size);
+void resizeCache(int size);
 
-  byte[] save(int i);
+byte[] save(int i);
 
-  void setParent(ESRILayer parent);
+void setParent(ESRILayer parent);
 }

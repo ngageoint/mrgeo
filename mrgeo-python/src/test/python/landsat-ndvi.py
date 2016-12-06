@@ -2,15 +2,16 @@
 import gdal
 import getopt
 import json
+import math
 import numpy
 import os
-from gdalconst import *
-from osgeo import osr
 import sys
 import tempfile
+from gdalconst import *
+from osgeo import osr
 
-import math
 from dateutil.parser import parse
+
 from pymrgeo import MrGeo
 from pymrgeo.rastermapop import RasterMapOp
 
@@ -47,17 +48,19 @@ def toa_reflectance(Array, bqa_data, metadata, band):
     Array[conds] *= mult
     Array[conds] += add
 
+
 def toa_radiance(Array, metadata, band):
     scales = metadata['L1_METADATA_FILE']['RADIOMETRIC_RESCALING']
 
     mult = scales['RADIANCE_MULT_BAND_' + str(band)]
     add = scales['RADIANCE_ADD_BAND_' + str(band)]
 
-    sun_elev = metadata['L1_METADATA_FILE']['IMAGE_ATTRIBUTES']['SUN_ELEVATION'] * 0.0174533 # degrees to rad
+    sun_elev = metadata['L1_METADATA_FILE']['IMAGE_ATTRIBUTES']['SUN_ELEVATION'] * 0.0174533  # degrees to rad
 
     print('band: ' + str(band) + ' mult: ' + str(mult) + ' add: ' + str(add))
 
     Array[Array != 0] = ((Array * mult) + add) / math.sin(sun_elev)
+
 
 def load_all_metadata(root):
     metadata = []
@@ -74,7 +77,8 @@ def load_all_metadata(root):
                     with open(pathname) as metafile:
                         md = json.load(metafile)
                         md["PARENT_DIR"] = dirname
-                        md["BQA"] = os.path.join(dirname, md["L1_METADATA_FILE"]["PRODUCT_METADATA"]["FILE_NAME_BAND_QUALITY"])
+                        md["BQA"] = os.path.join(dirname,
+                                                 md["L1_METADATA_FILE"]["PRODUCT_METADATA"]["FILE_NAME_BAND_QUALITY"])
                         md[1] = os.path.join(dirname, md["L1_METADATA_FILE"]["PRODUCT_METADATA"]["FILE_NAME_BAND_1"])
                         md[2] = os.path.join(dirname, md["L1_METADATA_FILE"]["PRODUCT_METADATA"]["FILE_NAME_BAND_2"])
                         md[3] = os.path.join(dirname, md["L1_METADATA_FILE"]["PRODUCT_METADATA"]["FILE_NAME_BAND_3"])
@@ -91,6 +95,7 @@ def load_all_metadata(root):
                     pass
     return metadata
 
+
 # Function to read the original file's projection:
 def GetGeoInfo(FileName):
     SourceDS = gdal.Open(FileName, GA_ReadOnly)
@@ -104,21 +109,23 @@ def GetGeoInfo(FileName):
     data_type = gdal.GetDataTypeName(data_type)
     return NDV, xsize, ysize, GeoT, Projection, data_type
 
+
 # Function to write a new file.
 def CreateGeoTiff(Name, Array, driver, NDV,
                   xsize, ysize, GeoT, Projection, data_type):
     if data_type == 'Float32':
         data_type = gdal.GDT_Float32
     # Set up the dataset
-    DataSet = driver.Create( Name, xsize, ysize, 1, data_type )
+    DataSet = driver.Create(Name, xsize, ysize, 1, data_type)
     # the '1' is for band 1.
     DataSet.SetGeoTransform(GeoT)
-    DataSet.SetProjection( Projection.ExportToWkt() )
+    DataSet.SetProjection(Projection.ExportToWkt())
     # Write the array
-    DataSet.GetRasterBand(1).WriteArray( Array )
+    DataSet.GetRasterBand(1).WriteArray(Array)
     if NDV is not None:
         DataSet.GetRasterBand(1).SetNoDataValue(NDV)
-    # DataSet.close()
+        # DataSet.close()
+
 
 def main(argv):
     root = ''
@@ -126,7 +133,7 @@ def main(argv):
     year = -1
     output_postfix = ''
     try:
-        opts, args = getopt.getopt(argv,"hr:m:y:o:",["root=","month=,year=,output-postfix="])
+        opts, args = getopt.getopt(argv, "hr:m:y:o:", ["root=", "month=,year=,output-postfix="])
     except getopt.GetoptError:
         print 'multi-landsat.py -r <rootdir> -m <monthnum> -y <year> -o <output-postfix>'
         sys.exit(2)
@@ -162,14 +169,16 @@ def main(argv):
             if filtered_metadata.get(key) is None:
                 filtered_metadata[key] = md
             else:
-                existing_acq_date = parse(filtered_metadata[key]["L1_METADATA_FILE"]["PRODUCT_METADATA"]["DATE_ACQUIRED"])
+                existing_acq_date = parse(
+                    filtered_metadata[key]["L1_METADATA_FILE"]["PRODUCT_METADATA"]["DATE_ACQUIRED"])
                 if acqdate > existing_acq_date:
                     filtered_metadata[key] = md
     for key in filtered_metadata:
-        print "Processing scene at path %s, row %s, acquired %s, at %s" % (filtered_metadata[key]["L1_METADATA_FILE"]["PRODUCT_METADATA"]["WRS_PATH"],
-                                                                    filtered_metadata[key]["L1_METADATA_FILE"]["PRODUCT_METADATA"]["WRS_ROW"],
-                                                                    filtered_metadata[key]["L1_METADATA_FILE"]["PRODUCT_METADATA"]["DATE_ACQUIRED"],
-                                                                    filtered_metadata[key]["PARENT_DIR"])
+        print "Processing scene at path %s, row %s, acquired %s, at %s" % (
+            filtered_metadata[key]["L1_METADATA_FILE"]["PRODUCT_METADATA"]["WRS_PATH"],
+            filtered_metadata[key]["L1_METADATA_FILE"]["PRODUCT_METADATA"]["WRS_ROW"],
+            filtered_metadata[key]["L1_METADATA_FILE"]["PRODUCT_METADATA"]["DATE_ACQUIRED"],
+            filtered_metadata[key]["PARENT_DIR"])
 
     # being a separate image
     mrgeo = MrGeo()
@@ -186,6 +195,7 @@ def main(argv):
 
     mrgeo.stop()
     print("***** Done *****")
+
 
 def ingest_reflectance_image(mrgeo, filtered_metadata, band, image_name):
     cnt = 0
@@ -224,6 +234,7 @@ def ingest_reflectance_image(mrgeo, filtered_metadata, band, image_name):
     for rf in red_refl_paths:
         os.remove(rf)
     return red
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])

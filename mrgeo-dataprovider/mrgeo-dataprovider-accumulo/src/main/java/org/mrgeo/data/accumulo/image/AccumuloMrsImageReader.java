@@ -36,24 +36,21 @@ import org.mrgeo.data.accumulo.metadata.AccumuloMrsPyramidMetadataReader;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
 import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
+import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.image.MrsPyramidReaderContext;
 import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.raster.RasterWritable;
-import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.image.MrsImageException;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
-import org.mrgeo.utils.tms.TMSUtils;
-import org.mrgeo.utils.tms.TileBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
@@ -72,42 +69,30 @@ protected Scanner scanner;
 
 // multithreaded scanner
 protected BatchScanner batchScanner;
-
+// table in use
+protected String table = null;
+// zoom level being accessed
+protected int zoomLevel = -1;
 // compression items
 private CompressionCodec codec;
 private Decompressor decompressor;
-
 // is this a mock connection
 private boolean mock = false;
-
 // authorization strings needed for reading - this may need to be set every time
 private String authStr = null;
 private Authorizations auths;
-
 // metadata of the connection
 private MrsPyramidMetadata metadata = null;
-
-// table in use
-protected String table = null;
-
 // zookeeper instance
 private String instance = null;
-
 // user name
 private String user = null;
-
 // password for the user
 private String pass = null;
-
 // zppkeeper servers
 private String zooServers = null;
-
 // number of threads to use for the connection
 private int numQueryThreads = 2;
-
-// zoom level being accessed
-protected int zoomLevel = -1;
-
 // compression is not used right now
 private boolean useCompression = false;
 
@@ -199,7 +184,7 @@ public AccumuloMrsImageReader(Properties props, AccumuloMrsImageDataProvider pro
     }
     catch (IOException | ClassNotFoundException e)
     {
-      log.error("Exception thrown {}", e);
+      log.error("Exception thrown", e);
     }
 
   }
@@ -279,159 +264,6 @@ public AccumuloMrsImageReader(final String table, final int numQueryThreads, fin
 
 } // end constructor
 
-
-/**
- * Prepare the scanners that end up being used for getting items out of Accumulo
- */
-private void initializeScanners()
-{
-
-  if (AMTR_props != null)
-  {
-
-    String authsStr = AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS);
-    this.auths = AccumuloUtils.createAuthorizationsFromDelimitedString(authsStr);
-
-    if (AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_COMPRESS) != null)
-    {
-      //String tmp = AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_COMPRESS);
-      useCompression = Boolean.parseBoolean(AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_COMPRESS));
-    }
-
-  }
-
-  try
-  {
-
-    if (useCompression)
-    {
-      codec = HadoopUtils.getCodec(HadoopUtils.createConfiguration());
-      decompressor = CodecPool.getDecompressor(codec);
-    }
-    else
-    {
-      codec = null;
-      decompressor = null;
-    }
-
-    // see if we are in a test state
-    if (mock)
-    {
-
-      // in test mode - use a mock connector
-      final MockInstance mi = new MockInstance(this.instance);
-      connector = mi.getConnector(this.user, this.pass.getBytes());
-      connector.tableOperations().create(this.table);
-
-    }
-    else if (this.instance != null)
-    {
-
-      // get a real connector
-      connector = AccumuloConnector.getConnector(this.instance,
-          this.zooServers,
-          this.user,
-          this.pass);
-      if (useCompression)
-      {
-        codec = HadoopUtils.getCodec(HadoopUtils.createConfiguration());
-        decompressor = CodecPool.getDecompressor(codec);
-      }
-      else
-      {
-        codec = null;
-        decompressor = null;
-      }
-
-    }
-    else
-    {
-
-      // we did not get the information needed from the properties objects - so use the configs from the install
-
-      connector = AccumuloConnector.getConnector();
-
-      // TODO: compression items need to be worked out
-      codec = null;
-      decompressor = null;
-
-    }
-
-    // establish the scanners
-    scanner = connector.createScanner(this.table, this.auths);
-    batchScanner = connector.createBatchScanner(this.table, this.auths, numQueryThreads);
-
-  }
-  catch (final TableNotFoundException | TableExistsException | AccumuloException | AccumuloSecurityException | IOException e)
-  {
-    throw new MrsImageException(e);
-  }
-
-} // end initializeScanners
-
-
-/**
- * Pull together all the needed items for connecting to Accumulo.
- *
- * @param props - the object that has the information for connecting out to Accumulo.
- */
-private void initialize(Properties props)
-{
-  Properties tmpProps = null;
-  try
-  {
-    tmpProps = AccumuloConnector.getAccumuloProperties();
-  }
-  catch (Exception e)
-  {
-    log.error("Unable to get Accumulo connection properties", e);
-    return;
-  }
-  // initialize properties
-  if (AMTR_props == null)
-  {
-    AMTR_props = new Properties();
-  }
-  AMTR_props.putAll(tmpProps);
-
-  String authsString = AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS);
-
-  // pull in all properties for input
-  if (props != null)
-  {
-    if (props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS) != null)
-    {
-      authsString = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS);
-    }
-    AMTR_props.putAll(props);
-
-  } //else {
-  // read in properties from file?
-  //}
-
-  // get all needed properties for connecting to Accumulo
-
-  //table = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_RESOURCE);
-  instance = AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_RESOURCE);
-  zooServers = AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS);
-  user = AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER);
-  pass = AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD);
-
-  //log.info("auth string = " + AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS));
-  //log.info("provider rolses = " + AMTR_props.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES));
-
-  // authorizations - this will need to be set on a per query basis
-  auths = AccumuloUtils.createAuthorizationsFromDelimitedString(authsString);
-} // end initialize
-
-
-//  @Override
-//  public MrsImagePyramidMetadata loadMetadata()
-//  {
-//    // TODO Auto-generated method stub
-//    return null;
-//  }
-
 @SuppressWarnings("squid:S1166") // Exception caught and handled
 public long calculateTileCount()
 {
@@ -457,28 +289,19 @@ public boolean canBeCached()
   return true;
 }
 
-protected MrGeoRaster toNonWritable(byte[] val, CompressionCodec codec, Decompressor decompressor)
-    throws IOException
-{
-  DataInputBuffer dib = new DataInputBuffer();
-  dib.reset(val, val.length);
 
-  RasterWritable rw = new RasterWritable();
-  rw.readFields(dib);
-
-  if (codec == null || decompressor == null)
-  {
-    return RasterWritable.toMrGeoRaster(rw);
-  }
-  return RasterWritable.toMrGeoRaster(rw, codec, decompressor);
-}
+//  @Override
+//  public MrsImagePyramidMetadata loadMetadata()
+//  {
+//    // TODO Auto-generated method stub
+//    return null;
+//  }
 
 @Override
 public int getTileSize()
 {
   return tileSize;
 }
-
 
 /**
  * Cleanup the scanners connected to Accumulo
@@ -495,7 +318,6 @@ public void close()
     scanner.close();
   }
 } // end close
-
 
 /**
  * This will check to see if a tile is in the data store
@@ -522,7 +344,6 @@ public boolean exists(final TileIdWritable key)
 
 } // end exist
 
-
 /**
  * This is meant to pull back everything from the image.  This is not implemented.
  *
@@ -533,7 +354,6 @@ public KVIterator<TileIdWritable, MrGeoRaster> get()
 {
   return get(null, null);
 } // end get()
-
 
 /**
  * This will get an iterator that will be able to pull images for a rectangle
@@ -557,7 +377,6 @@ public KVIterator<TileIdWritable, MrGeoRaster> get(final LongRectangle tileBound
 //                                                  zoomLevel)));
 } // end get
 
-
 /**
  * This will get an iterator over the bounds of a given bounding box.
  *
@@ -574,7 +393,6 @@ public KVIterator<Bounds, MrGeoRaster> get(final Bounds bounds)
 
   throw new NotImplementedException("AccumuloReader.get from Bounds not implemented");
 } // end get
-
 
 /**
  * Retrieve a tile from the Accumulo instance.  This ignores zoom level and just
@@ -628,7 +446,6 @@ public MrGeoRaster get(final TileIdWritable key)
     throw new MrsImageException(e);
   }
 } // end get
-
 
 /**
  * Retrieve a series of tiles from the Accumulo store.
@@ -862,6 +679,165 @@ public int getZoomlevel()
   }
   return zoomLevel;
 } // end getZoomLevel
+
+protected MrGeoRaster toNonWritable(byte[] val, CompressionCodec codec, Decompressor decompressor)
+    throws IOException
+{
+  DataInputBuffer dib = new DataInputBuffer();
+  dib.reset(val, val.length);
+
+  RasterWritable rw = new RasterWritable();
+  rw.readFields(dib);
+
+  if (codec == null || decompressor == null)
+  {
+    return RasterWritable.toMrGeoRaster(rw);
+  }
+  return RasterWritable.toMrGeoRaster(rw, codec, decompressor);
+}
+
+/**
+ * Prepare the scanners that end up being used for getting items out of Accumulo
+ */
+private void initializeScanners()
+{
+
+  if (AMTR_props != null)
+  {
+
+    String authsStr = AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS);
+    this.auths = AccumuloUtils.createAuthorizationsFromDelimitedString(authsStr);
+
+    if (AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_COMPRESS) != null)
+    {
+      //String tmp = AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_COMPRESS);
+      useCompression = Boolean.parseBoolean(AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_COMPRESS));
+    }
+
+  }
+
+  try
+  {
+
+    if (useCompression)
+    {
+      codec = HadoopUtils.getCodec(HadoopUtils.createConfiguration());
+      decompressor = CodecPool.getDecompressor(codec);
+    }
+    else
+    {
+      codec = null;
+      decompressor = null;
+    }
+
+    // see if we are in a test state
+    if (mock)
+    {
+
+      // in test mode - use a mock connector
+      final MockInstance mi = new MockInstance(this.instance);
+      connector = mi.getConnector(this.user, this.pass.getBytes());
+      connector.tableOperations().create(this.table);
+
+    }
+    else if (this.instance != null)
+    {
+
+      // get a real connector
+      connector = AccumuloConnector.getConnector(this.instance,
+          this.zooServers,
+          this.user,
+          this.pass);
+      if (useCompression)
+      {
+        codec = HadoopUtils.getCodec(HadoopUtils.createConfiguration());
+        decompressor = CodecPool.getDecompressor(codec);
+      }
+      else
+      {
+        codec = null;
+        decompressor = null;
+      }
+
+    }
+    else
+    {
+
+      // we did not get the information needed from the properties objects - so use the configs from the install
+
+      connector = AccumuloConnector.getConnector();
+
+      // TODO: compression items need to be worked out
+      codec = null;
+      decompressor = null;
+
+    }
+
+    // establish the scanners
+    scanner = connector.createScanner(this.table, this.auths);
+    batchScanner = connector.createBatchScanner(this.table, this.auths, numQueryThreads);
+
+  }
+  catch (final TableNotFoundException | TableExistsException | AccumuloException | AccumuloSecurityException | IOException e)
+  {
+    throw new MrsImageException(e);
+  }
+
+} // end initializeScanners
+
+/**
+ * Pull together all the needed items for connecting to Accumulo.
+ *
+ * @param props - the object that has the information for connecting out to Accumulo.
+ */
+private void initialize(Properties props)
+{
+  Properties tmpProps = null;
+  try
+  {
+    tmpProps = AccumuloConnector.getAccumuloProperties();
+  }
+  catch (Exception e)
+  {
+    log.error("Unable to get Accumulo connection properties", e);
+    return;
+  }
+  // initialize properties
+  if (AMTR_props == null)
+  {
+    AMTR_props = new Properties();
+  }
+  AMTR_props.putAll(tmpProps);
+
+  String authsString = AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS);
+
+  // pull in all properties for input
+  if (props != null)
+  {
+    if (props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS) != null)
+    {
+      authsString = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS);
+    }
+    AMTR_props.putAll(props);
+
+  } //else {
+  // read in properties from file?
+  //}
+
+  // get all needed properties for connecting to Accumulo
+
+  //table = props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_RESOURCE);
+  instance = AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_RESOURCE);
+  zooServers = AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_ZOOKEEPERS);
+  user = AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_USER);
+  pass = AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_PASSWORD);
+
+  //log.info("auth string = " + AMTR_props.getProperty(MrGeoAccumuloConstants.MRGEO_ACC_KEY_AUTHS));
+  //log.info("provider rolses = " + AMTR_props.getProperty(DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES));
+
+  // authorizations - this will need to be set on a per query basis
+  auths = AccumuloUtils.createAuthorizationsFromDelimitedString(authsString);
+} // end initialize
 
 
 } // end AccumuloMrsImageReader

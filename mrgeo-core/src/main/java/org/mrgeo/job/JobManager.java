@@ -26,36 +26,37 @@ import java.util.concurrent.Executors;
 
 public class JobManager
 {
-  private static final Logger _log = LoggerFactory.getLogger(JobManager.class);
-  static JobManager theInstance;
+private static final Logger _log = LoggerFactory.getLogger(JobManager.class);
+static JobManager theInstance;
+private ExecutorService threadPool = Executors.newCachedThreadPool();
 
-  protected JobManager() {
-  }
+protected JobManager()
+{
+}
 
-  synchronized public static JobManager getInstance()
+synchronized public static JobManager getInstance()
+{
+  if (theInstance == null)
   {
-    if (theInstance == null)
-    {
-      theInstance = new JobManager();
-    }
-    return theInstance;
+    theInstance = new JobManager();
   }
-
-  private ExecutorService threadPool = Executors.newCachedThreadPool();
+  return theInstance;
+}
 
 @SuppressFBWarnings(value = "RV_RETURN_VALUE_IGNORED_BAD_PRACTICE",
     justification = "For now, there is no monitoring.  Eventually there should be.")
-  public long submitJob(String name, RunnableJob job) {
-    // For now, we aren't going to worry about monitoring job status. We can add that
-    // later as needed. To do this, we would need the applicationId which can be gotten
-    // from SparkListener.onApplicationStart. We would actually need the applicationId
-    // for both the map algebra job and the build pyramid job that follows it. However,
-    // we can't configure a SparkListener directly from here because the SparkContext is
-    // created on the driver side (which runs on a worker node). Instead, we would have
-    // to define a REST endpoint like ".../job/register/<jobId>" and pass that URI to
-    // the remote side to call back from the MrGeoListener it sets up (or something
-    // similar to that).
-    threadPool.submit(job);
-    return -1L;
-  }
+public long submitJob(String name, RunnableJob job)
+{
+  // For now, we aren't going to worry about monitoring job status. We can add that
+  // later as needed. To do this, we would need the applicationId which can be gotten
+  // from SparkListener.onApplicationStart. We would actually need the applicationId
+  // for both the map algebra job and the build pyramid job that follows it. However,
+  // we can't configure a SparkListener directly from here because the SparkContext is
+  // created on the driver side (which runs on a worker node). Instead, we would have
+  // to define a REST endpoint like ".../job/register/<jobId>" and pass that URI to
+  // the remote side to call back from the MrGeoListener it sets up (or something
+  // similar to that).
+  threadPool.submit(job);
+  return -1L;
+}
 }

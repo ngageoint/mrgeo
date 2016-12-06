@@ -59,6 +59,7 @@ private static final int A = 3;
 private static final int B = 2;
 private static final int G = 1;
 private static final int R = 0;
+private static final Object lock = new Object();
 private static ColorScale _colorScale = null;
 private static ColorScale _grayScale = null;
 private int[][] cache = null;
@@ -72,8 +73,6 @@ private double transparent = Double.NaN;
 private String name = null;
 private String title = null;
 private String description = null;
-
-private static final Object lock = new Object();
 
 private ColorScale()
 {
@@ -295,7 +294,7 @@ public Object clone()
 @Override
 public boolean equals(Object obj)
 {
-  return obj instanceof ColorScale && equals((ColorScale)obj);
+  return obj instanceof ColorScale && equals((ColorScale) obj);
 }
 
 @Override
@@ -472,13 +471,13 @@ public void fromXML(final Document doc) throws ColorScaleException
 
     name = xpath.evaluate("/ColorMap/@name", doc);
 
-    final Node nodeTitle = (Node)xpath.evaluate("/ColorMap/Title", doc, XPathConstants.NODE);
+    final Node nodeTitle = (Node) xpath.evaluate("/ColorMap/Title", doc, XPathConstants.NODE);
     if (nodeTitle != null)
     {
       title = xpath.evaluate("text()", nodeTitle);
     }
 
-    final Node nodeDesc = (Node)xpath.evaluate("/ColorMap/Description", doc, XPathConstants.NODE);
+    final Node nodeDesc = (Node) xpath.evaluate("/ColorMap/Description", doc, XPathConstants.NODE);
     if (nodeDesc != null)
     {
       description = xpath.evaluate("text()", nodeDesc);
@@ -627,7 +626,7 @@ public void fromJSON(final String json) throws ColorScaleException
       }
     }
   }
-  catch (IOException| NullPointerException e)
+  catch (IOException | NullPointerException e)
   {
     throw new BadJSONException(e);
   }

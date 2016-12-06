@@ -49,6 +49,7 @@ private static Random random = new Random(System.currentTimeMillis());
 
 private static Constructor<?> taskAttempt = null;
 private static Constructor<?> jobContext = null;
+
 static
 {
   Configuration.addDefaultResource("mapred-default.xml");
@@ -103,7 +104,8 @@ public static void adjustLogging()
  * reducers (remote nodes) or any code that they call.
  */
 @SuppressWarnings("squid:S00112") // See note at RuntimeException
-public synchronized static Configuration createConfiguration() {
+public synchronized static Configuration createConfiguration()
+{
   //OpImageRegistrar.registerMrGeoOps();
 
   Configuration config = new Configuration();
@@ -115,11 +117,13 @@ public synchronized static Configuration createConfiguration() {
   {
     final String[] hadoopParamsAsArray = hadoopParams.split(" ");
     final GenericOptionsParser parser;
-    try {
+    try
+    {
       parser = new GenericOptionsParser(hadoopParamsAsArray);
       config = parser.getConfiguration();
     }
-    catch (IOException e) {
+    catch (IOException e)
+    {
       // If configuration cannot be parsed, then correct behavior is to treat it as a system fault, to be handled by
       // the application fault barrier
       throw new RuntimeException("Fatal error parsing configuration options from command line", e);
@@ -184,7 +188,7 @@ public static TaskAttemptContext createTaskAttemptContext(final Configuration co
 
   try
   {
-    return (TaskAttemptContext) taskAttempt.newInstance(new Object[] { conf, id });
+    return (TaskAttemptContext) taskAttempt.newInstance(new Object[]{conf, id});
   }
   catch (final IllegalArgumentException | InstantiationException | IllegalAccessException | InvocationTargetException ignored)
   {
@@ -351,7 +355,7 @@ public static String getJar(final Configuration conf, Class clazz) throws IOExce
     }
   }
 
-  return  DependencyLoader.getMasterJar(clazz);
+  return DependencyLoader.getMasterJar(clazz);
   //setJar(job.getConfiguration());
 }
 
@@ -413,13 +417,81 @@ public static void setupLocalRunner(final Configuration config) throws IOExcepti
 //    setVectorMetadata(job.getConfiguration(), metadata);
 //  }
 
+@SuppressWarnings("squid:S00112") // See note at RuntimeException
+public static String findContainingJar(Class clazz)
+{
+  ClassLoader loader = clazz.getClassLoader();
+  String classFile = clazz.getName().replaceAll("\\.", "/") + ".class";
+  try
+  {
+    for (Enumeration itr = loader.getResources(classFile);
+         itr.hasMoreElements(); )
+    {
+      URL url = (URL) itr.nextElement();
+      if ("jar".equals(url.getProtocol()))
+      {
+        String toReturn = url.getPath();
+        if (toReturn.startsWith("file:"))
+        {
+          toReturn = toReturn.substring("file:".length());
+        }
+        //toReturn = URLDecoder.decode(toReturn, "UTF-8");
+        return toReturn.replaceAll("!.*$", "");
+      }
+    }
+  }
+  catch (IOException e)
+  {
+    // If find containing jar exceptions, then correct behavior is to treat it as a system fault, to be handled by
+    // the application fault barrier
+    throw new RuntimeException(e);
+  }
+  return null;
+}
+
+/**
+ * Get the compression codec from the configuration.  The class org.apache.hadoop.io.compress.GzipCodec
+ * is used.
+ * <p>
+ * TODO: change this to use other codecs
+ *
+ * @param conf is the Configuration of the system.
+ * @return the compression codec
+ * @throws IOException
+ */
+public static CompressionCodec getCodec(Configuration conf) throws IOException
+{
+  return getCodec(conf, "org.apache.hadoop.io.compress.GzipCodec");
+} // end getCodec
+
+/**
+ * @param conf           is the configuration of the system
+ * @param codecClassName is the class to instantiate
+ * @return an instantiated CompressionCodec
+ * @throws IOException
+ */
+public static CompressionCodec getCodec(Configuration conf, String codecClassName) throws IOException
+{
+  Class<?> codecClass;
+  try
+  {
+    codecClass = Class.forName(codecClassName);
+  }
+  catch (ClassNotFoundException e)
+  {
+    // TODO Auto-generated catch block
+    throw new IOException(e);
+  }
+  return ((CompressionCodec) ReflectionUtils.newInstance(codecClass, conf));
+} // end getCodec
+
 @SuppressWarnings("squid:S1166") // Exception caught and handled
 private static void loadJobContextClass()
 {
   try
   {
     final Class<?> jc = Class.forName("org.apache.hadoop.mapreduce.JobContext");
-    final Class<?>[] argTypes = { Configuration.class, JobID.class };
+    final Class<?>[] argTypes = {Configuration.class, JobID.class};
 
     jobContext = jc.getDeclaredConstructor(argTypes);
 
@@ -432,7 +504,7 @@ private static void loadJobContextClass()
   try
   {
     final Class<?> jci = Class.forName("org.apache.hadoop.mapreduce.task.JobContextImpl");
-    final Class<?>[] argTypes = { Configuration.class, JobID.class };
+    final Class<?>[] argTypes = {Configuration.class, JobID.class};
 
     jobContext = jci.getDeclaredConstructor(argTypes);
 
@@ -452,7 +524,7 @@ private static void loadTaskAttemptClass()
   try
   {
     final Class<?> tac = Class.forName("org.apache.hadoop.mapreduce.TaskAttemptContext");
-    final Class<?>[] argTypes = { Configuration.class, TaskAttemptID.class };
+    final Class<?>[] argTypes = {Configuration.class, TaskAttemptID.class};
 
     taskAttempt = tac.getDeclaredConstructor(argTypes);
 
@@ -467,7 +539,7 @@ private static void loadTaskAttemptClass()
     // Class<?> taci = Class.forName("org.apache.hadoop.mapreduce.TaskAttemptContextImpl");
     final Class<?> taci = Class
         .forName("org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl");
-    final Class<?>[] argTypes = { Configuration.class, TaskAttemptID.class };
+    final Class<?>[] argTypes = {Configuration.class, TaskAttemptID.class};
 
     taskAttempt = taci.getDeclaredConstructor(argTypes);
 
@@ -480,64 +552,5 @@ private static void loadTaskAttemptClass()
   log.error("ERROR!  Can not find a TaskAttempt implementation class!");
   taskAttempt = null;
 }
-
-@SuppressWarnings("squid:S00112") // See note at RuntimeException
-public static String findContainingJar(Class clazz) {
-  ClassLoader loader = clazz.getClassLoader();
-  String classFile = clazz.getName().replaceAll("\\.", "/") + ".class";
-  try {
-    for (Enumeration itr = loader.getResources(classFile);
-         itr.hasMoreElements();) {
-      URL url = (URL) itr.nextElement();
-      if ("jar".equals(url.getProtocol())) {
-        String toReturn = url.getPath();
-        if (toReturn.startsWith("file:")) {
-          toReturn = toReturn.substring("file:".length());
-        }
-        //toReturn = URLDecoder.decode(toReturn, "UTF-8");
-        return toReturn.replaceAll("!.*$", "");
-      }
-    }
-  } catch (IOException e) {
-    // If find containing jar exceptions, then correct behavior is to treat it as a system fault, to be handled by
-    // the application fault barrier
-    throw new RuntimeException(e);
-  }
-  return null;
-}
-
-/**
- * Get the compression codec from the configuration.  The class org.apache.hadoop.io.compress.GzipCodec
- * is used.
- *
- * TODO: change this to use other codecs
- *
- * @param conf is the Configuration of the system.
- * @return the compression codec
- * @throws IOException
- */
-public static CompressionCodec getCodec(Configuration conf) throws IOException {
-  return getCodec(conf,"org.apache.hadoop.io.compress.GzipCodec");
-} // end getCodec
-
-
-/**
- *
- *
- * @param conf is the configuration of the system
- * @param codecClassName is the class to instantiate
- * @return an instantiated CompressionCodec
- * @throws IOException
- */
-public static CompressionCodec getCodec(Configuration conf, String codecClassName) throws IOException {
-  Class<?> codecClass;
-  try {
-    codecClass = Class.forName(codecClassName);
-  } catch (ClassNotFoundException e) {
-    // TODO Auto-generated catch block
-    throw new IOException(e);
-  }
-  return ((CompressionCodec) ReflectionUtils.newInstance(codecClass, conf));
-} // end getCodec
 
 }

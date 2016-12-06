@@ -28,7 +28,6 @@ import java.util.Map;
 
 /**
  * @author jason.surratt
- *
  */
 public class PointImpl extends GeometryImpl implements WritablePoint
 {
@@ -126,35 +125,6 @@ public double getX()
 /*
  * (non-Javadoc)
  *
- * @see com.spadac.Geometry.Point#getY()
- */
-@Override
-public double getY()
-{
-  return y;
-}
-
-/*
- * (non-Javadoc)
- *
- * @see com.spadac.Geometry.Point#getZ()
- */
-@Override
-public double getZ()
-{
-  return z;
-}
-
-@Override
-public boolean isValid()
-{
-  return Double.isNaN(x) == false && Double.isNaN(y) == false && Double.isNaN(z) == false;
-}
-
-
-/*
- * (non-Javadoc)
- *
  * @see com.spadac.Geometry.WritablePoint#setX(double)
  */
 @Override
@@ -162,6 +132,17 @@ public void setX(double x)
 {
   this.x = x;
   hash = false;
+}
+
+/*
+ * (non-Javadoc)
+ *
+ * @see com.spadac.Geometry.Point#getY()
+ */
+@Override
+public double getY()
+{
+  return y;
 }
 
 /*
@@ -179,12 +160,29 @@ public void setY(double y)
 /*
  * (non-Javadoc)
  *
+ * @see com.spadac.Geometry.Point#getZ()
+ */
+@Override
+public double getZ()
+{
+  return z;
+}
+
+/*
+ * (non-Javadoc)
+ *
  * @see com.spadac.Geometry.WritablePoint#setZ(double)
  */
 @Override
 public void setZ(double z)
 {
   this.z = z;
+}
+
+@Override
+public boolean isValid()
+{
+  return Double.isNaN(x) == false && Double.isNaN(y) == false && Double.isNaN(z) == false;
 }
 
 @Override
@@ -202,21 +200,6 @@ public void read(DataInputStream stream) throws IOException
   y = stream.readDouble();
   z = stream.readDouble();
   hash = false;
-}
-
-
-private void writeObject(ObjectOutputStream stream) throws IOException
-{
-  DataOutputStream dos = new DataOutputStream(stream);
-  write(dos);
-  writeAttributes(dos);
-}
-
-private void readObject(ObjectInputStream stream) throws IOException
-{
-  DataInputStream dis = new DataInputStream(stream);
-  read(dis);
-  readAttributes(dis);
 }
 
 @Override
@@ -246,7 +229,7 @@ public long getGeohashBits()
 {
   if (!hash)
   {
-    geohash = GeoHash.encodeBits(y,  x);
+    geohash = GeoHash.encodeBits(y, x);
     hash = false;
   }
   return geohash;
@@ -263,7 +246,7 @@ public Bounds getBounds()
 {
   if (bounds == null)
   {
-    bounds = new Bounds(x,  y, x, y);
+    bounds = new Bounds(x, y, x, y);
   }
 
   return bounds;
@@ -283,6 +266,20 @@ public Geometry clip(Bounds bbox)
 public boolean isEmpty()
 {
   return Double.isNaN(x) && Double.isNaN(y);
+}
+
+private void writeObject(ObjectOutputStream stream) throws IOException
+{
+  DataOutputStream dos = new DataOutputStream(stream);
+  write(dos);
+  writeAttributes(dos);
+}
+
+private void readObject(ObjectInputStream stream) throws IOException
+{
+  DataInputStream dis = new DataInputStream(stream);
+  read(dis);
+  readAttributes(dis);
 }
 
 

@@ -38,16 +38,10 @@ import java.io.IOException;
 public class VectorPainter
 {
 private static final Logger log = LoggerFactory.getLogger(VectorPainter.class);
-
-public enum AggregationType {
-  SUM, MASK, MIN, MAX, AVERAGE, GAUSSIAN, MASK2
-}
-
 private AggregationType aggregationType;
 private String valueColumn;
 private int tileSize;
 private int zoom;
-
 private GeometryPainter rasterPainter;
 private Composite composite;
 private WritableRaster raster;
@@ -57,7 +51,6 @@ private WritableRaster totalRaster;
 /**
  * Use this constructor if you need to use this class outside of the context of
  * a map/reduce 1 job.
- *
  */
 public VectorPainter(int zoom, AggregationType aggregationType, String valueColumn,
     int tileSize)
@@ -66,6 +59,35 @@ public VectorPainter(int zoom, AggregationType aggregationType, String valueColu
   this.aggregationType = aggregationType;
   this.valueColumn = valueColumn;
   this.tileSize = tileSize;
+}
+
+private static void averageRaster(final WritableRaster raster, final Raster count)
+{
+  for (int y = 0; y < raster.getHeight(); y++)
+  {
+    for (int x = 0; x < raster.getWidth(); x++)
+    {
+      for (int b = 0; b < raster.getNumBands(); b++)
+      {
+        float v = raster.getSampleFloat(x, y, b);
+        final float c = count.getSampleFloat(x, y, b);
+
+        if (!Float.isNaN(v))
+        {
+          if (FloatUtils.isEqual(c, 0.0))
+          {
+            v = Float.NaN;
+          }
+          else
+          {
+            v /= c;
+          }
+
+          raster.setSample(x, y, b, v);
+        }
+      }
+    }
+  }
 }
 
 public void beforePaintingTile(final long tileId)
@@ -153,7 +175,7 @@ public void paintGeometry(Geometry g)
     if (sv != null)
     {
       final double v = Double.parseDouble(sv);
-      ((WeightedComposite)composite).setWeight(v);
+      ((WeightedComposite) composite).setWeight(v);
 
       rasterPainter.paint(g);
 
@@ -170,7 +192,8 @@ public void paintGeometry(Geometry g)
 }
 
 
-public void paintEllipse(Point center, double majorWidth, double minorWidth, double orientation, double weight) {
+public void paintEllipse(Point center, double majorWidth, double minorWidth, double orientation, double weight)
+{
 
   if (composite instanceof WeightedComposite)
   {
@@ -178,7 +201,8 @@ public void paintEllipse(Point center, double majorWidth, double minorWidth, dou
   }
   if (composite instanceof GaussianComposite)
   {
-    ((GaussianComposite) composite).setEllipse(center, majorWidth, minorWidth, orientation, rasterPainter.getTransform());
+    ((GaussianComposite) composite)
+        .setEllipse(center, majorWidth, minorWidth, orientation, rasterPainter.getTransform());
   }
 
 
@@ -222,7 +246,8 @@ public RasterWritable afterPaintingTile() throws IOException
           mrgeo.setPixel(x, y, 0, v);
         }
       }
-      else {
+      else
+      {
         mrgeo.setPixel(x, y, 0, raster.getSampleFloat(x, y, 0));
       }
     }
@@ -232,32 +257,8 @@ public RasterWritable afterPaintingTile() throws IOException
 }
 
 
-private static void averageRaster(final WritableRaster raster, final Raster count)
+public enum AggregationType
 {
-  for (int y = 0; y < raster.getHeight(); y++)
-  {
-    for (int x = 0; x < raster.getWidth(); x++)
-    {
-      for (int b = 0; b < raster.getNumBands(); b++)
-      {
-        float v = raster.getSampleFloat(x, y, b);
-        final float c = count.getSampleFloat(x, y, b);
-
-        if (!Float.isNaN(v))
-        {
-          if (FloatUtils.isEqual(c, 0.0))
-          {
-            v = Float.NaN;
-          }
-          else
-          {
-            v /= c;
-          }
-
-          raster.setSample(x, y, b, v);
-        }
-      }
-    }
-  }
+  SUM, MASK, MIN, MAX, AVERAGE, GAUSSIAN, MASK2
 }
 }

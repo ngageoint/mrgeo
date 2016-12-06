@@ -33,25 +33,26 @@ import java.util.List;
  * options are output directior and zoom level
  *
  * @author andrew
- *
  */
-public class FindHoles extends Command{
+public class FindHoles extends Command
+{
 
-private Options options;
 private static Logger log = LoggerFactory.getLogger(FindHoles.class);
-
+private Options options;
 private int zoomLevel = -1;
 private String out = null;
 private String inputImage = null;
 
-public FindHoles(){
+public FindHoles()
+{
 
   options = createOptions();
 
 } // end constructor
 
 
-public static Options createOptions(){
+public static Options createOptions()
+{
   Options retOpt = new Options();
 
   Option output = new Option("o", "output", true, "MrsPyramid image name");
@@ -78,7 +79,8 @@ public static Options createOptions(){
 
 @Override
 public int run(String[] args, Configuration conf,
-    ProviderProperties providerProperties) {
+    ProviderProperties providerProperties)
+{
 
   CommandLine line = null;
   try
@@ -113,9 +115,9 @@ public int run(String[] args, Configuration conf,
       {
         HadoopUtils.setupLocalRunner(conf);
       }
-      catch(IOException ioe)
+      catch (IOException ioe)
       {
-        log.error("Exception thrown {}", ioe);
+        log.error("Exception thrown", ioe);
         return -1;
       }
     }
@@ -127,7 +129,8 @@ public int run(String[] args, Configuration conf,
 
     // DataProviderFactory.PROVIDER_PROPERTY_USER_ROLES
     ProviderProperties props = null;
-    if(line.hasOption("r")){
+    if (line.hasOption("r"))
+    {
       props = new ProviderProperties("", line.getOptionValue("r"));
     }
     else
@@ -138,7 +141,8 @@ public int run(String[] args, Configuration conf,
 
     List<String> al = line.getArgList();
     System.out.print("Input:     ");
-    for(String a: al){
+    for (String a : al)
+    {
       System.out.print(a + " ");
     }
     System.out.println();
@@ -152,9 +156,9 @@ public int run(String[] args, Configuration conf,
     {
       fhd.runJob(al.get(0), out, zoomLevel, props, conf);
     }
-    catch(Exception e)
+    catch (Exception e)
     {
-      log.error("Exception thrown {}", e);
+      log.error("Exception thrown", e);
       return -1;
     }
 

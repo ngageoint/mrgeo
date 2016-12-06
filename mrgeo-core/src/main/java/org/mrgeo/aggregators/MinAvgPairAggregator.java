@@ -27,7 +27,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Uses the minimum average pixel value calculated for 
+ * Uses the minimum average pixel value calculated for
  * each row and column and diagonal pair.  Pairs with
  * a "no data" value will be excluded.
  */
@@ -44,17 +44,29 @@ public double aggregate(double[] values, double nodata)
 
   Collection<Double> averages = new ArrayList<Double>();
   if (data0 && data1)
+  {
     averages.add((values[0] + values[1]) / 2);
+  }
   if (data0 && data2)
+  {
     averages.add((values[0] + values[2]) / 2);
+  }
   if (data0 && data3)
+  {
     averages.add((values[0] + values[3]) / 2);
+  }
   if (data1 && data2)
+  {
     averages.add((values[1] + values[2]) / 2);
+  }
   if (data1 && data3)
+  {
     averages.add((values[1] + values[3]) / 2);
+  }
   if (data2 && data3)
+  {
     averages.add((values[2] + values[3]) / 2);
+  }
 
   return (averages.isEmpty()) ? nodata : Collections.min(averages);
 }
@@ -69,17 +81,29 @@ public float aggregate(float[] values, float nodata)
 
   Collection<Float> averages = new ArrayList<Float>();
   if (data0 && data1)
+  {
     averages.add((values[0] + values[1]) / 2);
+  }
   if (data0 && data2)
+  {
     averages.add((values[0] + values[2]) / 2);
+  }
   if (data0 && data3)
+  {
     averages.add((values[0] + values[3]) / 2);
+  }
   if (data1 && data2)
+  {
     averages.add((values[1] + values[2]) / 2);
+  }
   if (data1 && data3)
+  {
     averages.add((values[1] + values[3]) / 2);
+  }
   if (data2 && data3)
+  {
     averages.add((values[2] + values[3]) / 2);
+  }
 
   return (averages.isEmpty()) ? nodata : Collections.min(averages);
 }
@@ -94,17 +118,29 @@ public int aggregate(int[] values, int nodata)
 
   Collection<Integer> averages = new ArrayList<Integer>();
   if (data0 && data1)
+  {
     averages.add((values[0] + values[1]) / 2);
+  }
   if (data0 && data2)
+  {
     averages.add((values[0] + values[2]) / 2);
+  }
   if (data0 && data3)
+  {
     averages.add((values[0] + values[3]) / 2);
+  }
   if (data1 && data2)
+  {
     averages.add((values[1] + values[2]) / 2);
+  }
   if (data1 && data3)
+  {
     averages.add((values[1] + values[3]) / 2);
+  }
   if (data2 && data3)
+  {
     averages.add((values[2] + values[3]) / 2);
+  }
 
   return (averages.isEmpty()) ? nodata : Collections.min(averages);
 }
@@ -119,17 +155,29 @@ public short aggregate(short[] values, short nodata)
 
   Collection<Integer> averages = new ArrayList<Integer>();
   if (data0 && data1)
+  {
     averages.add((values[0] + values[1]) / 2);
+  }
   if (data0 && data2)
+  {
     averages.add((values[0] + values[2]) / 2);
+  }
   if (data0 && data3)
+  {
     averages.add((values[0] + values[3]) / 2);
+  }
   if (data1 && data2)
+  {
     averages.add((values[1] + values[2]) / 2);
+  }
   if (data1 && data3)
+  {
     averages.add((values[1] + values[3]) / 2);
+  }
   if (data2 && data3)
+  {
     averages.add((values[2] + values[3]) / 2);
+  }
 
   return (averages.isEmpty()) ? nodata : Collections.min(averages).shortValue();
 }
@@ -144,29 +192,41 @@ public byte aggregate(byte[] values, byte nodata)
 
   Collection<Integer> averages = new ArrayList<Integer>();
   if (data0 && data1)
+  {
     averages.add((values[0] + values[1]) / 2);
+  }
   if (data0 && data2)
+  {
     averages.add((values[0] + values[2]) / 2);
+  }
   if (data0 && data3)
+  {
     averages.add((values[0] + values[3]) / 2);
+  }
   if (data1 && data2)
+  {
     averages.add((values[1] + values[2]) / 2);
+  }
   if (data1 && data3)
+  {
     averages.add((values[1] + values[3]) / 2);
+  }
   if (data2 && data3)
+  {
     averages.add((values[2] + values[3]) / 2);
+  }
 
   return (averages.isEmpty()) ? nodata : Collections.min(averages).byteValue();
 }
 
 @Override
-public double aggregate(double[][]values, double weightx, double weighty, double nodata)
+public double aggregate(double[][] values, double weightx, double weighty, double nodata)
 {
   throw new NotImplementedException("Not yet implemented");
 }
 
 @Override
-public float aggregate(float[][]values, double weightx, double weighty, float nodata)
+public float aggregate(float[][] values, double weightx, double weighty, float nodata)
 {
   throw new NotImplementedException("Not yet implemented");
 }

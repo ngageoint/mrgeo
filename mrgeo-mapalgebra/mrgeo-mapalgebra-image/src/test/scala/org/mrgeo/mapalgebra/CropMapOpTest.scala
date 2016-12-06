@@ -8,10 +8,10 @@ import org.scalatest.{BeforeAndAfter, FlatSpec}
 @SuppressWarnings(Array("all")) // Test code, not included in production
 class CropMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTestVerifySupport {
 
-  private val tileIds: Array[Long] = Array(11, 12, 19, 20)
+  private val tileIds:Array[Long] = Array(11, 12, 19, 20)
 
-  private var inputRaster: RasterMapOp = _
-  private var subject: RasterMapOp = _
+  private var inputRaster:RasterMapOp = _
+  private var subject:RasterMapOp = _
 
   before {
     val zoomLevel = 3
@@ -113,7 +113,7 @@ class CropMapOpTest extends FlatSpec with BeforeAndAfter with RasterMapOpTestVer
     // Create a new raster map op.  Make sure to reuse the current context since you can only have one context active
     // in a JVM
     val rasterMapOpForBounds = createRasterMapOpWithBounds(tileIds = tileIds, zoomLevel = 3, tileSize = 512,
-                                                           bounds = new Bounds(10.0, 10.0, 35.0, 35.0))
+      bounds = new Bounds(10.0, 10.0, 35.0, 35.0))
     subject = CropMapOp.create(inputRaster, rasterMapOpForBounds).asInstanceOf[RasterMapOp]
     subject.execute(subject.context())
     val transformedRDD = subject.rdd().get

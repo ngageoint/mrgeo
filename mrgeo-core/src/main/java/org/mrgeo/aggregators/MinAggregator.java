@@ -76,7 +76,7 @@ public short aggregate(short[] values, short nodata)
   {
     if (value != nodata)
     {
-      min = (short)Math.min(min, value);
+      min = (short) Math.min(min, value);
     }
   }
   return (min == Short.MAX_VALUE) ? nodata : min;
@@ -90,7 +90,7 @@ public byte aggregate(byte[] values, byte nodata)
   {
     if (value != nodata)
     {
-      min = (byte)Math.min(min, value);
+      min = (byte) Math.min(min, value);
     }
   }
   return (min == Byte.MAX_VALUE) ? nodata : min;
@@ -98,13 +98,13 @@ public byte aggregate(byte[] values, byte nodata)
 
 
 @Override
-public double aggregate(double[][]values, double weightx, double weighty, double nodata)
+public double aggregate(double[][] values, double weightx, double weighty, double nodata)
 {
   throw new NotImplementedException("Not yet implemented");
 }
 
 @Override
-public float aggregate(float[][]values, double weightx, double weighty, float nodata)
+public float aggregate(float[][] values, double weightx, double weighty, float nodata)
 {
   throw new NotImplementedException("Not yet implemented");
 }

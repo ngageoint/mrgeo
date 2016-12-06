@@ -18,14 +18,14 @@ package org.mrgeo.job;
 
 public class JobNotFoundException extends Exception
 {
-  private static final long serialVersionUID = -31067678342230393L;
+private static final long serialVersionUID = -31067678342230393L;
 
-  /**
-   * @param string
-   */
-  public JobNotFoundException(String string)
-  {
-    super(string);
-  }
+/**
+ * @param string
+ */
+public JobNotFoundException(String string)
+{
+  super(string);
+}
 
 }

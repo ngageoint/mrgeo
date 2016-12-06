@@ -22,54 +22,60 @@ import java.util.Date;
 @XmlRootElement
 public class JobStateResponse
 {
-  private Date _startTime; //time when job was started
-  private long _duration; //duration of the jib in ms from start to completion
-  private String _message;
-  private String _state;
-  private boolean _isFinished;
-  public void setStartTime(Date startTime)
-  {
-    this._startTime = (Date) startTime.clone();
-  }
+private Date _startTime; //time when job was started
+private long _duration; //duration of the jib in ms from start to completion
+private String _message;
+private String _state;
+private boolean _isFinished;
 
-  public Date getStartTime()
-  {
-    return (Date) _startTime.clone();
-  }
-  
-  public void setState(String state)
-  {
-    this._state = state;
-  }
+public Date getStartTime()
+{
+  return (Date) _startTime.clone();
+}
 
-  public String getState()
-  {
-    return _state;
-  }
-  public void setDuration(long duration)
-  {
-    this._duration = duration;
-  }
+public void setStartTime(Date startTime)
+{
+  this._startTime = (Date) startTime.clone();
+}
 
-  public long getDuration()
-  {
-    return _duration;
-  }
-  
-  public String getMessage() {
-    return _message;
-  }
-  
-  public void setMessage(String msg) {
-    _message = msg;
-  }
-  
-  public boolean getJobFinished() {
-    return _isFinished;
-  }
-  
-  public void setJobFinished(boolean f) {
-    _isFinished = f;
-  }  
-  
+public String getState()
+{
+  return _state;
+}
+
+public void setState(String state)
+{
+  this._state = state;
+}
+
+public long getDuration()
+{
+  return _duration;
+}
+
+public void setDuration(long duration)
+{
+  this._duration = duration;
+}
+
+public String getMessage()
+{
+  return _message;
+}
+
+public void setMessage(String msg)
+{
+  _message = msg;
+}
+
+public boolean getJobFinished()
+{
+  return _isFinished;
+}
+
+public void setJobFinished(boolean f)
+{
+  _isFinished = f;
+}
+
 }

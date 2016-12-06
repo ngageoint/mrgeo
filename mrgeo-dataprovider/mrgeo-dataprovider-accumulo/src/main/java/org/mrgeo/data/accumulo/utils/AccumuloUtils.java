@@ -38,8 +38,8 @@ import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.raster.RasterWritable;
-import org.mrgeo.image.MrsPyramidMetadata.Classification;
 import org.mrgeo.image.MrsPyramidMetadata;
+import org.mrgeo.image.MrsPyramidMetadata.Classification;
 import org.mrgeo.utils.Base64Utils;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
@@ -171,7 +171,7 @@ public static Key toKeyFull(int z, long tileId)
 
 	
 	/*
-	 * Start Raster utilities
+   * Start Raster utilities
 	 */
 
 
@@ -199,7 +199,7 @@ public static Key toKeyFull(int z, long tileId)
 //	  // note the upcast from RasterWritable to Value
 //		return RasterWritable.toWritable(raster, codec, compressor);
 //	} // end toValue
-	
+
 
 
 	
@@ -253,7 +253,7 @@ public static void importDirectory(String workDir, String tableName, Configurati
     }
     catch (TableExistsException tee)
     {
-      log.error("Exception thrown {}", tee);
+      log.error("Exception thrown", tee);
     }
   }
   connector.tableOperations().importDirectory(tableName, workDir + "/files", workDir + "/failures", false);
@@ -639,7 +639,7 @@ public static RasterWritable getRaster(String table, long tid, int zl, Connector
   }
   catch (IOException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
   }
 
   return retRaster;
@@ -675,7 +675,7 @@ public static Set<String> getListOfTables(Properties properties) throws DataProv
   }
   catch (AccumuloSecurityException | AccumuloException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
     return null;
   }
   //catch (DataProviderException dpe) {
@@ -770,7 +770,7 @@ public static Hashtable<String, String> getGeoTables(Properties providerProperti
   }
   catch (AccumuloSecurityException | AccumuloException ase)
   {
-    log.error("Exception thrown {}", ase);
+    log.error("Exception thrown", ase);
     return null;
   }
   //catch (DataProviderException dpe) {
@@ -881,7 +881,7 @@ public static Hashtable<String, String> getGeoTables(String ignore, Authenticati
     }
     catch (Exception e)
     {
-      log.error("Exception thrown {}", e);
+      log.error("Exception thrown", e);
     }
 
   } // end for loop
@@ -896,7 +896,8 @@ public static Hashtable<String, String> getGeoTables(String ignore, Authenticati
  * @param protectionLevel
  * @return
  */
-@SuppressWarnings({"squid:S1166", "squid:S1848"}) // BadArgumentException exception is caught and returned as false, Using object creation for valid check
+@SuppressWarnings({"squid:S1166", "squid:S1848"})
+// BadArgumentException exception is caught and returned as false, Using object creation for valid check
 public static boolean validateProtectionLevel(final String protectionLevel)
 {
   try

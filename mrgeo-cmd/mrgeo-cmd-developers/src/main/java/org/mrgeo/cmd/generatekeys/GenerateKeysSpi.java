@@ -23,22 +23,22 @@ import org.mrgeo.cmd.CommandSpi;
 public class GenerateKeysSpi extends CommandSpi
 {
 
-  @Override
-  public Class<? extends Command> getCommandClass()
-  {
-    return GenerateKeys.class;
-  }
+@Override
+public Class<? extends Command> getCommandClass()
+{
+  return GenerateKeys.class;
+}
 
-  @Override
-  public String getCommandName()
-  {
-    return "generatekeys";
-  }
+@Override
+public String getCommandName()
+{
+  return "generatekeys";
+}
 
-  @Override
-  public String getDescription()
-  {
-    return "Generate keys (developer cmd)";
-  }
-  
+@Override
+public String getDescription()
+{
+  return "Generate keys (developer cmd)";
+}
+
 }

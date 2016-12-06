@@ -26,7 +26,7 @@ import org.mrgeo.mapalgebra.MapOp
 import org.mrgeo.utils.SparkVectorUtils
 
 object VectorDataMapOp {
-  def apply(dataprovider: VectorDataProvider) = {
+  def apply(dataprovider:VectorDataProvider) = {
     new VectorDataMapOp(dataprovider)
   }
 
@@ -38,10 +38,10 @@ object VectorDataMapOp {
   }
 }
 
-class VectorDataMapOp(dataprovider: VectorDataProvider) extends VectorMapOp {
-  private var vectorRDD: Option[VectorRDD] = None
+class VectorDataMapOp(dataprovider:VectorDataProvider) extends VectorMapOp {
+  private var vectorRDD:Option[VectorRDD] = None
 
-  def rdd(zoom:Int):Option[VectorRDD]  = {
+  def rdd(zoom:Int):Option[VectorRDD] = {
     load(zoom)
     vectorRDD
   }
@@ -51,27 +51,29 @@ class VectorDataMapOp(dataprovider: VectorDataProvider) extends VectorMapOp {
     vectorRDD
   }
 
-  private def load(zoom:Int = -1)  = {
+  // nothing to do here...
+  override def setup(job:JobArguments, conf:SparkConf):Boolean = true
+
+  //  override def metadata():Option[VectorMetadata] =  {
+  //    load()
+  //    super.metadata()
+  //  }
+
+  override def execute(context:SparkContext):Boolean = true
+
+  override def teardown(job:JobArguments, conf:SparkConf):Boolean = true
+
+  private def load(zoom:Int = -1) = {
 
     if (vectorRDD.isEmpty) {
       if (context == null) {
         throw new IOException("Error creating VectorRDD, can not create an RDD without a SparkContext")
       }
 
-//      metadata(dataprovider.getMetadataReader.read())
+      //      metadata(dataprovider.getMetadataReader.read())
       vectorRDD = Some(SparkVectorUtils.loadVectorRDD(dataprovider, context()))
     }
 
   }
-
-//  override def metadata():Option[VectorMetadata] =  {
-//    load()
-//    super.metadata()
-//  }
-
-  // nothing to do here...
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = true
-  override def execute(context: SparkContext): Boolean = true
-  override def teardown(job: JobArguments, conf: SparkConf): Boolean = true
 
 }

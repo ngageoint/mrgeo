@@ -25,343 +25,341 @@ import java.util.*;
 
 /**
  * @author jason.surratt
- * 
  */
 public class GeometryCollectionImpl extends GeometryImpl implements WritableGeometryCollection
 {
 private static final long serialVersionUID = 1L;
 
-  List<WritableGeometry> geometries = new ArrayList<WritableGeometry>();
+List<WritableGeometry> geometries = new ArrayList<WritableGeometry>();
 
-  List<String> roles = new ArrayList<String>();
+List<String> roles = new ArrayList<String>();
 
-  GeometryCollectionImpl()
+GeometryCollectionImpl()
+{
+
+}
+
+GeometryCollectionImpl(Map<String, String> attributes)
+{
+  this.attributes.putAll(attributes);
+}
+
+@Override
+public Collection<? extends Geometry> getGeometries()
+{
+  return geometries;
+}
+
+@Override
+public Iterator<? extends Geometry> iterator()
+{
+  return geometries.iterator();
+}
+
+/*
+ * (non-Javadoc)
+ *
+ * @see com.spadac.Geometry.Geometry#createWritableClone()
+ */
+@Override
+public WritableGeometry createWritableClone()
+{
+  GeometryCollectionImpl result = new GeometryCollectionImpl();
+  for (Geometry r : geometries)
   {
-
+    result.addGeometry(r.createWritableClone());
   }
-  
-  GeometryCollectionImpl(Map<String, String> attributes)
-  {
-    this.attributes.putAll(attributes);
-  }
+  result.attributes.putAll(attributes);
+  result.roles.addAll(roles);
+  return result;
+}
 
-  @Override
-  public Collection<? extends Geometry> getGeometries()
+@Override
+public void filter(PointFilter pf)
+{
+  for (WritableGeometry g : geometries)
   {
-    return geometries;
+    g.filter(pf);
   }
+}
 
-  @Override
-  public Iterator<? extends Geometry> iterator()
-  {
-    return geometries.iterator();
-  }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.spadac.Geometry.Geometry#createWritableClone()
-   */
-  @Override
-  public WritableGeometry createWritableClone()
+@Override
+public boolean isValid()
+{
+  boolean result = geometries.size() > 0;
+  for (WritableGeometry g : geometries)
   {
-    GeometryCollectionImpl result = new GeometryCollectionImpl();
-    for (Geometry r : geometries)
+    if (g.isValid() == false)
     {
-      result.addGeometry(r.createWritableClone());
-    }
-    result.attributes.putAll(attributes);
-    result.roles.addAll(roles);
-    return result;
-  }
-
-  @Override
-  public void filter(PointFilter pf)
-  {
-    for (WritableGeometry g : geometries)
-    {
-      g.filter(pf);
-    }
-  }
-
-
-  @Override
-  public boolean isValid()
-  {
-    boolean result = geometries.size() > 0;
-    for (WritableGeometry g : geometries)
-    {
-      if (g.isValid() == false)
-      {
-        result = false;
-      }
-    }
-
-    return result;
-  }
-
-  @Override
-  public void addGeometry(WritableGeometry g)
-  {
-    geometries.add(g);
-  }
-  
-  /**
-   * Do not call this method within the middle of iterating
-   * the collection returned from getGeometries(). It will
-   * throw a ConcurrentModificationException. Instead, use
-   * iterator() and call remove() on the returned Iterator
-   * after iterating to a geometry that needs to be removed.
-   */
-  @Override
-  public boolean removeGeometry(Geometry g)
-  {
-    return geometries.remove(g);
-  }
-
-  @Override
-  public void read(DataInputStream stream) throws IOException
-  {
-    int size = stream.readInt();
-    geometries = new ArrayList<>(size);
-
-    Geometry.Type[] types = Geometry.Type.values(); 
-    for (int i = 0; i < size; i++)
-    {
-      Geometry.Type type = types[stream.readInt()];
-
-      WritableGeometry geometry = null;
-      switch (type)
-      {
-      case COLLECTION:
-        geometry = new GeometryCollectionImpl();
-        break;
-      case LINEARRING:
-        geometry = new LinearRingImpl();
-        break;
-      case LINESTRING:
-        geometry = new LineStringImpl();
-        break;
-      case POINT:
-        geometry = new PointImpl();
-        break;
-      case POLYGON:
-        geometry = new PolygonImpl();
-        break;
-      default:
-        throw new IOException("Unsupported geometry type");
-      }
-
-      // TODO: exception
-      geometry.read(stream);
-      addGeometry(geometry);
+      result = false;
     }
   }
 
-  @Override
-  public void write(DataOutputStream stream) throws IOException
+  return result;
+}
+
+@Override
+public void addGeometry(WritableGeometry g)
+{
+  geometries.add(g);
+}
+
+/**
+ * Do not call this method within the middle of iterating
+ * the collection returned from getGeometries(). It will
+ * throw a ConcurrentModificationException. Instead, use
+ * iterator() and call remove() on the returned Iterator
+ * after iterating to a geometry that needs to be removed.
+ */
+@Override
+public boolean removeGeometry(Geometry g)
+{
+  return geometries.remove(g);
+}
+
+@Override
+public void read(DataInputStream stream) throws IOException
+{
+  int size = stream.readInt();
+  geometries = new ArrayList<>(size);
+
+  Geometry.Type[] types = Geometry.Type.values();
+  for (int i = 0; i < size; i++)
   {
-    stream.writeInt(geometries.size());
-    for (Geometry geometry: geometries)
+    Geometry.Type type = types[stream.readInt()];
+
+    WritableGeometry geometry = null;
+    switch (type)
     {
-      if (geometry instanceof Point)
-      {
-        stream.writeInt(Geometry.Type.POINT.ordinal());
-      }
-      else if (geometry instanceof LineString)
-      {
-        stream.writeInt(Geometry.Type.LINESTRING.ordinal());
-      }
-      else if (geometry instanceof LinearRing)
-      {
-        stream.writeInt(Geometry.Type.LINEARRING.ordinal());
-      }
-      else if (geometry instanceof Polygon)
-      {
-        stream.writeInt(Geometry.Type.POLYGON.ordinal());
-      }
-      else if (geometry instanceof GeometryCollection)
-      {
-        stream.writeInt(Geometry.Type.COLLECTION.ordinal());
-      }
-      else
-      {
-        throw new IOException("Unsupported geometry type");
-      }
-      geometry.write(stream);
+    case COLLECTION:
+      geometry = new GeometryCollectionImpl();
+      break;
+    case LINEARRING:
+      geometry = new LinearRingImpl();
+      break;
+    case LINESTRING:
+      geometry = new LineStringImpl();
+      break;
+    case POINT:
+      geometry = new PointImpl();
+      break;
+    case POLYGON:
+      geometry = new PolygonImpl();
+      break;
+    default:
+      throw new IOException("Unsupported geometry type");
     }
+
+    // TODO: exception
+    geometry.read(stream);
+    addGeometry(geometry);
   }
+}
 
-  private void writeObject(ObjectOutputStream stream) throws IOException
+@Override
+public void write(DataOutputStream stream) throws IOException
+{
+  stream.writeInt(geometries.size());
+  for (Geometry geometry : geometries)
   {
-    DataOutputStream dos = new DataOutputStream(stream);
-    write(dos);
-    writeAttributes(dos);
+    if (geometry instanceof Point)
+    {
+      stream.writeInt(Geometry.Type.POINT.ordinal());
+    }
+    else if (geometry instanceof LineString)
+    {
+      stream.writeInt(Geometry.Type.LINESTRING.ordinal());
+    }
+    else if (geometry instanceof LinearRing)
+    {
+      stream.writeInt(Geometry.Type.LINEARRING.ordinal());
+    }
+    else if (geometry instanceof Polygon)
+    {
+      stream.writeInt(Geometry.Type.POLYGON.ordinal());
+    }
+    else if (geometry instanceof GeometryCollection)
+    {
+      stream.writeInt(Geometry.Type.COLLECTION.ordinal());
+    }
+    else
+    {
+      throw new IOException("Unsupported geometry type");
+    }
+    geometry.write(stream);
   }
+}
 
-  private void readObject(ObjectInputStream stream) throws IOException
-  {
-    DataInputStream dis = new DataInputStream(stream);
-    read(dis);
-    readAttributes(dis);
-  }
+@Override
+public Type type()
+{
+  return Geometry.Type.COLLECTION;
+}
 
+@Override
+public com.vividsolutions.jts.geom.GeometryCollection toJTS()
+{
+  GeometryFactory factory = new GeometryFactory();
 
-  @Override
-  public Type type()
-  {
-    return Geometry.Type.COLLECTION;
-  }
-
-  @Override
-  public com.vividsolutions.jts.geom.GeometryCollection toJTS()
-  {
-    GeometryFactory factory = new GeometryFactory();
-
-    com.vividsolutions.jts.geom.Geometry[] jtsGeometries = new com.vividsolutions.jts.geom.Geometry[geometries.size()];
+  com.vividsolutions.jts.geom.Geometry[] jtsGeometries = new com.vividsolutions.jts.geom.Geometry[geometries.size()];
 //    LinkedList<com.vividsolutions.jts.geom.Geometry> jtsGeometries = new LinkedList<com.vividsolutions.jts.geom.Geometry>();
-    int i = 0;
-    for (Geometry geometry : geometries)
-    {
+  int i = 0;
+  for (Geometry geometry : geometries)
+  {
 //      jtsGeometries.add(geometry.toJTS());
-      jtsGeometries[i++] = geometry.toJTS();
-    }
+    jtsGeometries[i++] = geometry.toJTS();
+  }
 
 //    return factory.createGeometryCollection(
 //      (com.vividsolutions.jts.geom.Geometry[]) jtsGeometries.toArray());
-    return factory.createGeometryCollection(jtsGeometries);
-  }
+  return factory.createGeometryCollection(jtsGeometries);
+}
 
-  @Override
-  public void fromJTS(com.vividsolutions.jts.geom.GeometryCollection collection)
+@Override
+public void fromJTS(com.vividsolutions.jts.geom.GeometryCollection collection)
+{
+  for (int i = 0; i < collection.getNumGeometries(); i++)
   {
-    for (int i = 0; i < collection.getNumGeometries(); i++)
-    {
-      com.vividsolutions.jts.geom.Geometry jtsGeometry = collection.getGeometryN(i);
+    com.vividsolutions.jts.geom.Geometry jtsGeometry = collection.getGeometryN(i);
 
-      if (jtsGeometry instanceof com.vividsolutions.jts.geom.Point)
-      {
-        WritablePoint pt = new PointImpl();
-        pt.fromJTS((com.vividsolutions.jts.geom.Point) jtsGeometry);
-        addGeometry(pt);
-      }
-      // make sure LinearRing is before LineString!
-      else if (jtsGeometry instanceof com.vividsolutions.jts.geom.LinearRing)
-      {
-        WritableLinearRing ring = new LinearRingImpl();
-        ring.fromJTS((com.vividsolutions.jts.geom.LineString) jtsGeometry);
-        addGeometry(ring);
-      }
-      else if (jtsGeometry instanceof com.vividsolutions.jts.geom.LineString)
-      {
-        WritableLineString string = new LineStringImpl();
-        string.fromJTS((com.vividsolutions.jts.geom.LineString) jtsGeometry);
-        addGeometry(string);
-      }
-      else if (jtsGeometry instanceof com.vividsolutions.jts.geom.Polygon)
-      {
-        WritablePolygon polygon = new PolygonImpl();
-        polygon.fromJTS((com.vividsolutions.jts.geom.Polygon) jtsGeometry);
-        addGeometry(polygon);
-      }
+    if (jtsGeometry instanceof com.vividsolutions.jts.geom.Point)
+    {
+      WritablePoint pt = new PointImpl();
+      pt.fromJTS((com.vividsolutions.jts.geom.Point) jtsGeometry);
+      addGeometry(pt);
+    }
+    // make sure LinearRing is before LineString!
+    else if (jtsGeometry instanceof com.vividsolutions.jts.geom.LinearRing)
+    {
+      WritableLinearRing ring = new LinearRingImpl();
+      ring.fromJTS((com.vividsolutions.jts.geom.LineString) jtsGeometry);
+      addGeometry(ring);
+    }
+    else if (jtsGeometry instanceof com.vividsolutions.jts.geom.LineString)
+    {
+      WritableLineString string = new LineStringImpl();
+      string.fromJTS((com.vividsolutions.jts.geom.LineString) jtsGeometry);
+      addGeometry(string);
+    }
+    else if (jtsGeometry instanceof com.vividsolutions.jts.geom.Polygon)
+    {
+      WritablePolygon polygon = new PolygonImpl();
+      polygon.fromJTS((com.vividsolutions.jts.geom.Polygon) jtsGeometry);
+      addGeometry(polygon);
     }
   }
+}
 
-  @Override
-  public int getNumGeometries()
+@Override
+public int getNumGeometries()
+{
+  return geometries.size();
+}
+
+@Override
+public Geometry getGeometry(int index)
+{
+  if (index < geometries.size())
   {
-    return geometries.size();
+    return geometries.get(index);
   }
+  return null;
+}
 
-  @Override
-  public Geometry getGeometry(int index)
+@Override
+public String getRole(int index)
+{
+  if (index < roles.size())
   {
-    if (index < geometries.size())
+    return roles.get(index);
+  }
+  return null;
+}
+
+@Override
+public void setRole(int index, String role)
+{
+  roles.add(index, role);
+}
+
+@Override
+public Bounds getBounds()
+{
+  if (bounds == null)
+  {
+    for (Geometry geometry : geometries)
     {
-      return geometries.get(index);
-    }
-    return null;
-  }
-
-  @Override
-  public String getRole(int index)
-  {
-    if (index < roles.size())
-    {
-      return roles.get(index);
-    }
-    return null;
-  }
-
-  @Override
-  public void setRole(int index, String role)
-  {
-    roles.add(index, role);
-  }
-
-  @Override
-  public Bounds getBounds()
-  {
-    if (bounds == null)
-    {
-      for (Geometry geometry: geometries)
+      Bounds b = geometry.getBounds();
+      if (b != null)
       {
-        Bounds b = geometry.getBounds();
-        if (b != null)
+        if (bounds == null)
         {
-          if (bounds == null)
-          {
-            bounds = b;
-          }
-          else
-          {
-            bounds = bounds.expand(b);
-          }
+          bounds = b;
+        }
+        else
+        {
+          bounds = bounds.expand(b);
         }
       }
     }
-
-    return bounds;
   }
 
-  @Override
-  public boolean isEmpty()
-  {
-    return geometries.isEmpty();
-  }
+  return bounds;
+}
 
-  @Override
-  public Geometry clip(Polygon geom)
+@Override
+public boolean isEmpty()
+{
+  return geometries.isEmpty();
+}
+
+@Override
+public Geometry clip(Polygon geom)
+{
+  Geometry clipped = super.clip(geom);
+
+  if (clipped instanceof GeometryCollection)
   {
-    Geometry clipped = super.clip(geom);
-    
-    if (clipped instanceof GeometryCollection)
+    WritableGeometryCollection collection = (WritableGeometryCollection) clipped;
+    // got a collection.  Need to make sure they are all valid.
+    Iterator<? extends Geometry> iter = collection.iterator();
+    while (iter.hasNext())
     {
-      WritableGeometryCollection collection = (WritableGeometryCollection) clipped;
-      // got a collection.  Need to make sure they are all valid.
-      Iterator<? extends Geometry> iter = collection.iterator();
-      while (iter.hasNext())
+      Geometry g = iter.next();
+      if (g.isEmpty())
       {
-        Geometry g = iter.next();
-        if (g.isEmpty())
-        {
-          iter.remove();
-        }
+        iter.remove();
       }
-      
-      if (collection.getNumGeometries() == 0)
-      {
-        return null;
-      }
-      else if (collection.getNumGeometries() == 1)
-      {
-        WritableGeometry g = (WritableGeometry) collection.getGeometry(0);
-        g.setAttributes(collection.getAllAttributes());
-        return g;
-      }
-      return collection;
     }
-    return null;
+
+    if (collection.getNumGeometries() == 0)
+    {
+      return null;
+    }
+    else if (collection.getNumGeometries() == 1)
+    {
+      WritableGeometry g = (WritableGeometry) collection.getGeometry(0);
+      g.setAttributes(collection.getAllAttributes());
+      return g;
+    }
+    return collection;
   }
+  return null;
+}
+
+private void writeObject(ObjectOutputStream stream) throws IOException
+{
+  DataOutputStream dos = new DataOutputStream(stream);
+  write(dos);
+  writeAttributes(dos);
+}
+
+private void readObject(ObjectInputStream stream) throws IOException
+{
+  DataInputStream dis = new DataInputStream(stream);
+  read(dis);
+  readAttributes(dis);
+}
 
 }

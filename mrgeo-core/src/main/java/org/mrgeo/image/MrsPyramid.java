@@ -42,11 +42,10 @@ import java.util.concurrent.TimeUnit;
 
 public class MrsPyramid
 {
-static Logger log = LoggerFactory.getLogger(MrsPyramid.class);
-
 private final static int IMAGE_CACHE_SIZE = 3;
 private final static int IMAGE_CACHE_EXPIRE = 10; // minutes
-
+static Logger log = LoggerFactory.getLogger(MrsPyramid.class);
+final private MrsImageDataProvider provider;
 final LoadingCache<Integer, Optional<MrsImage>> imageCache = CacheBuilder.newBuilder()
     .maximumSize(IMAGE_CACHE_SIZE)
     .expireAfterAccess(IMAGE_CACHE_EXPIRE, TimeUnit.SECONDS)
@@ -62,7 +61,8 @@ final LoadingCache<Integer, Optional<MrsImage>> imageCache = CacheBuilder.newBui
 
               notification.getValue().get().close();
             }
-          }})
+          }
+        })
     .build(new CacheLoader<Integer, Optional<MrsImage>>()
     {
       @Override
@@ -74,51 +74,12 @@ final LoadingCache<Integer, Optional<MrsImage>> imageCache = CacheBuilder.newBui
       }
     });
 
-
-final private MrsImageDataProvider provider;
-
 private MrsPyramid(MrsImageDataProvider provider)
 {
   super();
 
   this.provider = provider;
 
-}
-
-public Bounds getBounds()
-{
-  return getMetadataInternal().getBounds();
-}
-
-public LongRectangle getTileBounds(int zoomLevel)
-{
-  return getMetadataInternal().getTileBounds(zoomLevel);
-}
-
-public int getTileSize()
-{
-  return getMetadataInternal().getTilesize();
-}
-
-public int getMaximumLevel()
-{
-  return getMetadataInternal().getMaxZoomLevel();
-}
-
-public int getNumLevels()
-{
-  return getMetadataInternal().getMaxZoomLevel();
-}
-
-/**
- * Return true if there is data at each of the pyramid levels.
- *
- * @return
- */
-public boolean hasPyramids()
-{
-  MrsPyramidMetadata metadata = getMetadataInternal();
-  return metadata.hasPyramids();
 }
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled
@@ -147,7 +108,7 @@ public static void calculateMetadata(final String pyramidname, final int zoom,
   metadata.setBounds(bounds);
   metadata.setName(zoom);
   metadata.setDefaultValues(defaultValues);
-  if(protectionLevel != null && !protectionLevel.equals("null"))
+  if (protectionLevel != null && !protectionLevel.equals("null"))
   {
     metadata.setProtectionLevel(protectionLevel);
   }
@@ -209,22 +170,6 @@ public static void calculateMetadata(final int zoom,
   provider.getMetadataWriter().write(metadata);
 }
 
-//  public static boolean delete(final String name)
-//  {
-//    try
-//    {
-//      pyramidCache.invalidate(name);
-//      HadoopFileUtils.delete(name);
-//
-//      return true;
-//    }
-//    catch (final IOException e)
-//    {
-//    }
-//
-//    return false;
-//  }
-
 @SuppressWarnings("squid:S1166") // Exception caught and handled
 public static boolean isValid(final String name, final ProviderProperties providerProperties)
 {
@@ -268,6 +213,58 @@ public static MrsPyramid open(final MrsImageDataProvider provider) throws IOExce
   return new MrsPyramid(provider);
 }
 
+public Bounds getBounds()
+{
+  return getMetadataInternal().getBounds();
+}
+
+//  public static boolean delete(final String name)
+//  {
+//    try
+//    {
+//      pyramidCache.invalidate(name);
+//      HadoopFileUtils.delete(name);
+//
+//      return true;
+//    }
+//    catch (final IOException e)
+//    {
+//    }
+//
+//    return false;
+//  }
+
+public LongRectangle getTileBounds(int zoomLevel)
+{
+  return getMetadataInternal().getTileBounds(zoomLevel);
+}
+
+public int getTileSize()
+{
+  return getMetadataInternal().getTilesize();
+}
+
+public int getMaximumLevel()
+{
+  return getMetadataInternal().getMaxZoomLevel();
+}
+
+public int getNumLevels()
+{
+  return getMetadataInternal().getMaxZoomLevel();
+}
+
+/**
+ * Return true if there is data at each of the pyramid levels.
+ *
+ * @return
+ */
+public boolean hasPyramids()
+{
+  MrsPyramidMetadata metadata = getMetadataInternal();
+  return metadata.hasPyramids();
+}
+
 public MrsPyramidMetadata.Classification getClassification() throws IOException
 {
   return provider.getMetadataReader().read().getClassification();
@@ -275,7 +272,6 @@ public MrsPyramidMetadata.Classification getClassification() throws IOException
 
 /**
  * Be sure to also call MrsImage.close() on the returned MrsImage, or else there'll be a leak
- *
  */
 public MrsImage getHighestResImage() throws IOException
 {
@@ -284,7 +280,6 @@ public MrsImage getHighestResImage() throws IOException
 
 /**
  * Be sure to also call MrsImage.close() on the returned MrsImage, or else there'll be a leak
- *
  */
 @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST_OF_RETURN_VALUE", justification = "We _are_ checking!")
 public MrsImage getImage(final int level) throws IOException
@@ -301,7 +296,7 @@ public MrsImage getImage(final int level) throws IOException
   {
     if (e.getCause() instanceof IOException)
     {
-      throw (IOException)e.getCause();
+      throw (IOException) e.getCause();
     }
     throw new IOException(e);
   }
@@ -338,7 +333,7 @@ private MrsPyramidMetadata getMetadataInternal()
   }
   catch (IOException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
   }
 
   return null;

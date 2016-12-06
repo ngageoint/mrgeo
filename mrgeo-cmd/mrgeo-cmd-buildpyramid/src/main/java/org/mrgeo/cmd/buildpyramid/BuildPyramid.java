@@ -66,13 +66,13 @@ public static Options createOptions()
   max.setRequired(false);
   result.addOption(max);
 
-  Option minavgpair = new Option("minavgpair", "miminumaveragepair", false, "Minimum Average Pair Pixel Resampling Method");
+  Option minavgpair =
+      new Option("minavgpair", "miminumaveragepair", false, "Minimum Average Pair Pixel Resampling Method");
   minavgpair.setRequired(false);
   result.addOption(minavgpair);
 
   return result;
 }
-
 
 
 @Override
@@ -90,7 +90,10 @@ public int run(String[] args, final Configuration conf,
   try
   {
     //if no arguments, print help
-    if (args.length == 0) throw new ParseException(null);
+    if (args.length == 0)
+    {
+      throw new ParseException(null);
+    }
     CommandLineParser parser = new PosixParser();
     line = parser.parse(options, args);
   }
@@ -133,7 +136,7 @@ public int run(String[] args, final Configuration conf,
   }
 
   String input = null;
-  for (String arg: line.getArgs())
+  for (String arg : line.getArgs())
   {
     input = arg;
   }
@@ -152,7 +155,8 @@ public int run(String[] args, final Configuration conf,
       {
         DataProviderFactory.getMrsImageDataProvider(input, DataProviderFactory.AccessMode.READ, providerProperties);
       }
-      catch (DataProviderNotFound e) {
+      catch (DataProviderNotFound e)
+      {
         log.error(input + " is not an image");
         return -1;
       }

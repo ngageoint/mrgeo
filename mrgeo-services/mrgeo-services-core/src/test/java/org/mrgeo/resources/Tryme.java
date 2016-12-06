@@ -29,6 +29,13 @@ import javax.ws.rs.core.Response;
 public class Tryme extends JerseyTest
 {
 
+@Test
+public void test1()
+{
+  String response = target("/fake/test1").request().get(String.class);
+  Assert.assertEquals("Bad message", "This is the message", response);
+}
+
 @Override
 protected Application configure()
 {
@@ -42,18 +49,12 @@ protected Application configure()
 public static class FakeResource
 {
   String message = "This is the message";
+
   @Path("/test1")
   @GET
   public Response fake()
   {
     return Response.status(Response.Status.OK).entity(message).build();
   }
-}
-
-@Test
-public void test1()
-{
-  String response = target("/fake/test1").request().get(String.class);
-  Assert.assertEquals("Bad message", "This is the message", response);
 }
 }

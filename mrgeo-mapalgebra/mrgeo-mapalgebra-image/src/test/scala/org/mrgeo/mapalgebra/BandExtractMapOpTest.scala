@@ -28,18 +28,17 @@ import org.mrgeo.mapalgebra.parser.ParserException
 import org.mrgeo.test.{LocalRunnerTest, MapOpTestUtils}
 import org.scalatest.junit.AssertionsForJUnit
 
-object BandExtractMapOpTest
-{
-  def all_ones = "all-ones"
-  def small_3band = "small-3band"
+object BandExtractMapOpTest {
   var all_ones_input = Defs.INPUT + all_ones
   var small_3band_input = Defs.INPUT + small_3band
+  var testUtils:MapOpTestUtils = null
 
-  var testUtils: MapOpTestUtils = null
+  def all_ones = "all-ones"
+
+  def small_3band = "small-3band"
 
   @BeforeClass
-  def init()
-  {
+  def init() {
     testUtils = new MapOpTestUtils(classOf[BandExtractMapOpTest])
 
     var file = new File(all_ones_input)
@@ -49,31 +48,29 @@ object BandExtractMapOpTest
   }
 }
 
-class BandExtractMapOpTest extends LocalRunnerTest with AssertionsForJUnit
-{
+class BandExtractMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
   // only set this to true to generate new baseline images after correcting tests; image comparison
-// tests won't be run when is set to true
+  // tests won't be run when is set to true
   def GEN_BASELINE_DATA_ONLY = false
 
-//  private static final Logger log = LoggerFactory.getLogger(BandExtractMapOpTest.class)
+  //  private static final Logger log = LoggerFactory.getLogger(BandExtractMapOpTest.class)
 
   @Before
-  def setup(): Unit =
-  {
+  def setup():Unit = {
   }
 
   @Test
-  @Category(Array[Class[_]] { classOf[UnitTest] })
-  def testMissingAllArgs() : Unit =
-  {
+  @Category(Array[Class[_]] {
+    classOf[UnitTest]
+  })
+  def testMissingAllArgs():Unit = {
     val exp = s"BandExtract()"
-    try
-    {
+    try {
       MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""))
       Assert.fail("Should have gotten a ParserException")
     }
     catch {
-      case e: ParserException => {
+      case e:ParserException => {
         // Verify the content of the error message
         Assert.assertTrue(e.getMessage.contains("requires two arguments"))
       }
@@ -81,17 +78,17 @@ class BandExtractMapOpTest extends LocalRunnerTest with AssertionsForJUnit
   }
 
   @Test
-  @Category(Array[Class[_]] { classOf[UnitTest] })
-  def testMissingBandArg() : Unit =
-  {
+  @Category(Array[Class[_]] {
+    classOf[UnitTest]
+  })
+  def testMissingBandArg():Unit = {
     val exp = s"BandExtract([$BandExtractMapOpTest.all_ones_input])"
-    try
-    {
+    try {
       MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""))
       Assert.fail("Should have gotten a ParserException")
     }
     catch {
-      case e: ParserException => {
+      case e:ParserException => {
         // Verify the content of the error message
         Assert.assertTrue(e.getMessage.contains("requires two arguments"))
       }
@@ -99,17 +96,17 @@ class BandExtractMapOpTest extends LocalRunnerTest with AssertionsForJUnit
   }
 
   @Test
-  @Category(Array[Class[_]] { classOf[UnitTest] })
-  def testMissingImageArg() : Unit =
-  {
+  @Category(Array[Class[_]] {
+    classOf[UnitTest]
+  })
+  def testMissingImageArg():Unit = {
     val exp = s"BandExtract(0)"
-    try
-    {
+    try {
       MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""))
       Assert.fail("Should have gotten a ParserException")
     }
     catch {
-      case e: ParserException => {
+      case e:ParserException => {
         // Verify the content of the error message
         Assert.assertTrue(e.getMessage.contains("requires two arguments"))
       }
@@ -117,17 +114,17 @@ class BandExtractMapOpTest extends LocalRunnerTest with AssertionsForJUnit
   }
 
   @Test
-  @Category(Array[Class[_]] { classOf[UnitTest] })
-  def testBadImageArg() : Unit =
-  {
+  @Category(Array[Class[_]] {
+    classOf[UnitTest]
+  })
+  def testBadImageArg():Unit = {
     val exp = "BandExtract(\"abc\", 0)"
-    try
-    {
+    try {
       MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""))
       Assert.fail("Should have gotten a ParserException")
     }
     catch {
-      case e: ParserException => {
+      case e:ParserException => {
         // Verify the content of the error message
         Assert.assertTrue("Unexpected message: " + e.getMessage,
           e.getMessage.contains("is not a raster input"))
@@ -136,17 +133,17 @@ class BandExtractMapOpTest extends LocalRunnerTest with AssertionsForJUnit
   }
 
   @Test
-  @Category(Array[Class[_]] { classOf[UnitTest] })
-  def testBadImageArg2() : Unit =
-  {
+  @Category(Array[Class[_]] {
+    classOf[UnitTest]
+  })
+  def testBadImageArg2():Unit = {
     val exp = "BandExtract([abc], 0)"
-    try
-    {
+    try {
       MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""))
       Assert.fail("Should have gotten a ParserException")
     }
     catch {
-      case e: ParserException => {
+      case e:ParserException => {
         // Verify the content of the error message
         Assert.assertTrue("Unexpected message: " + e.getMessage,
           e.getMessage.contains("is not a raster input"))
@@ -155,9 +152,10 @@ class BandExtractMapOpTest extends LocalRunnerTest with AssertionsForJUnit
   }
 
   @Test
-  @Category(Array[Class[_]] { classOf[IntegrationTest] })
-  def testBandTooLarge() : Unit =
-  {
+  @Category(Array[Class[_]] {
+    classOf[IntegrationTest]
+  })
+  def testBandTooLarge():Unit = {
     try {
       val exp = s"BandExtract([${BandExtractMapOpTest.all_ones_input}], 10)"
       if (GEN_BASELINE_DATA_ONLY) {
@@ -168,8 +166,9 @@ class BandExtractMapOpTest extends LocalRunnerTest with AssertionsForJUnit
         BandExtractMapOpTest.testUtils.runRasterExpression(conf,
           testname.getMethodName, exp)
       }
-    } catch {
-      case e: ParserException => {
+    }
+    catch {
+      case e:ParserException => {
         // Verify the content of the error message
         Assert.assertTrue("Unexpected message: " + e.getMessage,
           e.getMessage.contains("Cannot extract band"))
@@ -178,9 +177,10 @@ class BandExtractMapOpTest extends LocalRunnerTest with AssertionsForJUnit
   }
 
   @Test
-  @Category(Array[Class[_]] { classOf[IntegrationTest] })
-  def testFromSingleBandImage() : Unit =
-  {
+  @Category(Array[Class[_]] {
+    classOf[IntegrationTest]
+  })
+  def testFromSingleBandImage():Unit = {
     try {
       val exp = s"BandExtract([${BandExtractMapOpTest.all_ones_input}], 1)"
       if (GEN_BASELINE_DATA_ONLY) {
@@ -191,8 +191,9 @@ class BandExtractMapOpTest extends LocalRunnerTest with AssertionsForJUnit
         BandExtractMapOpTest.testUtils.runRasterExpression(conf,
           testname.getMethodName, exp)
       }
-    } catch {
-      case e: ParserException => {
+    }
+    catch {
+      case e:ParserException => {
         // Verify the content of the error message
         Assert.assertTrue("Unexpected message: " + e.getMessage,
           e.getMessage.contains("Cannot extract band"))
@@ -201,9 +202,10 @@ class BandExtractMapOpTest extends LocalRunnerTest with AssertionsForJUnit
   }
 
   @Test
-  @Category(Array[Class[_]] { classOf[IntegrationTest] })
-  def testFromMultiBandImage() : Unit =
-  {
+  @Category(Array[Class[_]] {
+    classOf[IntegrationTest]
+  })
+  def testFromMultiBandImage():Unit = {
     try {
       val exp = s"BandExtract([${BandExtractMapOpTest.small_3band_input}], 3 )"
       if (GEN_BASELINE_DATA_ONLY) {
@@ -214,8 +216,9 @@ class BandExtractMapOpTest extends LocalRunnerTest with AssertionsForJUnit
         BandExtractMapOpTest.testUtils.runRasterExpression(conf,
           testname.getMethodName, exp)
       }
-    } catch {
-      case e: ParserException => {
+    }
+    catch {
+      case e:ParserException => {
         // Verify the content of the error message
         Assert.assertTrue("Unexpected message: " + e.getMessage,
           e.getMessage.contains("Cannot extract band"))

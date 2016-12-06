@@ -69,41 +69,6 @@ public static List<Long> getRandom(String randomKeyFileDir, String allKeyFile, i
   return randomKeys;
 }
 
-private static List<Long> getRandom(String file, int num, long min, long max, Random r) throws IOException
-{
-  log.info("getRandom: Start generating keys");
-
-  List<Long> allKeysList;
-  allKeysList = getAllKeys(file, num * 1000);
-  int indexMin = -1, indexMax = -1;
-  for (int i = 0; i < allKeysList.size(); i++)
-  {
-
-    // initialize indexMin to first entry >= min
-    if (allKeysList.get(i) >= min && indexMin == -1)
-    {
-      indexMin = i;
-    }
-    // initialize indexMax to last entry <= max
-    if (allKeysList.get(i) <= max)
-    {
-      indexMax = i;
-    }
-
-  }
-
-  List<Integer> indices = findRandomIndices(num, indexMin, indexMax, r);
-
-  List<Long> keysList = new ArrayList<Long>();
-  for (Integer index : indices)
-  {
-    keysList.add(allKeysList.get(index));
-  }
-
-  log.info("getRandom: Finished generating keys");
-  return keysList;
-}
-
 public static List<Long> getSequential(String keyFile, String[] splits, int num) throws IOException
 {
   log.info("getSequential: Start generating keys");
@@ -142,6 +107,60 @@ public static List<Long> getSequential(String keyFile, int num, long start, long
 
   log.info("getSequential: Finished generating keys");
   return keys;
+}
+
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File() - name is generated in code")
+public static List<Long> getAllKeys(String file, int limit) throws NumberFormatException, IOException
+{
+  log.info("Start getting all keys");
+  ArrayList<Long> keys = new ArrayList<Long>();
+  try (BufferedReader br = new BufferedReader(new FileReader(new File(file))))
+  {
+    String line;
+
+    int num = 0;
+    while ((line = br.readLine()) != null && num++ < limit)
+    {
+      keys.add(Long.valueOf(line));
+    }
+  }
+  log.info("End getting all keys");
+  return keys;
+}
+
+private static List<Long> getRandom(String file, int num, long min, long max, Random r) throws IOException
+{
+  log.info("getRandom: Start generating keys");
+
+  List<Long> allKeysList;
+  allKeysList = getAllKeys(file, num * 1000);
+  int indexMin = -1, indexMax = -1;
+  for (int i = 0; i < allKeysList.size(); i++)
+  {
+
+    // initialize indexMin to first entry >= min
+    if (allKeysList.get(i) >= min && indexMin == -1)
+    {
+      indexMin = i;
+    }
+    // initialize indexMax to last entry <= max
+    if (allKeysList.get(i) <= max)
+    {
+      indexMax = i;
+    }
+
+  }
+
+  List<Integer> indices = findRandomIndices(num, indexMin, indexMax, r);
+
+  List<Long> keysList = new ArrayList<Long>();
+  for (Integer index : indices)
+  {
+    keysList.add(allKeysList.get(index));
+  }
+
+  log.info("getRandom: Finished generating keys");
+  return keysList;
 }
 
 private static List<Integer> findRandomIndices(int num, int indexMin, int indexMax, Random r)
@@ -194,26 +213,6 @@ private static List<Long> findSequentialRange(List<Long> allKeys, int num, long 
   }
   return null;
 }
-
-@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File() - name is generated in code")
-public static List<Long> getAllKeys(String file, int limit) throws NumberFormatException, IOException
-{
-  log.info("Start getting all keys");
-  ArrayList<Long> keys = new ArrayList<Long>();
-  try (BufferedReader br = new BufferedReader(new FileReader(new File(file))))
-  {
-    String line;
-
-    int num = 0;
-    while ((line = br.readLine()) != null && num++ < limit)
-    {
-      keys.add(Long.valueOf(line));
-    }
-  }
-  log.info("End getting all keys");
-  return keys;
-}
-
 
 private static List<Long> readRandomKeys(File file) throws FileNotFoundException
 {
@@ -268,7 +267,7 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
   }
   catch (ParseException | IOException e)
   {
-    log.error("Exception Thrown {}", e);
+    log.error("Exception thrown", e);
   }
 
   return -1;

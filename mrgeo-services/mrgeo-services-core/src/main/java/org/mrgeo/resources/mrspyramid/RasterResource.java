@@ -48,23 +48,17 @@ import java.io.IOException;
 @Path("/raster")
 public class RasterResource
 {
-@Context
-UriInfo uriInfo;
-
-@Context
-Providers providers;
-
-@Context
-MrsPyramidService service;
-
-@Context
-HttpServletRequest request;
-
-
 private static final String TIFF_MIME_TYPE = "image/tiff";
 private static final String KML_INPUT_FORMAT = "kml";
-
 private static final Logger log = LoggerFactory.getLogger(RasterResource.class);
+@Context
+UriInfo uriInfo;
+@Context
+Providers providers;
+@Context
+MrsPyramidService service;
+@Context
+HttpServletRequest request;
 
 /*
  * Accepts a MapAlgebra expression and runs a job that will create a raster as
@@ -207,7 +201,7 @@ public Response getImage(@PathParam("output") String imgName,
 //          cs = service.getColorScaleFromPyramid(imgName);
 //        }
 
-    if ( zoomLevel != -1 )
+    if (zoomLevel != -1)
     {
       MrsPyramid pyramid = service.getPyramid(imgName, SecurityUtils.getProviderProperties());
       if (pyramid == null)
@@ -264,8 +258,14 @@ public Response getImage(@PathParam("output") String imgName,
         log.debug("Applying color scale to image " + imgName + " ...");
         //Add min/max colorscale override
         double[] overrideExtrema = renderer.getExtrema();
-        if (min != null) overrideExtrema[0] = min;
-        if (max != null) overrideExtrema[1] = max;
+        if (min != null)
+        {
+          overrideExtrema[0] = min;
+        }
+        if (max != null)
+        {
+          overrideExtrema[1] = max;
+        }
         result = service.applyColorScaleToImage(format, result, cs, renderer, overrideExtrema);
         log.debug("Color scale applied to image " + imgName);
       }
@@ -278,13 +278,14 @@ public Response getImage(@PathParam("output") String imgName,
           SecurityUtils.getProviderProperties());
     }
   }
-  catch (FileNotFoundException fnfe) {
-    log.error("Exception thrown {}", fnfe);
-    return Response.status(Status.NOT_FOUND).entity(fnfe.getMessage()).build();
-  }
-  catch (ImageRendererException | MrsPyramidServiceException | IOException e)
+  catch (FileNotFoundException | MrsPyramidServiceException fnfe)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", fnfe);
+    return Response.status(Status.BAD_REQUEST).entity(fnfe.getMessage()).build();
+  }
+  catch (ImageRendererException | IOException e)
+  {
+    log.error("Exception thrown", e);
     return Response.serverError().entity(e.getMessage()).build();
   }
 }
@@ -296,7 +297,9 @@ private void getService()
     ContextResolver<MrsPyramidService> resolver =
         providers.getContextResolver(MrsPyramidService.class, MediaType.WILDCARD_TYPE);
     if (resolver != null)
+    {
       service = resolver.getContext(MrsPyramidService.class);
+    }
   }
 }
 

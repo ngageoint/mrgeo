@@ -16,11 +16,9 @@
 
 package org.mrgeo.colorscale.applier;
 
-import org.gdal.gdal.Dataset;
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.raster.RasterUtils;
-import org.mrgeo.utils.GDALUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,13 +61,13 @@ public MrGeoRaster applyColorScale(final MrGeoRaster raster, ColorScale colorSca
 @Override
 public String[] getMimeTypes()
 {
-  return new String[] { "image/png" };
+  return new String[]{"image/png"};
 }
 
 @Override
 public String[] getWmsFormats()
 {
-  return new String[] { "png" };
+  return new String[]{"png"};
 }
 
 }

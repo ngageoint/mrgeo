@@ -16,7 +16,6 @@
 
 package org.mrgeo.services.mrspyramid.rendering;
 
-import ar.com.hjg.pngj.*;
 import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.utils.GDALJavaUtils;
 import org.slf4j.Logger;
@@ -30,37 +29,37 @@ import java.io.IOException;
  */
 public class PngImageResponseWriter extends ImageResponseWriterAbstract
 {
-  private static final Logger log = LoggerFactory.getLogger(PngImageResponseWriter.class);
+private static final Logger log = LoggerFactory.getLogger(PngImageResponseWriter.class);
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.mrgeo.services.wms.ImageResponseWriter#getMimeType()
-   */
-  @Override
-  public String[] getMimeTypes()
-  {
-    return new String[] { "image/png" };
-  }
+/*
+ * (non-Javadoc)
+ *
+ * @see org.mrgeo.services.wms.ImageResponseWriter#getMimeType()
+ */
+@Override
+public String[] getMimeTypes()
+{
+  return new String[]{"image/png"};
+}
 
-  @Override
-  public String getResponseMimeType()
-  {
-    return "image/png";
-  }
+@Override
+public String getResponseMimeType()
+{
+  return "image/png";
+}
 
-  @Override
-  public String[] getWmsFormats()
-  {
-    return new String[] { "png" };
-  }
+@Override
+public String[] getWmsFormats()
+{
+  return new String[]{"png"};
+}
 
-  @Override
-  public void writeToStream(final MrGeoRaster raster, final double[] defaults,
+@Override
+public void writeToStream(final MrGeoRaster raster, final double[] defaults,
     final ByteArrayOutputStream byteStream) throws IOException
-  {
-    GDALJavaUtils.saveRaster(raster.toDataset(null, defaults), byteStream, "png");
-    byteStream.close();
+{
+  GDALJavaUtils.saveRaster(raster.toDataset(null, defaults), byteStream, "png");
+  byteStream.close();
 
 //    // final long start = System.currentTimeMillis();
 //
@@ -131,5 +130,5 @@ public class PngImageResponseWriter extends ImageResponseWriterAbstract
 //    writer.end();
 //
 //    byteStream.close();
-  }
+}
 }

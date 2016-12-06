@@ -25,15 +25,14 @@ import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.colorscale.ColorScale.ColorScaleException;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
-import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
+import org.mrgeo.services.mrspyramid.rendering.ImageRendererException;
 import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.tms.Bounds;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,21 +42,11 @@ import java.util.Properties;
 import static org.junit.Assert.assertEquals;
 
 @SuppressWarnings("all") // Test code, not included in production
-public class MrsPyramidServiceTest {
-@Rule
-public TestName testname = new TestName();
-
+public class MrsPyramidServiceTest
+{
 // only set this to true to generate new baseline images after correcting tests; image comparison
 // tests won't be run when is set to true
 private final static boolean GEN_BASELINE_DATA_ONLY = false;
-
-private static String islandsElevation = "IslandsElevation-v2-2";
-private static String islandsElevationColorScale = "IslandsElevation-v2-2-color-scale";
-private static String islandsElevationNoPyramid = "IslandsElevation-v2-no-pyramid";
-private static String islandsElevation_unqualified = islandsElevation;
-private static String islandsElevationColorScale_unqualified = islandsElevationColorScale;
-private static String islandsElevationNoPyramid_unqualified = islandsElevationNoPyramid;
-private static String islandsElevationNonExistant = "IslandsElevation-Non-Existent";
 // bounds is completely outside of the image bounds
 private final static String ISLANDS_ELEVATION_V2_OUT_OF_BOUNDS = "160.312500,-12.656250,161.718750,-11.250000";
 // bounds is within the image bounds and results in a single source tile being
@@ -67,10 +56,21 @@ private final static String ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE = "160.31
 // bounds is within the image bounds and results in multiple source tiles
 // being accessed;
 // zoom level = 9
-private final static String ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES = "160.312500,-11.250000,161.718750,-9.843750";
-
+private final static String ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES =
+    "160.312500,-11.250000,161.718750,-9.843750";
+private static String islandsElevation = "IslandsElevation-v2-2";
+private static String islandsElevationColorScale = "IslandsElevation-v2-2-color-scale";
+private static String islandsElevationNoPyramid = "IslandsElevation-v2-no-pyramid";
+private static String islandsElevation_unqualified = islandsElevation;
+private static String islandsElevationColorScale_unqualified = islandsElevationColorScale;
+private static String islandsElevationNoPyramid_unqualified = islandsElevationNoPyramid;
+private static String islandsElevationNonExistant = "IslandsElevation-Non-Existent";
+@Rule
+public TestName testname = new TestName();
 private TestUtils testutils;
-public MrsPyramidServiceTest() {
+
+public MrsPyramidServiceTest()
+{
 }
 
 @Before
@@ -154,23 +154,7 @@ public void testCreateColorSwatchVertical() throws Exception
 
 }
 
-private ColorScale createRainbowColorScale() throws ColorScaleException {
-  String colorScaleXml = "<ColorMap name=\"Rainbow\">\n" +
-      "  <Scaling>MinMax</Scaling> <!-- Could also be Absolute -->\n" +
-      "  <ReliefShading>0</ReliefShading>\n" +
-      "  <Interpolate>1</Interpolate>\n" +
-      "  <NullColor color=\"0,0,0\" opacity=\"0\"/>\n" +
-      "  <Color value=\"0.0\" color=\"0,0,127\" opacity=\"255\"/>\n" +
-      "  <Color value=\"0.2\" color=\"0,0,255\"/> <!-- if not specified an opacity defaults to 255 -->\n" +
-      "  <Color value=\"0.4\" color=\"0,255,255\"/>\n" +
-      "  <Color value=\"0.6\" color=\"0,255,0\"/>\n" +
-      "  <Color value=\"0.8\" color=\"255,255,0\"/>\n" +
-      "  <Color value=\"1.0\" color=\"255,0,0\"/>\n" +
-      "</ColorMap>";
-  return ColorScale.loadFromXML(new ByteArrayInputStream(colorScaleXml.getBytes()));
-}
-
-@Test(expected = DataProviderNotFound.class)
+@Test(expected = ImageRendererException.class)
 @Category(UnitTest.class)
 public void testGetRasterNonExistent() throws Exception
 {
@@ -197,11 +181,10 @@ public void testGetRasterJpgMultipleSourceTilesAspectColorScaleWithZoom() throws
 {
   // test jpg, multiple source tile with color scale passed in
   testIslandsElevationFor("jpeg",
-      MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+      MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
       islandsElevation_unqualified, getAspectColorScale(), 8);
 }
-
 
 @Test
 @Category(UnitTest.class)
@@ -209,7 +192,7 @@ public void testGetRasterJpgSingleSourceTileAspectColorScale() throws Exception
 {
   // test jpg, single source tile with color scale passed in
   testIslandsElevationFor("jpeg",
-      MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+      MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
       islandsElevation_unqualified, getAspectColorScale());
 }
@@ -220,7 +203,7 @@ public void testGetRasterJpgSingleSourceTileAspectColorScaleWithZoom() throws Ex
 {
   // test jpg, single source tile with color scale passed in
   testIslandsElevationFor("jpeg",
-      MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+      MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
       islandsElevation_unqualified, getAspectColorScale(), 7);
 }
@@ -470,7 +453,6 @@ public void testGetRasterTifSingleSourceTileWithZoom() throws Exception
       islandsElevation_unqualified, getAspectColorScale(), 7);
 }
 
-
 @Test
 @Category(UnitTest.class)
 public void testGetRasterPngMultipleSourceTilesWithAspectColorScaleWithZoom() throws Exception
@@ -480,6 +462,23 @@ public void testGetRasterPngMultipleSourceTilesWithAspectColorScaleWithZoom() th
       MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
       ISLANDS_ELEVATION_V2_IN_BOUNDS_MULTIPLE_TILES,
       islandsElevation_unqualified, getAspectColorScale(), 8);
+}
+
+private ColorScale createRainbowColorScale() throws ColorScaleException
+{
+  String colorScaleXml = "<ColorMap name=\"Rainbow\">\n" +
+      "  <Scaling>MinMax</Scaling> <!-- Could also be Absolute -->\n" +
+      "  <ReliefShading>0</ReliefShading>\n" +
+      "  <Interpolate>1</Interpolate>\n" +
+      "  <NullColor color=\"0,0,0\" opacity=\"0\"/>\n" +
+      "  <Color value=\"0.0\" color=\"0,0,127\" opacity=\"255\"/>\n" +
+      "  <Color value=\"0.2\" color=\"0,0,255\"/> <!-- if not specified an opacity defaults to 255 -->\n" +
+      "  <Color value=\"0.4\" color=\"0,255,255\"/>\n" +
+      "  <Color value=\"0.6\" color=\"0,255,0\"/>\n" +
+      "  <Color value=\"0.8\" color=\"255,255,0\"/>\n" +
+      "  <Color value=\"1.0\" color=\"255,0,0\"/>\n" +
+      "</ColorMap>";
+  return ColorScale.loadFromXML(new ByteArrayInputStream(colorScaleXml.getBytes()));
 }
   /*
    * TODO: move these color scale related tests to a new test or merge with the
@@ -522,7 +521,8 @@ private void testIslandsElevationFor(String format, final String width,
 
   if (zoomLevel != -1)
   {
-    if ( !service.isZoomLevelValid(reqImgName, null, zoomLevel) ) {
+    if (!service.isZoomLevelValid(reqImgName, null, zoomLevel))
+    {
       throw new IllegalArgumentException("Zoom level " + zoomLevel + " is not in pyramid " + reqImgName);
     }
   }
@@ -531,8 +531,10 @@ private void testIslandsElevationFor(String format, final String width,
   MrGeoRaster result = renderer.renderImage(reqImgName, bounds, w, h, null, null);
 
   double[] extrema = renderer.getExtrema();
-  if ( !format.equalsIgnoreCase("TIFF") )
+  if (!format.equalsIgnoreCase("TIFF"))
+  {
     result = service.applyColorScaleToImage(format, result, cs, renderer, extrema);
+  }
 
   // if we are jpeg, we sant to use the golden image as a png, because jpeg compression may deliver different
   // results after saving/loading

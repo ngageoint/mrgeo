@@ -16,39 +16,30 @@
 
 package org.mrgeo.resources.wms;
 
-import junit.framework.Assert;
 import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.test.TestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.Response;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 @SuppressWarnings("all") // Test code, not included in production
 public class GetTileTest extends WmsGeneratorTestAbstract
 {
-  @SuppressWarnings("unused")
-  private static final Logger log = LoggerFactory.getLogger(GetTileTest.class);
+@SuppressWarnings("unused")
+private static final Logger log = LoggerFactory.getLogger(GetTileTest.class);
 
-  @BeforeClass 
-  public static void setUpForJUnit()
-  {    
-    try 
-    {
-      baselineInput = TestUtils.composeInputDir(GetTileTest.class);
-      WmsGeneratorTestAbstract.setUpForJUnit();
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-    }
+@BeforeClass
+public static void setUpForJUnit()
+{
+  try
+  {
+    baselineInput = TestUtils.composeInputDir(GetTileTest.class);
+    WmsGeneratorTestAbstract.setUpForJUnit();
   }
+  catch (Exception e)
+  {
+    e.printStackTrace();
+  }
+}
 
   /*
    * WmsGenerator doesn't support more than one layer per request.

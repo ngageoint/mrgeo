@@ -41,63 +41,62 @@ object RasterizeVectorMapOp extends MapOpRegistrar {
 
   private val MAX_TILES_PER_FEATURE = 1000
 
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("rasterizevector", "rasterize")
   }
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new RasterizeVectorMapOp(node, variables)
 
-  def create(vector: VectorMapOp, aggregator:String, cellsize:String, column:String = null) =
-  {
+  def create(vector:VectorMapOp, aggregator:String, cellsize:String, column:String = null) = {
     new RasterizeVectorMapOp(Some(vector), aggregator, cellsize, column, null.asInstanceOf[String])
   }
-//vec
+
+  //vec
 }
 
 
-class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externalizable
-{
+class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externalizable {
 
-  def this(vector: Option[VectorMapOp], aggregator:String, cellsize:String, column:String, bounds:String) = {
+  def this(vector:Option[VectorMapOp], aggregator:String, cellsize:String, column:String, bounds:String) = {
     this()
 
     initialize(vector, aggregator, cellsize, Left(bounds), column)
   }
 
-  def this(vector: Option[VectorMapOp], aggregator:String, cellsize:String, column:String,
-      rasterForBounds: Option[RasterMapOp]) = {
+  def this(vector:Option[VectorMapOp], aggregator:String, cellsize:String, column:String,
+           rasterForBounds:Option[RasterMapOp]) = {
     this()
 
     initialize(vector, aggregator, cellsize, Right(rasterForBounds), column)
   }
 
 
-  def this(node:ParserNode, variables: String => Option[ParserNode]) = {
+  def this(node:ParserNode, variables:String => Option[ParserNode]) = {
     this()
 
     initialize(node, variables)
   }
 
-  override def registerClasses(): Array[Class[_]] = {
+  override def registerClasses():Array[Class[_]] = {
     GeometryFactory.getClasses ++ Array[Class[_]](classOf[FeatureIdWritable])
   }
 
-  override def rasterize(vectorRDD: VectorRDD): RDD[(TileIdWritable, RasterWritable)] =
-  {
+  override def rasterize(vectorRDD:VectorRDD):RDD[(TileIdWritable, RasterWritable)] = {
     val tiledVectors = vectorsToTiledRDD(vectorRDD)
     val localRdd = new PairRDDFunctions(tiledVectors)
     val groupedGeometries = localRdd.groupByKey()
     rasterize(groupedGeometries)
   }
 
-  def rasterize(groupedGeometries: RDD[(TileIdWritable, Iterable[Geometry])]): RDD[(TileIdWritable, RasterWritable)] = {
+  def rasterize(groupedGeometries:RDD[(TileIdWritable, Iterable[Geometry])]):RDD[(TileIdWritable, RasterWritable)] = {
     val result = groupedGeometries.map(U => {
       val tileId = U._1
       val rvp = new VectorPainter(zoom,
         aggregationType,
         column match {
-        case Some(c) => c
-        case None => null
+          case Some(c) => c
+          case None => null
         },
         tilesize)
       rvp.beforePaintingTile(tileId.get)
@@ -110,20 +109,19 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     result
   }
 
-  def splitFeature(fid: FeatureIdWritable, geom: Geometry, maxfeaturesize: Double):
-  TraversableOnce[(FeatureIdWritable, Geometry)] =
-  {
+  def splitFeature(fid:FeatureIdWritable, geom:Geometry, maxfeaturesize:Double):
+  TraversableOnce[(FeatureIdWritable, Geometry)] = {
     var result = new ListBuffer[(FeatureIdWritable, Geometry)]
 
     if (geom != null) {
-      val bounds: Bounds = geom.getBounds
+      val bounds:Bounds = geom.getBounds
       if (bounds.width() * bounds.height() > maxfeaturesize) {
         val center = bounds.center()
 
-        val ul = new Bounds(bounds.w,   center.lat, center.lon, bounds.n)
-        val ll = new Bounds(bounds.w,   bounds.s,   center.lon, center.lat)
-        val ur = new Bounds(center.lon, center.lat, bounds.e,   bounds.n)
-        val lr = new Bounds(center.lon, bounds.s,   bounds.e,   center.lat)
+        val ul = new Bounds(bounds.w, center.lat, center.lon, bounds.n)
+        val ll = new Bounds(bounds.w, bounds.s, center.lon, center.lat)
+        val ur = new Bounds(center.lon, center.lat, bounds.e, bounds.n)
+        val lr = new Bounds(center.lon, bounds.s, bounds.e, center.lat)
 
         result ++= splitFeature(fid, geom.clip(ul), maxfeaturesize)
         result ++= splitFeature(fid, geom.clip(ll), maxfeaturesize)
@@ -145,7 +143,7 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     * For example, if a feature intersects 5 tiles, then it adds 5 records for that
     * feature to the returned RDD.
     */
-  def vectorsToTiledRDD(vectorRDD: VectorRDD): RDD[(TileIdWritable, Geometry)] = {
+  def vectorsToTiledRDD(vectorRDD:VectorRDD):RDD[(TileIdWritable, Geometry)] = {
     val sizeAccumulator = vectorRDD.context.accumulator(0)(MaxSizeAccumulator)
 
     val singletile = TMSUtils.tileBounds(0, 0, zoom, tilesize)
@@ -157,14 +155,14 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
       val geom = feature._2
 
       val process = bounds match {
-      case Some(filterBounds) =>
-        if (filterBounds.intersects(geom.getBounds)) {
-          true
-        }
-        else {
-          false
-        }
-      case None => true
+        case Some(filterBounds) =>
+          if (filterBounds.intersects(geom.getBounds)) {
+            true
+          }
+          else {
+            false
+          }
+        case None => true
       }
 
       if (process) {
@@ -228,7 +226,7 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
       val geom = U._2
       var result = new ListBuffer[(TileIdWritable, Geometry)]
 
-      val tiles: List[TileIdWritable] = getOverlappingTiles(zoom, tilesize, geom.getBounds)
+      val tiles:List[TileIdWritable] = getOverlappingTiles(zoom, tilesize, geom.getBounds)
       for (tileId <- tiles) {
         // make sure the geometry actually intersects this tile
         val t = TMSUtils.tileid(tileId.get(), zoom)
@@ -251,14 +249,14 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     tilefeatures.repartition(partitions)
   }
 
-  def getOverlappingTiles(zoom: Int, tileSize: Int, bounds: Bounds): List[TileIdWritable] = {
+  def getOverlappingTiles(zoom:Int, tileSize:Int, bounds:Bounds):List[TileIdWritable] = {
     var tiles = new ListBuffer[TileIdWritable]
-    val tb: TileBounds = TMSUtils.boundsToTile(bounds, zoom, tileSize)
-    var tx: Long = tb.w
+    val tb:TileBounds = TMSUtils.boundsToTile(bounds, zoom, tileSize)
+    var tx:Long = tb.w
     while (tx <= tb.e) {
-      var ty: Long = tb.s
+      var ty:Long = tb.s
       while (ty <= tb.n) {
-        val tile: TileIdWritable = new TileIdWritable(TMSUtils.tileid(tx, ty, zoom))
+        val tile:TileIdWritable = new TileIdWritable(TMSUtils.tileid(tx, ty, zoom))
         tiles += tile
         ty += 1
       }
@@ -268,14 +266,14 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
   }
 
   @SuppressFBWarnings(value = Array("NM_FIELD_NAMING_CONVENTION"), justification = "Scala generated code")
-  object MaxSizeAccumulator extends AccumulatorParam[Int]
-  {
-    override def addInPlace(r1: Int, r2: Int): Int = {
+  object MaxSizeAccumulator extends AccumulatorParam[Int] {
+    override def addInPlace(r1:Int, r2:Int):Int = {
       Math.max(r1, r2)
     }
 
-    override def zero(initialValue: Int): Int = {
+    override def zero(initialValue:Int):Int = {
       initialValue
     }
   }
+
 }

@@ -16,55 +16,57 @@
 
 package org.mrgeo.utils.tms;
 
-import java.io.*;
+import java.io.Serializable;
 
 // Pixel 0, 0 is the lower-left corner of the world grid!
 public class Pixel implements Serializable
 {
 private static final long serialVersionUID = 1L;
 
-  final public long px;
-  final public long py;
+final public long px;
+final public long py;
 
-  public Pixel(final long px, final long py)
+public Pixel(final long px, final long py)
 
+{
+  this.px = px;
+  this.py = py;
+}
+
+public long getPy()
+{
+  return py;
+}
+
+public long getPx()
+{
+  return px;
+}
+
+@Override
+public boolean equals(final Object obj)
+{
+  if (obj instanceof Pixel)
   {
-    this.px = px;
-    this.py = py;
+    final Pixel other = (Pixel) obj;
+    return (px == other.px) && (py == other.py);
   }
+  return super.equals(obj);
+}
 
-  public long getPy() {
-    return py;
-  }
+@Override
+public int hashCode()
+{
+  // Based on Point2D.hashCode() implementation
+  long bits = px;
+  bits ^= py * 31;
+  return (((int) bits) ^ ((int) (bits >> 32)));
+}
 
-  public long getPx() {
-    return px;
-  }
-
-  @Override
-  public boolean equals(final Object obj)
-  {
-    if (obj instanceof Pixel)
-    {
-      final Pixel other = (Pixel)obj;
-      return (px == other.px) && (py == other.py);
-    }
-    return super.equals(obj);
-  }
-
-  @Override
-  public int hashCode()
-  {
-    // Based on Point2D.hashCode() implementation
-    long bits = px;
-    bits ^= py * 31;
-    return (((int) bits) ^ ((int) (bits >> 32)));
-  }
-
-  @Override
-  public String toString()
-  {
-    return "Pixel [px=" + px + ", py=" + py + "]";
-  }
+@Override
+public String toString()
+{
+  return "Pixel [px=" + px + ", py=" + py + "]";
+}
 
 }

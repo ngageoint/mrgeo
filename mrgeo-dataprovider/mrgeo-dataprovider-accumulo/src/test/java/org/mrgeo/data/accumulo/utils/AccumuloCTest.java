@@ -23,10 +23,10 @@ import static org.junit.Assert.fail;
 public class AccumuloCTest
 {
 
-  @Test
-  public void test()
-  {
-    fail("Not yet implemented");
-  }
+@Test
+public void test()
+{
+  fail("Not yet implemented");
+}
 
 }

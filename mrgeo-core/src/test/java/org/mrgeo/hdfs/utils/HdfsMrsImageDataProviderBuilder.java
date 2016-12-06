@@ -12,36 +12,41 @@ import static org.mockito.Mockito.*;
 /**
  * Created by ericwood on 6/16/16.
  */
-public class HdfsMrsImageDataProviderBuilder {
-    private HdfsMrsImageDataProvider imageDataProvider;
+public class HdfsMrsImageDataProviderBuilder
+{
+private HdfsMrsImageDataProvider imageDataProvider;
 //    private MrsPyramidMetadataReader metadataReader;
-    private MrsPyramidMetadata pyramidMetadata;
-    private Path resourcePath;
+private MrsPyramidMetadata pyramidMetadata;
+private Path resourcePath;
 
-    public HdfsMrsImageDataProviderBuilder() {
-        // RETURNS_DEEP_STUBS allows us to avoid mocking intermediate objects (e.g. MetadataReader)
-        this.imageDataProvider = mock(HdfsMrsImageDataProvider.class, RETURNS_DEEP_STUBS);
+public HdfsMrsImageDataProviderBuilder()
+{
+  // RETURNS_DEEP_STUBS allows us to avoid mocking intermediate objects (e.g. MetadataReader)
+  this.imageDataProvider = mock(HdfsMrsImageDataProvider.class, RETURNS_DEEP_STUBS);
 //        this.metadataReader = mock(MrsPyramidMetadataReader.class);
-    }
+}
 
-    public HdfsMrsImageDataProviderBuilder pyramidMetadata(MrsPyramidMetadata pyramidMetadata) {
-        this.pyramidMetadata = pyramidMetadata;
+public HdfsMrsImageDataProviderBuilder pyramidMetadata(MrsPyramidMetadata pyramidMetadata)
+{
+  this.pyramidMetadata = pyramidMetadata;
 
-        return this;
-    }
+  return this;
+}
 
-    public HdfsMrsImageDataProviderBuilder resourcePath(Path resourcePath) {
-        this.resourcePath = resourcePath;
+public HdfsMrsImageDataProviderBuilder resourcePath(Path resourcePath)
+{
+  this.resourcePath = resourcePath;
 
-        return this;
-    }
+  return this;
+}
 
-    public HdfsMrsImageDataProvider build() throws IOException {
+public HdfsMrsImageDataProvider build() throws IOException
+{
 //        when(metadataReader.read()).thenReturn(pyramidMetadata);
 //        when(imageDataProvider.getMetadataReader()).thenReturn(metadataReader);
-        when(imageDataProvider.getMetadataReader().read()).thenReturn(pyramidMetadata);
-        when(imageDataProvider.getResourcePath(anyBoolean())).thenReturn(resourcePath);
+  when(imageDataProvider.getMetadataReader().read()).thenReturn(pyramidMetadata);
+  when(imageDataProvider.getResourcePath(anyBoolean())).thenReturn(resourcePath);
 
-        return imageDataProvider;
-    }
+  return imageDataProvider;
+}
 }

@@ -27,107 +27,107 @@ import java.io.IOException;
 
 public class TiledInputSplit extends InputSplit implements Writable
 {
-  private InputSplit wrappedInputSplit;
-  private long startTileId;
-  private long endTileId;
-  private int zoomLevel;
-  private int tileSize;
+private InputSplit wrappedInputSplit;
+private long startTileId;
+private long endTileId;
+private int zoomLevel;
+private int tileSize;
 
-  // Used by Hadoop to re-construct the split when readFields is called.
-  public TiledInputSplit()
-  {
-  }
+// Used by Hadoop to re-construct the split when readFields is called.
+public TiledInputSplit()
+{
+}
 
-  public TiledInputSplit(final InputSplit inputSplit, long startTileId,
-      long endTileId, int zoomLevel, int tileSize)
-  {
-    this.wrappedInputSplit = inputSplit;
-    this.startTileId = startTileId;
-    this.endTileId = endTileId;
-    this.zoomLevel = zoomLevel;
-    this.tileSize = tileSize;
-  }
+public TiledInputSplit(final InputSplit inputSplit, long startTileId,
+    long endTileId, int zoomLevel, int tileSize)
+{
+  this.wrappedInputSplit = inputSplit;
+  this.startTileId = startTileId;
+  this.endTileId = endTileId;
+  this.zoomLevel = zoomLevel;
+  this.tileSize = tileSize;
+}
 
-  @Override
-  public void readFields(DataInput in) throws IOException
+@Override
+public void readFields(DataInput in) throws IOException
+{
+  boolean wrappedWritable = in.readBoolean();
+  if (wrappedWritable)
   {
-    boolean wrappedWritable = in.readBoolean();
-    if (wrappedWritable)
+    String wrappedSplitClassName = in.readUTF();
+    try
     {
-      String wrappedSplitClassName = in.readUTF();
-      try
-      {
-        Class<?> splitClass = Class.forName(wrappedSplitClassName);
-        wrappedInputSplit = (InputSplit)ReflectionUtils.newInstance(splitClass, HadoopUtils.createConfiguration());
-        ((Writable)wrappedInputSplit).readFields(in);
-      }
-      catch (ClassNotFoundException e)
-      {
-        throw new IOException(e);
-      }
+      Class<?> splitClass = Class.forName(wrappedSplitClassName);
+      wrappedInputSplit = (InputSplit) ReflectionUtils.newInstance(splitClass, HadoopUtils.createConfiguration());
+      ((Writable) wrappedInputSplit).readFields(in);
     }
-
-    startTileId = in.readLong();
-    endTileId = in.readLong();
-    zoomLevel = in.readInt();
-    tileSize = in.readInt();
-  }
-
-  @Override
-  public void write(DataOutput out) throws IOException
-  {
-    // Write a boolean indicating whether the wrapped input split is writable. If
-    // it is, then write it after the boolean.
-    if (wrappedInputSplit instanceof Writable)
+    catch (ClassNotFoundException e)
     {
-      out.writeBoolean(true);
-      out.writeUTF(wrappedInputSplit.getClass().getName());
-      ((Writable)wrappedInputSplit).write(out);
+      throw new IOException(e);
     }
-    else
-    {
-      out.writeBoolean(false);
-    }
-    out.writeLong(startTileId);
-    out.writeLong(endTileId);
-    out.writeInt(zoomLevel);
-    out.writeInt(tileSize);
   }
 
-  @Override
-  public long getLength() throws IOException, InterruptedException
-  {
-    return (wrappedInputSplit != null) ? wrappedInputSplit.getLength() : 0;
-  }
+  startTileId = in.readLong();
+  endTileId = in.readLong();
+  zoomLevel = in.readInt();
+  tileSize = in.readInt();
+}
 
-  @Override
-  public String[] getLocations() throws IOException, InterruptedException
+@Override
+public void write(DataOutput out) throws IOException
+{
+  // Write a boolean indicating whether the wrapped input split is writable. If
+  // it is, then write it after the boolean.
+  if (wrappedInputSplit instanceof Writable)
   {
-    return (wrappedInputSplit != null) ? wrappedInputSplit.getLocations() : new String[0];
+    out.writeBoolean(true);
+    out.writeUTF(wrappedInputSplit.getClass().getName());
+    ((Writable) wrappedInputSplit).write(out);
   }
+  else
+  {
+    out.writeBoolean(false);
+  }
+  out.writeLong(startTileId);
+  out.writeLong(endTileId);
+  out.writeInt(zoomLevel);
+  out.writeInt(tileSize);
+}
 
-  public InputSplit getWrappedSplit()
-  {
-    return wrappedInputSplit;
-  }
+@Override
+public long getLength() throws IOException, InterruptedException
+{
+  return (wrappedInputSplit != null) ? wrappedInputSplit.getLength() : 0;
+}
 
-  public long getStartTileId()
-  {
-    return startTileId;
-  }
+@Override
+public String[] getLocations() throws IOException, InterruptedException
+{
+  return (wrappedInputSplit != null) ? wrappedInputSplit.getLocations() : new String[0];
+}
 
-  public long getEndTileId()
-  {
-    return endTileId;
-  }
+public InputSplit getWrappedSplit()
+{
+  return wrappedInputSplit;
+}
 
-  public int getZoomLevel()
-  {
-    return zoomLevel;
-  }
+public long getStartTileId()
+{
+  return startTileId;
+}
 
-  public int getTileSize()
-  {
-    return tileSize;
-  }
+public long getEndTileId()
+{
+  return endTileId;
+}
+
+public int getZoomLevel()
+{
+  return zoomLevel;
+}
+
+public int getTileSize()
+{
+  return tileSize;
+}
 }

@@ -17,7 +17,6 @@
 package org.mrgeo.data.raster;
 
 import junit.framework.Assert;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.SequenceFile;
@@ -51,17 +50,15 @@ import java.io.IOException;
 @SuppressWarnings("all") // test code, not included in production
 public class RasterWritableTest extends LocalRunnerTest
 {
+private static Path outputHdfs;
 private MrGeoRaster srcRaster;
-
 private int RASTER_SIZE = 10;
 private double PIXEL_VALUE = 1.0;
-private int NUM_ENTRIES = 5;
 
 //	private CompressionCodec codec;
 //	private Decompressor decompressor;
 //	private Compressor compressor;
-
-private static Path outputHdfs;
+private int NUM_ENTRIES = 5;
 
 @BeforeClass
 public static void init() throws IOException

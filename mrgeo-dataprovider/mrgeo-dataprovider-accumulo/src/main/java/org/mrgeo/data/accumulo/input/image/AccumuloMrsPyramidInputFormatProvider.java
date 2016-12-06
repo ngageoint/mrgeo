@@ -32,11 +32,11 @@ import org.mrgeo.data.accumulo.image.AccumuloMrsPyramidInputFormat;
 import org.mrgeo.data.accumulo.utils.AccumuloConnector;
 import org.mrgeo.data.accumulo.utils.AccumuloUtils;
 import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
+import org.mrgeo.data.image.ImageInputFormatContext;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageInputFormatProvider;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.data.image.ImageInputFormatContext;
 import org.mrgeo.utils.Base64Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -129,6 +129,11 @@ public void setupJob(Job job,
 
   log.info("Setting up job " + job.getJobName());
   setupConfig(job, provider);
+}
+
+@Override
+public void teardown(Job job) throws DataProviderException
+{
 }
 
 @SuppressWarnings("squid:S00112")
@@ -325,11 +330,6 @@ private void setupConfig(final Job job,
   String cp = job.getConfiguration().get("mapred.job.classpath.files");
   log.info("mapred.job.classpath.files = " + cp);
 
-}
-
-@Override
-public void teardown(Job job) throws DataProviderException
-{
 }
 
 } // end AccumuloMrsPyramidInputFormatProvider

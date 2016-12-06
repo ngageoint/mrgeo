@@ -32,18 +32,18 @@ import org.mrgeo.utils.SparkUtils
 
 abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
 
-  protected var inputMapOp: Option[RasterMapOp] = None
+  protected var inputMapOp:Option[RasterMapOp] = None
   private var rasterRDD:Option[RasterRDD] = None
-  private var outputNoDatas: Option[Array[Double]] = None
+  private var outputNoDatas:Option[Array[Double]] = None
 
-  override def rdd(): Option[RasterRDD] = rasterRDD
+  override def rdd():Option[RasterRDD] = rasterRDD
 
-  override def execute(context: SparkContext): Boolean =
-  {
-    val input:RasterMapOp = inputMapOp getOrElse(throw new IOException("Input MapOp not valid!"))
+  override def execute(context:SparkContext):Boolean = {
+    val input:RasterMapOp = inputMapOp getOrElse (throw new IOException("Input MapOp not valid!"))
 
-    val meta = input.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
-    val rdd = input.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + inputMapOp.getClass.getName))
+    val meta = input.metadata() getOrElse
+               (throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
+    val rdd = input.rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + inputMapOp.getClass.getName))
 
     beforeExecute(meta)
     val zoom = meta.getMaxZoomLevel
@@ -60,12 +60,27 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
     val tiles = FocalBuilder.create(rdd, bufferX, bufferY, meta.getBounds, zoom, nodatas, context)
 
     rasterRDD =
-      Some(RasterRDD(calculate(tiles, bufferX, bufferY, neighborhoodWidth, neighborhoodHeight, nodatas, zoom, tilesize)))
+        Some(
+          RasterRDD(calculate(tiles, bufferX, bufferY, neighborhoodWidth, neighborhoodHeight, nodatas, zoom, tilesize)))
 
     metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, getOutputNoData,
       bounds = meta.getBounds, calcStats = false))
 
     true
+  }
+
+  override def setup(job:JobArguments, conf:SparkConf):Boolean = {
+    true
+  }
+
+  override def teardown(job:JobArguments, conf:SparkConf):Boolean = {
+    true
+  }
+
+  override def readExternal(in:ObjectInput):Unit = {
+  }
+
+  override def writeExternal(out:ObjectOutput):Unit = {
   }
 
   /**
@@ -80,25 +95,25 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
     * from the left (e.g. xLeftOffset will be 1).
     *
     * @param raster
-    * @param notnodata An raster of booleans indicating whether each pixel value in
-    *                  the source raster is nodata or not. Using this array improves
-    *                  performance during neighborhood calculations because the "is nodata"
-    *                  checks are expensive when repeatedly run for the same pixel.
-    * @param processX The x pixel coordinate in the source raster of the pixel to process
-    * @param processY The y pixel coordinate in the source raster of the pixel to process
-    * @param xLeftOffset Defines the left boundary of the neighborhood. This is the number of pixels
-    *                    to the left of the pixel being processed.
-    * @param neighborhoodWidth The width of the neighborhood in pixels.
-    * @param yAboveOffset Defines the top boundary of the neighborhood. This is the number of pixels
-    *                     above the pixel being processed.
+    * @param notnodata          An raster of booleans indicating whether each pixel value in
+    *                           the source raster is nodata or not. Using this array improves
+    *                           performance during neighborhood calculations because the "is nodata"
+    *                           checks are expensive when repeatedly run for the same pixel.
+    * @param processX           The x pixel coordinate in the source raster of the pixel to process
+    * @param processY           The y pixel coordinate in the source raster of the pixel to process
+    * @param xLeftOffset        Defines the left boundary of the neighborhood. This is the number of pixels
+    *                           to the left of the pixel being processed.
+    * @param neighborhoodWidth  The width of the neighborhood in pixels.
+    * @param yAboveOffset       Defines the top boundary of the neighborhood. This is the number of pixels
+    *                           above the pixel being processed.
     * @param neighborhoodHeight The height of the neighborhood in pixels.
     * @return
     */
-  protected def computePixelValue(raster: MrGeoRaster, notnodata: MrGeoRaster,
-                                  outNoData: Double, rasterWidth: Int,
-                                  processX: Int, processY: Int, processBand: Int,
-                                  xLeftOffset: Int, neighborhoodWidth: Int,
-                                  yAboveOffset: Int, neighborhoodHeight: Int, tileId: Long): Double
+  protected def computePixelValue(raster:MrGeoRaster, notnodata:MrGeoRaster,
+                                  outNoData:Double, rasterWidth:Int,
+                                  processX:Int, processY:Int, processBand:Int,
+                                  xLeftOffset:Int, neighborhoodWidth:Int,
+                                  yAboveOffset:Int, neighborhoodHeight:Int, tileId:Long):Double
 
   /**
     * This method is called at the start of the "execute" method, giving sub-classes an
@@ -107,18 +122,8 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
     *
     * @param meta
     */
-  protected def beforeExecute(meta: MrsPyramidMetadata): Unit = {
+  protected def beforeExecute(meta:MrsPyramidMetadata):Unit = {
     outputNoDatas = Some(Array.fill[Double](meta.getBands)(Double.NaN))
-  }
-
-  private def isNoData(value: Double, nodata: Double): Boolean =
-  {
-    if (nodata.isNaN) {
-      value.isNaN
-    }
-    else {
-      (value == nodata)
-    }
   }
 
   /**
@@ -128,24 +133,32 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
     *
     * @return
     */
-  protected def getNeighborhoodInfo: (Int, Int)
+  protected def getNeighborhoodInfo:(Int, Int)
 
-  protected def getOutputTileType: Int = {
+  protected def getOutputTileType:Int = {
     DataBuffer.TYPE_FLOAT
   }
 
-  protected def getOutputNoData: Array[Double] = {
+  protected def getOutputNoData:Array[Double] = {
     outputNoDatas match {
       case Some(nodatas) => nodatas
       case None => throw new IllegalStateException("The output nodata values have not been set")
     }
   }
 
+  private def isNoData(value:Double, nodata:Double):Boolean = {
+    if (nodata.isNaN) {
+      value.isNaN
+    }
+    else {
+      (value == nodata)
+    }
+  }
+
   private def calculate(tiles:RDD[(TileIdWritable, RasterWritable)],
-                        bufferX: Int, bufferY: Int,
-                        neighborhoodWidth: Int, neighborhoodHeight: Int,
-                        nodatas:Array[Double], zoom:Int, tilesize:Int) =
-  {
+                        bufferX:Int, bufferY:Int,
+                        neighborhoodWidth:Int, neighborhoodHeight:Int,
+                        nodatas:Array[Double], zoom:Int, tilesize:Int) = {
     val outputNoData = getOutputNoData
     tiles.map(tile => {
 
@@ -174,7 +187,7 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
       // pixel value in the source raster is nodata or not
       val rasterWidth = raster.width()
       val rasterHeight = raster.height()
-      var band: Int = 0
+      var band:Int = 0
       val notnodata = MrGeoRaster.createEmptyRaster(rasterWidth, rasterHeight, 1, DataBuffer.TYPE_BYTE)
       while (band < raster.bands()) {
         val outputNoDataForBand = outputNoData(band).doubleValue()
@@ -219,19 +232,5 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
       }
       (new TileIdWritable(tile._1), RasterWritable.toWritable(answer))
     })
-  }
-
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = {
-    true
-  }
-
-  override def teardown(job: JobArguments, conf: SparkConf): Boolean = {
-    true
-  }
-
-  override def readExternal(in: ObjectInput): Unit = {
-  }
-
-  override def writeExternal(out: ObjectOutput): Unit = {
   }
 }

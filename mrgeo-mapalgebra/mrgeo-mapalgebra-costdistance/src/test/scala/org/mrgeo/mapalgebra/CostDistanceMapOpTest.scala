@@ -31,63 +31,63 @@ class CostDistanceMapOpTest extends FlatSpec {
   // should extend 2 degrees in all four directions beyond the MBR of the source points.
 
   // TODO:  Uncomment and correct when CostDistanceMapOp is finished
-//  "Using a source point at lon=0, lat=0" should "return bounds from (-2, -2) to (2, 2)" in {
-//    val sourcePoints: mutable.ListBuffer[(Float,Float)] = new mutable.ListBuffer[(Float,Float)]
-//    sourcePoints.append((0.0f, 0.0f))
-//    // The distance is 20000 meters for the expanded bounds.
-//    val b: Bounds = CostDistanceMapOp.calculateBoundsFromCost(maxCost, sourcePoints, minPixelValue)
-//    Assert.assertNotNull(b)
-//    Assert.assertEquals(-2.0, b.getMinX, EPSILON)
-//    Assert.assertEquals(-2.0, b.getMinY, EPSILON)
-//    Assert.assertEquals(2.0, b.getMaxX, EPSILON)
-//    Assert.assertEquals(2.0, b.getMaxY, EPSILON)
-//  }
-//
-//  "Using a source point at lon=180, lat=90" should "return bounds from (178, 88) to (180, 90)" in {
-//    val sourcePoints: mutable.ListBuffer[(Float,Float)] = new mutable.ListBuffer[(Float,Float)]
-//    sourcePoints.append((180.0f, 90.0f))
-//    // The distance is 20000 meters for the expanded bounds.
-//    val b: Bounds = CostDistanceMapOp.calculateBoundsFromCost(maxCost, sourcePoints, minPixelValue)
-//    Assert.assertNotNull(b)
-//    Assert.assertEquals(178.0, b.getMinX, EPSILON)
-//    Assert.assertEquals(88.0, b.getMinY, EPSILON)
-//    Assert.assertEquals(180.0, b.getMaxX, EPSILON)
-//    Assert.assertEquals(90.0, b.getMaxY, EPSILON)
-//  }
-//
-//  "Using a source point at lon=180, lat=-90" should "return bounds from (178, -90) to (180, -88)" in {
-//    val sourcePoints: mutable.ListBuffer[(Float,Float)] = new mutable.ListBuffer[(Float,Float)]
-//    sourcePoints.append((180.0f, -90.0f))
-//    // The distance is 20000 meters for the expanded bounds.
-//    val b: Bounds = CostDistanceMapOp.calculateBoundsFromCost(maxCost, sourcePoints, minPixelValue)
-//    Assert.assertNotNull(b)
-//    Assert.assertEquals(178.0, b.getMinX, EPSILON)
-//    Assert.assertEquals(-90.0, b.getMinY, EPSILON)
-//    Assert.assertEquals(180.0, b.getMaxX, EPSILON)
-//    Assert.assertEquals(-88.0, b.getMaxY, EPSILON)
-//  }
-//
-//  "Using a source point at lon=-180, lat=-90" should "return bounds from (-180, -90) to (-178, -88)" in {
-//    val sourcePoints: mutable.ListBuffer[(Float,Float)] = new mutable.ListBuffer[(Float,Float)]
-//    sourcePoints.append((-180.0f, -90.0f))
-//    // The distance is 20000 meters for the expanded bounds.
-//    val b: Bounds = CostDistanceMapOp.calculateBoundsFromCost(maxCost, sourcePoints, minPixelValue)
-//    Assert.assertNotNull(b)
-//    Assert.assertEquals(-180.0, b.getMinX, EPSILON)
-//    Assert.assertEquals(-90.0, b.getMinY, EPSILON)
-//    Assert.assertEquals(-178.0, b.getMaxX, EPSILON)
-//    Assert.assertEquals(-88.0, b.getMaxY, EPSILON)
-//  }
-//
-//  "Using a source point at lon=-180, lat=90" should "return bounds from (-180, 88) to (-178, 90)" in {
-//    val sourcePoints: mutable.ListBuffer[(Float,Float)] = new mutable.ListBuffer[(Float,Float)]
-//    sourcePoints.append((-180.0f, 90.0f))
-//    // The distance is 20000 meters for the expanded bounds.
-//    val b: Bounds = CostDistanceMapOp.calculateBoundsFromCost(maxCost, sourcePoints, minPixelValue)
-//    Assert.assertNotNull(b)
-//    Assert.assertEquals(-180.0, b.getMinX, EPSILON)
-//    Assert.assertEquals(88.0, b.getMinY, EPSILON)
-//    Assert.assertEquals(-178.0, b.getMaxX, EPSILON)
-//    Assert.assertEquals(90.0, b.getMaxY, EPSILON)
-//  }
+  //  "Using a source point at lon=0, lat=0" should "return bounds from (-2, -2) to (2, 2)" in {
+  //    val sourcePoints: mutable.ListBuffer[(Float,Float)] = new mutable.ListBuffer[(Float,Float)]
+  //    sourcePoints.append((0.0f, 0.0f))
+  //    // The distance is 20000 meters for the expanded bounds.
+  //    val b: Bounds = CostDistanceMapOp.calculateBoundsFromCost(maxCost, sourcePoints, minPixelValue)
+  //    Assert.assertNotNull(b)
+  //    Assert.assertEquals(-2.0, b.getMinX, EPSILON)
+  //    Assert.assertEquals(-2.0, b.getMinY, EPSILON)
+  //    Assert.assertEquals(2.0, b.getMaxX, EPSILON)
+  //    Assert.assertEquals(2.0, b.getMaxY, EPSILON)
+  //  }
+  //
+  //  "Using a source point at lon=180, lat=90" should "return bounds from (178, 88) to (180, 90)" in {
+  //    val sourcePoints: mutable.ListBuffer[(Float,Float)] = new mutable.ListBuffer[(Float,Float)]
+  //    sourcePoints.append((180.0f, 90.0f))
+  //    // The distance is 20000 meters for the expanded bounds.
+  //    val b: Bounds = CostDistanceMapOp.calculateBoundsFromCost(maxCost, sourcePoints, minPixelValue)
+  //    Assert.assertNotNull(b)
+  //    Assert.assertEquals(178.0, b.getMinX, EPSILON)
+  //    Assert.assertEquals(88.0, b.getMinY, EPSILON)
+  //    Assert.assertEquals(180.0, b.getMaxX, EPSILON)
+  //    Assert.assertEquals(90.0, b.getMaxY, EPSILON)
+  //  }
+  //
+  //  "Using a source point at lon=180, lat=-90" should "return bounds from (178, -90) to (180, -88)" in {
+  //    val sourcePoints: mutable.ListBuffer[(Float,Float)] = new mutable.ListBuffer[(Float,Float)]
+  //    sourcePoints.append((180.0f, -90.0f))
+  //    // The distance is 20000 meters for the expanded bounds.
+  //    val b: Bounds = CostDistanceMapOp.calculateBoundsFromCost(maxCost, sourcePoints, minPixelValue)
+  //    Assert.assertNotNull(b)
+  //    Assert.assertEquals(178.0, b.getMinX, EPSILON)
+  //    Assert.assertEquals(-90.0, b.getMinY, EPSILON)
+  //    Assert.assertEquals(180.0, b.getMaxX, EPSILON)
+  //    Assert.assertEquals(-88.0, b.getMaxY, EPSILON)
+  //  }
+  //
+  //  "Using a source point at lon=-180, lat=-90" should "return bounds from (-180, -90) to (-178, -88)" in {
+  //    val sourcePoints: mutable.ListBuffer[(Float,Float)] = new mutable.ListBuffer[(Float,Float)]
+  //    sourcePoints.append((-180.0f, -90.0f))
+  //    // The distance is 20000 meters for the expanded bounds.
+  //    val b: Bounds = CostDistanceMapOp.calculateBoundsFromCost(maxCost, sourcePoints, minPixelValue)
+  //    Assert.assertNotNull(b)
+  //    Assert.assertEquals(-180.0, b.getMinX, EPSILON)
+  //    Assert.assertEquals(-90.0, b.getMinY, EPSILON)
+  //    Assert.assertEquals(-178.0, b.getMaxX, EPSILON)
+  //    Assert.assertEquals(-88.0, b.getMaxY, EPSILON)
+  //  }
+  //
+  //  "Using a source point at lon=-180, lat=90" should "return bounds from (-180, 88) to (-178, 90)" in {
+  //    val sourcePoints: mutable.ListBuffer[(Float,Float)] = new mutable.ListBuffer[(Float,Float)]
+  //    sourcePoints.append((-180.0f, 90.0f))
+  //    // The distance is 20000 meters for the expanded bounds.
+  //    val b: Bounds = CostDistanceMapOp.calculateBoundsFromCost(maxCost, sourcePoints, minPixelValue)
+  //    Assert.assertNotNull(b)
+  //    Assert.assertEquals(-180.0, b.getMinX, EPSILON)
+  //    Assert.assertEquals(88.0, b.getMinY, EPSILON)
+  //    Assert.assertEquals(-178.0, b.getMaxX, EPSILON)
+  //    Assert.assertEquals(90.0, b.getMaxY, EPSILON)
+  //  }
 }

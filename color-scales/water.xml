@@ -14,7 +14,7 @@
   ~
   -->
 <ColorMap name="Water">
-<!-- Simply color zero pixels blue. Style for SRTM water bodies -->
+  <!-- Simply color zero pixels blue. Style for SRTM water bodies -->
   <Scaling>Absolute</Scaling>
   <ReliefShading>0</ReliefShading>
   <Interpolate>1</Interpolate>

@@ -32,149 +32,152 @@ import java.util.TreeSet;
 @SuppressWarnings("all") // test code, not included in production
 public class PartitionerSplitTest
 {
-  static private Long[] generated = new Long[]{1L, 2L, 5L, 10L, 15L, 20L, 30L, 50L};
-  @Rule public TemporaryFolder folder = new TemporaryFolder();
-  @Rule public TestName testName = new TestName();
+static private Long[] generated = new Long[]{1L, 2L, 5L, 10L, 15L, 20L, 30L, 50L};
+@Rule
+public TemporaryFolder folder = new TemporaryFolder();
+@Rule
+public TestName testName = new TestName();
 
-  @Test
-  @Category(UnitTest.class)
-  public void generateSplits() {
-    Splits splits = new PartitionerSplit();
-    splits.generateSplits(new TestGenerator());
+@Test
+@Category(UnitTest.class)
+public void generateSplits()
+{
+  Splits splits = new PartitionerSplit();
+  splits.generateSplits(new TestGenerator());
 
-    PartitionerSplit.PartitionerSplitInfo[] si = (PartitionerSplit.PartitionerSplitInfo[]) splits.getSplits();
+  PartitionerSplit.PartitionerSplitInfo[] si = (PartitionerSplit.PartitionerSplitInfo[]) splits.getSplits();
 
-    Assert.assertEquals("Splits length not correct", generated.length, si.length);
-    for (int i = 0; i < generated.length; i++)
-    {
-      Assert.assertEquals("Splits entry not correct", generated[i].longValue(), si[i].getTileId());
-    }
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void getSplitsNoGenerate()
+  Assert.assertEquals("Splits length not correct", generated.length, si.length);
+  for (int i = 0; i < generated.length; i++)
   {
-    Splits splits = new PartitionerSplit();
-
-    PartitionerSplit.PartitionerSplitInfo[] si = (PartitionerSplit.PartitionerSplitInfo[]) splits.getSplits();
-
-    Assert.assertNull("Splits not null", si);
+    Assert.assertEquals("Splits entry not correct", generated[i].longValue(), si[i].getTileId());
   }
+}
 
-  @Test
-  @Category(UnitTest.class)
-  public void getLength()
+@Test
+@Category(UnitTest.class)
+public void getSplitsNoGenerate()
+{
+  Splits splits = new PartitionerSplit();
+
+  PartitionerSplit.PartitionerSplitInfo[] si = (PartitionerSplit.PartitionerSplitInfo[]) splits.getSplits();
+
+  Assert.assertNull("Splits not null", si);
+}
+
+@Test
+@Category(UnitTest.class)
+public void getLength()
+{
+  Splits splits = new PartitionerSplit();
+  splits.generateSplits(new TestGenerator());
+
+  Assert.assertEquals("Splits length not correct", generated.length, splits.length());
+}
+
+@Test
+@Category(UnitTest.class)
+public void getSplitIndexLow() throws Splits.SplitException
+{
+  Splits splits = new PartitionerSplit();
+  splits.generateSplits(new TestGenerator());
+
+  Assert.assertEquals(0, splits.getSplitIndex(0));
+}
+
+@Test
+@Category(UnitTest.class)
+public void getSplitIndex() throws Splits.SplitException
+{
+  Splits splits = new PartitionerSplit();
+  splits.generateSplits(new TestGenerator());
+
+  Assert.assertEquals(5, splits.getSplitIndex(16));
+}
+
+@Test
+@Category(UnitTest.class)
+public void getSplitIndexHigh() throws Splits.SplitException
+{
+  Splits splits = new PartitionerSplit();
+  splits.generateSplits(new TestGenerator());
+
+  Assert.assertEquals(splits.length() - 1, splits.getSplitIndex(1000));
+}
+
+@Test
+@Category(UnitTest.class)
+public void getSplit() throws Splits.SplitException
+{
+  Splits splits = new PartitionerSplit();
+  splits.generateSplits(new TestGenerator());
+
+  Random rand = new Random();
+  for (int i = 0; i < 1000; i++)
   {
-    Splits splits = new PartitionerSplit();
-    splits.generateSplits(new TestGenerator());
-
-    Assert.assertEquals("Splits length not correct", generated.length, splits.length());
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void getSplitIndexLow() throws Splits.SplitException
-  {
-    Splits splits = new PartitionerSplit();
-    splits.generateSplits(new TestGenerator());
-
-    Assert.assertEquals(0, splits.getSplitIndex(0));
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void getSplitIndex() throws Splits.SplitException
-  {
-    Splits splits = new PartitionerSplit();
-    splits.generateSplits(new TestGenerator());
-
-    Assert.assertEquals(5, splits.getSplitIndex(16));
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void getSplitIndexHigh() throws Splits.SplitException
-  {
-    Splits splits = new PartitionerSplit();
-    splits.generateSplits(new TestGenerator());
-
-    Assert.assertEquals(splits.length() - 1, splits.getSplitIndex(1000));
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void getSplit() throws Splits.SplitException
-  {
-    Splits splits = new PartitionerSplit();
-    splits.generateSplits(new TestGenerator());
-
-    Random rand = new Random();
-    for (int i = 0; i < 1000; i++)
-    {
-      long test = rand.nextInt(generated[generated.length - 1].intValue());
-      long testPartition = findSplit(generated, test);
-
-      PartitionerSplit.PartitionerSplitInfo split =
-          (PartitionerSplit.PartitionerSplitInfo) splits.getSplit(test);
-
-      Assert.assertEquals("Splits entry not correct", testPartition, split.getPartition());
-    }
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void getSplitLow() throws Splits.SplitException
-  {
-    Splits splits = new PartitionerSplit();
-    splits.generateSplits(new TestGenerator());
+    long test = rand.nextInt(generated[generated.length - 1].intValue());
+    long testPartition = findSplit(generated, test);
 
     PartitionerSplit.PartitionerSplitInfo split =
-        (PartitionerSplit.PartitionerSplitInfo) splits.getSplit(0);
+        (PartitionerSplit.PartitionerSplitInfo) splits.getSplit(test);
 
-    Assert.assertEquals("Splits entry not correct", 0, split.getPartition());
+    Assert.assertEquals("Splits entry not correct", testPartition, split.getPartition());
   }
+}
 
-  @Test(expected = Splits.SplitException.class)
-  @Category(UnitTest.class)
-  public void getSplitHigh() throws Splits.SplitException
+@Test
+@Category(UnitTest.class)
+public void getSplitLow() throws Splits.SplitException
+{
+  Splits splits = new PartitionerSplit();
+  splits.generateSplits(new TestGenerator());
+
+  PartitionerSplit.PartitionerSplitInfo split =
+      (PartitionerSplit.PartitionerSplitInfo) splits.getSplit(0);
+
+  Assert.assertEquals("Splits entry not correct", 0, split.getPartition());
+}
+
+@Test(expected = Splits.SplitException.class)
+@Category(UnitTest.class)
+public void getSplitHigh() throws Splits.SplitException
+{
+  Splits splits = new PartitionerSplit();
+  splits.generateSplits(new TestGenerator());
+
+  splits.getSplit(1000);
+}
+
+@Test(expected = Splits.SplitException.class)
+@Category(UnitTest.class)
+public void getSplitNotGenerated() throws Splits.SplitException
+{
+  Splits splits = new PartitionerSplit();
+  splits.getSplit(10);
+}
+
+@Test
+@Category(UnitTest.class)
+public void getSplitLotsOfPartitions() throws Splits.SplitException
+{
+  Splits splits = new PartitionerSplit();
+  BigTestGenerator btg = new BigTestGenerator();
+  splits.generateSplits(btg);
+
+  Random rand = new Random();
+  for (int i = 0; i < 10000; i++)
   {
-    Splits splits = new PartitionerSplit();
-    splits.generateSplits(new TestGenerator());
+    long test = rand.nextInt(btg.generated[btg.generated.length - 1].intValue());
+    long testPartition = findSplit(btg.generated, test);
 
-    splits.getSplit(1000);
+    PartitionerSplit.PartitionerSplitInfo split =
+        (PartitionerSplit.PartitionerSplitInfo) splits.getSplit(test);
+
+    Assert.assertEquals("Splits entry not correct", testPartition, split.getPartition());
   }
+}
 
-  @Test(expected = Splits.SplitException.class)
-  @Category(UnitTest.class)
-  public void getSplitNotGenerated() throws Splits.SplitException
-  {
-    Splits splits = new PartitionerSplit();
-    splits.getSplit(10);
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void getSplitLotsOfPartitions() throws Splits.SplitException
-  {
-    Splits splits = new PartitionerSplit();
-    BigTestGenerator btg = new BigTestGenerator();
-    splits.generateSplits(btg);
-
-    Random rand = new Random();
-    for (int i = 0; i < 10000; i++)
-    {
-      long test = rand.nextInt(btg.generated[btg.generated.length - 1].intValue());
-      long testPartition = findSplit(btg.generated, test);
-
-      PartitionerSplit.PartitionerSplitInfo split =
-          (PartitionerSplit.PartitionerSplitInfo) splits.getSplit(test);
-
-      Assert.assertEquals("Splits entry not correct", testPartition, split.getPartition());
-    }
-  }
-
-  // Tests not needed since the methods were removed
+// Tests not needed since the methods were removed
 //  @Test
 //  @Category(UnitTest.class)
 //  public void writeSplits() throws IOException
@@ -301,71 +304,72 @@ public class PartitionerSplitTest
 //
 //  }
 
-  private long findSplit(Long[] splits, long value)
+private long findSplit(Long[] splits, long value)
+{
+  for (int i = 0; i < splits.length; i++)
   {
+    if (value <= splits[i])
+    {
+      return i;
+    }
+  }
+  return -1;
+}
+
+class TestGenerator implements SplitGenerator
+{
+  @Override
+  public SplitInfo[] getSplits()
+  {
+    PartitionerSplit.PartitionerSplitInfo splits[] = new PartitionerSplit.PartitionerSplitInfo[generated.length];
     for (int i = 0; i < splits.length; i++)
     {
-      if (value <= splits[i])
-      {
-        return i;
-      }
+      splits[i] = new PartitionerSplit.PartitionerSplitInfo(generated[i], i);
     }
-    return -1;
+
+    return splits;
   }
 
-  class TestGenerator implements SplitGenerator
+  @Override
+  public SplitInfo[] getPartitions()
   {
-    @Override
-    public SplitInfo[] getSplits()
-    {
-      PartitionerSplit.PartitionerSplitInfo splits[] = new PartitionerSplit.PartitionerSplitInfo[generated.length];
-      for (int i = 0; i < splits.length; i++)
-      {
-        splits[i] = new PartitionerSplit.PartitionerSplitInfo(generated[i], i);
-      }
-
-      return splits;
-    }
-
-    @Override
-    public SplitInfo[] getPartitions()
-    {
-      return getSplits();
-    }
+    return getSplits();
   }
+}
 
-  class BigTestGenerator implements SplitGenerator
+class BigTestGenerator implements SplitGenerator
+{
+  Long[] generated = null;
+
+  public BigTestGenerator()
   {
-    Long[] generated = null;
-    public BigTestGenerator()
+    Random rand = new Random();
+    Set<Long> raw = new TreeSet<>();
+    while (raw.size() < 10000)
     {
-      Random rand = new Random();
-      Set<Long> raw = new TreeSet<>();
-      while (raw.size() < 10000)
-      {
-        raw.add((long) rand.nextInt(Integer.MAX_VALUE));
-      }
-
-      generated = raw.toArray(new Long[raw.size()]);
+      raw.add((long) rand.nextInt(Integer.MAX_VALUE));
     }
 
-    @Override
-    public SplitInfo[] getSplits()
-    {
-      PartitionerSplit.PartitionerSplitInfo splits[] = new PartitionerSplit.PartitionerSplitInfo[generated.length];
-      for (int i = 0; i < splits.length; i++)
-      {
-        splits[i] = new PartitionerSplit.PartitionerSplitInfo(generated[i], i);
-      }
-
-      return splits;
-    }
-
-    @Override
-    public SplitInfo[] getPartitions()
-    {
-      return getSplits();
-    }
+    generated = raw.toArray(new Long[raw.size()]);
   }
+
+  @Override
+  public SplitInfo[] getSplits()
+  {
+    PartitionerSplit.PartitionerSplitInfo splits[] = new PartitionerSplit.PartitionerSplitInfo[generated.length];
+    for (int i = 0; i < splits.length; i++)
+    {
+      splits[i] = new PartitionerSplit.PartitionerSplitInfo(generated[i], i);
+    }
+
+    return splits;
+  }
+
+  @Override
+  public SplitInfo[] getPartitions()
+  {
+    return getSplits();
+  }
+}
 
 }

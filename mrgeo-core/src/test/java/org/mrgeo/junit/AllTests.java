@@ -24,6 +24,6 @@ import static org.junit.extensions.cpsuite.SuiteType.TEST_CLASSES;
 
 @RunWith(ClasspathSuite.class)
 @SuiteTypes({TEST_CLASSES})
-public class AllTests 
+public class AllTests
 {
 }

@@ -23,7 +23,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
-import org.apache.hadoop.yarn.util.SystemClock;
 import org.joda.time.format.DateTimeFormat;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.MrGeo;
@@ -32,8 +31,8 @@ import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.data.image.MrsPyramidReaderContext;
 import org.mrgeo.data.image.MrsImageReader;
+import org.mrgeo.data.image.MrsPyramidReaderContext;
 import org.mrgeo.image.ImageStats;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.MrsPyramidMetadata;
@@ -233,7 +232,7 @@ public int run(final String[] args, final Configuration conf,
   }
   catch (IOException e)
   {
-    log.error("Exception thrown {}", e);
+    log.error("Exception thrown", e);
   }
 
   return -1;
@@ -242,28 +241,28 @@ public int run(final String[] args, final Configuration conf,
 private void printFileInfo(final Path pfile, PrintStream out) throws IOException
 {
   // TODO: The following is HDFS-sepcific; needs to be re-factored
-    final FileSystem fs = pfile.getFileSystem(config);
-    final FileStatus stat = fs.getFileStatus(pfile);
+  final FileSystem fs = pfile.getFileSystem(config);
+  final FileStatus stat = fs.getFileStatus(pfile);
 
-    out.print("    date: " +
-        DateTimeFormat.shortDateTime().print(stat.getModificationTime()));
-    out.println("  size: " + human(stat.getLen()));
+  out.print("    date: " +
+      DateTimeFormat.shortDateTime().print(stat.getModificationTime()));
+  out.println("  size: " + human(stat.getLen()));
 
-    final FsPermission p = stat.getPermission();
+  final FsPermission p = stat.getPermission();
 
-    if (debug)
-    {
-      out.print("    ");
-      out.print(stat.isDir() ? "d" : "f");
-      out.print(" u: " + stat.getOwner() + " (" +
-          p.getUserAction().toString().toLowerCase() + ")");
-      out.print(" g: " + stat.getGroup() + " (" +
-          p.getGroupAction().toString().toLowerCase() + ")");
-      out.print(" o: " + "(" + p.getOtherAction().toString().toLowerCase() + ")");
+  if (debug)
+  {
+    out.print("    ");
+    out.print(stat.isDir() ? "d" : "f");
+    out.print(" u: " + stat.getOwner() + " (" +
+        p.getUserAction().toString().toLowerCase() + ")");
+    out.print(" g: " + stat.getGroup() + " (" +
+        p.getGroupAction().toString().toLowerCase() + ")");
+    out.print(" o: " + "(" + p.getOtherAction().toString().toLowerCase() + ")");
 
-      out.print(" blk: " + human(stat.getBlockSize()));
-      out.println(" repl: " + stat.getReplication());
-    }
+    out.print(" blk: " + human(stat.getBlockSize()));
+    out.println(" repl: " + stat.getReplication());
+  }
 }
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled

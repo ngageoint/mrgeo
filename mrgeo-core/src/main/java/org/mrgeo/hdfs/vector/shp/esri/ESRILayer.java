@@ -32,14 +32,33 @@ import java.io.*;
  * Provides basic reading of Shapefiles. There is some old code in place for
  * writing shapefiles and reading DBFs, but many changes have been made w/o
  * supporting or testing the code.
- *
+ * <p>
  * TODO Write unit tests and supporting DBFs and writing
- *
+ * <p>
  * This class was ported from the legacy Orion code and has no existing unit
  * tests so it should be questioned if you experience problems.
  */
 public class ESRILayer
 {
+protected ShxFile index = null;
+@SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD", justification = "used in subclasses")
+protected String mode = null; // RAF mode
+protected ShpFile shape = null;
+protected DbaseFile table = null;
+private double maxScale = Long.MAX_VALUE;
+private double minScale = 0;
+private String projection = "";
+private boolean visible = true;
+
+/**
+ * Opens an existing shapefile for read-only.
+ */
+public ESRILayer(SeekableDataInput shp, SeekableDataInput shx, SeekableDataInput dbf,
+    InputStream prj) throws FormatException, IOException
+{
+  internalLoader(shp, shx, dbf, prj, ShxFile.DEFAULT_CACHE_SIZE);
+}
+
 public static String getBaseName(String fileName)
 {
   if (fileName.length() > 4 && fileName.toLowerCase().endsWith(".shp"))
@@ -89,29 +108,6 @@ public static ESRILayer open(String fileName) throws FormatException, IOExceptio
   return open(new SeekableRaf(shpRaf), new SeekableRaf(shxRaf), new SeekableRaf(dbfRaf), prjIs);
 }
 
-protected ShxFile index = null;
-private double maxScale = Long.MAX_VALUE;
-private double minScale = 0;
-@SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD", justification = "used in subclasses")
-protected String mode = null; // RAF mode
-private String projection = "";
-
-protected ShpFile shape = null;
-
-protected DbaseFile table = null;
-
-private boolean visible = true;
-
-/**
- * Opens an existing shapefile for read-only.
- *
- */
-public ESRILayer(SeekableDataInput shp, SeekableDataInput shx, SeekableDataInput dbf,
-    InputStream prj) throws FormatException, IOException
-{
-  internalLoader(shp, shx, dbf, prj, ShxFile.DEFAULT_CACHE_SIZE);
-}
-
 public void close() throws IOException
 {
   if (shape != null)
@@ -127,6 +123,7 @@ public void close() throws IOException
     table.close();
   }
 }
+
 public int getCacheSize()
 {
   return index.getCacheSize();
@@ -212,7 +209,8 @@ public String getProjection()
   return projection;
 }
 
-@SuppressWarnings("squid:S00112") // I didn't write this code, so I'm not sure why it throws the RuntimeException.  Keeping it
+@SuppressWarnings("squid:S00112")
+// I didn't write this code, so I'm not sure why it throws the RuntimeException.  Keeping it
 public JShape getShape(int i)
 {
   if (shape != null)
@@ -241,6 +239,62 @@ public int getShapeType()
 public DbaseFile getTable()
 {
   return table;
+}
+
+public boolean isLayerVisible()
+{
+  return visible;
+}
+
+@SuppressWarnings("squid:S00112")
+// I didn't write this code, so I'm not sure why it throws the RuntimeException.  Keeping it
+public void save() throws Exception
+{
+  throw new UnsupportedOperationException();
+}
+
+public void updateExtent(boolean check) throws IOException
+{
+  JExtent groupExtent = null;
+  JExtent tempExtent = null;
+  JShape obj = null;
+  if (shape != null)
+  {
+    synchronized (shape)
+    {
+      for (int i = 0; i < shape.data.getCount(); i++)
+      {
+        obj = shape.data.getShape(i);
+        if (obj != null)
+        {
+          if (check)
+          {
+            obj.updateExtent();
+          }
+
+          tempExtent = obj.getExtent();
+          if (groupExtent == null)
+          {
+            groupExtent = (JExtent) tempExtent.clone();
+          }
+          else
+          {
+            if (tempExtent != null)
+            {
+              JExtent.union(groupExtent, tempExtent, groupExtent);
+            }
+          }
+        }
+      }
+    }
+    // set extent
+    if (shape.header.extent == null && groupExtent != null)
+    {
+      shape.header.extent = new JExtent();
+    }
+    shape.header.extent = groupExtent;
+    index.header.extent = shape.header.extent;
+  }
 }
 
 private void internalLoader(SeekableDataInput shp, SeekableDataInput shx, SeekableDataInput dbf,
@@ -282,57 +336,6 @@ private void internalLoader(SeekableDataInput shp, SeekableDataInput shx, Seekab
   if (projection == null)
   {
     projection = GDALUtils.EPSG4326();
-  }
-}
-
-public boolean isLayerVisible()
-{
-  return visible;
-}
-
-@SuppressWarnings("squid:S00112") // I didn't write this code, so I'm not sure why it throws the RuntimeException.  Keeping it
-public void save() throws Exception
-{
-  throw new UnsupportedOperationException();
-}
-
-public void updateExtent(boolean check) throws IOException
-{
-  JExtent groupExtent = null;
-  JExtent tempExtent = null;
-  JShape obj = null;
-  if (shape != null)
-  {
-    synchronized (shape)
-    {
-      for (int i = 0; i < shape.data.getCount(); i++)
-      {
-        obj = shape.data.getShape(i);
-        if (obj != null)
-        {
-          if (check)
-          {
-            obj.updateExtent();
-          }
-
-          tempExtent = obj.getExtent();
-          if (groupExtent == null)
-          {
-            groupExtent = (JExtent) tempExtent.clone();
-          }
-          else
-          {
-            if (tempExtent != null)
-              JExtent.union(groupExtent, tempExtent, groupExtent);
-          }
-        }
-      }
-    }
-    // set extent
-    if (shape.header.extent == null && groupExtent != null)
-      shape.header.extent = new JExtent();
-    shape.header.extent = groupExtent;
-    index.header.extent = shape.header.extent;
   }
 }
 }
