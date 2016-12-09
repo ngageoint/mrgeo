@@ -563,8 +563,8 @@ object IngestImage extends MrGeoDriver with Externalizable {
           logDebug("  tile height:  " + h)
         }
 
-        // TODO:  Figure out chunking...
-        val scaled = GDALUtils.createEmptyMemoryRaster(src, w.toInt, h.toInt)
+        val scaled = GDALUtils.createEmptyDiskBasedRaster(src, w.toInt, h.toInt)
+
         if (scaled == null) {
           throw new java.lang.OutOfMemoryError(
             s"Not enough system memory available to create a memory-based image of size $w x $h with $bands bands for reprojecting $image to WGS84 at zoom $zoom")
@@ -612,7 +612,6 @@ object IngestImage extends MrGeoDriver with Externalizable {
 
         // close the image
         GDALUtils.close(src)
-
 
         var dty:Int = 0
         while (dty < tiles.height.toInt) {

@@ -47,7 +47,8 @@ private MrGeoProperties()
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled
 @SuppressFBWarnings(value = {"DE_MIGHT_IGNORE",
-    "PATH_TRAVERSAL_IN"}, justification = "Ignored exception causes empty properties object, which is fine, false positive, user can't control the path")
+    "PATH_TRAVERSAL_IN"}, justification = "Ignored exception causes empty properties object, which is fine, " +
+    "false positive, user can't control the path")
 public static synchronized Properties getInstance()
 {
   if (properties == null)
