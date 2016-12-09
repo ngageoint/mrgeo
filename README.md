@@ -1,7 +1,7 @@
-||Apache|||||
-|:---|:---:|:---:|:---:|:---:|:---:|
-|**Version**|2.4.0|2.4.1|2.5.2|2.6.0|2.7.1|
-|**Status**|[![Build Status](https://jenkins.dgis-dev.com/buildStatus/icon?job=mrgeo-opensource-apache240)](https://jenkins.dgis-dev.com/job/mrgeo-opensource-apache240)|[![Build Status](https://jenkins.dgis-dev.com/buildStatus/icon?job=mrgeo-opensource-apache241)](https://jenkins.dgis-dev.com/job/mrgeo-opensource-apache241)|[![Build Status](https://jenkins.dgis-dev.com/buildStatus/icon?job=mrgeo-opensource-apache252)](https://jenkins.dgis-dev.com/job/mrgeo-opensource-apache252)|[![Build Status](https://jenkins.dgis-dev.com/buildStatus/icon?job=mrgeo-opensource-apache260)](https://jenkins.dgis-dev.com/job/mrgeo-opensource-apache260)|[![Build Status](https://jenkins.dgis-dev.com/buildStatus/icon?job=mrgeo-opensource-apache271)](https://jenkins.dgis-dev.com/job/mrgeo-opensource-apache271)
+||Apache||
+|:---|:---:|:---:|
+|**Version**|2.6.0|2.7.1|
+|**Status**|[![Build Status](https://jenkins.dgis-dev.com/buildStatus/icon?job=mrgeo-opensource-apache260)](https://jenkins.dgis-dev.com/job/mrgeo-opensource-apache260)|[![Build Status](https://jenkins.dgis-dev.com/buildStatus/icon?job=mrgeo-opensource-apache271)](https://jenkins.dgis-dev.com/job/mrgeo-opensource-apache271)
 
 ||CDH|||
 |:---|:---:|:---:|:---:|
@@ -10,13 +10,13 @@
 
 ||RPM|pyMrGeo|
 |:---|:---:|:---:|
-|**Version**|1.1.0|0.0.4|
+|**Version**|1.1.0|0.0.7|
 |**Status**|[![Build Status](https://jenkins.dgis-dev.com/buildStatus/icon?job=mrgeo-opensource-aws-rpm)](https://jenkins.dgis-dev.com/job/mrgeo-opensource-aws-rpm)|[![Build Status](https://jenkins.dgis-dev.com/buildStatus/icon?job=pymrgeo-build)](https://jenkins.dgis-dev.com/job/pymrgeo-build)
 
-||Amazon EMR|
-|:---|:---:|
-|**Version**|4.5.0|
-|**Status**|[![Build Status](https://jenkins.dgis-dev.com/buildStatus/icon?job=mrgeo-opensource-aws)](https://jenkins.dgis-dev.com/job/mrgeo-opensource-aws)
+||Amazon EMR||
+|:---|:---:|:---:|
+|**Version**|4.7.1|5.0.0|
+|**Status**|[![Build Status](https://jenkins.dgis-dev.com/buildStatus/icon?job=mrgeo-opensource-emr4.7.1)](https://jenkins.dgis-dev.com/job/mrgeo-opensource-emr4.7.1)|[![Build Status](https://jenkins.dgis-dev.com/buildStatus/icon?job=mrgeo-opensource-emr5.0.0)](https://jenkins.dgis-dev.com/job/mrgeo-opensource-emr5.0.0)
 
 ##Origin
 

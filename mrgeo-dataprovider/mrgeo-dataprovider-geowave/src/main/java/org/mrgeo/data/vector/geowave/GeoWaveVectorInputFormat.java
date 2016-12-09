@@ -1,6 +1,7 @@
 package org.mrgeo.data.vector.geowave;
 
 import mil.nga.giat.geowave.mapreduce.input.GeoWaveInputFormat;
+import org.apache.hadoop.mapreduce.*;
 import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.geometry.Geometry;
 import org.slf4j.Logger;
@@ -37,7 +38,7 @@ public List<InputSplit> getSplits(JobContext context) throws IOException, Interr
 
 @Override
 public RecordReader<FeatureIdWritable, Geometry> createRecordReader(InputSplit split,
-    TaskAttemptContext context) throws IOException, InterruptedException
+                                                                    TaskAttemptContext context) throws IOException, InterruptedException
 {
   RecordReader delegateReader = delegate.createRecordReader(split, context);
   RecordReader<FeatureIdWritable, Geometry> result = new GeoWaveVectorRecordReader(delegateReader);
