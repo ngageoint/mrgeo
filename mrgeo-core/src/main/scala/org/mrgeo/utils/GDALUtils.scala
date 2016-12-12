@@ -415,7 +415,7 @@ object GDALUtils extends Logging {
     }
   }
 
-  @SuppressFBWarnings(value = Array("PATH_TRAVERSAL_OUT"), justification = "Only deletes a valid GDAL file the user has permission to load and delete")
+  @SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "Only deletes a valid GDAL file the user has permission to load and delete")
   def delete(image:Dataset): Unit = {
     val files = image.GetFileList
 
