@@ -415,6 +415,7 @@ object GDALUtils extends Logging {
     }
   }
 
+  @SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "Only deletes the temp file created in createEmptyDiskBasedRaster()")
   def delete(image:Dataset): Unit = {
     val files = image.GetFileList
 
