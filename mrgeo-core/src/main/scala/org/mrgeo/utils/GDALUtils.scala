@@ -65,6 +65,7 @@ class GDALException extends IOException {
 
 @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
 @SuppressFBWarnings(value = Array("PZLA_PREFER_ZERO_LENGTH_ARRAYS"), justification = "api")
+@SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "delete() Only deletes a valid GDAL file the user has permission to load and delete")
 object GDALUtils extends Logging {
 
   val EPSG4326:String = osrConstants.SRS_WKT_WGS84
@@ -415,7 +416,6 @@ object GDALUtils extends Logging {
     }
   }
 
-  @SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "Only deletes a valid GDAL file the user has permission to load and delete")
   def delete(image:Dataset): Unit = {
     val files = image.GetFileList
 
