@@ -421,7 +421,6 @@ object GDALUtils extends Logging {
 
     image.delete()
 
-    // unlink the file from memory if is has been streamed
     for (f <- files) {
       f match {
         case file:String =>
