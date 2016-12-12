@@ -196,7 +196,7 @@ object GDALUtils extends Logging {
   }
 
   def createEmptyDiskBasedRaster(width:Int, height:Int, bands:Int, datatype:Int,
-                              nodatas:Array[Double] = null):Dataset = {
+                                 nodatas:Array[Double] = null):Dataset = {
 
     val driver:Driver = gdal.GetDriverByName("GTiff")
 
@@ -398,7 +398,10 @@ object GDALUtils extends Logging {
   def close(image:Dataset) {
     val files = image.GetFileList
 
-    image.delete()
+    val driver = image.GetDriver()
+    if ("MEM".equals(driver.getShortName)) {
+      image.delete()
+    }
 
     // unlink the file from memory if is has been streamed
     for (f <- files) {
@@ -410,6 +413,23 @@ object GDALUtils extends Logging {
         case _ =>
       }
     }
+  }
+
+  def delete(image:Dataset): Unit = {
+    val files = image.GetFileList
+
+    image.delete()
+
+    // unlink the file from memory if is has been streamed
+    for (f <- files) {
+      f match {
+        case file:String =>
+          val f = new File(file)
+          f.deleteOnExit()
+        case _ =>
+      }
+    }
+
   }
 
 
