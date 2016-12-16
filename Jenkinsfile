@@ -1,4 +1,4 @@
-node ('sl62'){
+node ('mrgeo'){
   // ---------------------------------------------
   // we want a clean workspace     
   stage 'Clear workspace'         
@@ -12,14 +12,15 @@ node ('sl62'){
   // ---------------------------------------------
   // build using maven     
   stage 'Build'         
-  def mvnHome = "${tool name: 'M3'}"         
+  def mvnHome = "${tool name: 'Maven'}"         
   echo "MVN_HOME: ${mvnHome}"
   
-  withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: '4d7ce3c3-2cba-4031-9ef0-df4a1926bbe5', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME']]) {
+  withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: '<TO_BE_ADDED>', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME']]) {
       
   // set up local settings.xml for maven build
-  sh '''set +x
-cat <<-EOF> /jslave/workspace/DigitalGlobe/MrGeo/mrgeo-pipeline/maven-settings.xml
+  sh '''
+  set +x
+cat <<-EOF> ${WORKSPACE}/maven-settings.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
 <pluginGroups></pluginGroups>
@@ -55,19 +56,16 @@ EOF'''
   # Check for SNAPSHOT, and add the BUILD as part of the version name
   if [[ ${VERSION} == *"-SNAPSHOT" ]]; then
     NEWVERSION=${VERSION%"-SNAPSHOT"}-${BUILD-SNAPSHOT}
-    DEPLOY_REPO_URL="deploy.repository.url=https://nexus.devops.geointservices.io/content/repositories/DG-Releases"
   else
     NEWVERSION=${VERSION}-${BUILD}
-    DEPLOY_REPO_URL="deploy.repository.url=https://nexus.devops.geointservices.io/content/repositories/DG-Releases"
   fi
   echo "NEWVERSION" ${NEWVERSION}
-  echo "DEPLOY_REPO_URL"=${DEPLOY_REPO_URL}
 
   # set mvn version, build, revert mvn version
   ${mvnHome}/bin/mvn -Dmodules=all versions:set -DnewVersion=${NEWVERSION}
-  ${mvnHome}/bin/mvn -e -s /jslave/workspace/DigitalGlobe/MrGeo/mrgeo-pipeline/maven-settings.xml -P${BUILD_VERSION} -Pskip-all-tests  -Dmodules=all deploy -U -D${DEPLOY_REPO_URL}
-  ${mvnHome}/bin/mvn versions:revert'''
- 
+  ${mvnHome}/bin/mvn -e -s ${WORKSPACE}/maven-settings.xml -P${BUILD_VERSION} -Pskip-all-tests  -Dmodules=allU
+  ${mvnHome}/bin/mvn versions:revert
+  '''
 }
 
   // ---------------------------------------------
@@ -78,15 +76,17 @@ EOF'''
   // ---------------------------------------------
   //generate rpm
   stage 'Package MrGeo'
-  sh '''gem install bundler;
-  echo "source 'https://rubygems.org'" > Gemfile
-  echo "gem 'fpm'" >> Gemfile
-  bundle install --path=vendor/bundle;
-  bundle exec which fpm;
-  bundle exec fpm --version;'''
+  //sh '''
+  #gem install bundler;
+  #echo "source 'https://rubygems.org'" > Gemfile
+  #echo "gem 'fpm'" >> Gemfile
+  #bundle install --path=vendor/bundle;
+  #bundle exec which fpm;
+  #bundle exec fpm --version;'''
 
-  sh '''ROOT_WORKSPACE=/jslave/workspace/DigitalGlobe/MrGeo
-  PARENT_TARGET_DIR=${ROOT_WORKSPACE}/mrgeo-pipeline/distribution/target
+  sh '''
+  #ROOT_WORKSPACE=/jslave/workspace/DigitalGlobe/MrGeo
+  PARENT_TARGET_DIR=${WORKSPACE}/mrgeo-pipeline/distribution/target
   MRGEO_TAR=$(find ${PARENT_TARGET_DIR} -name "mrgeo-*.tar.gz")
   
   mkdir -p ${PARENT_TARGET_DIR}/rpm-creation
@@ -132,10 +132,10 @@ EOF'''
   sh '''#!/bin/bash
 
   # Set directory var
-  ROOT_WORKSPACE=/jslave/workspace/DigitalGlobe/MrGeo
-  MRGEO_DIR=${ROOT_WORKSPACE}/mrgeo-pipeline
+  #ROOT_WORKSPACE=/jslave/workspace/DigitalGlobe/MrGeo
+  MRGEO_DIR=${WORKSPACE}/mrgeo-pipeline
   PYPI_DIR=${MRGEO_DIR}/mrgeo-python/src/main/python
-  PARENT_TARGET_DIR=${ROOT_WORKSPACE}/mrgeo-pipeline/distribution/target
+  PARENT_TARGET_DIR=${WORKSPACE}/mrgeo-pipeline/distribution/target
   
   PY_VERSION=0.0.7
 
@@ -148,61 +148,4 @@ EOF'''
   bundle exec fpm -s dir -t rpm -n pymrgeo-${PY_VERSION}.rpm -p pymrgeo-${PY_VERSION}.rpm --prefix /usr/lib/python2.7/dist-packages --directories ./pymrgeo ./pymrgeo
   
   mv ${PYPI_DIR}/pymrgeo-${PY_VERSION}.rpm ${PARENT_TARGET_DIR}/'''
-
-  // ---------------------------------------------
-  // sonar
-  stage 'Sonar'
-  def sonarUrl = "https://sonar.geointservices.io"         
-  def projectKey = "mrgeo:mrgeo"         
-  def projectName = "mrgeo:mrgeo"         
-  withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: '4d7ce3c3-2cba-4031-9ef0-df4a1926bbe5', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME']]) {
-      sh "${mvnHome}/bin/mvn clean verify sonar:sonar -Dsonar.host.url=${sonarUrl} -Dsonar.projectKey=${projectKey} -Dsonar.projectName=${projectName} -Dsonar.login=${env.USERNAME} -Dsonar.password=${env.PASSWORD}"
-      }
-  
-  // ---------------------------------------------
-  // fortify
-  stage 'Fortify MrGeo'
-  def fortifyJavaName = "mrgeo-java"
-  sh "/opt/hp_fortify_sca/bin/sourceanalyzer -64 -b ${env.JOB_NAME} -clean"
-  sh "/opt/hp_fortify_sca/bin/sourceanalyzer -64 -b ${env.JOB_NAME}       -Xmx3000M `find ./ -name '*.java'`"          
-  sh "/opt/hp_fortify_sca/bin/sourceanalyzer -b ${env.JOB_NAME} -scan -Xmx4G -64 -f fortifyResults-${fortifyJavaName}.fpr"
-  withCredentials([[$class : 'StringBinding', credentialsId   : '2fa66d37-7265-4bf5-aa8a-696f032078e0', variable: 'API_KEY']]) {
-    sh "/bin/curl -v --insecure -H 'Accept: application/json' -X POST --form file=@fortifyResults-${fortifyJavaName}.fpr https://threadfix.devops.geointservices.io/rest/applications/14/upload?apiKey={$API_KEY}"
-    }
-  
-  // ---------------------------------------------  
-  // fortify
-  stage 'Fortify pyMrGeo'
-  def fortifyPythonName = "pymrgeo-python"
-  sh "/opt/hp_fortify_sca/bin/sourceanalyzer -b ${env.JOB_NAME} `find ./ -name '*.py'`"
-  sh "/opt/hp_fortify_sca/bin/sourceanalyzer -b ${env.JOB_NAME} -scan -Xmx4G -64 -f fortifyResults-${fortifyPythonName}.fpr"
-  withCredentials([[$class : 'StringBinding', credentialsId   : '2fa66d37-7265-4bf5-aa8a-696f032078e0', variable: 'API_KEY']]) {
-    sh "/bin/curl -v --insecure -H 'Accept: application/json' -X POST --form file=@fortifyResults-${fortifyPythonName}.fpr https://threadfix.devops.geointservices.io/rest/applications/14/upload?apiKey={$API_KEY}"
-    }
-
-  // ---------------------------------------------
-  //owasp
-  stage 'OWASP'
-  sh "/opt/dependency-check/bin/dependency-check.sh --project '${env.JOB_NAME}' --scan '.' --format 'XML' -disableBundleAudit --enableExperimental"
-  withCredentials([[$class : 'StringBinding', credentialsId   : '2fa66d37-7265-4bf5-aa8a-696f032078e0', variable: 'API_KEY']]) {
-    sh "/bin/curl -v --insecure -H 'Accept: application/json' -X POST --form file=@dependency-check-report.xml https://threadfix.devops.geointservices.io/rest/applications/14/upload?apiKey={$API_KEY}"
-    }
- 
-  // ---------------------------------------------
-  // publish to nexus
-  stage 'Publish'
-  withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: '4d7ce3c3-2cba-4031-9ef0-df4a1926bbe5', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME']]) {
-  
-  sh '''set +x
-  ROOT_WORKSPACE=/jslave/workspace/DigitalGlobe/MrGeo
-  PARENT_TARGET_DIR=${ROOT_WORKSPACE}/mrgeo-pipeline/distribution/target
-  
-  MRGEO_RPM=$(find ${PARENT_TARGET_DIR} -name "mrgeo*.rpm")
-  MRGEO_TAR=$(find ${PARENT_TARGET_DIR} -name "mrgeo*.tar.gz")
-  PYMRGEO_RPM=$(find ${PARENT_TARGET_DIR} -name "pymrgeo*.rpm")
-  
-  curl -v -u ${USERNAME}:${PASSWORD} --upload-file ${MRGEO_RPM} https://nexus.devops.geointservices.io/content/repositories/DG-Releases/org/mrgeo/
-  curl -v -u ${USERNAME}:${PASSWORD} --upload-file ${MRGEO_TAR} https://nexus.devops.geointservices.io/content/repositories/DG-Releases/org/mrgeo/
-  curl -v -u ${USERNAME}:${PASSWORD} --upload-file ${PYMRGEO_RPM} https://nexus.devops.geointservices.io/content/repositories/DG-Releases/org/mrgeo/'''
-  }
 }

@@ -65,6 +65,7 @@ class GDALException extends IOException {
 
 @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
 @SuppressFBWarnings(value = Array("PZLA_PREFER_ZERO_LENGTH_ARRAYS"), justification = "api")
+@SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "delete() Only deletes a valid GDAL file the user has permission to load and delete")
 object GDALUtils extends Logging {
 
   val EPSG4326:String = osrConstants.SRS_WKT_WGS84
@@ -144,6 +145,69 @@ object GDALUtils extends Logging {
     val driver:Driver = gdal.GetDriverByName("MEM")
 
     val dataset = driver.Create("InMem", width, height, bands, datatype)
+
+    if (dataset != null) {
+      if (nodatas != null) {
+        var i:Int = 1
+        while (i <= dataset.getRasterCount) {
+          val nodata:Double = if (i < nodatas.length) {
+            nodatas(i - 1)
+          }
+          else {
+            nodatas(nodatas.length - 1)
+          }
+          val band:Band = dataset.GetRasterBand(i)
+          band.Fill(nodata)
+          band.SetNoDataValue(nodata)
+          i += 1
+        }
+      }
+      return dataset
+    }
+
+    null
+  }
+
+  def createEmptyDiskBasedRaster(src:Dataset, width:Int, height:Int):Dataset = {
+
+    val bands:Int = src.getRasterCount
+    var datatype:Int = -1
+
+    val nodatas = Array.newBuilder[Double]
+
+    val nodata = Array.ofDim[java.lang.Double](1)
+    var i:Int = 1
+    while (i <= src.GetRasterCount()) {
+      val band:Band = src.GetRasterBand(i)
+      if (datatype < 0) {
+        datatype = band.getDataType
+      }
+
+      band.GetNoDataValue(nodata)
+      nodatas += (if (nodata(0) == null) {
+        java.lang.Double.NaN
+      }
+      else {
+        nodata(0)
+      })
+      i += 1
+    }
+
+    createEmptyDiskBasedRaster(width, height, bands, datatype, nodatas.result())
+  }
+
+  def createEmptyDiskBasedRaster(width:Int, height:Int, bands:Int, datatype:Int,
+                                 nodatas:Array[Double] = null):Dataset = {
+
+    val driver:Driver = gdal.GetDriverByName("GTiff")
+
+    val f = File.createTempFile("gdal-tmp-", ".tif")
+    val filename = f.getCanonicalPath
+    if (!f.delete()) {
+      throw new IOException("Error creating tmp file")
+    }
+
+    val dataset = driver.Create(filename, width, height, bands, datatype)
 
     if (dataset != null) {
       if (nodatas != null) {
@@ -335,7 +399,10 @@ object GDALUtils extends Logging {
   def close(image:Dataset) {
     val files = image.GetFileList
 
-    image.delete()
+    val driver = image.GetDriver()
+    if ("MEM".equals(driver.getShortName)) {
+      image.delete()
+    }
 
     // unlink the file from memory if is has been streamed
     for (f <- files) {
@@ -347,6 +414,22 @@ object GDALUtils extends Logging {
         case _ =>
       }
     }
+  }
+
+  def delete(image:Dataset): Unit = {
+    val files = image.GetFileList
+
+    image.delete()
+
+    for (f <- files) {
+      f match {
+        case file:String =>
+          val f = new File(file)
+          f.deleteOnExit()
+        case _ =>
+      }
+    }
+
   }
 
 

@@ -3474,6 +3474,12 @@
       <groupId>org.jasypt</groupId>
       <artifactId>jasypt</artifactId>
     </dependency>
+        <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+
   </dependencies>
   <!-- move me back to the top of this POM!!!  -->
   <licenses>
