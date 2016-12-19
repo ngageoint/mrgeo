@@ -14,8 +14,7 @@
      ~ See the License for the specific language governing permissions and limitations under the License.
      ~
 -->
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.mrgeo</groupId>
   <artifactId>mrgeo</artifactId>
@@ -434,7 +433,7 @@
           <artifactId>cobertura-maven-plugin</artifactId>
           <version>${cobertura-maven.version}</version>
           <configuration>
-            <check/>
+            <check />
             <formats>
               <format>html</format>
               <format>xml</format>
@@ -765,7 +764,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.9.0</spark.version>
         <final.classifier>cdh5.9.0</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <dependency>
@@ -783,7 +782,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.9.0</spark.version>
         <final.classifier>cdh5.9.0-mr1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -807,7 +806,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.8.2</spark.version>
         <final.classifier>cdh5.8.2</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <dependency>
@@ -825,7 +824,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.8.2</spark.version>
         <final.classifier>cdh5.8.2-mr1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -849,7 +848,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.8.0</spark.version>
         <final.classifier>cdh5.8.0</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <dependency>
@@ -867,7 +866,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.8.0</spark.version>
         <final.classifier>cdh5.8.0-mr1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -891,7 +890,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.7.1</spark.version>
         <final.classifier>cdh5.7.1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <dependency>
@@ -909,7 +908,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.7.1</spark.version>
         <final.classifier>cdh5.7.1-mr1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -933,7 +932,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.7.0</spark.version>
         <final.classifier>cdh5.7.0</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <dependency>
@@ -951,7 +950,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.7.0</spark.version>
         <final.classifier>cdh5.7.0-mr1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -975,7 +974,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.5.0-cdh5.6.0</spark.version>
         <final.classifier>cdh5.6.0</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <dependency>
@@ -993,7 +992,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.5.0-cdh5.6.0</spark.version>
         <final.classifier>cdh5.6.0-mr1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1017,7 +1016,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.5.0-cdh5.5.2</spark.version>
         <final.classifier>cdh5.5.2</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <dependency>
@@ -1035,7 +1034,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.5.0-cdh5.5.1</spark.version>
         <final.classifier>cdh5.5.2-mr1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1059,7 +1058,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.5.0-cdh5.5.1</spark.version>
         <final.classifier>cdh5.5.1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <dependency>
@@ -1077,7 +1076,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.5.0-cdh5.5.1</spark.version>
         <final.classifier>cdh5.5.1-mr1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1101,7 +1100,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.5.0-cdh5.5.0</spark.version>
         <final.classifier>cdh5.5.0</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <dependency>
@@ -1119,7 +1118,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.5.0-cdh5.5.0</spark.version>
         <final.classifier>cdh5.5.0-mr1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1143,7 +1142,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.8</spark.version>
         <final.classifier>cdh5.4.8</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
     </profile>
     <profile>
@@ -1155,7 +1154,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.8</spark.version>
         <final.classifier>cdh5.4.8-mr1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1175,7 +1174,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.7</spark.version>
         <final.classifier>cdh5.4.7</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
     </profile>
     <profile>
@@ -1187,7 +1186,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.7</spark.version>
         <final.classifier>cdh5.4.7-mr1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1207,9 +1206,9 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.5</spark.version>
         <final.classifier>cdh5.4.5</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
-      <dependencies/>
+      <dependencies />
     </profile>
     <profile>
       <id>cdh545</id>
@@ -1220,7 +1219,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.5</spark.version>
         <final.classifier>cdh5.4.5-mr1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1240,7 +1239,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.4</spark.version>
         <final.classifier>cdh5.4.4</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
     </profile>
     <profile>
@@ -1252,7 +1251,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.4</spark.version>
         <final.classifier>cdh5.4.4-mr1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1272,7 +1271,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.3</spark.version>
         <final.classifier>cdh5.4.3</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
     </profile>
     <profile>
@@ -1284,7 +1283,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.3</spark.version>
         <final.classifier>cdh5.4.3-mr1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1304,7 +1303,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.2</spark.version>
         <final.classifier>cdh5.4.2</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
     </profile>
     <profile>
@@ -1316,7 +1315,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.2</spark.version>
         <final.classifier>cdh5.4.2-mr1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1336,7 +1335,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.1</spark.version>
         <final.classifier>cdh5.4.1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
     </profile>
     <profile>
@@ -1348,7 +1347,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.1</spark.version>
         <final.classifier>cdh5.4.1-mr1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1368,7 +1367,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.0</spark.version>
         <final.classifier>cdh5.4.0</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
     </profile>
     <profile>
@@ -1380,7 +1379,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.0</spark.version>
         <final.classifier>cdh5.4.0-mr1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1400,7 +1399,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.3</spark.version>
         <final.classifier>cdh5.3.3</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
     </profile>
     <profile>
@@ -1412,7 +1411,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.3</spark.version>
         <final.classifier>cdh5.3.3-mr1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1432,7 +1431,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.2</spark.version>
         <final.classifier>cdh5.3.2</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <dependency>
@@ -1450,7 +1449,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.2</spark.version>
         <final.classifier>cdh5.3.2-mr1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <dependency>
@@ -1478,7 +1477,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.1</spark.version>
         <final.classifier>cdh5.3.1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <dependency>
@@ -1496,7 +1495,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.1</spark.version>
         <final.classifier>cdh5.3.1-mr1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <dependency>
@@ -1524,7 +1523,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.0</spark.version>
         <final.classifier>cdh5.3.0</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <dependency>
@@ -1542,7 +1541,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.0</spark.version>
         <final.classifier>cdh5.3.0-mr1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <dependency>
@@ -1570,7 +1569,7 @@
         <protobuf.version>2.4.1</protobuf.version>
         <spark.version>1.6.1</spark.version>
         <final.classifier>2.2.0</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1590,7 +1589,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.1</spark.version>
         <final.classifier>2.3.0</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1610,7 +1609,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.1</spark.version>
         <final.classifier>2.4.0</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1630,7 +1629,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.1</spark.version>
         <final.classifier>2.4.1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1650,7 +1649,7 @@
         <protobuf.version>2.4.1</protobuf.version>
         <spark.version>1.6.1</spark.version>
         <final.classifier>2.5.0</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1670,7 +1669,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.1</spark.version>
         <final.classifier>2.5.1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1690,7 +1689,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.1</spark.version>
         <final.classifier>2.5.2</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1710,7 +1709,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.1</spark.version>
         <final.classifier>2.6.0</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1730,7 +1729,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.1</spark.version>
         <final.classifier>2.7.1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1750,7 +1749,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.1</spark.version>
         <final.classifier>2.7.2</final.classifier>
-        <release.arguments/>
+        <release.arguments />
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1781,7 +1780,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.10</slf4j.version>
         <final.classifier>emr5.0.0</final.classifier>
-        <release.arguments/>
+        <release.arguments />
         <gdal.version>1.11.1</gdal.version>
         <spark.version>2.0.0</spark.version>
       </properties>
@@ -1809,7 +1808,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.10</slf4j.version>
         <final.classifier>emr4.7.2</final.classifier>
-        <release.arguments/>
+        <release.arguments />
         <gdal.version>1.11.1</gdal.version>
         <spark.version>1.6.2</spark.version>
       </properties>
@@ -1837,7 +1836,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.10</slf4j.version>
         <final.classifier>emr4.7.1</final.classifier>
-        <release.arguments/>
+        <release.arguments />
         <gdal.version>1.11.1</gdal.version>
         <spark.version>1.6.1</spark.version>
       </properties>
@@ -1865,7 +1864,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.10</slf4j.version>
         <final.classifier>emr4.7.0</final.classifier>
-        <release.arguments/>
+        <release.arguments />
         <gdal.version>1.11.1</gdal.version>
         <spark.version>1.6.1</spark.version>
       </properties>
@@ -1893,7 +1892,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.10</slf4j.version>
         <final.classifier>emr4.6.0</final.classifier>
-        <release.arguments/>
+        <release.arguments />
         <gdal.version>1.11.1</gdal.version>
         <spark.version>1.6.1</spark.version>
       </properties>
@@ -1921,7 +1920,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.10</slf4j.version>
         <final.classifier>emr4.5.0</final.classifier>
-        <release.arguments/>
+        <release.arguments />
         <gdal.version>1.11.1</gdal.version>
         <spark.version>1.6.1</spark.version>
       </properties>
@@ -1949,7 +1948,7 @@
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.10</slf4j.version>
         <final.classifier>emr4.4.0</final.classifier>
-        <release.arguments/>
+        <release.arguments />
         <gdal.version>1.11.1</gdal.version>
         <spark.version>1.6.1</spark.version>
       </properties>
@@ -2033,6 +2032,13 @@
       <properties>
         <hadoop.scope>compile</hadoop.scope>
       </properties>
+      <dependencies>
+        <dependency>
+          <groupId>javax.servlet</groupId>
+          <artifactId>javax.servlet-api</artifactId>
+          <version>${servlet-api.version}</version>
+        </dependency>
+      </dependencies>
     </profile>
     <!--
          | Profiles defining the various testing options.  The template for these are:
@@ -3474,12 +3480,11 @@
       <groupId>org.jasypt</groupId>
       <artifactId>jasypt</artifactId>
     </dependency>
-        <dependency>
+    <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
       <scope>test</scope>
     </dependency>
-
   </dependencies>
   <!-- move me back to the top of this POM!!!  -->
   <licenses>
