@@ -88,7 +88,7 @@ class MrGeo(object):
                 self._localGateway = True
             else:
                 self.gateway = pysparkContext._gateway
-                self.gateway_client = self.gateway.gateway_client
+                self.gateway_client = pysparkContext._jsc._gateway_client
                 self.sparkContext = pysparkContext._jsc.sc()
 
             self._create_job()
