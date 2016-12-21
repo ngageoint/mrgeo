@@ -32,8 +32,14 @@ object CropExactMapOp extends MapOpRegistrar {
   def create(raster:RasterMapOp, w:Double, s:Double, e:Double, n:Double):MapOp =
     new CropExactMapOp(Some(raster), w, s, e, n)
 
+  def create(raster:RasterMapOp, w:Double, s:Double, e:Double, n:Double, zoom:Int):MapOp =
+    new CropExactMapOp(Some(raster), w, s, e, n, zoom)
+
   def create(raster:RasterMapOp, rasterForBounds:RasterMapOp):MapOp =
     new CropExactMapOp(Some(raster), Some(rasterForBounds))
+
+  def create(raster:RasterMapOp, rasterForBounds:RasterMapOp, zoom:Int):MapOp =
+    new CropExactMapOp(Some(raster), Some(rasterForBounds), zoom)
 
   override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new CropExactMapOp(node, variables)
@@ -118,6 +124,15 @@ class CropExactMapOp extends CropMapOp {
     this()
 
     cropBounds = new Bounds(w, s, e, n)
+    requestedZoom = None
+    setInputMapOp(raster)
+  }
+
+  private[mapalgebra] def this(raster:Option[RasterMapOp], w:Double, s:Double, e:Double, n:Double, zoom:Int) = {
+    this()
+
+    cropBounds = new Bounds(w, s, e, n)
+    requestedZoom = Some(zoom)
     setInputMapOp(raster)
   }
 
@@ -125,6 +140,15 @@ class CropExactMapOp extends CropMapOp {
     this()
 
     rasterForBoundsMapOp = rasterForBounds
+    requestedZoom = None
+    setInputMapOp(raster)
+  }
+
+  private[mapalgebra] def this(raster:Option[RasterMapOp], rasterForBounds:Option[RasterMapOp], zoom:Int) = {
+    this()
+
+    rasterForBoundsMapOp = rasterForBounds
+    requestedZoom = Some(zoom)
     setInputMapOp(raster)
   }
 
