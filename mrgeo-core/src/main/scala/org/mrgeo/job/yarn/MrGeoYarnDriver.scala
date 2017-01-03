@@ -109,6 +109,7 @@ class MrGeoYarnDriver {
       // For Spark 1.6.0, passing --num-executors no longer works. Instead, you
       // have to set the spark.executor.instances configuration setting.
       conf.set("spark.executor.instances", job.executors.toString)
+      conf.set("spark.executor.cores", job.cores.toString)
       args += "--num-executors"
       //args += executors.toString
       args += job.executors.toString
