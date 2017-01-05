@@ -190,7 +190,7 @@ def main(argv):
     red_refl = ingest_reflectance_image(mrgeo, filtered_metadata, 4, "landsat-red-refl" + output_postfix)
     nir_refl = ingest_reflectance_image(mrgeo, filtered_metadata, 5, "landsat-nir-refl" + output_postfix)
 
-    ndvi = (nir_refl - red_refl) / (nir_refl + nir_refl)
+    ndvi = (nir_refl - red_refl) / (nir_refl + red_refl)
     ndvi.save('landsat-ndvi' + output_postfix)
 
     mrgeo.stop()
