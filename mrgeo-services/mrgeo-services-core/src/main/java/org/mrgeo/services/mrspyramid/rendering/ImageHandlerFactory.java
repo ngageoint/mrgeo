@@ -171,7 +171,7 @@ private static void addFormatHandlers(final Map<String, Class<?>> handlers, fina
   catch (final InstantiationException | InvocationTargetException |
       IllegalArgumentException | NoSuchMethodException | SecurityException | IllegalAccessException e)
   {
-    log.error("Exception thrown", e);
+    log.error("Exception thrown while processing class " + clazz.getName(), e);
   }
 }
 

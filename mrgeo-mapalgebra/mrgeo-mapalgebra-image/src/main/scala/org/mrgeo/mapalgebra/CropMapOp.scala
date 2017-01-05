@@ -37,8 +37,14 @@ object CropMapOp extends MapOpRegistrar {
   def create(raster:RasterMapOp, w:Double, s:Double, e:Double, n:Double):MapOp =
     new CropMapOp(Some(raster), w, s, e, n)
 
+  def create(raster:RasterMapOp, w:Double, s:Double, e:Double, n:Double, zoom:Int):MapOp =
+    new CropMapOp(Some(raster), w, s, e, n, zoom)
+
   def create(raster:RasterMapOp, rasterForBounds:RasterMapOp):MapOp =
     new CropMapOp(Some(raster), Some(rasterForBounds))
+
+  def create(raster:RasterMapOp, rasterForBounds:RasterMapOp, zoom:Int):MapOp =
+    new CropMapOp(Some(raster), Some(rasterForBounds), zoom)
 
   override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new CropMapOp(node, variables)
@@ -48,6 +54,7 @@ object CropMapOp extends MapOpRegistrar {
 class CropMapOp extends RasterMapOp with Externalizable {
   protected var rasterForBoundsMapOp:Option[RasterMapOp] = None
   protected var bounds:TileBounds = null
+  protected var requestedZoom:Option[Int] = None
   protected var cropBounds:Bounds = null
   private var rasterRDD:Option[RasterRDD] = None
   private var inputMapOp:Option[RasterMapOp] = None
@@ -78,9 +85,9 @@ class CropMapOp extends RasterMapOp with Externalizable {
     }
     val meta = input.metadata() getOrElse
                (throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
-    val rdd = input.rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + inputMapOp.getClass.getName))
+    val zoom = requestedZoom.getOrElse(meta.getMaxZoomLevel)
+    val rdd = input.rdd(zoom) getOrElse (throw new IOException("Can't load RDD! Ouch! " + inputMapOp.getClass.getName))
 
-    val zoom = meta.getMaxZoomLevel
     val tilesize = meta.getTilesize
 
     if (rasterForBoundsMapOp.isDefined) {
@@ -137,14 +144,20 @@ class CropMapOp extends RasterMapOp with Externalizable {
   }
 
   protected def parseChildren(node:ParserNode, variables:String => Option[ParserNode]) = {
-    if (node.getNumChildren == 2) {
+    if (node.getNumChildren == 2 || node.getNumChildren == 3) {
       rasterForBoundsMapOp = RasterMapOp.decodeToRaster(node.getChild(1), variables)
+      if (node.getNumChildren == 3) {
+        requestedZoom = MapOp.decodeInt(node.getChild(2))
+      }
     }
     else {
       cropBounds = new Bounds(MapOp.decodeDouble(node.getChild(1), variables).get,
         MapOp.decodeDouble(node.getChild(2), variables).get,
         MapOp.decodeDouble(node.getChild(3), variables).get,
         MapOp.decodeDouble(node.getChild(4), variables).get)
+      if (node.getNumChildren == 6) {
+        requestedZoom = MapOp.decodeInt(node.getChild(5))
+      }
     }
     setInputMapOp(RasterMapOp.decodeToRaster(node.getChild(0), variables))
   }
@@ -224,6 +237,15 @@ class CropMapOp extends RasterMapOp with Externalizable {
     this()
 
     cropBounds = new Bounds(w, s, e, n)
+    requestedZoom = None
+    setInputMapOp(raster)
+  }
+
+  private[mapalgebra] def this(raster:Option[RasterMapOp], w:Double, s:Double, e:Double, n:Double, zoom:Int) = {
+    this()
+
+    cropBounds = new Bounds(w, s, e, n)
+    requestedZoom = Some(zoom)
     setInputMapOp(raster)
   }
 
@@ -231,14 +253,24 @@ class CropMapOp extends RasterMapOp with Externalizable {
     this()
 
     rasterForBoundsMapOp = rasterForBounds
+    requestedZoom = None
+    setInputMapOp(raster)
+  }
+
+  private[mapalgebra] def this(raster:Option[RasterMapOp], rasterForBounds:Option[RasterMapOp], zoom:Int) = {
+    this()
+
+    rasterForBoundsMapOp = rasterForBounds
+    requestedZoom = Some(zoom)
     setInputMapOp(raster)
   }
 
   private[mapalgebra] def this(node:ParserNode, variables:String => Option[ParserNode]) = {
     this()
 
-    if (node.getNumChildren != 5 && node.getNumChildren != 2) {
-      throw new ParserException("Usage: crop(raster, w, s, e, n) or crop(raster, rasterForBounds)")
+    if (node.getNumChildren != 5 && node.getNumChildren != 6 &&
+        node.getNumChildren != 2 && node.getNumChildren != 3) {
+      throw new ParserException("Usage: crop(raster, w, s, e, n, [zoom]) or crop(raster, rasterForBounds, [zoom])")
     }
     parseChildren(node, variables)
   }
