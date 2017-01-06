@@ -1,4 +1,4 @@
-node ('sl62'){
+node ('sl63'){
   // ---------------------------------------------
   // we want a clean workspace     
   stage 'Clear workspace'         
