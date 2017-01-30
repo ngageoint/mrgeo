@@ -54,8 +54,7 @@ def loadlib(lib):
     except KeyError:
         pypath = []
 
-
-    #print('pypath is: ' + str(pypath))
+    # print('pypath is: ' + str(pypath))
     for dirname in pypath:
         libpath = walker(dirname, lib)
         if libpath is not None:
@@ -81,7 +80,6 @@ def loadlib(lib):
 from pymrgeo.mrgeo import MrGeo
 from pymrgeo.rastermapop import RasterMapOp
 from pymrgeo.vectormapop import VectorMapOp
-
 
 __all__ = [
     "MrGeo"

@@ -26,6 +26,6 @@ import static org.junit.extensions.cpsuite.SuiteType.TEST_CLASSES;
 @RunWith(ClasspathSuite.class)
 @SuiteTypes({TEST_CLASSES})
 @ClassnameFilters("org\\.mrgeo\\.resources\\..*|org\\.mrgeo\\.services\\..*")
-public class MrGeoServicesAllTests 
+public class MrGeoServicesAllTests
 {
 }

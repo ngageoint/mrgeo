@@ -33,7 +33,9 @@ protected Coord[] point; // array of simple points
 protected double[] zarr;
 protected double[] zrange;
 
-/** Creates new JPolygon */
+/**
+ * Creates new JPolygon
+ */
 public JPolygonZ()
 {
   super(POLYGONZ);
@@ -61,7 +63,9 @@ public void add(Coord p, double z, double m)
 public boolean add(Coord p, double z, double m, int flag)
 {
   if (p == null)
+  {
     return false;
+  }
   if (flag == NEW_PART)
   {
     // expand array of parts
@@ -82,7 +86,9 @@ public boolean add(Coord p, double z, double m, int flag)
   {
     // ignore redundant coords!
     if (point[point.length - 1].equals(p))
+    {
       return false;
+    }
   }
   // expand array of points
   if (point.length == 0)
@@ -161,11 +167,15 @@ public byte check(boolean clean)
     }
     // closed?
     if (!point[part[p]].equals(point[limit - 1]))
+    {
       insert((Coord) point[part[p]].clone(), 0, 0, limit);
+    }
     status = READY;
   }
   if (clean)
+  {
     updateExtent();
+  }
   return status;
 }
 
@@ -173,13 +183,21 @@ public boolean contains(Coord c)
 {
   // fast answer (test MBR)
   if (c.x < this.extent.min.x)
+  {
     return false;
+  }
   if (c.x > this.extent.max.x)
+  {
     return false;
+  }
   if (c.y < this.extent.min.y)
+  {
     return false;
+  }
   if (c.y > this.extent.max.y)
+  {
     return false;
+  }
 
   // must now evaluate in detail
   int counter = 0;
@@ -204,7 +222,9 @@ public boolean contains(Coord c)
             {
               xinters = (c.y - p1.y) * (p2.x - p1.x) / (p2.y - p1.y) + p1.x;
               if (p1.x == p2.x || c.x <= xinters)
+              {
                 counter++;
+              }
             }
           }
         }
@@ -214,7 +234,9 @@ public boolean contains(Coord c)
 
     // return
     if (counter % 2 != 0)
+    {
       return true;
+    }
   }
 
   // default (not in any parts)
@@ -225,15 +247,19 @@ public boolean contains(Coord c)
 public void debug()
 {
   if (extent != null)
+  {
     System.out.println("Extent: " + extent.toString());
+  }
   System.out.println(toString());
   for (int p = 0; p < part.length; p++)
   {
     System.out.println("Part[" + p + "]: " + part[p]);
     int limit = ((p + 1) == part.length) ? point.length : part[p + 1];
     for (int i = part[p]; i < limit; i++)
+    {
       System.out.println("  PointZ[" + i + "]: " + point[i].toString() + "," + zarr[i] + ","
           + marr[i]);
+    }
   }
 }
 
@@ -348,7 +374,9 @@ public boolean insert(Coord p, double z, double m, int i)
 {
   // valid?
   if (i < 0 || i > point.length)
+  {
     return false;
+  }
   Coord[] temp = new Coord[++npoints];
   System.arraycopy(point, 0, temp, 0, i);
   temp[i] = p;
@@ -370,7 +398,9 @@ public boolean insert(Coord p, double z, double m, int i)
     if (part[j] <= i)
     {
       for (int k = j + 1; k < part.length; k++)
+      {
         part[k]++;
+      }
       break;
     }
   }
@@ -382,7 +412,9 @@ public boolean remove(int i)
 {
   // valid?
   if (i < 0 || i > point.length - 1)
+  {
     return false;
+  }
   // shift parts
   boolean ok = false;
   // determine what part index is in
@@ -401,44 +433,50 @@ public boolean remove(int i)
           System.arraycopy(part, p + 1, temp, p, part.length - p - 1);
         }
         if (p < part.length - 1)
+        {
           temp[p]--; // decrement that part index if not last
+        }
         part = temp;
       }
       // shift part indices by 1 for all successive parts
       for (int k = p + 1; k < part.length; k++)
+      {
         part[k]--;
+      }
       // done!
       ok = true;
       break;
     }
-    // check part step ok
-    if (!ok)
-      return false;
-    // shift coords
-    if (point.length == 1)
-    {
-      point = new Coord[0];
-    }
-    else
-    {
-      Coord[] temp = new Coord[point.length - 1];
-      System.arraycopy(point, 0, temp, 0, i);
-      System.arraycopy(point, i + 1, temp, i, point.length - i - 1);
-      point = temp;
-      double[] temp2 = new double[point.length - 1];
-      System.arraycopy(zarr, 0, temp2, 0, i);
-      System.arraycopy(zarr, i + 1, temp2, i, zarr.length - i - 1);
-      zarr = temp2;
-      double[] temp3 = new double[point.length - 1];
-      System.arraycopy(marr, 0, temp3, 0, i);
-      System.arraycopy(marr, i + 1, temp3, i, marr.length - i - 1);
-      marr = temp3;
-    }
-    // reset sizes, extent, and return
-    nparts = part.length;
-    npoints = point.length;
-    status = UNKNOWN;
   }
+  // check part step ok
+  if (!ok)
+  {
+    return false;
+  }
+  // shift coords
+  if (point.length == 1)
+  {
+    point = new Coord[0];
+  }
+  else
+  {
+    Coord[] temp = new Coord[point.length - 1];
+    System.arraycopy(point, 0, temp, 0, i);
+    System.arraycopy(point, i + 1, temp, i, point.length - i - 1);
+    point = temp;
+    double[] temp2 = new double[point.length - 1];
+    System.arraycopy(zarr, 0, temp2, 0, i);
+    System.arraycopy(zarr, i + 1, temp2, i, zarr.length - i - 1);
+    zarr = temp2;
+    double[] temp3 = new double[point.length - 1];
+    System.arraycopy(marr, 0, temp3, 0, i);
+    System.arraycopy(marr, i + 1, temp3, i, marr.length - i - 1);
+    marr = temp3;
+  }
+  // reset sizes, extent, and return
+  nparts = part.length;
+  npoints = point.length;
+  status = UNKNOWN;
   return true;
 }
 
@@ -448,7 +486,7 @@ public String toString()
   return "parts:" + nparts + "|points:" + npoints;
 }
 
-@SuppressWarnings({ "static-method", "unused" })
+@SuppressWarnings({"static-method", "unused"})
 public JPolygon union(JPolygon p)
 {
   return null;
@@ -460,17 +498,27 @@ public void updateExtent()
   JExtent temp = new JExtent(Double.MAX_VALUE, Double.MAX_VALUE, Double.MIN_VALUE,
       Double.MIN_VALUE);
   if (status != READY)
+  {
     check(false); // close polygon if not closed
+  }
   for (int i = 0; i < point.length - 1; i++)
   { // assume first & last points are the same
     if (point[i].x < temp.min.x)
+    {
       temp.min.x = point[i].x;
+    }
     if (point[i].x > temp.max.x)
+    {
       temp.max.x = point[i].x;
+    }
     if (point[i].y < temp.min.y)
+    {
       temp.min.y = point[i].y;
+    }
     if (point[i].y > temp.max.y)
+    {
       temp.max.y = point[i].y;
+    }
   }
   // calc area & centroid
   area = null;

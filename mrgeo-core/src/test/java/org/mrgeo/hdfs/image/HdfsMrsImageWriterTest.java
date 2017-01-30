@@ -19,26 +19,27 @@ package org.mrgeo.hdfs.image;
 import org.junit.Before;
 import org.junit.Test;
 
+@SuppressWarnings("all") // test code, not included in production
 public class HdfsMrsImageWriterTest
 {
 
-  HdfsMrsImageWriter writer;
+HdfsMrsImageWriter writer;
 
-  @Before
-  public void setUp() throws Exception
-  {
+@Before
+public void setUp() throws Exception
+{
 
-  }
+}
 
-  @Test
-  public void testAppend() throws Exception
-  {
+@Test
+public void testAppend() throws Exception
+{
 
-  }
+}
 
-  @Test
-  public void testClose() throws Exception
-  {
+@Test
+public void testClose() throws Exception
+{
 
-  }
+}
 }

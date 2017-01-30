@@ -24,44 +24,44 @@ import java.util.List;
 
 public class VectorMetadata
 {
-  private List<String> attributes = new ArrayList<String>();
-  private Bounds bounds;
+private List<String> attributes = new ArrayList<String>();
+private Bounds bounds;
 
-  public VectorMetadata()
-  {
-  }
+public VectorMetadata()
+{
+}
 
-  public Bounds getBounds()
-  {
-    return bounds;
-  }
+public Bounds getBounds()
+{
+  return bounds;
+}
 
-  public void setBounds(final Bounds bounds)
-  {
-    this.bounds = bounds;
-  }
+public void setBounds(final Bounds bounds)
+{
+  this.bounds = bounds;
+}
 
-  /**
-   * Attributes should not include the attribute that stores geometry.
-   * 
-   * @param attribute
-   */
-  public void addAttribute(String attribute)
+/**
+ * Attributes should not include the attribute that stores geometry.
+ *
+ * @param attribute
+ */
+public void addAttribute(String attribute)
+{
+  if (!hasAttribute(attribute))
   {
-    if (!hasAttribute(attribute))
-    {
-      attributes.add(attribute);
-    }
+    attributes.add(attribute);
   }
+}
 
-  public boolean hasAttribute(final String fieldName)
-  {
-    return attributes.contains(fieldName);
-  }
+public boolean hasAttribute(final String fieldName)
+{
+  return attributes.contains(fieldName);
+}
 
-  public String[] getAttributes()
-  {
-    String[] result = new String[attributes.size()];
-    return attributes.toArray(result);
-  }
+public String[] getAttributes()
+{
+  String[] result = new String[attributes.size()];
+  return attributes.toArray(result);
+}
 }

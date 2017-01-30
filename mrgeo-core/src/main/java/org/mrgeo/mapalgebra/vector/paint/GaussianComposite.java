@@ -19,6 +19,8 @@ package org.mrgeo.mapalgebra.vector.paint;
 import org.mrgeo.geometry.Point;
 import org.mrgeo.utils.FloatUtils;
 import org.mrgeo.utils.Gaussian;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -30,6 +32,7 @@ import java.awt.image.WritableRaster;
 
 public class GaussianComposite extends WeightedComposite
 {
+private static Logger log = LoggerFactory.getLogger(GaussianComposite.class);
 
 private Point2D.Double center = new Point2D.Double();
 private double major;
@@ -47,6 +50,7 @@ public GaussianComposite(double weight)
 {
   super(weight);
 }
+
 public GaussianComposite(double weight, double nodata)
 {
   super(weight, nodata);
@@ -65,6 +69,19 @@ public void setEllipse(Point center, double majorWidth, double minorWidth,
 
   // orientation of the ellipse
   this.rotate = AffineTransform.getRotateInstance(-orientation);
+}
+
+/*
+ * (non-Javadoc)
+ *
+ * @see java.awt.Composite#createContext(java.awt.image.ColorModel,
+ * java.awt.image.ColorModel, java.awt.RenderingHints)
+ */
+@Override
+public CompositeContext createContext(ColorModel srcColorModel, ColorModel dstColorModel,
+    RenderingHints hints)
+{
+  return new GaussianCompositeContext();
 }
 
 private class GaussianCompositeContext implements CompositeContext
@@ -157,7 +174,7 @@ private class GaussianCompositeContext implements CompositeContext
     }
     catch (NoninvertibleTransformException e)
     {
-      e.printStackTrace();
+      log.error("Exception thrown", e);
     }
 
     // calculate the lat/lon delta of the src point
@@ -169,22 +186,9 @@ private class GaussianCompositeContext implements CompositeContext
 
 
     double gaussian = Gaussian.phi(delta.getX(), major) *
-        Gaussian.phi(delta.getY(),minor);
+        Gaussian.phi(delta.getY(), minor);
 
     return v * (gaussian * multiplier);
   }
-}
-
-/*
- * (non-Javadoc)
- *
- * @see java.awt.Composite#createContext(java.awt.image.ColorModel,
- * java.awt.image.ColorModel, java.awt.RenderingHints)
- */
-@Override
-public CompositeContext createContext(ColorModel srcColorModel, ColorModel dstColorModel,
-    RenderingHints hints)
-{
-  return new GaussianCompositeContext();
 }
 }

@@ -16,23 +16,24 @@
 
 package org.mrgeo.mapalgebra.binarymath
 
-import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
+import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object RBinaryMinusMapOp extends MapOpRegistrar {
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("rminus")
   }
 
   def create(const:Double, raster:RasterMapOp):MapOp = {
     new BinaryMinusMapOp(Some(raster), Some(const), true)
   }
+
   def create(rasterA:RasterMapOp, rasterB:RasterMapOp):MapOp = {
     new BinaryMinusMapOp(Some(rasterA), Some(rasterB))
   }
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new BinaryMinusMapOp(node, variables)
 }
 

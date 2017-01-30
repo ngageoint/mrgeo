@@ -15,6 +15,7 @@ usage() {
     echo "  python       - mrgeo-core/mrgeo-vector/mrgeo-dataprovider/mrgeo-mapalgebra/mrgeo-python"
     echo "build type:"
     echo "  apache    - apache hadoop"
+    echo "  apache272 - Apache hadoop, version 2.7.2"
     echo "  apache271 - Apache hadoop, version 2.7.1"
     echo "  apache260 - Apache hadoop, version 2.6.0"
     echo "  apache252 - Apache hadoop, version 2.5.2"
@@ -22,6 +23,9 @@ usage() {
     echo "  apache250 - Apache hadoop, version 2.5.0"
     echo "  apache241 - Apache hadoop, version 2.4.1"
     echo "  apache240 - Apache hadoop, version 2.4.0"
+    echo "  cdh591    - Cloudera hadoop 5.9.1"
+    echo "  cdh590    - Cloudera hadoop 5.9.0"
+    echo "  cdh582    - Cloudera hadoop 5.8.2"
     echo "  cdh580    - Cloudera hadoop 5.8.0"
     echo "  cdh571    - Cloudera hadoop 5.7.1"
     echo "  cdh570    - Cloudera hadoop 5.7.0"
@@ -29,6 +33,7 @@ usage() {
     echo "  cdh552    - Cloudera hadoop 5.5.2"
     echo "  cdh551    - Cloudera hadoop 5.5.1"
     echo "  cdh550    - Cloudera hadoop 5.5.0"
+    echo "  emr530 - Amazon EMR 5.3.0 with hadoop 2.7.3"
     echo "  emr500 - Amazon EMR 5.0.0 with hadoop 2.7.2"
     echo "  emr472 - Amazon EMR 4.7.2 with hadoop 2.7.2"
     echo "  emr471 - Amazon EMR 4.7.1 with hadoop 2.7.2"
@@ -233,8 +238,11 @@ while [ $# -gt 0 ] ; do
     "apache250" | "apache251" | "apache252")
         BUILD=$1
         ;;
-    "apache260" | "apache270" | "apache271")
+    "apache260" | "apache270" | "apache271" | "apache272")
         BUILD=$1
+        ;;
+    "emr530")
+        BUILD="emr530"
         ;;
     "emr500")
         BUILD="emr500"
@@ -270,7 +278,10 @@ while [ $# -gt 0 ] ; do
     "cdh570" | "cdh570-yarn" | "cdh571" | "cdh571-yarn")
         BUILD=$1
         ;;
-    "cdh580" | "cdh580-yarn")
+    "cdh580" | "cdh580-yarn" | "cdh582" | "cdh582-yarn")
+        BUILD=$1
+        ;;
+    "cdh590" | "cdh590-yarn" | "cdh591" | "cdh591-yarn")
         BUILD=$1
         ;;
     "build")

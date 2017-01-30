@@ -20,23 +20,22 @@ import java.awt.image.DataBuffer
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.utils.MrGeoImplicits._
 import org.mrgeo.utils.SparkUtils
 
 object LogMapOp extends MapOpRegistrar {
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("log")
   }
 
   def create(raster:RasterMapOp, base:Double = 1.0):MapOp =
     new LogMapOp(Some(raster), Some(base))
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new LogMapOp(node, variables)
 }
 
@@ -46,68 +45,45 @@ class LogMapOp extends RasterMapOp with Externalizable {
   private var base:Option[Double] = None
   private var rasterRDD:Option[RasterRDD] = None
 
-  private[mapalgebra] def this(raster:Option[RasterMapOp], base:Option[Double]) = {
-    this()
-    inputMapOp = raster
-    this.base = base
-  }
+  override def rdd():Option[RasterRDD] = rasterRDD
 
-  private[mapalgebra] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
-    this()
+  override def execute(context:SparkContext):Boolean = {
+    val input:RasterMapOp = inputMapOp getOrElse (throw new IOException("Input MapOp not valid!"))
 
-    if (node.getNumChildren < 1) {
-      throw new ParserException(node.getName + " requires at least one argument")
-    }
-    else if (node.getNumChildren > 2) {
-      throw new ParserException(node.getName + " requires only one or two arguments")
-    }
-
-    inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
-
-    if (node.getNumChildren == 2) {
-      base = MapOp.decodeDouble(node.getChild(1))
-    }
-
-  }
-
-  override def rdd(): Option[RasterRDD] = rasterRDD
-
-  override def execute(context: SparkContext): Boolean = {
-    val input:RasterMapOp = inputMapOp getOrElse(throw new IOException("Input MapOp not valid!"))
-
-    val meta = input.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
-    val rdd = input.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + inputMapOp.getClass.getName))
+    val meta = input.metadata() getOrElse
+               (throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
+    val rdd = input.rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + inputMapOp.getClass.getName))
 
 
     // precompute the denominator for the calculation
     val baseVal =
-    if (base.isDefined) {
-       Math.log(base.get)
-    }
-    else {
-      1
-    }
+      if (base.isDefined) {
+        Math.log(base.get)
+      }
+      else {
+        1
+      }
 
     val nodata = meta.getDefaultValues
     val outputnodata = Array.fill[Double](meta.getBands)(Float.NaN)
 
     rasterRDD = Some(RasterRDD(rdd.map(tile => {
-      val raster = RasterWritable.toRaster(tile._2)
+      val raster = RasterWritable.toMrGeoRaster(tile._2)
 
-      val output = RasterUtils.createEmptyRaster(raster.getWidth, raster.getHeight, raster.getNumBands, DataBuffer.TYPE_FLOAT)
+      val output = MrGeoRaster.createEmptyRaster(raster.width(), raster.height(), raster.bands(), DataBuffer.TYPE_FLOAT)
 
-      var y: Int = 0
-      while (y < raster.getHeight) {
-        var x: Int = 0
-        while (x < raster.getWidth) {
-          var b: Int = 0
-          while (b < raster.getNumBands) {
-            val v = raster.getSampleDouble(x, y, b)
+      var y:Int = 0
+      while (y < raster.height()) {
+        var x:Int = 0
+        while (x < raster.width()) {
+          var b:Int = 0
+          while (b < raster.bands()) {
+            val v = raster.getPixelDouble(x, y, b)
             if (RasterMapOp.isNotNodata(v, nodata(b))) {
-              output.setSample(x, y, b, Math.log(v) / baseVal)
+              output.setPixel(x, y, b, Math.log(v) / baseVal)
             }
             else {
-              output.setSample(x, y, b, outputnodata(b))
+              output.setPixel(x, y, b, outputnodata(b))
             }
             b += 1
           }
@@ -125,16 +101,40 @@ class LogMapOp extends RasterMapOp with Externalizable {
     true
   }
 
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = true
+  override def setup(job:JobArguments, conf:SparkConf):Boolean = true
 
-  override def teardown(job: JobArguments, conf: SparkConf): Boolean = true
+  override def teardown(job:JobArguments, conf:SparkConf):Boolean = true
 
-  override def readExternal(in: ObjectInput): Unit = {
+  override def readExternal(in:ObjectInput):Unit = {
     base = in.readObject().asInstanceOf[Option[Double]]
   }
 
-  override def writeExternal(out: ObjectOutput): Unit = {
+  override def writeExternal(out:ObjectOutput):Unit = {
     out.writeObject(base)
+
+  }
+
+  private[mapalgebra] def this(raster:Option[RasterMapOp], base:Option[Double]) = {
+    this()
+    inputMapOp = raster
+    this.base = base
+  }
+
+  private[mapalgebra] def this(node:ParserNode, variables:String => Option[ParserNode]) = {
+    this()
+
+    if (node.getNumChildren < 1) {
+      throw new ParserException(node.getName + " requires at least one argument")
+    }
+    else if (node.getNumChildren > 2) {
+      throw new ParserException(node.getName + " requires only one or two arguments")
+    }
+
+    inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
+
+    if (node.getNumChildren == 2) {
+      base = MapOp.decodeDouble(node.getChild(1))
+    }
 
   }
 

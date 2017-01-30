@@ -1,10 +1,10 @@
 import sys
-sys.path.append("..") # need to add the parent test path...  yuck!
+
+sys.path.append("..")  # need to add the parent test path...  yuck!
 import mrgeotest
 
 
 class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
-
     allones = None
     alltwos = None
     allhundreds = None
@@ -143,6 +143,7 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
     def test_bandcombineAlt(self):
         bands = self.allhundreds.bc(self.allones)
         self.compareraster(bands, self.name)
+
     def test_bitwise_or(self):
         result = self.allhundreds.convert("byte", "truncate") | 6
         self.compareraster(result, self.name, nodata=255)
@@ -212,7 +213,8 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
         self.compareraster(p, self.name)
 
     def test_export(self):
-        exp = self.smallelevation.export(self.outputdir + self.name, singleFile=True, format="tiff", overridenodata=-9999)
+        exp = self.smallelevation.export(self.outputdir + self.name, singleFile=True, format="tiff",
+                                         overridenodata=-9999)
 
         self.comparelocalraster(self.name)
         self.compareraster(exp, self.name)
@@ -227,18 +229,8 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
         self.compareraster(cd, self.name)
 
     def test_leastcostpath(self):
-        print(1)
-        sys.stdout.flush()
         # points = [64.75, 30.158, 65.268, 29.983]
         cd = self.toblertiny.costdistance(-1.0, -1, 64.75, 30.158)
-        print(2)
-        sys.stdout.flush()
         destPoints = self.mrgeo.create_points([65.087, 30.194, 65.283, 29.939])
-        print(3)
-        sys.stdout.flush()
         lcp = destPoints.leastcostpath(cd)
-        print(4)
-        sys.stdout.flush()
         self.comparevector(lcp, self.name)
-        print(5)
-        sys.stdout.flush()

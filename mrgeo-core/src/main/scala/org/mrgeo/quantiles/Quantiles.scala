@@ -16,7 +16,7 @@
 
 package org.mrgeo.quantiles
 
-import java.awt.image.{DataBuffer, Raster}
+import java.awt.image.DataBuffer
 import java.io.{Externalizable, ObjectInput, ObjectOutput, PrintWriter}
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
@@ -26,7 +26,7 @@ import org.apache.spark.rdd.{PairRDDFunctions, RDD}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data
 import org.mrgeo.data.ProviderProperties
-import org.mrgeo.data.raster.RasterWritable
+import org.mrgeo.data.raster.{MrGeoRaster, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.image.MrsPyramidMetadata
@@ -37,8 +37,9 @@ import org.mrgeo.utils.SparkUtils
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
-@SuppressFBWarnings(value = Array("SE_NO_SUITABLE_CONSTRUCTOR_FOR_EXTERNALIZATION"), justification = "object has no constructor, empty Externalizable prevents object serialization")
-@SuppressFBWarnings(value=Array("UPM_UNCALLED_PRIVATE_METHOD"), justification = "Scala constant")
+@SuppressFBWarnings(value = Array("SE_NO_SUITABLE_CONSTRUCTOR_FOR_EXTERNALIZATION"),
+  justification = "object has no constructor, empty Externalizable prevents object serialization")
+@SuppressFBWarnings(value = Array("UPM_UNCALLED_PRIVATE_METHOD"), justification = "Scala constant")
 object Quantiles extends MrGeoDriver with Externalizable {
   final private val Input = "input"
   final private val Output = "output"
@@ -46,8 +47,8 @@ object Quantiles extends MrGeoDriver with Externalizable {
   final private val Fraction = "fraction"
   final private val ProviderProperties = "provider.properties"
 
-  def compute(input: String, output: String, numQuantiles: Int,
-              conf: Configuration, providerProperties: ProviderProperties): Boolean = {
+  def compute(input:String, output:String, numQuantiles:Int,
+              conf:Configuration, providerProperties:ProviderProperties):Boolean = {
     val name = "Quantiles"
 
     val args = setupArguments(input, output, numQuantiles, None, providerProperties)
@@ -57,8 +58,8 @@ object Quantiles extends MrGeoDriver with Externalizable {
     true
   }
 
-  def compute(input: String, output: String, numQuantiles: Int, fraction: Float,
-              conf: Configuration, providerProperties: ProviderProperties): Boolean = {
+  def compute(input:String, output:String, numQuantiles:Int, fraction:Float,
+              conf:Configuration, providerProperties:ProviderProperties):Boolean = {
     val name = "Quantiles"
 
     val args = setupArguments(input, output, numQuantiles, Some(fraction), providerProperties)
@@ -68,72 +69,137 @@ object Quantiles extends MrGeoDriver with Externalizable {
     true
   }
 
-  private def setupArguments(input: String, output: String,
-                             numQuantiles: Int,
-                             fraction: Option[Float],
-                             providerProperties: ProviderProperties):mutable.Map[String, String] = {
-    val args = mutable.Map[String, String]()
+  def getDoublePixelValues(raster:MrGeoRaster, band:Int):Array[Double] = {
+    var x = 0
+    var y = 0
 
-    args += Input -> input
-    args += Output -> output
-    args += NumQuantiles -> numQuantiles.toString
-    if (fraction.isDefined) {
-      args += Fraction -> fraction.get.toString
+    val width = raster.width()
+    val height = raster.height()
+
+    val data = Array.ofDim[Double](width * height)
+
+    var cnt = 0
+    while (y < height) {
+      x = 0
+      while (x < width) {
+        data(cnt) = raster.getPixelDouble(x, y, band)
+        cnt += 1
+
+        x += 1
+      }
+      y += 1
     }
 
-    if (providerProperties != null)
-    {
-      args += ProviderProperties -> data.ProviderProperties.toDelimitedString(providerProperties)
+    data
+  }
+
+  def getFloatPixelValues(raster:MrGeoRaster, band:Int):Array[Float] = {
+    var x = 0
+    var y = 0
+
+    val width = raster.width()
+    val height = raster.height()
+
+    val data = Array.ofDim[Float](width * height)
+
+    var cnt = 0
+    while (y < height) {
+      x = 0
+      while (x < width) {
+        data(cnt) = raster.getPixelFloat(x, y, band)
+
+        cnt += 1
+
+        x += 1
+      }
+      y += 1
     }
-    else
-    {
-      args += ProviderProperties -> ""
+
+    data
+  }
+
+  def getIntPixelValues(raster:MrGeoRaster, band:Int):Array[Int] = {
+    var x = 0
+    var y = 0
+
+    val width = raster.width()
+    val height = raster.height()
+
+    val data = Array.ofDim[Int](width * height)
+
+    var cnt = 0
+    while (y < height) {
+      x = 0
+      while (x < width) {
+        data(cnt) = raster.getPixelInt(x, y, band)
+        cnt += 1
+
+        x += 1
+      }
+      y += 1
     }
 
-    args
+    data
   }
 
-  def getDoublePixelValues(raster: Raster, band: Int): Array[Double] = {
-    raster.getSamples(raster.getMinX, raster.getMinY, raster.getMinX + raster.getWidth,
-      raster.getHeight, band, null.asInstanceOf[Array[Double]])
+  def getShortPixelValues(raster:MrGeoRaster, band:Int):Array[Short] = {
+    var x = 0
+    var y = 0
+
+    val width = raster.width()
+    val height = raster.height()
+
+    val data = Array.ofDim[Short](width * height)
+
+    var cnt = 0
+    while (y < height) {
+      x = 0
+      while (x < width) {
+        data(cnt) = raster.getPixelShort(x, y, band)
+        cnt += 1
+
+        x += 1
+      }
+      y += 1
+    }
+
+    data
   }
 
-  def getFloatPixelValues(raster: Raster, band: Int): Array[Float] = {
-    raster.getSamples(raster.getMinX, raster.getMinY, raster.getMinX + raster.getWidth,
-      raster.getHeight, band, null.asInstanceOf[Array[Float]])
+  def getBytePixelValues(raster:MrGeoRaster, band:Int):Array[Byte] = {
+    var x = 0
+    var y = 0
+
+    val width = raster.width()
+    val height = raster.height()
+
+    val data = Array.ofDim[Byte](width * height)
+
+    var cnt = 0
+    while (y < height) {
+      x = 0
+      while (x < width) {
+        data(cnt) = raster.getPixelByte(x, y, band)
+        cnt += 1
+
+        x += 1
+      }
+      y += 1
+    }
+
+    data
   }
 
-  def getIntPixelValues(raster: Raster, band: Int): Array[Int] = {
-    raster.getSamples(raster.getMinX, raster.getMinY, raster.getMinX + raster.getWidth,
-      raster.getHeight, band, null.asInstanceOf[Array[Int]])
-  }
-
-  def getShortPixelValues(raster: Raster, band: Int): Array[Short] = {
-    val intValues = raster.getSamples(raster.getMinX, raster.getMinY, raster.getMinX + raster.getWidth,
-      raster.getHeight, band, null.asInstanceOf[Array[Int]])
-    intValues.map(U => {
-      U.toShort
-    })
-  }
-
-  def getBytePixelValues(raster: Raster, band: Int): Array[Byte] = {
-    val intValues = raster.getSamples(raster.getMinX, raster.getMinY, raster.getMinX + raster.getWidth,
-      raster.getHeight, band, null.asInstanceOf[Array[Int]])
-    intValues.map(U => {
-      U.toByte
-    })
-  }
-
-  def compute(rdd: RasterRDD, numberOfQuantiles: Int, fraction: Option[Float], meta: MrsPyramidMetadata) = {
-    var b: Int = 0
+  def compute(rdd:RasterRDD, numberOfQuantiles:Int, fraction:Option[Float], meta:MrsPyramidMetadata) = {
+    var b:Int = 0
     //val dt = meta.getTileType
     var result = new ListBuffer[Array[Double]]()
     while (b < meta.getBands) {
       val nodata = meta.getDefaultValue(b)
-      val sortedPixelValues: RDD[AnyVal] = meta.getTileType match {
-        case DataBuffer.TYPE_DOUBLE => {
+      val sortedPixelValues:RDD[AnyVal] = meta.getTileType match {
+        case DataBuffer.TYPE_DOUBLE =>
           var pixelValues = rdd.flatMap(U => {
-            getDoublePixelValues(RasterWritable.toRaster(U._2), b)
+            getDoublePixelValues(RasterWritable.toMrGeoRaster(U._2), b)
           }).filter(value => {
             !RasterMapOp.isNodata(value, nodata)
           })
@@ -141,21 +207,21 @@ object Quantiles extends MrGeoDriver with Externalizable {
             pixelValues = pixelValues.sample(false, fraction.get)
           }
           pixelValues.sortBy(x => x).asInstanceOf[RDD[AnyVal]]
-        }
-        case DataBuffer.TYPE_FLOAT => {
+        case DataBuffer.TYPE_FLOAT =>
           var pixelValues = rdd.flatMap(U => {
-            getFloatPixelValues(RasterWritable.toRaster(U._2), b)
+            getFloatPixelValues(RasterWritable.toMrGeoRaster(U._2), b)
           }).filter(value => {
             !RasterMapOp.isNodata(value, nodata)
           })
+          println(pixelValues.count())
           if (fraction.isDefined && fraction.get < 1.0f) {
             pixelValues = pixelValues.sample(false, fraction.get)
           }
           pixelValues.sortBy(x => x).asInstanceOf[RDD[AnyVal]]
-        }
-        case (DataBuffer.TYPE_INT | DataBuffer.TYPE_USHORT) => {
+
+        case (DataBuffer.TYPE_INT | DataBuffer.TYPE_USHORT) =>
           var pixelValues = rdd.flatMap(U => {
-            getIntPixelValues(RasterWritable.toRaster(U._2), b)
+            getIntPixelValues(RasterWritable.toMrGeoRaster(U._2), b)
           }).filter(value => {
             value != nodata.toInt
           })
@@ -163,10 +229,9 @@ object Quantiles extends MrGeoDriver with Externalizable {
             pixelValues = pixelValues.sample(false, fraction.get)
           }
           pixelValues.sortBy(x => x).asInstanceOf[RDD[AnyVal]]
-        }
-        case DataBuffer.TYPE_SHORT => {
+        case DataBuffer.TYPE_SHORT =>
           var pixelValues = rdd.flatMap(U => {
-            getShortPixelValues(RasterWritable.toRaster(U._2), b)
+            getShortPixelValues(RasterWritable.toMrGeoRaster(U._2), b)
           }).filter(value => {
             value != nodata.toShort
           })
@@ -174,10 +239,9 @@ object Quantiles extends MrGeoDriver with Externalizable {
             pixelValues = pixelValues.sample(false, fraction.get)
           }
           pixelValues.sortBy(x => x).asInstanceOf[RDD[AnyVal]]
-        }
-        case DataBuffer.TYPE_BYTE => {
+        case DataBuffer.TYPE_BYTE =>
           var pixelValues = rdd.flatMap(U => {
-            getBytePixelValues(RasterWritable.toRaster(U._2), b)
+            getBytePixelValues(RasterWritable.toMrGeoRaster(U._2), b)
           }).filter(value => {
             value != nodata.toByte
           })
@@ -185,7 +249,6 @@ object Quantiles extends MrGeoDriver with Externalizable {
             pixelValues = pixelValues.sample(false, fraction.get)
           }
           pixelValues.sortBy(x => x).asInstanceOf[RDD[AnyVal]]
-        }
       }
       val count = sortedPixelValues.count()
       // Build an RDD containing an entry for each individual quantile to compute.
@@ -198,7 +261,7 @@ object Quantiles extends MrGeoDriver with Externalizable {
       }
       val quantilesRdd = new PairRDDFunctions(rdd.context.parallelize(quantiles))
       if (count >= quantiles.length) {
-//        log.info("value count is " + count)
+        //        log.info("value count is " + count)
         // Add an index as the key to the sorted pixel values so we can join on that key.
         val sortedWithIndexKey = sortedPixelValues.zipWithIndex().map(_.swap)
         val quantileValues = new Array[Double](quantiles.length)
@@ -209,64 +272,64 @@ object Quantiles extends MrGeoDriver with Externalizable {
         localJoined.foreach(q => {
           quantileValues(q._2._1) = q._2._2.toString.toDouble
         })
-//        if (log.isInfoEnabled) {
-//          log.info("Setting quantiles for band " + b + " to:")
-//          quantileValues.foreach(v => {
-//            log.info("  " + v)
-//          })
-//        }
+        //        if (log.isInfoEnabled) {
+        //          log.info("Setting quantiles for band " + b + " to:")
+        //          quantileValues.foreach(v => {
+        //            log.info("  " + v)
+        //          })
+        //        }
         result += quantileValues
       }
-//      else {
-//        log.warn("Unable to compute quantiles because there are only " + count + " values")
-//      }
+      //      else {
+      //        log.warn("Unable to compute quantiles because there are only " + count + " values")
+      //      }
       b += 1
     }
     result.toList
   }
 
-  override def setup(job: JobArguments): Boolean = {
+  override def setup(job:JobArguments):Boolean = {
     true
   }
 
-  override def readExternal(in: ObjectInput): Unit = {
+  override def readExternal(in:ObjectInput):Unit = {
   }
 
-  override def writeExternal(out: ObjectOutput): Unit = {
+  override def writeExternal(out:ObjectOutput):Unit = {
+  }
+
+  private def setupArguments(input:String, output:String,
+                             numQuantiles:Int,
+                             fraction:Option[Float],
+                             providerProperties:ProviderProperties):mutable.Map[String, String] = {
+    val args = mutable.Map[String, String]()
+
+    args += Input -> input
+    args += Output -> output
+    args += NumQuantiles -> numQuantiles.toString
+    if (fraction.isDefined) {
+      args += Fraction -> fraction.get.toString
+    }
+
+    if (providerProperties != null) {
+      args += ProviderProperties -> data.ProviderProperties.toDelimitedString(providerProperties)
+    }
+    else {
+      args += ProviderProperties -> ""
+    }
+
+    args
   }
 }
 
 class Quantiles extends MrGeoJob with Externalizable {
-  private var input: String = null
-  private var output: String = null
-  private var numQuantiles: Int = 0.toInt
-  private var fraction: Option[Float] = None
-  var providerproperties:ProviderProperties = null
+  var providerproperties:ProviderProperties = _
+  private var input:String = _
+  private var output:String = _
+  private var numQuantiles:Int = 0
+  private var fraction:Option[Float] = None
 
-  private[quantiles] def this(input: String, output: String,
-                                 numQuantiles: Int,
-                                 providerProperties: ProviderProperties) = {
-    this()
-
-    this.input = input
-    this.output = output
-    this.numQuantiles = numQuantiles
-    this.providerproperties = providerproperties
-  }
-
-  private[quantiles] def this(input: String, output: String,
-                                 numQuantiles: Int, fraction: Float,
-                                 providerProperties: ProviderProperties) = {
-    this()
-
-    this.input = input
-    this.output = output
-    this.numQuantiles = numQuantiles
-    this.fraction = Some(fraction)
-    this.providerproperties = providerproperties
-  }
-
-  override def registerClasses(): Array[Class[_]] = {
+  override def registerClasses():Array[Class[_]] = {
     val classes = Array.newBuilder[Class[_]]
 
     classes += classOf[Array[Float]]
@@ -275,7 +338,7 @@ class Quantiles extends MrGeoJob with Externalizable {
     classes.result()
   }
 
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = {
+  override def setup(job:JobArguments, conf:SparkConf):Boolean = {
     input = job.getSetting(Quantiles.Input)
     output = job.getSetting(Quantiles.Output)
     numQuantiles = job.getSetting(Quantiles.NumQuantiles).toInt
@@ -291,7 +354,7 @@ class Quantiles extends MrGeoJob with Externalizable {
     true
   }
 
-  override def execute(context: SparkContext): Boolean = {
+  override def execute(context:SparkContext):Boolean = {
     val imagePair = SparkUtils.loadMrsPyramidAndMetadata(input, context)
     val result = org.mrgeo.quantiles.Quantiles.compute(imagePair._1, numQuantiles, fraction, imagePair._2)
     // Write the quantiles to the specified HDFS output file
@@ -301,7 +364,7 @@ class Quantiles extends MrGeoJob with Externalizable {
     val pw = new PrintWriter(os)
     try {
       if (result.length == 1) {
-        result(0).foreach(v => {
+        result.head.foreach(v => {
           pw.println("" + v)
         })
       }
@@ -320,11 +383,11 @@ class Quantiles extends MrGeoJob with Externalizable {
     }
   }
 
-  override def teardown(job: JobArguments, conf: SparkConf): Boolean = {
+  override def teardown(job:JobArguments, conf:SparkConf):Boolean = {
     true
   }
 
-  override def readExternal(in: ObjectInput): Unit = {
+  override def readExternal(in:ObjectInput):Unit = {
     input = in.readUTF()
     output = in.readUTF()
     numQuantiles = in.readInt()
@@ -338,7 +401,7 @@ class Quantiles extends MrGeoJob with Externalizable {
     }
   }
 
-  override def writeExternal(out: ObjectOutput): Unit = {
+  override def writeExternal(out:ObjectOutput):Unit = {
     out.writeUTF(input)
     out.writeUTF(output)
     out.writeInt(numQuantiles)
@@ -350,5 +413,28 @@ class Quantiles extends MrGeoJob with Externalizable {
     if (providerproperties != null) {
       out.writeUTF(ProviderProperties.toDelimitedString(providerproperties))
     }
+  }
+
+  private[quantiles] def this(input:String, output:String,
+                              numQuantiles:Int,
+                              providerProperties:ProviderProperties) = {
+    this()
+
+    this.input = input
+    this.output = output
+    this.numQuantiles = numQuantiles
+    this.providerproperties = providerproperties
+  }
+
+  private[quantiles] def this(input:String, output:String,
+                              numQuantiles:Int, fraction:Float,
+                              providerProperties:ProviderProperties) = {
+    this()
+
+    this.input = input
+    this.output = output
+    this.numQuantiles = numQuantiles
+    this.fraction = Some(fraction)
+    this.providerproperties = providerproperties
   }
 }

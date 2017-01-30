@@ -90,3 +90,6 @@ mrgeo-core/src/main/scripts/WpsTools.pyc
 
 # pyspark, moved into mrgeo for testing...
 mrgeo-python/pyspark
+
+# jenkinsfile test
+*Jenkinsfile

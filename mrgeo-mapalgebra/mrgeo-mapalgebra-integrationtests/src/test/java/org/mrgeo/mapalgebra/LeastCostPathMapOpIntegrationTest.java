@@ -18,7 +18,6 @@ package org.mrgeo.mapalgebra;
 
 import junit.framework.Assert;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.Path;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -30,32 +29,25 @@ import org.mrgeo.data.vector.VectorReader;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.hdfs.vector.DelimitedVectorReader;
-import org.mrgeo.junit.IntegrationTest;
-import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.job.JobCancelledException;
 import org.mrgeo.job.JobFailedException;
+import org.mrgeo.junit.IntegrationTest;
+import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.HashSet;
-import java.util.Set;
 
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // Test code, not included in production
 public class LeastCostPathMapOpIntegrationTest extends LocalRunnerTest
 {
-private static MapOpTestUtils testUtils;
-
 private static final String LEAST_COST_PATH_OUTPUT = "testLeastCostPath";
-
 private static final String LEAST_COST_PATH_INPUT = "testCostDistance";
 private static final int LEAST_COST_PATH_INPUT_ZOOM = 10;
 private static final int LOWER_ZOOM_LEVEL = 9;
-
+private static MapOpTestUtils testUtils;
 private final String costSurface = testUtils.getInputHdfs()
-    + "/" +  LEAST_COST_PATH_INPUT; // + "/" + LEAST_COST_PATH_INPUT_ZOOM;
+    + "/" + LEAST_COST_PATH_INPUT; // + "/" + LEAST_COST_PATH_INPUT_ZOOM;
 
 @BeforeClass
 public static void init() throws IOException
@@ -73,65 +65,6 @@ public static void init() throws IOException
       LEAST_COST_PATH_OUTPUT);
 }
 
-@Test
-@Category(IntegrationTest.class)
-public void testLeastCostPath() throws IOException, ParserException, JobFailedException, JobCancelledException {
-
-  //LoggingUtils.setLogLevel("org.mrgeo.mapalgebra", LoggingUtils.DEBUG);
-  long start = System.currentTimeMillis();
-  try
-  {
-    String exp = "destPts = InlineCsv(\"GEOMETRY\", \"'POINT(66.65408 32.13850)'\");\n"
-        + "cost = [" + costSurface + "];\n"
-        + "result = LeastCostPath(cost, destPts);";
-
-    LeastCostPathMapOpIntegrationTest.runLeastCostPath(conf,
-        testUtils.getOutputHdfs(),
-        "testLeastCostPath",
-        exp,
-        true,
-        48064f,
-        70771.1f,
-        0.9d,
-        2.2d,
-        1.5d
-    );
-  } finally
-  {
-    System.out.println("test took " + (System.currentTimeMillis() - start));
-  }
-}
-
-@Test
-@Category(IntegrationTest.class)
-public void testDestPtOutsideCostSurface()
-    throws IOException, ParserException, JobCancelledException, JobFailedException
-{
-  String exp = "destPts = InlineCsv(\"GEOMETRY\", \"'POINT(66.5896 32.2005)'\");\n"
-      + "cost = [" + costSurface + "];\n"
-      + "result = LeastCostPath(cost, destPts);";
-
-  try {
-    LeastCostPathMapOpIntegrationTest.runLeastCostPath(conf,
-        testUtils.getOutputHdfs(),
-        "testDestPtOutsideCostSurface",
-        exp,
-        true,
-        0f,
-        0f,
-        0d,
-        0d,
-        0d
-    );
-  } catch(IllegalStateException e) {
-    // we don't just use the Expected annotation because MapAlgebraExecutioner throws the generic
-    // JobFailedException in the case of an IllegalStateException(ugh!) and expecting a generic
-    // JobFailedException may give us true negatives (test passes but code has a bug)
-    boolean ret = e.getMessage().contains("falls outside cost surface");
-    Assert.assertEquals(true, ret);
-  }
-}
-
 public static void runLeastCostPath(Configuration conf,
     Path outputHdfs,
     String testName,
@@ -144,7 +77,8 @@ public static void runLeastCostPath(Configuration conf,
     double expectedAvgSpeed
 )
     throws IOException, ParserException, JobFailedException,
-    JobCancelledException {
+    JobCancelledException
+{
 
   String tsvFileName = testName + ".tsv";
   Path testOutputPath = new Path(outputHdfs, tsvFileName);
@@ -190,46 +124,110 @@ public static void runLeastCostPath(Configuration conf,
 //    }
 
 }
-private static PathCost getPathCost(Path outputFilePath, Configuration conf) throws IOException {
-  FSDataInputStream fdis = outputFilePath.getFileSystem(conf).open(outputFilePath);
-  BufferedReader br = new BufferedReader(new InputStreamReader(fdis));
-  // Skip the header line
-  String strLine = br.readLine();
-  strLine = br.readLine();
-  String[] splits = strLine.split("\t");
-  String lineString = splits[0];
-  String lineStringSub = lineString.substring(lineString.indexOf('(')+1, lineString.indexOf(')'));
-  String[] gotPixelsStrs = lineStringSub.split(",");
-  Set<String> gotPixels = new HashSet<String>();
-  for(String pixel : gotPixelsStrs) {
-    gotPixels.add(pixel);
+
+@Test
+@Category(IntegrationTest.class)
+public void testLeastCostPath() throws IOException, ParserException, JobFailedException, JobCancelledException
+{
+
+  //LoggingUtils.setLogLevel("org.mrgeo.mapalgebra", LoggingUtils.DEBUG);
+  long start = System.currentTimeMillis();
+  try
+  {
+    String exp = "destPts = InlineCsv(\"GEOMETRY\", \"'POINT(66.65408 32.13850)'\");\n"
+        + "cost = [" + costSurface + "];\n"
+        + "result = LeastCostPath(cost, destPts);";
+
+    LeastCostPathMapOpIntegrationTest.runLeastCostPath(conf,
+        testUtils.getOutputHdfs(),
+        "testLeastCostPath",
+        exp,
+        true,
+        48064f,
+        70771.1f,
+        0.9d,
+        2.2d,
+        1.5d
+    );
   }
-  br.close();
-  return new PathCost(gotPixels, Float.parseFloat(splits[1]),
-      Float.parseFloat(splits[2]),
-      Double.parseDouble(splits[3]),
-      Double.parseDouble(splits[4]),
-      Double.parseDouble(splits[5])
-  );
+  finally
+  {
+    System.out.println("test took " + (System.currentTimeMillis() - start));
+  }
 }
 
-private static class PathCost {
-  Set<String> path;
-  float cost;
-  float distance;
-  double minSpeed;
-  double maxSpeed;
-  double avgSpeed;
-  public PathCost(Set<String> path, float cost, float distance, double minSpeed, double maxSpeed, double avgSpeed)
+@Test
+@Category(IntegrationTest.class)
+public void testDestPtOutsideCostSurface()
+    throws IOException, ParserException, JobCancelledException, JobFailedException
+{
+  String exp = "destPts = InlineCsv(\"GEOMETRY\", \"'POINT(66.5896 32.2005)'\");\n"
+      + "cost = [" + costSurface + "];\n"
+      + "result = LeastCostPath(cost, destPts);";
+
+  try
   {
-    super();
-    this.path = path;
-    this.cost = cost;
-    this.distance = distance;
-    this.minSpeed = minSpeed;
-    this.maxSpeed = maxSpeed;
-    this.avgSpeed = avgSpeed;
+    LeastCostPathMapOpIntegrationTest.runLeastCostPath(conf,
+        testUtils.getOutputHdfs(),
+        "testDestPtOutsideCostSurface",
+        exp,
+        true,
+        0f,
+        0f,
+        0d,
+        0d,
+        0d
+    );
+  }
+  catch (IllegalStateException e)
+  {
+    // we don't just use the Expected annotation because MapAlgebraExecutioner throws the generic
+    // JobFailedException in the case of an IllegalStateException(ugh!) and expecting a generic
+    // JobFailedException may give us true negatives (test passes but code has a bug)
+    boolean ret = e.getMessage().contains("falls outside cost surface");
+    Assert.assertEquals(true, ret);
   }
 }
+//private static PathCost getPathCost(Path outputFilePath, Configuration conf) throws IOException {
+//  FSDataInputStream fdis = outputFilePath.getFileSystem(conf).open(outputFilePath);
+//  BufferedReader br = new BufferedReader(new InputStreamReader(fdis));
+//  // Skip the header line
+//  String strLine = br.readLine();
+//  strLine = br.readLine();
+//  String[] splits = strLine.split("\t");
+//  String lineString = splits[0];
+//  String lineStringSub = lineString.substring(lineString.indexOf('(')+1, lineString.indexOf(')'));
+//  String[] gotPixelsStrs = lineStringSub.split(",");
+//  Set<String> gotPixels = new HashSet<String>();
+//  for(String pixel : gotPixelsStrs) {
+//    gotPixels.add(pixel);
+//  }
+//  br.close();
+//  return new PathCost(gotPixels, Float.parseFloat(splits[1]),
+//      Float.parseFloat(splits[2]),
+//      Double.parseDouble(splits[3]),
+//      Double.parseDouble(splits[4]),
+//      Double.parseDouble(splits[5])
+//  );
+//}
+//
+//private static class PathCost {
+//  Set<String> path;
+//  float cost;
+//  float distance;
+//  double minSpeed;
+//  double maxSpeed;
+//  double avgSpeed;
+//  public PathCost(Set<String> path, float cost, float distance, double minSpeed, double maxSpeed, double avgSpeed)
+//  {
+//    super();
+//    this.path = path;
+//    this.cost = cost;
+//    this.distance = distance;
+//    this.minSpeed = minSpeed;
+//    this.maxSpeed = maxSpeed;
+//    this.avgSpeed = avgSpeed;
+//  }
+//}
 
 }

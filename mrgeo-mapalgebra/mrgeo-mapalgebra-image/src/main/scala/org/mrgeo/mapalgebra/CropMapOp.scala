@@ -26,114 +26,41 @@ import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.{MrsPyramidMapOp, RasterMapOp}
-import org.mrgeo.utils.MrGeoImplicits._
 import org.mrgeo.utils.SparkUtils
 import org.mrgeo.utils.tms.{Bounds, TMSUtils, TileBounds}
 
 object CropMapOp extends MapOpRegistrar {
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("crop")
   }
 
   def create(raster:RasterMapOp, w:Double, s:Double, e:Double, n:Double):MapOp =
     new CropMapOp(Some(raster), w, s, e, n)
 
-  def create(raster:RasterMapOp, rasterForBounds: RasterMapOp):MapOp =
+  def create(raster:RasterMapOp, w:Double, s:Double, e:Double, n:Double, zoom:Int):MapOp =
+    new CropMapOp(Some(raster), w, s, e, n, zoom)
+
+  def create(raster:RasterMapOp, rasterForBounds:RasterMapOp):MapOp =
     new CropMapOp(Some(raster), Some(rasterForBounds))
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+  def create(raster:RasterMapOp, rasterForBounds:RasterMapOp, zoom:Int):MapOp =
+    new CropMapOp(Some(raster), Some(rasterForBounds), zoom)
+
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new CropMapOp(node, variables)
 }
 
 
 class CropMapOp extends RasterMapOp with Externalizable {
-  private var rasterRDD: Option[RasterRDD] = None
-
-  private var inputMapOp: Option[RasterMapOp] = None
-  protected var rasterForBoundsMapOp: Option[RasterMapOp] = None
+  protected var rasterForBoundsMapOp:Option[RasterMapOp] = None
   protected var bounds:TileBounds = null
+  protected var requestedZoom:Option[Int] = None
   protected var cropBounds:Bounds = null
+  private var rasterRDD:Option[RasterRDD] = None
+  private var inputMapOp:Option[RasterMapOp] = None
   private var doFiltering = true
 
-  private[mapalgebra] def this(raster:Option[RasterMapOp], w:Double, s:Double, e:Double, n:Double) = {
-    this()
-
-    cropBounds = new Bounds(w, s, e, n)
-    setInputMapOp(raster)
-  }
-
-  private[mapalgebra] def this(raster:Option[RasterMapOp], rasterForBounds: Option[RasterMapOp]) = {
-    this()
-
-    rasterForBoundsMapOp = rasterForBounds
-    setInputMapOp(raster)
-  }
-
-  private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
-    this()
-
-    if (node.getNumChildren != 5 && node.getNumChildren != 2) {
-      throw new ParserException("Usage: crop(raster, w, s, e, n) or crop(raster, rasterForBounds)")
-    }
-    parseChildren(node, variables)
-  }
-
-  protected def parseChildren(node: ParserNode, variables: String => Option[ParserNode]) = {
-    if (node.getNumChildren == 2) {
-      rasterForBoundsMapOp = RasterMapOp.decodeToRaster(node.getChild(1), variables)
-    }
-    else {
-      cropBounds = new Bounds(MapOp.decodeDouble(node.getChild(1), variables).get,
-        MapOp.decodeDouble(node.getChild(2), variables).get,
-        MapOp.decodeDouble(node.getChild(3), variables).get,
-        MapOp.decodeDouble(node.getChild(4), variables).get)
-    }
-    setInputMapOp(RasterMapOp.decodeToRaster(node.getChild(0), variables))
-  }
-
-  /**
-    * Checks to see if the raster input to the crop is a MrsPyramidInputFormat. If so,
-    * it takes advantage of the MrsPyramidMapOp's ability to directly filter the
-    * input image to bounds, which is significantly faster than filtering all of
-    * the image's tiles using the Spark filter function. This is because it limits
-    * the number of splits and tiles while the data is being read rather than having
-    * to push the data through the system to be filtered out during processing.
-    *
-    * Because MrsPyramidMapOps can be shared (when the same input source is referenced
-    * in multiple places in the map algebra), we clone the input map op before
-    * setting the bounds information into it. This prevents affecting any other places
-    * where the same input source is used without the crop.
-    */
-  protected def setInputMapOp(inputMapOp: Option[RasterMapOp]): Unit = {
-    inputMapOp match {
-      case Some(op) => {
-        op match {
-          case op: MrsPyramidMapOp => {
-            rasterForBoundsMapOp match {
-              case Some(bmo) => {
-                val clonedOp = op.clone
-                clonedOp.asInstanceOf[MrsPyramidMapOp].setBounds(bmo)
-                this.inputMapOp = Some(clonedOp)
-                doFiltering = false
-              }
-              case None => {
-                if (cropBounds != null) {
-                  val clonedOp = op.clone
-                  clonedOp.asInstanceOf[MrsPyramidMapOp].setBounds(cropBounds)
-                  this.inputMapOp = Some(clonedOp)
-                  doFiltering = false
-                }
-              }
-            }
-          }
-          case _ => this.inputMapOp = inputMapOp
-        }
-      }
-      case _ => this.inputMapOp = inputMapOp
-    }
-  }
-
-  override def context(cont: SparkContext) = {
+  override def context(cont:SparkContext) = {
     super.context(cont)
     this.inputMapOp match {
       case Some(op) => {
@@ -143,13 +70,13 @@ class CropMapOp extends RasterMapOp with Externalizable {
     }
   }
 
-  override def rdd(): Option[RasterRDD] = rasterRDD
+  override def rdd():Option[RasterRDD] = rasterRDD
 
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = true
+  override def setup(job:JobArguments, conf:SparkConf):Boolean = true
 
-  override def execute(context: SparkContext): Boolean = {
+  override def execute(context:SparkContext):Boolean = {
 
-    val input: RasterMapOp = inputMapOp getOrElse (throw new IOException("Input MapOp not valid!"))
+    val input:RasterMapOp = inputMapOp getOrElse (throw new IOException("Input MapOp not valid!"))
 
     // If we had to clone the input map op, then the Spark context will not be
     // set in the clone. We need to set the context before accessing the input RDD
@@ -157,10 +84,10 @@ class CropMapOp extends RasterMapOp with Externalizable {
       input.context(context)
     }
     val meta = input.metadata() getOrElse
-        (throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
-    val rdd = input.rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + inputMapOp.getClass.getName))
+               (throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
+    val zoom = requestedZoom.getOrElse(meta.getMaxZoomLevel)
+    val rdd = input.rdd(zoom) getOrElse (throw new IOException("Can't load RDD! Ouch! " + inputMapOp.getClass.getName))
 
-    val zoom = meta.getMaxZoomLevel
     val tilesize = meta.getTilesize
 
     if (rasterForBoundsMapOp.isDefined) {
@@ -204,15 +131,88 @@ class CropMapOp extends RasterMapOp with Externalizable {
     true
   }
 
-  protected def getOutputBounds(zoom: Int, tilesize: Int): Bounds = {
+  override def teardown(job:JobArguments, conf:SparkConf):Boolean = true
+
+  override def readExternal(in:ObjectInput):Unit = {
+    bounds = TileBounds.fromCommaString(in.readUTF())
+    cropBounds = Bounds.fromCommaString(in.readUTF())
+  }
+
+  override def writeExternal(out:ObjectOutput):Unit = {
+    out.writeUTF(bounds.toCommaString)
+    out.writeUTF(cropBounds.toCommaString)
+  }
+
+  protected def parseChildren(node:ParserNode, variables:String => Option[ParserNode]) = {
+    if (node.getNumChildren == 2 || node.getNumChildren == 3) {
+      rasterForBoundsMapOp = RasterMapOp.decodeToRaster(node.getChild(1), variables)
+      if (node.getNumChildren == 3) {
+        requestedZoom = MapOp.decodeInt(node.getChild(2))
+      }
+    }
+    else {
+      cropBounds = new Bounds(MapOp.decodeDouble(node.getChild(1), variables).get,
+        MapOp.decodeDouble(node.getChild(2), variables).get,
+        MapOp.decodeDouble(node.getChild(3), variables).get,
+        MapOp.decodeDouble(node.getChild(4), variables).get)
+      if (node.getNumChildren == 6) {
+        requestedZoom = MapOp.decodeInt(node.getChild(5))
+      }
+    }
+    setInputMapOp(RasterMapOp.decodeToRaster(node.getChild(0), variables))
+  }
+
+  /**
+    * Checks to see if the raster input to the crop is a MrsPyramidInputFormat. If so,
+    * it takes advantage of the MrsPyramidMapOp's ability to directly filter the
+    * input image to bounds, which is significantly faster than filtering all of
+    * the image's tiles using the Spark filter function. This is because it limits
+    * the number of splits and tiles while the data is being read rather than having
+    * to push the data through the system to be filtered out during processing.
+    *
+    * Because MrsPyramidMapOps can be shared (when the same input source is referenced
+    * in multiple places in the map algebra), we clone the input map op before
+    * setting the bounds information into it. This prevents affecting any other places
+    * where the same input source is used without the crop.
+    */
+  protected def setInputMapOp(inputMapOp:Option[RasterMapOp]):Unit = {
+    inputMapOp match {
+      case Some(op) => {
+        op match {
+          case op:MrsPyramidMapOp => {
+            rasterForBoundsMapOp match {
+              case Some(bmo) => {
+                val clonedOp = op.clone
+                clonedOp.asInstanceOf[MrsPyramidMapOp].setBounds(bmo)
+                this.inputMapOp = Some(clonedOp)
+                doFiltering = false
+              }
+              case None => {
+                if (cropBounds != null) {
+                  val clonedOp = op.clone
+                  clonedOp.asInstanceOf[MrsPyramidMapOp].setBounds(cropBounds)
+                  this.inputMapOp = Some(clonedOp)
+                  doFiltering = false
+                }
+              }
+            }
+          }
+          case _ => this.inputMapOp = inputMapOp
+        }
+      }
+      case _ => this.inputMapOp = inputMapOp
+    }
+  }
+
+  protected def getOutputBounds(zoom:Int, tilesize:Int):Bounds = {
     // Use the bounds of the tiles processed
     TMSUtils.tileToBounds(bounds, zoom, tilesize)
   }
 
-  protected def processTile(tile: (TileIdWritable, RasterWritable),
-                            zoom: Int,
-                            tilesize: Int,
-                            nodatas: Array[Double]): (TileIdWritable, RasterWritable) = {
+  protected def processTile(tile:(TileIdWritable, RasterWritable),
+                            zoom:Int,
+                            tilesize:Int,
+                            nodatas:Array[Double]):(TileIdWritable, RasterWritable) = {
     tile
   }
 
@@ -226,23 +226,53 @@ class CropMapOp extends RasterMapOp with Externalizable {
     * can extend this class and perform processing on the individual tiles in
     * within the bounds of the crop area if needed.
     */
-  protected def processAllTiles(inputRDD: RasterRDD,
-                                zoom: Int,
-                                tilesize: Int,
-                                nodats: Array[Double]): RDD[(TileIdWritable, RasterWritable)] = {
+  protected def processAllTiles(inputRDD:RasterRDD,
+                                zoom:Int,
+                                tilesize:Int,
+                                nodats:Array[Double]):RDD[(TileIdWritable, RasterWritable)] = {
     inputRDD
   }
 
-  override def teardown(job: JobArguments, conf: SparkConf): Boolean = true
+  private[mapalgebra] def this(raster:Option[RasterMapOp], w:Double, s:Double, e:Double, n:Double) = {
+    this()
 
-  override def readExternal(in: ObjectInput): Unit = {
-    bounds = TileBounds.fromCommaString(in.readUTF())
-    cropBounds = Bounds.fromCommaString(in.readUTF())
+    cropBounds = new Bounds(w, s, e, n)
+    requestedZoom = None
+    setInputMapOp(raster)
   }
 
-  override def writeExternal(out: ObjectOutput): Unit = {
-    out.writeUTF(bounds.toCommaString)
-    out.writeUTF(cropBounds.toCommaString)
+  private[mapalgebra] def this(raster:Option[RasterMapOp], w:Double, s:Double, e:Double, n:Double, zoom:Int) = {
+    this()
+
+    cropBounds = new Bounds(w, s, e, n)
+    requestedZoom = Some(zoom)
+    setInputMapOp(raster)
+  }
+
+  private[mapalgebra] def this(raster:Option[RasterMapOp], rasterForBounds:Option[RasterMapOp]) = {
+    this()
+
+    rasterForBoundsMapOp = rasterForBounds
+    requestedZoom = None
+    setInputMapOp(raster)
+  }
+
+  private[mapalgebra] def this(raster:Option[RasterMapOp], rasterForBounds:Option[RasterMapOp], zoom:Int) = {
+    this()
+
+    rasterForBoundsMapOp = rasterForBounds
+    requestedZoom = Some(zoom)
+    setInputMapOp(raster)
+  }
+
+  private[mapalgebra] def this(node:ParserNode, variables:String => Option[ParserNode]) = {
+    this()
+
+    if (node.getNumChildren != 5 && node.getNumChildren != 6 &&
+        node.getNumChildren != 2 && node.getNumChildren != 3) {
+      throw new ParserException("Usage: crop(raster, w, s, e, n, [zoom]) or crop(raster, rasterForBounds, [zoom])")
+    }
+    parseChildren(node, variables)
   }
 }
 

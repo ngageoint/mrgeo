@@ -1,15 +1,22 @@
 # Friction Surface Builder script
-import sys, os, subprocess, datetime, argparse
+import argparse
+import datetime
+import subprocess
 
 now = datetime.datetime.now()
 nowf = now.strftime("%Y%m%d-%s")
 
 # User input
 parser = argparse.ArgumentParser()
-parser.add_argument("-e", "--equation", help="Friction surface equation to utilize. Defaults to tobler.", choices=['tobler','pingel'], action="store", default="tobler")
-parser.add_argument("-m", "--maxspeed", help="Maximum walking or vehicle speed in kilometers per hour. Defaults to 6kph.", action="store", default=6)
-parser.add_argument("-o", "--output", help="S3 or HDFS location for results.", action="store", default="s3://mrgeo/images/fsout-" + nowf)
-parser.add_argument("-s", "--scratch", help="Run friction surface recipe from scratch. Will take much longer.", action="store_true")
+parser.add_argument("-e", "--equation", help="Friction surface equation to utilize. Defaults to tobler.",
+                    choices=['tobler', 'pingel'], action="store", default="tobler")
+parser.add_argument("-m", "--maxspeed",
+                    help="Maximum walking or vehicle speed in kilometers per hour. Defaults to 6kph.", action="store",
+                    default=6)
+parser.add_argument("-o", "--output", help="S3 or HDFS location for results.", action="store",
+                    default="s3://mrgeo/images/fsout-" + nowf)
+parser.add_argument("-s", "--scratch", help="Run friction surface recipe from scratch. Will take much longer.",
+                    action="store_true")
 args = parser.parse_args()
 
 # Set up S3 links
@@ -23,20 +30,20 @@ waterVector = 's3://mrgeo-source/srtm-waterbodies'
 
 # Modify equation based on user input
 if args.equation == 'tobler':
-	mult = "-3.5"
-	ab = "abs(tan(slope) + 0.05)"
-	maxslope = "60.0"
+    mult = "-3.5"
+    ab = "abs(tan(slope) + 0.05)"
+    maxslope = "60.0"
 else:
-	mult = "-8.3"
-	ab = "abs(tan(slope))"
-	maxslope = "40.0"
+    mult = "-8.3"
+    ab = "abs(tan(slope))"
+    maxslope = "40.0"
 
 # Get max speed to apply
 ms = str(args.maxspeed)
 
 # Run from scratch or from pre-processed inputs
 if args.scratch:
-	ma = "slope = slope([" + elevationRaster + "]); \
+    ma = "slope = slope([" + elevationRaster + "]); \
 roads = RasterizeVector([" + roadwayVector + "],\"MAX\",\"12z\",\"b\"; \
 imp = con(abs([s3://mrgeo/images/GlobCover30m] - 11) < 0.1, 0.3, \
 abs([s3://mrgeo/images/GlobCover30m] - 14) < 0.1, 0.3, \
@@ -64,12 +71,11 @@ abs([s3://mrgeo/images/GlobCover30m] - 230) < 0.1, 1.0, 0.6); \
 water = RasterizeVector([" + waterVector + "],\"MASK\",\"12z\"); \
 fs = 3.6 / (" + ms + " * pow(2.718281828, " + mult + " * " + ab + ")); \
 result = con(slope > " + maxslope + ", NaN, water = 0, NaN, roads > 0, roads, (3.6 / (fs * imp)));"
-	cmd = "mrgeo mapalgebra -e " + "\"" + ma + "\"" + " -o " + args.output
+    cmd = "mrgeo mapalgebra -e " + "\"" + ma + "\"" + " -o " + args.output
 
 else:
-	ma = "slope = [" + slopeRaster + "];fs = 3.6 / (" + ms + " * pow(2.718281828, " + mult + " * " + ab + ")); \
+    ma = "slope = [" + slopeRaster + "];fs = 3.6 / (" + ms + " * pow(2.718281828, " + mult + " * " + ab + ")); \
 result = con([" + slopeRaster + "] > " + maxslope + ", NaN, [" + waterRaster + "] = 0, NaN, [" + roadwayRaster + "] > 0, [" + roadwayRaster + "], (3.6 / (fs * [" + impedanceRaster + "])))"
-	cmd = "mrgeo mapalgebra -e " + "\"" + ma + "\"" + " -o " + args.output
+    cmd = "mrgeo mapalgebra -e " + "\"" + ma + "\"" + " -o " + args.output
 
 print subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
-

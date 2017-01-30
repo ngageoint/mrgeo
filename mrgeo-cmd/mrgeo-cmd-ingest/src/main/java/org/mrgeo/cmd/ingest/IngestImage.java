@@ -16,14 +16,8 @@
 
 package org.mrgeo.cmd.ingest;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.cli.*;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.gdal.gdal.Band;
-import org.gdal.gdal.Dataset;
 import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
@@ -34,37 +28,28 @@ import org.mrgeo.cmd.MrGeo;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.utils.GDALUtils;
-import org.mrgeo.utils.tms.Bounds;
-import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.ingest.IngestInputProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.collection.JavaConversions;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 public class IngestImage extends Command
 {
 
-private Options options;
-
 private static Logger log = LoggerFactory.getLogger(IngestImage.class);
-
-private int zoomlevel = -1;
-private int tilesize = -1;
-private Number[] nodataOverride = null;
-private Number[] nodata;
+private Options options;
+private double[] nodata;
 private int bands = -1;
 private int tiletype = -1;
 private boolean skippreprocessing = false;
 private boolean local = false;
 private boolean quick = false;
 private Map<String, String> tags = new HashMap<>();
-private Bounds bounds = null;
 private boolean firstInput = true;
 
 public IngestImage()
@@ -133,7 +118,8 @@ public static Options createOptions()
   max.setRequired(false);
   aggregators.addOption(max);
 
-  Option minavgpair = new Option("minavgpair", "miminumaveragepair", false, "Minimum Average Pair Pyramid Pixel Resampling Method");
+  Option minavgpair =
+      new Option("minavgpair", "miminumaveragepair", false, "Minimum Average Pair Pyramid Pixel Resampling Method");
   minavgpair.setRequired(false);
   aggregators.addOption(minavgpair);
 
@@ -178,315 +164,13 @@ public static Options createOptions()
   return result;
 }
 
-private void calculateParams(final Dataset image)
-{
-  Bounds imageBounds = GDALUtils.getBounds(image);
-
-  log.debug("    image bounds: (lon/lat) " +
-      imageBounds.w + ", " + imageBounds.s + " to " +
-      imageBounds.e + ", " + imageBounds.n);
-
-
-  if (bounds == null)
-  {
-    bounds = imageBounds;
-  }
-  else
-  {
-    bounds = bounds.expand(imageBounds);
-  }
-
-  // calculate zoom level for the image
-
-  final int zx = TMSUtils.zoomForPixelSize(imageBounds.width() / image.getRasterXSize(), tilesize);
-  final int zy = TMSUtils.zoomForPixelSize(imageBounds.height() / image.getRasterYSize(), tilesize);
-
-  if (zoomlevel < zx)
-  {
-    zoomlevel = zx;
-  }
-  if (zoomlevel < zy)
-  {
-    zoomlevel = zy;
-  }
-
-
-  // Calculate some parameters only for the first input file because they should
-  // not differ among all the input files for one source.
-  if (firstInput)
-  {
-    firstInput = false;
-    calculateMinimalParams(image);
-  }
-}
-
-/**
- * This is called when the user requests to skip pre-processing of all of the input
- * files, and it is only called for the first input file. It's job is to compute
- * parameters that are expected to be the same across all of the input files for
- * this data source - namely bands, tiletype, and nodata.
- *
- */
-private void calculateMinimalParams(final Dataset image)
-{
-  bands = image.GetRasterCount();
-  tiletype = GDALUtils.toRasterDataBufferType(image.GetRasterBand(1).getDataType());
-
-  nodata = new Double[bands];
-  // If the nodata values were not overridden on the command line, then we
-  // read them from each band of the source data.
-  if (nodataOverride != null)
-  {
-    if (nodataOverride.length == 1)
-    {
-      log.info("overriding nodata for all " + bands + " bands with: " + nodataOverride[0]);
-      // Use the same nodata value override for all bands
-      for (int i = 0; i < bands; i++)
-      {
-        nodata[i] = nodataOverride[0];
-      }
-    }
-    else if (nodataOverride.length == bands)
-    {
-      for (int i = 0; i < bands; i++)
-      {
-        log.info("overriding nodata for band " + i + " with: " + nodataOverride[i]);
-        nodata[i] = nodataOverride[i];
-      }
-    }
-    else
-    {
-      String msg =
-          "The argument to the nodata option must either be a single value to use for" +
-              " all bands or be a comma-separated list of values, one for each band starting" +
-              " with band 0. The source image has " + bands + " bands.";
-      throw new IllegalArgumentException(msg);
-    }
-  }
-  else
-  {
-    for (int b = 1; b <= bands; b++)
-    {
-      Double[] val = new Double[1];
-      Band band = image.GetRasterBand(b);
-      band.GetNoDataValue(val);
-      if (val[0] != null)
-      {
-        nodata[b - 1] = val[0];
-        log.debug("nodata: b: " + nodata[b-1].byteValue() + " d: " + nodata[b-1].doubleValue() +
-            " f: " + nodata[b-1].floatValue() + " i: " + nodata[b-1].intValue() +
-            " s: " + nodata[b-1].shortValue() + " l: " + nodata[b-1].longValue());
-      }
-      else
-      {
-        log.debug("Unable to retrieve nodata from source, using NaN");
-        nodata[b-1] = Double.NaN;
-      }
-    }
-  }
-}
-
-@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File() used to find GDAL images only")
-List<String> getInputs(String arg, boolean recurse, final Configuration conf,
-    boolean existsCheck, boolean argIsDir)
-{
-  List<String> inputs = new LinkedList<>();
-
-  File f;
-  try
-  {
-    f = new File(new URI(arg));
-  }
-  catch (URISyntaxException | IllegalArgumentException ignored)
-  {
-    f = new File(arg);
-  }
-
-  // recurse through directories
-  if (f.isDirectory())
-  {
-    File[] dir = f.listFiles();
-    if (dir != null)
-    {
-      for (File s : dir)
-      {
-        try
-        {
-          if (s.isFile() || (s.isDirectory() && recurse))
-          {
-            inputs.addAll(getInputs(s.getCanonicalFile().toURI().toString(), recurse, conf,
-                false, s.isDirectory()));
-          }
-        }
-        catch (IOException ignored)
-        {
-        }
-      }
-    }
-  }
-  else if (f.isFile())
-  {
-    // is this a geospatial image file?
-    try
-    {
-      System.out.print("*** checking (local file) " + f.getCanonicalPath());
-      String name = f.getCanonicalFile().toURI().toString();
-
-      if (skippreprocessing)
-      {
-        if (firstInput)
-        {
-          firstInput = false;
-          Dataset dataset = GDALUtils.open(name);
-
-          if (dataset != null)
-          {
-            try
-            {
-              calculateMinimalParams(dataset);
-            }
-            finally
-            {
-              GDALUtils.close(dataset);
-            }
-          }
-        }
-        inputs.add(name);
-        local = true;
-
-        System.out.println(" accepted ***");
-      }
-      else
-      {
-        Dataset dataset = GDALUtils.open(name);
-
-        if (dataset != null)
-        {
-          calculateParams(dataset);
-
-          GDALUtils.close(dataset);
-          inputs.add(name);
-
-          local = true;
-
-          System.out.println(" accepted ***");
-        }
-        else
-        {
-          System.out.println(" can't load ***");
-        }
-      }
-    }
-    catch (IOException ignored)
-    {
-      System.out.println(" can't load ***");
-    }
-  }
-  else
-  {
-    try
-    {
-
-      Path p = new Path(arg);
-      FileSystem fs = HadoopFileUtils.getFileSystem(conf, p);
-
-      if (!existsCheck || fs.exists(p))
-      {
-        boolean isADirectory = argIsDir;
-        if (existsCheck)
-        {
-          FileStatus status = fs.getFileStatus(p);
-          isADirectory = status.isDirectory();
-        }
-
-        if (isADirectory && recurse)
-        {
-          FileStatus[] files = fs.listStatus(p);
-          for (FileStatus file : files)
-          {
-            inputs.addAll(getInputs(file.getPath().toUri().toString(), true, conf,
-                false, file.isDirectory()));
-          }
-        }
-        else
-        {
-          // is this a geospatial image file?
-          System.out.print("*** checking  " + p.toString());
-          String name = p.toUri().toString();
-
-          if (skippreprocessing)
-          {
-            if (firstInput)
-            {
-              firstInput = false;
-              Dataset dataset = GDALUtils.open(name);
-
-              if (dataset != null)
-              {
-                try
-                {
-                  calculateMinimalParams(dataset);
-                }
-                finally
-                {
-                  GDALUtils.close(dataset);
-                }
-              }
-            }
-            inputs.add(name);
-            System.out.println(" accepted ***");
-          }
-          else
-          {
-
-            Dataset dataset = GDALUtils.open(name);
-
-            if (dataset != null)
-            {
-              calculateParams(dataset);
-
-              GDALUtils.close(dataset);
-              inputs.add(name);
-
-              System.out.println(" accepted ***");
-            }
-            else
-            {
-              System.out.println(" can't load ***");
-            }
-          }
-        }
-      }
-    }
-    catch (IOException ignored)
-    {
-    }
-
-  }
-
-  return inputs;
-}
-
-private double parseNoData(String fromArg) throws NumberFormatException
-{
-  String arg = fromArg.trim();
-  if (arg.compareToIgnoreCase("nan") != 0)
-  {
-    return Double.parseDouble(arg);
-  }
-  else
-  {
-    return Double.NaN;
-  }
-}
-
 @Override
+@SuppressWarnings("squid:S1166") // Exceptions caught and error message printed
 public int run(String[] args, Configuration conf, ProviderProperties providerProperties)
 {
   try
   {
     long start = System.currentTimeMillis();
-
 
     CommandLine line;
     try
@@ -511,18 +195,19 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
 
 
     boolean overrideNodata = line.hasOption("nd");
+    double[] nodataOverride = null;
     if (overrideNodata)
     {
       String str = line.getOptionValue("nd");
       String[] strElements = str.split(",");
-      nodataOverride = new Double[strElements.length];
-      for (int i=0; i < nodataOverride.length; i++)
+      nodataOverride = new double[strElements.length];
+      for (int i = 0; i < nodataOverride.length; i++)
       {
         try
         {
           nodataOverride[i] = parseNoData(strElements[i]);
         }
-        catch(NumberFormatException nfe)
+        catch (NumberFormatException nfe)
         {
           System.out.println("Invalid nodata value: " + strElements[i]);
           return -1;
@@ -544,24 +229,10 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
     log.debug("skip pyramids: " + skipPyramids);
     log.debug("output: " + output);
 
-    List<String> inputs = new LinkedList<>();
+    ArrayList<String> inputs = new ArrayList<String>();
 
 
-    tilesize = Integer.parseInt(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_MRS_TILESIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT));
-
-    try
-    {
-      for (String arg : line.getArgs())
-      {
-        inputs.addAll(getInputs(arg, recurse, conf, true, false));
-      }
-    }
-    catch(IllegalArgumentException e)
-    {
-      System.out.println(e.getMessage());
-      return -1;
-    }
-
+    int zoomlevel = -1;
     if (line.hasOption("z"))
     {
       zoomlevel = Integer.parseInt(line.getOptionValue("z"));
@@ -572,9 +243,24 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
       log.error("Need to specify zoomlevel to skip preprocessing");
       return -1;
     }
+    IngestInputProcessor iip = new IngestInputProcessor(conf, nodataOverride, zoomlevel, skippreprocessing);
+
+    try
+    {
+      for (String arg : line.getArgs())
+      {
+        iip.processInput(arg, recurse);
+      }
+      inputs.addAll(JavaConversions.asJavaCollection(iip.getInputs()));
+    }
+    catch (IllegalArgumentException e)
+    {
+      System.out.println(e.getMessage());
+      return -1;
+    }
 
     log.info("Ingest inputs (" + inputs.size() + ")");
-    for (String input:inputs)
+    for (String input : inputs)
     {
       log.info("   " + input);
     }
@@ -584,7 +270,7 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
       String rawTags = line.getOptionValue("t");
 
       String splittags[] = rawTags.split(",");
-      for (String t: splittags)
+      for (String t : splittags)
       {
         String[] s = t.split(":");
         if (s.length != 2)
@@ -597,8 +283,8 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
       }
     }
 
-    quick = quick | line.hasOption("q");
-    local = local | line.hasOption("lc");
+    quick = quick || line.hasOption("q");
+    local = local || line.hasOption("lc");
 
     String protectionLevel = line.getOptionValue("pl");
 
@@ -617,14 +303,16 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
         else if (local)
         {
           success = org.mrgeo.ingest.IngestImage.localIngest(inputs.toArray(new String[inputs.size()]),
-              output, categorical, skipCatLoad, conf, bounds, zoomlevel, tilesize, nodata, bands, tiletype,
+              output, categorical, skipCatLoad, conf, iip.getBounds(), iip.getZoomlevel(), iip.tilesize(),
+              iip.getNodata(), iip.getBands(), iip.getTiletype(),
               tags, protectionLevel, providerProperties);
         }
         else
         {
           success = org.mrgeo.ingest.IngestImage.ingest(inputs.toArray(new String[inputs.size()]),
-              output, categorical, skipCatLoad, conf, bounds, zoomlevel, tilesize, nodata, bands,
-              tiletype, tags, protectionLevel, providerProperties);
+              output, categorical, skipCatLoad, conf, iip.getBounds(), iip.getZoomlevel(), iip.tilesize(),
+              iip.getNodata(), iip.getBands(),
+              iip.getTiletype(), tags, protectionLevel, providerProperties);
         }
 
         if (!success)
@@ -666,7 +354,6 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
       }
       catch (Exception e)
       {
-        e.printStackTrace();
         log.error("IngestImage exited with error", e);
         return 1;
       }
@@ -689,9 +376,22 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
   }
   catch (Exception e)
   {
-    e.printStackTrace();
+    log.error("IngestImage exited with error", e);
   }
 
   return -1;
+}
+
+private double parseNoData(String fromArg) throws NumberFormatException
+{
+  String arg = fromArg.trim();
+  if (arg.compareToIgnoreCase("nan") != 0)
+  {
+    return Double.parseDouble(arg);
+  }
+  else
+  {
+    return Double.NaN;
+  }
 }
 }

@@ -32,14 +32,12 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import javax.inject.Singleton;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Context;
-import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -49,121 +47,272 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.zip.ZipOutputStream;
 
 @Path("/kml")
+@Singleton
 public class KmlGenerator
 {
 
-private static class KMLErrorHandler implements ErrorHandler
-{
-  // Validation errors
-  @Override
-  public void error(SAXParseException ex) throws SAXParseException
-  {
-    log.error("Error at " + ex.getLineNumber() + " line.");
-    log.error(ex.getMessage());
-  }
-
-  // Ignore the fatal errors
-  @Override
-  public void fatalError(SAXParseException ex) throws SAXException
-  {
-    log.error("Fatal Error at " + ex.getLineNumber() + " line.");
-    log.error(ex.getMessage());
-  }
-
-  // Show warnings
-  @Override
-  public void warning(SAXParseException ex) throws SAXParseException
-  {
-    log.warn("Warning at " + ex.getLineNumber() + " line.");
-    log.warn(ex.getMessage());
-  }
-}
-
-@SuppressFBWarnings(value = "SE_COMPARATOR_SHOULD_BE_SERIALIZABLE", justification = "Do not need serialization")
-private static class MrsImageComparator implements Comparator<MrsImageDataProvider>
-{
-  @Override
-  public int compare(MrsImageDataProvider o1, MrsImageDataProvider o2)
-  {
-    return o1.getResourceName().compareTo(o2.getResourceName());
-  }
-}
-
-private static class Version
-{
-  private int major, minor, micro;
-
-  public Version(String str)
-  {
-    String[] l = str.split("\\.");
-    major = Integer.parseInt(l[0]);
-    minor = Integer.parseInt(l[1]);
-    micro = Integer.parseInt(l[2]);
-  }
-
-  public int compareTo(String str)
-  {
-    Version other = new Version(str);
-    if (other.major < major)
-      return 1;
-    if (other.major > major)
-      return -1;
-    if (other.minor < minor)
-      return 1;
-    if (other.minor > minor)
-      return -1;
-    if (other.micro < micro)
-      return 1;
-    if (other.micro > micro)
-      return -1;
-    return 0;
-  }
-
-  public int getMajor()
-  {
-    return major;
-  }
-
-  public int getMicro()
-  {
-    return micro;
-  }
-
-  public int getMinor()
-  {
-    return minor;
-  }
-
-  public boolean isEqual(String str)
-  {
-    return compareTo(str) == 0;
-  }
-
-  public boolean isLess(String str)
-  {
-    return compareTo(str) == -1;
-  }
-}
-
-private String baseUrl;
-
 private static final String KML_MIME_TYPE = "application/vnd.google-earth.kml+xml";
-private Version version;
-
-private final String WMS_VERSION = "1.3.0";
-
 private static final Logger log = LoggerFactory.getLogger(KmlGenerator.class);
+private final String WMS_VERSION = "1.3.0";
+private String baseUrl;
+private Version version;
 
 public KmlGenerator()
 {
+}
+
+public static String getKmlBodyAsString(String service, String url, Bounds inputBounds, String layer, String wmsHost,
+    String levelStr, String res, final ProviderProperties providerProperties) throws IOException
+{
+  String bbox = "";
+  if (layer == null)
+  {
+    throw new IllegalArgumentException("Layer must be specified.");
+  }
+  double minX = inputBounds.w;
+  double minY = inputBounds.s;
+  double maxX = inputBounds.e;
+  double maxY = inputBounds.n;
+
+  MrsImageDataProvider dp =
+      DataProviderFactory.getMrsImageDataProvider(layer, DataProviderFactory.AccessMode.READ, providerProperties);
+  MrsPyramid pyramid = MrsPyramid.open(dp);
+
+  int level = pyramid.getMaximumLevel();
+
+  Bounds bounds = pyramid.getBounds();
+  if (bounds.toEnvelope().contains(inputBounds.toEnvelope()))
+  {
+    double layerMinX = bounds.w;
+    double layerMinY = bounds.s;
+    double layerMaxX = bounds.e;
+    double layerMaxY = bounds.n;
+    bbox = layerMinX + "," + layerMinY + "," + layerMaxX + "," + layerMaxY;
+  }
+
+  String kmlBody;
+
+  //String format = KML_MIME_TYPE;
+
+  String hrefKmlString = "<href>" + url + "?LAYERS=" + layer + "&amp;SERVICE=" + service
+      + "&amp;REQUEST=getkmlnode" + "&amp;WMSHOST=" + wmsHost + "&amp;BBOX=" + bbox
+      + "&amp;LEVELS=" + level + "&amp;RESOLUTION=" + res + "&amp;NODEID=0,0"
+      + "</href>";
+
+  kmlBody = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+      + "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n" + "<Document>\n" + "<Region>\n"
+      + "  <LatLonAltBox>\n" + "    <north>"
+      + String.valueOf(maxY)
+      + "</north>\n"
+      + "    <south>"
+      + String.valueOf(minY)
+      + "</south>\n"
+      + "    <east>"
+      + String.valueOf(maxX)
+      + "</east>\n"
+      + "    <west>"
+      + String.valueOf(minX)
+      + "</west>\n"
+      + "  </LatLonAltBox>\n"
+      + "  <Lod>\n"
+      + "    <minLodPixels>256</minLodPixels>\n"
+      + "    <maxLodPixels>-1</maxLodPixels>\n"
+      + "  </Lod>\n"
+      + "</Region>\n"
+      + "<NetworkLink>\n"
+      + "  <name>0</name>\n"
+      + "  <Region>\n"
+      + "    <LatLonAltBox>\n"
+      + "      <north>"
+      + String.valueOf(maxY)
+      + "</north>\n"
+      + "      <south>"
+      + String.valueOf(minY)
+      + "</south>\n"
+      + "      <east>"
+      + String.valueOf(maxX)
+      + "</east>\n"
+      + "      <west>"
+      + String.valueOf(minX)
+      + "</west>\n"
+      + "   </LatLonAltBox>\n"
+      + "   <Lod>\n"
+      + "     <minLodPixels>256</minLodPixels>\n"
+      + "     <maxLodPixels>-1</maxLodPixels>\n"
+      + "   </Lod>\n"
+      + " </Region>\n"
+      + " <Link>\n"
+      + hrefKmlString
+      + "\n"
+      + "   <viewRefreshMode>onRegion</viewRefreshMode>\n"
+      + " </Link>\n"
+      + "</NetworkLink>\n" + "</Document>\n" + "</kml>\n";
+  return kmlBody;
+}
+
+/*
+* Returns a list of all MrsPyramid version 2 data in the home data directory
+*/
+private static MrsImageDataProvider[] getPyramidFilesList(
+    final ProviderProperties providerProperties) throws IOException
+{
+  String[] images = DataProviderFactory.listImages(providerProperties);
+
+  Arrays.sort(images);
+
+  MrsImageDataProvider[] providers = new MrsImageDataProvider[images.length];
+
+  for (int i = 0; i < images.length; i++)
+  {
+    // original code looked for a MrsPyramid.toc file, not sure why, it wasn't used anywhere else...
+//      Path toc = new Path(f.getPath(), "MrsPyramid.toc");
+//      if (fs.exists(toc))
+//      {
+//        files.add(f);
+//      }
+
+    providers[i] = DataProviderFactory.getMrsImageDataProvider(images[i],
+        DataProviderFactory.AccessMode.READ, providerProperties);
+  }
+
+  return providers;
+}
+
+public Element createElement(Element parent, String tagName)
+{
+  Document doc = parent.getOwnerDocument();
+  Element e = doc.createElement(tagName);
+  parent.appendChild(e);
+  return e;
+}
+
+public Element createTextElement(Element parent, String tagName, String text)
+{
+  Document doc = parent.getOwnerDocument();
+  Element e = doc.createElement(tagName);
+  e.appendChild(doc.createTextNode(text));
+  parent.appendChild(e);
+  return e;
+}
+
+@SuppressWarnings("squid:S1148") // We _are_ printing the exception, to a printwriter!
+@SuppressFBWarnings(value = {"SERVLET_QUERY_STRING",
+    "SERVLET_PARAMETER"}, justification = "1) QueryString only checked for not null, 2) SERVICE & REQUEST validated")
+// @GET
+public void doGet(@Context HttpServletRequest request, @Context HttpServletResponse response)
+    throws ServletException, IOException
+{
+  init();
+
+  response.setHeader("Cache-Control", "no-store");
+  response.setHeader("Pragma", "no-cache");
+  response.setDateHeader("Expires", 0);
+
+  try
+  {
+    if (request.getQueryString() != null)
+    {
+      String serviceParam = request.getParameter("SERVICE");
+      if (serviceParam == null || serviceParam.isEmpty())
+      {
+        serviceParam = "kml";
+      }
+
+      if (!serviceParam.toLowerCase().equals("kml"))
+      {
+        throw new KmlGeneratorException("Unsupported service type was requested. (only KML is supported '"
+            + serviceParam + "')");
+      }
+
+      String requestParam = request.getParameter("REQUEST");
+      if (requestParam != null)
+      {
+        ProviderProperties providerProperties = new ProviderProperties(); // null;
+        if (requestParam.toLowerCase().equals("getcapabilities"))
+        {
+          try
+          {
+            getCapabilities(request, response, providerProperties);
+          }
+          catch (TransformerException | ParserConfigurationException e)
+          {
+            throw new KmlGeneratorException(e);
+          }
+        }
+        else if (requestParam.toLowerCase().equals("getkmlrootnode"))
+        {
+          getNetworkKmlRootNode(serviceParam, request, response, providerProperties);
+        }
+        else if (requestParam.toLowerCase().equals("getkmlnode"))
+        {
+          getNetworkKmlNode(serviceParam, request, response);
+        }
+        else
+        {
+          throw new KmlGeneratorException("No viable request made.");
+        }
+      }
+      else
+      {
+        throw new KmlGeneratorException("No viable request made.");
+      }
+    }
+  }
+  catch (KmlGeneratorException e)
+  {
+    log.error("Exception thrown", e);
+    try
+    {
+      Document doc;
+      DocumentBuilderFactory dBF = DocumentBuilderFactory.newInstance();
+      DocumentBuilder builder = dBF.newDocumentBuilder();
+      doc = builder.newDocument();
+
+      Element ser = doc.createElement("ServiceExceptionReport");
+      doc.appendChild(ser);
+      ser.setAttribute("version", WMS_VERSION);
+      Element se = createElement(ser, "ServiceException");
+      String code = e.getLocalizedMessage();
+      if (code == null || code.isEmpty())
+      {
+        code = e.getClass().getName();
+      }
+      se.setAttribute("code", code);
+      ByteArrayOutputStream strm = new ByteArrayOutputStream();
+      e.printStackTrace(new PrintStream(strm));
+      se.setAttribute("locator", strm.toString());
+      PrintWriter out = response.getWriter();
+
+      writeDocument(doc, out);
+    }
+    catch (ParserConfigurationException | TransformerException e1)
+    {
+      throw new IOException("Exception while creating XML exception (ah, the irony)."
+          + e1.getLocalizedMessage(), e1);
+    }
+//    catch (Exception exception)
+//    {
+//      throw new IOException("Exception while creating XML exception (ah, the irony)."
+//          + exception.getLocalizedMessage());
+//    }
+  }
+}
+
+// @POST
+public void doPost(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException
+{
+  doGet(request, response);
 }
 
 private void addHttpElement(Element parent, HttpServletRequest request)
@@ -197,36 +346,37 @@ private void addHttpElement(Element parent, HttpServletRequest request)
 }
 
 /*
-* Returns a list of all MrsPyramid version 2 data in the home data directory
-*/
-private static MrsImageDataProvider[] getPyramidFilesList(
-    final ProviderProperties providerProperties) throws IOException
-{
-  String[] images = DataProviderFactory.listImages(providerProperties);
-
-  Arrays.sort(images);
-
-  MrsImageDataProvider[] providers = new MrsImageDataProvider[images.length];
-
-  for (int i = 0; i < images.length; i++)
-  {
-    // original code looked for a MrsPyramid.toc file, not sure why, it wasn't used anywhere else...
-//      Path toc = new Path(f.getPath(), "MrsPyramid.toc");
-//      if (fs.exists(toc))
-//      {
-//        files.add(f);
-//      }
-
-    providers[i] = DataProviderFactory.getMrsImageDataProvider(images[i],
-        DataProviderFactory.AccessMode.READ, providerProperties);
-  }
-
-  return providers;
-}
+ * Checks the provided document against the 1.1.1 DTD
+ */
+//private void checkForErrors(Document doc) throws SAXException, IOException, TransformerException,
+//    ParserConfigurationException
+//{
+//  ByteArrayOutputStream strm = new ByteArrayOutputStream();
+//  PrintWriter pw = new PrintWriter(strm);
+//  writeDocument(doc, pw);
+//
+//  DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+//  factory.setValidating(true);
+//  factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+//  DocumentBuilder builder = factory.newDocumentBuilder();
+//  builder.setErrorHandler(new KMLErrorHandler());
+//
+//  ByteArrayInputStream input = new ByteArrayInputStream(strm.toByteArray());
+//
+//  Document xmlDocument = builder.parse(input);
+//  DOMSource source = new DOMSource(xmlDocument);
+//  StreamResult result = new StreamResult(new ByteArrayOutputStream());
+//  TransformerFactory tf = TransformerFactory.newInstance();
+//  Transformer transformer = tf.newTransformer();
+//  transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM,
+//      "http://schemas.opengis.net/wms/1.1.1/WMS_MS_Capabilities.dtd");
+//  transformer.transform(source, result);
+//}
 
 /*
  *
  */
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 private void addLayersToCapability(Element capability, Version kmlVersion,
     final ProviderProperties providerProperties) throws IOException
 {
@@ -288,7 +438,7 @@ private void addLayersToCapability(Element capability, Version kmlVersion,
         createTextElement(bb, "northBoundLatitude", String.valueOf(mp.getBounds().n));
       }
     }
-    catch (IOException e)
+    catch (IOException ignored)
     {
       // no op
     }
@@ -297,157 +447,11 @@ private void addLayersToCapability(Element capability, Version kmlVersion,
 }
 
 /*
- * Checks the provided document against the 1.1.1 DTD
- */
-//private void checkForErrors(Document doc) throws SAXException, IOException, TransformerException,
-//    ParserConfigurationException
-//{
-//  ByteArrayOutputStream strm = new ByteArrayOutputStream();
-//  PrintWriter pw = new PrintWriter(strm);
-//  writeDocument(doc, pw);
-//
-//  DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-//  factory.setValidating(true);
-//  factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-//  DocumentBuilder builder = factory.newDocumentBuilder();
-//  builder.setErrorHandler(new KMLErrorHandler());
-//
-//  ByteArrayInputStream input = new ByteArrayInputStream(strm.toByteArray());
-//
-//  Document xmlDocument = builder.parse(input);
-//  DOMSource source = new DOMSource(xmlDocument);
-//  StreamResult result = new StreamResult(new ByteArrayOutputStream());
-//  TransformerFactory tf = TransformerFactory.newInstance();
-//  Transformer transformer = tf.newTransformer();
-//  transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM,
-//      "http://schemas.opengis.net/wms/1.1.1/WMS_MS_Capabilities.dtd");
-//  transformer.transform(source, result);
-//}
-
-public Element createElement(Element parent, String tagName)
-{
-  Document doc = parent.getOwnerDocument();
-  Element e = doc.createElement(tagName);
-  parent.appendChild(e);
-  return e;
-}
-
-public Element createTextElement(Element parent, String tagName, String text)
-{
-  Document doc = parent.getOwnerDocument();
-  Element e = doc.createElement(tagName);
-  e.appendChild(doc.createTextNode(text));
-  parent.appendChild(e);
-  return e;
-}
-
-@SuppressFBWarnings(value = {"SERVLET_QUERY_STRING",
-    "SERVLET_PARAMETER"}, justification = "1) QueryString only checked for not null, 2) SERVICE & REQUEST validated")
-@GET
-public void doGet(@Context HttpServletRequest request, @Context HttpServletResponse response)
-    throws ServletException, IOException
-{
-  init();
-
-  response.setHeader("Cache-Control", "no-store");
-  response.setHeader("Pragma", "no-cache");
-  response.setDateHeader("Expires", 0);
-
-  try
-  {
-    if (request.getQueryString() != null)
-    {
-      String serviceParam = request.getParameter("SERVICE");
-      if (serviceParam == null || serviceParam.isEmpty())
-      {
-        serviceParam = "kml";
-      }
-
-      if (!serviceParam.toLowerCase().equals("kml"))
-      {
-        throw new Exception("Unsupported service type was requested. (only KML is supported '"
-            + serviceParam + "')");
-      }
-
-      String requestParam = request.getParameter("REQUEST");
-      if (requestParam != null)
-      {
-        ProviderProperties providerProperties = new ProviderProperties(); // null;
-        if (requestParam.toLowerCase().equals("getcapabilities"))
-        {
-          getCapabilities(request, response, providerProperties);
-        }
-        else if (requestParam.toLowerCase().equals("getkmlrootnode"))
-        {
-          getNetworkKmlRootNode(serviceParam, request, response, providerProperties);
-        }
-        else if (requestParam.toLowerCase().equals("getkmlnode"))
-        {
-          getNetworkKmlNode(serviceParam, request, response);
-        }
-        else
-        {
-          throw new Exception("No viable request made.");
-        }
-      }
-      else {
-        throw new Exception("No viable request made.");
-      }
-    }
-  }
-  catch (Exception e)
-  {
-    e.printStackTrace();
-    try
-    {
-      Document doc;
-      DocumentBuilderFactory dBF = DocumentBuilderFactory.newInstance();
-      DocumentBuilder builder = dBF.newDocumentBuilder();
-      doc = builder.newDocument();
-
-      Element ser = doc.createElement("ServiceExceptionReport");
-      doc.appendChild(ser);
-      ser.setAttribute("version", WMS_VERSION);
-      Element se = createElement(ser, "ServiceException");
-      String code = e.getLocalizedMessage();
-      if (code == null || code.isEmpty())
-      {
-        code = e.getClass().getName();
-      }
-      se.setAttribute("code", code);
-      ByteArrayOutputStream strm = new ByteArrayOutputStream();
-      e.printStackTrace(new PrintStream(strm));
-      se.setAttribute("locator", strm.toString());
-      PrintWriter out = response.getWriter();
-
-      writeDocument(doc, out);
-    }
-    catch (ParserConfigurationException | TransformerException e1)
-    {
-      throw new IOException("Exception while creating XML exception (ah, the irony)."
-          + e1.getLocalizedMessage());
-    }
-//    catch (Exception exception)
-//    {
-//      throw new IOException("Exception while creating XML exception (ah, the irony)."
-//          + exception.getLocalizedMessage());
-//    }
-  }
-}
-
-@POST
-public void doPost(HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException
-{
-  doGet(request, response);
-}
-
-/*
  *
  */
 @SuppressFBWarnings(value = "SERVLET_PARAMETER", justification = "VERSION validated")
 private void getCapabilities(HttpServletRequest request, HttpServletResponse response,
-    final ProviderProperties providerProperties) throws Exception
+    final ProviderProperties providerProperties) throws ParserConfigurationException, IOException, TransformerException
 {
   Document doc;
   DocumentBuilderFactory dBF = DocumentBuilderFactory.newInstance();
@@ -536,47 +540,6 @@ private void getCapabilities(HttpServletRequest request, HttpServletResponse res
   writeDocument(doc, out);
 }
 
-//private void getKmz(HttpServletRequest request, HttpServletResponse response) throws IOException
-//{
-//  String url = request.getRequestURL().toString();
-//  String serviceParam = request.getParameter("SERVICE");
-//
-//  String hostParam = getWmsHost(request);
-//
-//  String layerType = request.getParameter("LAYERS");
-//  if (layerType == null)
-//  {
-//    throw new IllegalArgumentException("Layer type must be specified.");
-//  }
-//
-//  String kmlBody;
-//
-//  String format = KML_MIME_TYPE;
-//
-//  String hrefString = "<href>" + url + "?LAYERS=" + layerType + "&amp;SERVICE=" + serviceParam
-//      + "&amp;REQUEST=getviewkml" + "&amp;WMSHOST=" + hostParam + "</href>";
-//
-//  kmlBody = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-//      + "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n" + " <NetworkLink>\n" + "  <name>"
-//      + layerType + "Link</name>\n" + "  <open>1</open>\n" + "  <Url>\n" + "   " + hrefString
-//      + "   <viewRefreshMode>onStop</viewRefreshMode>\n"
-//      + "   <viewRefreshTime>1</viewRefreshTime>\n" + "  </Url>\n"
-//      + "  <visibility>1</visibility>\n" + " </NetworkLink>\n" + "</kml>\n";
-//
-//  ZipOutputStream zos = new ZipOutputStream(response.getOutputStream());
-//  zos.setLevel(9);
-//
-//  try (PrintStream kmlStream = new PrintStream(zos))
-//  {
-//
-//    kmlStream.println(kmlBody);
-//    response.setContentType(format);
-//
-//    response.setContentLength(kmlBody.length());
-//  }
-//
-//}
-
 /*
  *
  */
@@ -591,7 +554,7 @@ private void getNetworkKmlNode(String serviceParam, HttpServletRequest request, 
   String resParam = request.getParameter("RESOLUTION");
 
   int maxLevels = Integer.parseInt(levelParam);
-  if (maxLevels < 1 || maxLevels >=22)
+  if (maxLevels < 1 || maxLevels >= 22)
   {
     throw new IllegalArgumentException("Levels must be between 1 and 22 inclusive.");
   }
@@ -783,7 +746,7 @@ private void getNetworkKmlRootNode(String serviceParam, HttpServletRequest reque
   String format = KML_MIME_TYPE;
 
   int maxLevels = Integer.parseInt(levelParam);
-  if (maxLevels < 1 || maxLevels >=22)
+  if (maxLevels < 1 || maxLevels >= 22)
   {
     throw new IllegalArgumentException("Levels must be between 1 and 22 inclusive.");
   }
@@ -808,7 +771,8 @@ private void getNetworkKmlRootNode(String serviceParam, HttpServletRequest reque
 
   Bounds inputBounds = new Bounds(minX, minY, maxX, maxY);
 
-  String kmlBody = getKmlBodyAsString(serviceParam, url, inputBounds, layer, hostParam, levelParam, resParam, providerProperties);
+  String kmlBody =
+      getKmlBodyAsString(serviceParam, url, inputBounds, layer, hostParam, levelParam, resParam, providerProperties);
 
   try (PrintStream kmlStream = new PrintStream(response.getOutputStream()))
   {
@@ -819,6 +783,91 @@ private void getNetworkKmlRootNode(String serviceParam, HttpServletRequest reque
     response.setContentLength(kmlBody.length());
 
   }
+}
+
+/*
+ *
+ */
+@SuppressFBWarnings(value = "SERVLET_PARAMETER", justification = "WMSHOST - simply returning the value sent in")
+private String getWmsHost(HttpServletRequest request) throws MalformedURLException
+{
+  String result = request.getParameter("WMSHOST");
+  if (result == null)
+  {
+    URL requestUrl = new URL(request.getRequestURL().toString());
+    result = requestUrl.getHost();
+    int port = requestUrl.getPort();
+    if (port != -1)
+    {
+      result = String.format("%s:%d", result, port);
+    }
+  }
+  return result;
+}
+
+//private void getKmz(HttpServletRequest request, HttpServletResponse response) throws IOException
+//{
+//  String url = request.getRequestURL().toString();
+//  String serviceParam = request.getParameter("SERVICE");
+//
+//  String hostParam = getWmsHost(request);
+//
+//  String layerType = request.getParameter("LAYERS");
+//  if (layerType == null)
+//  {
+//    throw new IllegalArgumentException("Layer type must be specified.");
+//  }
+//
+//  String kmlBody;
+//
+//  String format = KML_MIME_TYPE;
+//
+//  String hrefString = "<href>" + url + "?LAYERS=" + layerType + "&amp;SERVICE=" + serviceParam
+//      + "&amp;REQUEST=getviewkml" + "&amp;WMSHOST=" + hostParam + "</href>";
+//
+//  kmlBody = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+//      + "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n" + " <NetworkLink>\n" + "  <name>"
+//      + layerType + "Link</name>\n" + "  <open>1</open>\n" + "  <Url>\n" + "   " + hrefString
+//      + "   <viewRefreshMode>onStop</viewRefreshMode>\n"
+//      + "   <viewRefreshTime>1</viewRefreshTime>\n" + "  </Url>\n"
+//      + "  <visibility>1</visibility>\n" + " </NetworkLink>\n" + "</kml>\n";
+//
+//  ZipOutputStream zos = new ZipOutputStream(response.getOutputStream());
+//  zos.setLevel(9);
+//
+//  try (PrintStream kmlStream = new PrintStream(zos))
+//  {
+//
+//    kmlStream.println(kmlBody);
+//    response.setContentType(format);
+//
+//    response.setContentLength(kmlBody.length());
+//  }
+//
+//}
+
+private void init() throws ServletException
+{
+  try
+  {
+    baseUrl = Configuration.getInstance().getProperties().getProperty("base.url");
+  }
+  catch (IllegalStateException e)
+  {
+    throw new ServletException("Error reading configuration information.", e);
+  }
+}
+
+private void writeDocument(Document doc, PrintWriter out) throws TransformerException
+{
+  TransformerFactory transformerFactory = TransformerFactory.newInstance();
+  Transformer transformer = transformerFactory.newTransformer();
+  transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+  transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM,
+      "http://schemas.opengis.net/wms/1.1.1/WMS_MS_Capabilities.dtd");
+  DOMSource source = new DOMSource(doc);
+  StreamResult result = new StreamResult(out);
+  transformer.transform(source, result);
 }
 
 //  public static String getKmlBodyAsString(String service, String url, Bounds inputBounds, String layer, String wmsHost,
@@ -919,137 +968,6 @@ private void getNetworkKmlRootNode(String serviceParam, HttpServletRequest reque
 //    return kmlBody;
 //  }
 
-public static String getKmlBodyAsString(String service, String url, Bounds inputBounds, String layer, String wmsHost,
-    String levelStr, String res, final ProviderProperties providerProperties) throws IOException {
-  String bbox="";
-  if (layer == null)
-  {
-    throw new IllegalArgumentException("Layer must be specified.");
-  }
-  double minX = inputBounds.w;
-  double minY = inputBounds.s;
-  double maxX = inputBounds.e;
-  double maxY = inputBounds.n;
-
-  MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(layer, DataProviderFactory.AccessMode.READ, providerProperties);
-  MrsPyramid pyramid = MrsPyramid.open(dp);
-
-  int level = pyramid.getMaximumLevel();
-
-  Bounds bounds = pyramid.getBounds();
-  if (bounds.toEnvelope().contains(inputBounds.toEnvelope()))
-  {
-    double layerMinX = bounds.w;
-    double layerMinY = bounds.s;
-    double layerMaxX = bounds.e;
-    double layerMaxY = bounds.n;
-    bbox = layerMinX + "," + layerMinY + "," + layerMaxX + "," + layerMaxY;
-  }
-
-  String kmlBody;
-
-  //String format = KML_MIME_TYPE;
-
-  String hrefKmlString = "<href>" + url + "?LAYERS=" + layer + "&amp;SERVICE=" + service
-      + "&amp;REQUEST=getkmlnode" + "&amp;WMSHOST=" + wmsHost + "&amp;BBOX=" + bbox
-      + "&amp;LEVELS=" + level + "&amp;RESOLUTION=" + res + "&amp;NODEID=0,0"
-      + "</href>";
-
-  kmlBody = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-      + "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n" + "<Document>\n" + "<Region>\n"
-      + "  <LatLonAltBox>\n" + "    <north>"
-      + String.valueOf(maxY)
-      + "</north>\n"
-      + "    <south>"
-      + String.valueOf(minY)
-      + "</south>\n"
-      + "    <east>"
-      + String.valueOf(maxX)
-      + "</east>\n"
-      + "    <west>"
-      + String.valueOf(minX)
-      + "</west>\n"
-      + "  </LatLonAltBox>\n"
-      + "  <Lod>\n"
-      + "    <minLodPixels>256</minLodPixels>\n"
-      + "    <maxLodPixels>-1</maxLodPixels>\n"
-      + "  </Lod>\n"
-      + "</Region>\n"
-      + "<NetworkLink>\n"
-      + "  <name>0</name>\n"
-      + "  <Region>\n"
-      + "    <LatLonAltBox>\n"
-      + "      <north>"
-      + String.valueOf(maxY)
-      + "</north>\n"
-      + "      <south>"
-      + String.valueOf(minY)
-      + "</south>\n"
-      + "      <east>"
-      + String.valueOf(maxX)
-      + "</east>\n"
-      + "      <west>"
-      + String.valueOf(minX)
-      + "</west>\n"
-      + "   </LatLonAltBox>\n"
-      + "   <Lod>\n"
-      + "     <minLodPixels>256</minLodPixels>\n"
-      + "     <maxLodPixels>-1</maxLodPixels>\n"
-      + "   </Lod>\n"
-      + " </Region>\n"
-      + " <Link>\n"
-      + hrefKmlString
-      + "\n"
-      + "   <viewRefreshMode>onRegion</viewRefreshMode>\n"
-      + " </Link>\n"
-      + "</NetworkLink>\n" + "</Document>\n" + "</kml>\n";
-  return kmlBody;
-}
-/*
- *
- */
-@SuppressFBWarnings(value = "SERVLET_PARAMETER", justification = "WMSHOST - simply returning the value sent in")
-private String getWmsHost(HttpServletRequest request) throws MalformedURLException
-{
-  String result = request.getParameter("WMSHOST");
-  if (result == null)
-  {
-    URL requestUrl = new URL(request.getRequestURL().toString());
-    result = requestUrl.getHost();
-    int port = requestUrl.getPort();
-    if (port != -1)
-    {
-      result = String.format("%s:%d", result, port);
-    }
-  }
-  return result;
-}
-
-private void init() throws ServletException
-{
-  try
-  {
-    baseUrl = Configuration.getInstance().getProperties().getProperty("base.url");
-  }
-  catch (IllegalStateException e)
-  {
-    throw new ServletException("Error reading configuration information.", e);
-  }
-}
-
-
-private void writeDocument(Document doc, PrintWriter out) throws TransformerException
-{
-  TransformerFactory transformerFactory = TransformerFactory.newInstance();
-  Transformer transformer = transformerFactory.newTransformer();
-  transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-  transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM,
-      "http://schemas.opengis.net/wms/1.1.1/WMS_MS_Capabilities.dtd");
-  DOMSource source = new DOMSource(doc);
-  StreamResult result = new StreamResult(out);
-  transformer.transform(source, result);
-}
-
 private String writeKmlNetworkLink(double minX, double minY, double maxX, double maxY, int level,
     int id, String hrefContent)
 {
@@ -1069,5 +987,161 @@ private String writeKmlNetworkLink(double minX, double minY, double maxX, double
       + " </NetworkLink>\n";
 
   return nodeString;
+}
+
+public static class KmlGeneratorException extends java.lang.Exception
+{
+
+  /**
+   *
+   */
+  private static final long serialVersionUID = 1L;
+
+  /**
+   * Creates a new instance of <code>DbaseException</code> without detail
+   * message.
+   */
+  public KmlGeneratorException()
+  {
+  }
+
+  /**
+   * Constructs an instance of <code>DbaseException</code> with the specified
+   * detail message.
+   *
+   * @param msg the detail message.
+   */
+  public KmlGeneratorException(String msg)
+  {
+    super(msg);
+  }
+
+  /**
+   * Constructs an instance of <code>DbaseException</code> with the specified
+   * detail message and throwable cause.
+   *
+   * @param msg       the detail message.
+   * @param throwable the throwable cause.
+   */
+  public KmlGeneratorException(String msg, Throwable throwable)
+  {
+    super(msg, throwable);
+  }
+
+  /**
+   * Constructs an instance of <code>DbaseException</code> with the specified
+   * throwable cause.
+   *
+   * @param throwable the throwable cause.
+   */
+  public KmlGeneratorException(Throwable throwable)
+  {
+    super(throwable);
+  }
+}
+
+private static class KMLErrorHandler implements ErrorHandler
+{
+  // Validation errors
+  @Override
+  public void error(SAXParseException ex) throws SAXParseException
+  {
+    log.error("Error at " + ex.getLineNumber() + " line.");
+    log.error(ex.getMessage());
+  }
+
+  // Ignore the fatal errors
+  @Override
+  public void fatalError(SAXParseException ex) throws SAXException
+  {
+    log.error("Fatal Error at " + ex.getLineNumber() + " line.");
+    log.error(ex.getMessage());
+  }
+
+  // Show warnings
+  @Override
+  public void warning(SAXParseException ex) throws SAXParseException
+  {
+    log.warn("Warning at " + ex.getLineNumber() + " line.");
+    log.warn(ex.getMessage());
+  }
+}
+
+@SuppressFBWarnings(value = "SE_COMPARATOR_SHOULD_BE_SERIALIZABLE", justification = "Do not need serialization")
+private static class MrsImageComparator implements Comparator<MrsImageDataProvider>
+{
+  @Override
+  public int compare(MrsImageDataProvider o1, MrsImageDataProvider o2)
+  {
+    return o1.getResourceName().compareTo(o2.getResourceName());
+  }
+}
+
+private static class Version
+{
+  private int major, minor, micro;
+
+  public Version(String str)
+  {
+    String[] l = str.split("\\.");
+    major = Integer.parseInt(l[0]);
+    minor = Integer.parseInt(l[1]);
+    micro = Integer.parseInt(l[2]);
+  }
+
+  public int compareTo(String str)
+  {
+    Version other = new Version(str);
+    if (other.major < major)
+    {
+      return 1;
+    }
+    if (other.major > major)
+    {
+      return -1;
+    }
+    if (other.minor < minor)
+    {
+      return 1;
+    }
+    if (other.minor > minor)
+    {
+      return -1;
+    }
+    if (other.micro < micro)
+    {
+      return 1;
+    }
+    if (other.micro > micro)
+    {
+      return -1;
+    }
+    return 0;
+  }
+
+  public int getMajor()
+  {
+    return major;
+  }
+
+  public int getMicro()
+  {
+    return micro;
+  }
+
+  public int getMinor()
+  {
+    return minor;
+  }
+
+  public boolean isEqual(String str)
+  {
+    return compareTo(str) == 0;
+  }
+
+  public boolean isLess(String str)
+  {
+    return compareTo(str) == -1;
+  }
 }
 }

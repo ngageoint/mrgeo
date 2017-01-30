@@ -27,75 +27,75 @@ import java.io.IOException;
 
 public class VectorInputSplit extends InputSplit implements Writable
 {
-  private String vectorName;
-  private InputSplit wrappedInputSplit;
+private String vectorName;
+private InputSplit wrappedInputSplit;
 
-  public VectorInputSplit()
+public VectorInputSplit()
+{
+}
+
+public VectorInputSplit(String vectorName, InputSplit wrappedInputSplit)
+{
+  this.vectorName = vectorName;
+  this.wrappedInputSplit = wrappedInputSplit;
+}
+
+public String getVectorName()
+{
+  return vectorName;
+}
+
+public InputSplit getWrappedInputSplit()
+{
+  return wrappedInputSplit;
+}
+
+@Override
+public void write(DataOutput out) throws IOException
+{
+  out.writeUTF(vectorName);
+  if (wrappedInputSplit instanceof Writable)
   {
+    out.writeBoolean(true);
+    out.writeUTF(wrappedInputSplit.getClass().getName());
+    ((Writable) wrappedInputSplit).write(out);
   }
-
-  public VectorInputSplit(String vectorName, InputSplit wrappedInputSplit)
+  else
   {
-    this.vectorName = vectorName;
-    this.wrappedInputSplit = wrappedInputSplit;
+    out.writeBoolean(false);
   }
+}
 
-  public String getVectorName()
+@Override
+public void readFields(DataInput in) throws IOException
+{
+  vectorName = in.readUTF();
+  boolean hasWrapped = in.readBoolean();
+  if (hasWrapped)
   {
-    return vectorName;
-  }
-
-  public InputSplit getWrappedInputSplit()
-  {
-    return wrappedInputSplit;
-  }
-
-  @Override
-  public void write(DataOutput out) throws IOException
-  {
-    out.writeUTF(vectorName);
-    if (wrappedInputSplit instanceof Writable)
+    String wrappedSplitClassName = in.readUTF();
+    try
     {
-      out.writeBoolean(true);
-      out.writeUTF(wrappedInputSplit.getClass().getName());
-      ((Writable)wrappedInputSplit).write(out);
+      Class<?> splitClass = Class.forName(wrappedSplitClassName);
+      wrappedInputSplit = (InputSplit) ReflectionUtils.newInstance(splitClass, HadoopUtils.createConfiguration());
+      ((Writable) wrappedInputSplit).readFields(in);
     }
-    else
+    catch (ClassNotFoundException e)
     {
-      out.writeBoolean(false);
+      throw new IOException(e);
     }
   }
+}
 
-  @Override
-  public void readFields(DataInput in) throws IOException
-  {
-    vectorName = in.readUTF();
-    boolean hasWrapped = in.readBoolean();
-    if (hasWrapped)
-    {
-      String wrappedSplitClassName = in.readUTF();
-      try
-      {
-        Class<?> splitClass = Class.forName(wrappedSplitClassName);
-        wrappedInputSplit = (InputSplit)ReflectionUtils.newInstance(splitClass, HadoopUtils.createConfiguration());
-        ((Writable)wrappedInputSplit).readFields(in);
-      }
-      catch (ClassNotFoundException e)
-      {
-        throw new IOException(e);
-      }
-    }
-  }
+@Override
+public long getLength() throws IOException, InterruptedException
+{
+  return wrappedInputSplit.getLength();
+}
 
-  @Override
-  public long getLength() throws IOException, InterruptedException
-  {
-    return wrappedInputSplit.getLength();
-  }
-
-  @Override
-  public String[] getLocations() throws IOException, InterruptedException
-  {
-    return wrappedInputSplit.getLocations();
-  }
+@Override
+public String[] getLocations() throws IOException, InterruptedException
+{
+  return wrappedInputSplit.getLocations();
+}
 }

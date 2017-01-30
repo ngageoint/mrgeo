@@ -18,7 +18,6 @@ package org.mrgeo.utils;
 
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.mrgeo.core.MrGeoConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,9 +68,11 @@ public static File createDisposibleDirectory(File dir) throws IOException
 
   return dir;
 }
+
 public static File createDir(File dir) throws IOException
 {
-  if (!dir.getParentFile().exists()) {
+  if (!dir.getParentFile().exists())
+  {
     createDir(dir.getParentFile());
   }
   if (!dir.exists())
@@ -138,12 +139,13 @@ public static String resolveURI(final String path)
   }
   catch (URISyntaxException e)
   {
-    e.printStackTrace();
+    log.error("Execption thrown {}", e);
   }
 
   return path;
 }
 
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File used to create URI")
 public static String resolveURL(final String path)
 {

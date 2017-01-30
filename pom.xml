@@ -14,12 +14,12 @@
      ~ See the License for the specific language governing permissions and limitations under the License.
      ~
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.mrgeo</groupId>
   <artifactId>mrgeo</artifactId>
   <name>MrGeo</name>
-  <version>1.1.0-SNAPSHOT</version>
+  <version>1.2.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <properties>
     <!-- classifier to tag onto the end of the jars -->
@@ -34,6 +34,7 @@
     <accumulo.version>1.7.0</accumulo.version>
     <antlr.version>3.1.3</antlr.version>
     <axiom.version>1.2.9</axiom.version>
+    <aws.version>1.7.4</aws.version>
     <classutil.version>1.0.5</classutil.version>
     <commons-beanutils.version>1.7.0</commons-beanutils.version>
     <commons-codec.version>1.4</commons-codec.version>
@@ -55,7 +56,7 @@
     <hadoop.yarn.version>${hadoop.version}</hadoop.yarn.version>
     <hppc.version>0.5.2</hppc.version>
     <imageio.version>1.1.7</imageio.version>
-    <jackson.version>1.9.2</jackson.version>
+    <jackson.version>2.4.4</jackson.version>
     <jai-imageio.version>1.1</jai-imageio.version>
     <jaitools.version>1.3.0</jaitools.version>
     <jai.version>1.1.3</jai.version>
@@ -72,7 +73,8 @@
     <protobuf.version>2.5.0</protobuf.version>
     <py4j.version>0.10.3</py4j.version>
     <reflections.version>0.9.9-RC1</reflections.version>
-    <slf4j.version>1.7.5</slf4j.version>
+    <servlet-api.version>3.1.0</servlet-api.version>
+    <slf4j.version>1.7.21</slf4j.version>
     <spark.version>1.2.0-cdh5.3.0</spark.version>
     <spark.scala.version>2.10</spark.scala.version>
     <spark.scope>compile</spark.scope>
@@ -83,8 +85,8 @@
     <cas-client.version>3.2.1</cas-client.version>
     <ehcache.version>1.7.2</ehcache.version>
     <jboss.version>3.1.0.Final</jboss.version>
-    <jersey.version>1.19</jersey.version>
-    <jetty.version>8.1.14.v20131031</jetty.version>
+    <jersey.version>2.24</jersey.version>
+    <jetty.version>9.2.13.v20150730</jetty.version>
     <rhino.version>1.6R5</rhino.version>
     <spring-cas-client.version>3.0.8.RELEASE</spring-cas-client.version>
     <spring-ldap.version>1.3.1.RELEASE</spring-ldap.version>
@@ -128,6 +130,7 @@
     <maven-surefire.version>2.18.1</maven-surefire.version>
     <maven-war.version>2.6</maven-war.version>
     <scalatest.plugin.version>1.0</scalatest.plugin.version>
+    <sonar-maven-plugin.version>3.2</sonar-maven-plugin.version>
     <!-- encodings -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -323,10 +326,12 @@
               <configuration>
                 <source>
                   if (project.version.endsWith("-SNAPSHOT")) {
-                  project.properties.setProperty("deploy.repository.url", project.properties.getProperty("snapshot.repository.url", ""));
+                  project.properties.setProperty("deploy.repository.url",
+                  project.properties.getProperty("snapshot.repository.url", ""));
                   }
                   else {
-                  project.properties.setProperty("deploy.repository.url", project.properties.getProperty("repository.url", ""));
+                  project.properties.setProperty("deploy.repository.url",
+                  project.properties.getProperty("repository.url", ""));
                   }
                 </source>
               </configuration>
@@ -659,6 +664,11 @@
           </executions>
         </plugin>
         <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>sonar-maven-plugin</artifactId>
+          <version>${sonar-maven-plugin.version}</version>
+        </plugin>
+        <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-assembly-plugin</artifactId>
           <version>${maven-assembly.version}</version>
@@ -747,20 +757,145 @@
          | release.arguments - any arguments to use for releases, usually blank
     -->
     <profile>
+      <id>cdh591-yarn</id>
+      <properties>
+        <hadoop.version>2.6.0-cdh5.9.1</hadoop.version>
+        <mahout.version>0.9-cdh5.9.1</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.6.0-cdh5.9.1</spark.version>
+        <final.classifier>cdh5.9.1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>cdh591</id>
+      <properties>
+        <hadoop.version>2.6.0-mr1-cdh5.9.1</hadoop.version>
+        <hadoop.yarn.version>2.6.0-cdh5.9.1</hadoop.yarn.version>
+        <mahout.version>0.9-cdh5.9.1</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.6.0-cdh5.9.1</spark.version>
+        <final.classifier>cdh5.9.1-mr1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>cdh590-yarn</id>
+      <properties>
+        <hadoop.version>2.6.0-cdh5.9.0</hadoop.version>
+        <mahout.version>0.9-cdh5.9.0</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.6.0-cdh5.9.0</spark.version>
+        <final.classifier>cdh5.9.0</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>cdh590</id>
+      <properties>
+        <hadoop.version>2.6.0-mr1-cdh5.9.0</hadoop.version>
+        <hadoop.yarn.version>2.6.0-cdh5.9.0</hadoop.yarn.version>
+        <mahout.version>0.9-cdh5.9.0</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.6.0-cdh5.9.0</spark.version>
+        <final.classifier>cdh5.9.0-mr1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>cdh582-yarn</id>
+      <properties>
+        <hadoop.version>2.6.0-cdh5.8.2</hadoop.version>
+        <mahout.version>0.9-cdh5.8.2</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.6.0-cdh5.8.2</spark.version>
+        <final.classifier>cdh5.8.2</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>cdh582</id>
+      <properties>
+        <hadoop.version>2.6.0-mr1-cdh5.8.2</hadoop.version>
+        <hadoop.yarn.version>2.6.0-cdh5.8.2</hadoop.yarn.version>
+        <mahout.version>0.9-cdh5.8.2</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.6.0-cdh5.8.2</spark.version>
+        <final.classifier>cdh5.8.2-mr1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
       <id>cdh580-yarn</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.8.0</hadoop.version>
         <mahout.version>0.9-cdh5.8.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.8.0</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.8.0</final.classifier>
         <release.arguments />
       </properties>
       <dependencies>
         <dependency>
-          <groupId>com.sun.jersey</groupId>
-          <artifactId>jersey-servlet</artifactId>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -772,7 +907,6 @@
         <mahout.version>0.9-cdh5.8.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.8.0</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.8.0-mr1</final.classifier>
         <release.arguments />
       </properties>
@@ -785,8 +919,8 @@
           <scope>test</scope>
         </dependency>
         <dependency>
-          <groupId>com.sun.jersey</groupId>
-          <artifactId>jersey-servlet</artifactId>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -797,14 +931,13 @@
         <mahout.version>0.9-cdh5.7.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.7.1</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.7.1</final.classifier>
         <release.arguments />
       </properties>
       <dependencies>
         <dependency>
-          <groupId>com.sun.jersey</groupId>
-          <artifactId>jersey-servlet</artifactId>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -816,7 +949,6 @@
         <mahout.version>0.9-cdh5.7.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.7.1</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.7.1-mr1</final.classifier>
         <release.arguments />
       </properties>
@@ -829,8 +961,8 @@
           <scope>test</scope>
         </dependency>
         <dependency>
-          <groupId>com.sun.jersey</groupId>
-          <artifactId>jersey-servlet</artifactId>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -841,14 +973,13 @@
         <mahout.version>0.9-cdh5.7.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.7.0</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.7.0</final.classifier>
         <release.arguments />
       </properties>
       <dependencies>
         <dependency>
-          <groupId>com.sun.jersey</groupId>
-          <artifactId>jersey-servlet</artifactId>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -860,7 +991,6 @@
         <mahout.version>0.9-cdh5.7.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.7.0</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.7.0-mr1</final.classifier>
         <release.arguments />
       </properties>
@@ -873,8 +1003,8 @@
           <scope>test</scope>
         </dependency>
         <dependency>
-          <groupId>com.sun.jersey</groupId>
-          <artifactId>jersey-servlet</artifactId>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -885,14 +1015,13 @@
         <mahout.version>0.9-cdh5.6.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.5.0-cdh5.6.0</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.6.0</final.classifier>
         <release.arguments />
       </properties>
       <dependencies>
         <dependency>
-          <groupId>com.sun.jersey</groupId>
-          <artifactId>jersey-servlet</artifactId>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -904,7 +1033,6 @@
         <mahout.version>0.9-cdh5.6.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.5.0-cdh5.6.0</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.6.0-mr1</final.classifier>
         <release.arguments />
       </properties>
@@ -917,8 +1045,8 @@
           <scope>test</scope>
         </dependency>
         <dependency>
-          <groupId>com.sun.jersey</groupId>
-          <artifactId>jersey-servlet</artifactId>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -929,14 +1057,13 @@
         <mahout.version>0.9-cdh5.5.2</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.5.0-cdh5.5.2</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.5.2</final.classifier>
         <release.arguments />
       </properties>
       <dependencies>
         <dependency>
-          <groupId>com.sun.jersey</groupId>
-          <artifactId>jersey-servlet</artifactId>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -948,7 +1075,6 @@
         <mahout.version>0.9-cdh5.5.2</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.5.0-cdh5.5.1</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.5.2-mr1</final.classifier>
         <release.arguments />
       </properties>
@@ -961,8 +1087,8 @@
           <scope>test</scope>
         </dependency>
         <dependency>
-          <groupId>com.sun.jersey</groupId>
-          <artifactId>jersey-servlet</artifactId>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -973,14 +1099,13 @@
         <mahout.version>0.9-cdh5.5.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.5.0-cdh5.5.1</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.5.1</final.classifier>
         <release.arguments />
       </properties>
       <dependencies>
         <dependency>
-          <groupId>com.sun.jersey</groupId>
-          <artifactId>jersey-servlet</artifactId>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -992,7 +1117,6 @@
         <mahout.version>0.9-cdh5.5.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.5.0-cdh5.5.1</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.5.1-mr1</final.classifier>
         <release.arguments />
       </properties>
@@ -1005,8 +1129,8 @@
           <scope>test</scope>
         </dependency>
         <dependency>
-          <groupId>com.sun.jersey</groupId>
-          <artifactId>jersey-servlet</artifactId>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -1017,14 +1141,13 @@
         <mahout.version>0.9-cdh5.5.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.5.0-cdh5.5.0</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.5.0</final.classifier>
         <release.arguments />
       </properties>
       <dependencies>
         <dependency>
-          <groupId>com.sun.jersey</groupId>
-          <artifactId>jersey-servlet</artifactId>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -1036,7 +1159,6 @@
         <mahout.version>0.9-cdh5.5.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.5.0-cdh5.5.0</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.5.0-mr1</final.classifier>
         <release.arguments />
       </properties>
@@ -1049,8 +1171,8 @@
           <scope>test</scope>
         </dependency>
         <dependency>
-          <groupId>com.sun.jersey</groupId>
-          <artifactId>jersey-servlet</artifactId>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -1061,7 +1183,6 @@
         <mahout.version>0.9-cdh5.4.8</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.8</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.8</final.classifier>
         <release.arguments />
       </properties>
@@ -1074,7 +1195,6 @@
         <mahout.version>0.9-cdh5.4.8</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.8</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.8-mr1</final.classifier>
         <release.arguments />
       </properties>
@@ -1095,7 +1215,6 @@
         <mahout.version>0.9-cdh5.4.7</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.7</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.7</final.classifier>
         <release.arguments />
       </properties>
@@ -1108,7 +1227,6 @@
         <mahout.version>0.9-cdh5.4.7</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.7</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.7-mr1</final.classifier>
         <release.arguments />
       </properties>
@@ -1129,7 +1247,6 @@
         <mahout.version>0.9-cdh5.4.5</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.5</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.5</final.classifier>
         <release.arguments />
       </properties>
@@ -1143,7 +1260,6 @@
         <mahout.version>0.9-cdh5.4.5</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.5</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.5-mr1</final.classifier>
         <release.arguments />
       </properties>
@@ -1164,7 +1280,6 @@
         <mahout.version>0.9-cdh5.4.4</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.4</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.4</final.classifier>
         <release.arguments />
       </properties>
@@ -1177,7 +1292,6 @@
         <mahout.version>0.9-cdh5.4.4</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.4</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.4-mr1</final.classifier>
         <release.arguments />
       </properties>
@@ -1198,7 +1312,6 @@
         <mahout.version>0.9-cdh5.4.3</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.3</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.3</final.classifier>
         <release.arguments />
       </properties>
@@ -1211,7 +1324,6 @@
         <mahout.version>0.9-cdh5.4.3</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.3</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.3-mr1</final.classifier>
         <release.arguments />
       </properties>
@@ -1232,7 +1344,6 @@
         <mahout.version>0.9-cdh5.4.2</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.2</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.2</final.classifier>
         <release.arguments />
       </properties>
@@ -1245,7 +1356,6 @@
         <mahout.version>0.9-cdh5.4.2</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.2</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.2-mr1</final.classifier>
         <release.arguments />
       </properties>
@@ -1266,7 +1376,6 @@
         <mahout.version>0.9-cdh5.4.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.1</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.1</final.classifier>
         <release.arguments />
       </properties>
@@ -1279,7 +1388,6 @@
         <mahout.version>0.9-cdh5.4.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.1</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.1-mr1</final.classifier>
         <release.arguments />
       </properties>
@@ -1300,7 +1408,6 @@
         <mahout.version>0.9-cdh5.4.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.0</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.0</final.classifier>
         <release.arguments />
       </properties>
@@ -1313,7 +1420,6 @@
         <mahout.version>0.9-cdh5.4.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.3.0-cdh5.4.0</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.4.0-mr1</final.classifier>
         <release.arguments />
       </properties>
@@ -1334,7 +1440,6 @@
         <mahout.version>0.9-cdh5.3.3</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.3</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.3.3</final.classifier>
         <release.arguments />
       </properties>
@@ -1346,7 +1451,6 @@
         <hadoop.yarn.version>2.5.0-cdh5.3.3</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.3.3</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.0-cdh5.3.3</spark.version>
         <final.classifier>cdh5.3.3-mr1</final.classifier>
         <release.arguments />
@@ -1368,7 +1472,6 @@
         <mahout.version>0.9-cdh5.3.2</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.2</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.3.2</final.classifier>
         <release.arguments />
       </properties>
@@ -1386,7 +1489,6 @@
         <hadoop.yarn.version>2.5.0-cdh5.3.2</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.3.2</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.0-cdh5.3.2</spark.version>
         <final.classifier>cdh5.3.2-mr1</final.classifier>
         <release.arguments />
@@ -1416,7 +1518,6 @@
         <mahout.version>0.9-cdh5.3.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.1</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.3.1</final.classifier>
         <release.arguments />
       </properties>
@@ -1434,7 +1535,6 @@
         <hadoop.yarn.version>2.5.0-cdh5.3.1</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.3.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.0-cdh5.3.1</spark.version>
         <final.classifier>cdh5.3.1-mr1</final.classifier>
         <release.arguments />
@@ -1464,7 +1564,6 @@
         <mahout.version>0.9-cdh5.3.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.2.0-cdh5.3.0</spark.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <final.classifier>cdh5.3.0</final.classifier>
         <release.arguments />
       </properties>
@@ -1482,7 +1581,6 @@
         <hadoop.yarn.version>2.5.0-cdh5.3.0</hadoop.yarn.version>
         <mahout.version>0.9-cdh5.3.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.2.0-cdh5.3.0</spark.version>
         <final.classifier>cdh5.3.0-mr1</final.classifier>
         <release.arguments />
@@ -1511,7 +1609,6 @@
         <hadoop.version>2.2.0</hadoop.version>
         <mahout.version>0.7</mahout.version>
         <protobuf.version>2.4.1</protobuf.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
         <final.classifier>2.2.0</final.classifier>
         <release.arguments />
@@ -1532,7 +1629,6 @@
         <hadoop.version>2.3.0</hadoop.version>
         <mahout.version>0.7</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
         <final.classifier>2.3.0</final.classifier>
         <release.arguments />
@@ -1553,7 +1649,6 @@
         <hadoop.version>2.4.0</hadoop.version>
         <mahout.version>0.7</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
         <final.classifier>2.4.0</final.classifier>
         <release.arguments />
@@ -1574,7 +1669,6 @@
         <hadoop.version>2.4.1</hadoop.version>
         <mahout.version>0.7</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
         <final.classifier>2.4.1</final.classifier>
         <release.arguments />
@@ -1595,7 +1689,6 @@
         <hadoop.version>2.5.0</hadoop.version>
         <mahout.version>0.7</mahout.version>
         <protobuf.version>2.4.1</protobuf.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
         <final.classifier>2.5.0</final.classifier>
         <release.arguments />
@@ -1616,7 +1709,6 @@
         <hadoop.version>2.5.1</hadoop.version>
         <mahout.version>0.7</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
         <final.classifier>2.5.1</final.classifier>
         <release.arguments />
@@ -1637,7 +1729,6 @@
         <hadoop.version>2.5.2</hadoop.version>
         <mahout.version>0.7</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
         <final.classifier>2.5.2</final.classifier>
         <release.arguments />
@@ -1658,7 +1749,6 @@
         <hadoop.version>2.6.0</hadoop.version>
         <mahout.version>0.7</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
         <final.classifier>2.6.0</final.classifier>
         <release.arguments />
@@ -1679,9 +1769,28 @@
         <hadoop.version>2.7.1</hadoop.version>
         <mahout.version>0.7</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <slf4j.version>1.7.5</slf4j.version>
         <spark.version>1.6.1</spark.version>
         <final.classifier>2.7.1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>apache272</id>
+      <properties>
+        <hadoop.version>2.7.2</hadoop.version>
+        <mahout.version>0.7</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <spark.version>1.6.1</spark.version>
+        <final.classifier>2.7.2</final.classifier>
         <release.arguments />
       </properties>
       <dependencies>
@@ -1706,14 +1815,40 @@
          <skipShade>true</skipShade>
     -->
     <profile>
+      <id>emr530</id>
+      <properties>
+        <hadoop.version>2.7.3</hadoop.version>
+        <mahout.version>0.12.2</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <slf4j.version>1.7.10</slf4j.version>
+        <final.classifier>emr5.3.0</final.classifier>
+        <release.arguments />
+        <gdal.version>1.11.1</gdal.version>
+        <spark.version>2.1.0</spark.version>
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>3.1</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.httpcomponents</groupId>
+          <artifactId>httpclient</artifactId>
+          <version>4.3.4</version>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
       <id>emr500</id>
       <properties>
         <hadoop.version>2.7.2</hadoop.version>
         <mahout.version>0.12.2</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
-
         <final.classifier>emr5.0.0</final.classifier>
         <release.arguments />
         <gdal.version>1.11.1</gdal.version>
@@ -1741,7 +1876,6 @@
         <hadoop.version>2.7.2</hadoop.version>
         <mahout.version>0.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
         <final.classifier>emr4.7.2</final.classifier>
         <release.arguments />
@@ -1770,7 +1904,6 @@
         <hadoop.version>2.7.2</hadoop.version>
         <mahout.version>0.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
         <final.classifier>emr4.7.1</final.classifier>
         <release.arguments />
@@ -1799,7 +1932,6 @@
         <hadoop.version>2.7.2</hadoop.version>
         <mahout.version>0.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
         <final.classifier>emr4.7.0</final.classifier>
         <release.arguments />
@@ -1828,7 +1960,6 @@
         <hadoop.version>2.7.2</hadoop.version>
         <mahout.version>0.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
         <final.classifier>emr4.6.0</final.classifier>
         <release.arguments />
@@ -1857,7 +1988,6 @@
         <hadoop.version>2.7.2</hadoop.version>
         <mahout.version>0.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
         <final.classifier>emr4.5.0</final.classifier>
         <release.arguments />
@@ -1886,7 +2016,6 @@
         <hadoop.version>2.7.1</hadoop.version>
         <mahout.version>0.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <!--        <slf4j.version>1.7.5</slf4j.version> -->
         <slf4j.version>1.7.10</slf4j.version>
         <final.classifier>emr4.4.0</final.classifier>
         <release.arguments />
@@ -1906,6 +2035,17 @@
           <artifactId>httpclient</artifactId>
           <version>4.3.4</version>
           <scope>provided</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>enable-s3a</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-aws</artifactId>
+          <version>${hadoop.version}</version>
+          <scope>${hadoop.scope}</scope>
         </dependency>
       </dependencies>
     </profile>
@@ -1962,6 +2102,13 @@
       <properties>
         <hadoop.scope>compile</hadoop.scope>
       </properties>
+      <dependencies>
+        <dependency>
+          <groupId>javax.servlet</groupId>
+          <artifactId>javax.servlet-api</artifactId>
+          <version>${servlet-api.version}</version>
+        </dependency>
+      </dependencies>
     </profile>
     <!--
          | Profiles defining the various testing options.  The template for these are:
@@ -2499,6 +2646,11 @@
         <scope>test</scope>
       </dependency>
       <dependency>
+        <groupId>javax.servlet</groupId>
+        <artifactId>javax.servlet-api</artifactId>
+        <version>${servlet-api.version}</version>
+      </dependency>
+      <dependency>
         <groupId>xmlunit</groupId>
         <artifactId>xmlunit</artifactId>
         <version>${xmlunit.version}</version>
@@ -2543,16 +2695,29 @@
         <artifactId>jul-to-slf4j</artifactId>
         <version>${slf4j.version}</version>
       </dependency>
-      <!--  hadoop uses various versions, we need 1.9.2 -->
       <dependency>
-        <groupId>org.codehaus.jackson</groupId>
-        <artifactId>jackson-mapper-asl</artifactId>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
         <version>${jackson.version}</version>
       </dependency>
-      <!--  hadoop uses various versions, we need 1.9.2 -->
       <dependency>
-        <groupId>org.codehaus.jackson</groupId>
-        <artifactId>jackson-core-asl</artifactId>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-annotations</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.jaxrs</groupId>
+        <artifactId>jackson-jaxrs-json-provider</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.module</groupId>
+        <artifactId>jackson-module-jaxb-annotations</artifactId>
         <version>${jackson.version}</version>
       </dependency>
       <dependency>
@@ -2625,11 +2790,31 @@
             <artifactId>paranamer</artifactId>
           </exclusion>
           <exclusion>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-core-asl</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
         </exclusions>
         <!--<scope>provided</scope>-->
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-minicluster</artifactId>
+        <version>${hadoop.version}</version>
+        <scope>${hadoop.scope}</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-server</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
@@ -2665,6 +2850,34 @@
             <groupId>javax.xml.bind</groupId>
             <artifactId>jaxb-api</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-jaxrs</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-xc</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-server</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-client</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-core</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-json</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jersey.contribs</groupId>
+            <artifactId>jersey-guice</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -2687,6 +2900,10 @@
           <exclusion>
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.eclipse.jetty.orbit</groupId>
+            <artifactId>javax.servlet</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -2720,6 +2937,18 @@
           <exclusion>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpcore</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-core-asl</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-server</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-core</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -2961,7 +3190,7 @@
         <scope>provided</scope>
       </dependency>
       <dependency>
-        <groupId>com.sun.jersey</groupId>
+        <groupId>org.glassfish.jersey.core</groupId>
         <artifactId>jersey-server</artifactId>
         <version>${jersey.version}</version>
         <exclusions>
@@ -2972,39 +3201,39 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>com.sun.jersey.contribs</groupId>
-        <artifactId>jersey-multipart</artifactId>
+        <groupId>org.glassfish.jersey.media</groupId>
+        <artifactId>jersey-media-multipart</artifactId>
         <version>${jersey.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.sun.jersey</groupId>
-        <artifactId>jersey-servlet</artifactId>
+        <groupId>org.glassfish.jersey.media</groupId>
+        <artifactId>jersey-media-json-jackson</artifactId>
         <version>${jersey.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.sun.jersey</groupId>
+        <groupId>org.glassfish.jersey.core</groupId>
+        <artifactId>jersey-container-servlet-core</artifactId>
+        <version>${jersey.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.jersey.core</groupId>
         <artifactId>jersey-client</artifactId>
         <version>${jersey.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.sun.jersey</groupId>
+        <groupId>org.glassfish.jersey.core</groupId>
         <artifactId>jersey-core</artifactId>
         <version>${jersey.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.sun.jersey</groupId>
-        <artifactId>jersey-json</artifactId>
-        <version>${jersey.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.sun.jersey.jersey-test-framework</groupId>
-        <artifactId>jersey-test-framework-grizzly2</artifactId>
+        <groupId>org.glassfish.jersey.test-framework.providers</groupId>
+        <artifactId>jersey-test-framework-provider-grizzly2</artifactId>
         <version>${jersey.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>com.sun.jersey.jersey-test-framework</groupId>
-        <artifactId>jersey-test-framework-inmemory</artifactId>
+        <groupId>org.glassfish.jersey.test-framework.providers</groupId>
+        <artifactId>jersey-test-framework-provider-inmemory</artifactId>
         <version>${jersey.version}</version>
         <scope>test</scope>
       </dependency>
@@ -3023,6 +3252,11 @@
             <artifactId>commons-logging</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.jersey.containers</groupId>
+        <artifactId>jersey-container-servlet-core</artifactId>
+        <version>${jersey.version}</version>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
@@ -3240,6 +3474,14 @@
         <version>${findbugs.version}</version>
         <scope>provided</scope>
       </dependency>
+      <!-- jasypt for property file encrytpion/decryption.  Included in parent pom dependencies to allow the command line
+           tools to be run form the mrgeo parent directory.-->
+      <dependency>
+        <groupId>org.jasypt</groupId>
+        <artifactId>jasypt</artifactId>
+        <version>${jasypt.version}</version>
+        <scope>compile</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
   <dependencies>
@@ -3304,13 +3546,14 @@
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>findbugs</artifactId>
     </dependency>
-    <!-- jasypt for property file encrytpion/decryption.  Included in parent pom dependencies to allow the command line
-     tools to be run form the mrgeo parent directory.-->
     <dependency>
       <groupId>org.jasypt</groupId>
       <artifactId>jasypt</artifactId>
-      <version>${jasypt.version}</version>
-      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
   <!-- move me back to the top of this POM!!!  -->

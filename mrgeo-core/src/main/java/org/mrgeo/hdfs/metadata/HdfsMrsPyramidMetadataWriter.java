@@ -37,80 +37,84 @@ import java.io.IOException;
  */
 public class HdfsMrsPyramidMetadataWriter implements MrsPyramidMetadataWriter
 {
-  private static final Logger log = LoggerFactory.getLogger(HdfsMrsPyramidMetadataWriter.class);
+private static final Logger log = LoggerFactory.getLogger(HdfsMrsPyramidMetadataWriter.class);
 
-  private final MrsImageDataProvider provider;
-  private Configuration conf;
+private final MrsImageDataProvider provider;
+private Configuration conf;
 
-  /**
-   * Constructor for HdfsMrsPyramidMetadataWriter.
-   * @param provider MrsImageDataProvider
-   * @param context MrsPyramidMetadataWriterContext
-   */
-  public HdfsMrsPyramidMetadataWriter(MrsImageDataProvider provider,
-                                      Configuration conf,
-                                      MrsPyramidMetadataWriterContext context)
-  {
-    this.provider = provider;
-    this.conf = conf;
-  }
-  
-  /**
-   * Write the (already loaded) metadata for the provider to HDFS
-   * @throws IOException
-   * @see MrsPyramidMetadataWriter#write()
-   */
-  @Override
-  public void write() throws IOException
-  {
-    MrsPyramidMetadata metadata = provider.getMetadataReader(null).read();
+/**
+ * Constructor for HdfsMrsPyramidMetadataWriter.
+ *
+ * @param provider MrsImageDataProvider
+ * @param context  MrsPyramidMetadataWriterContext
+ */
+public HdfsMrsPyramidMetadataWriter(MrsImageDataProvider provider,
+    Configuration conf,
+    MrsPyramidMetadataWriterContext context)
+{
+  this.provider = provider;
+  this.conf = conf;
+}
 
-    write(metadata);
-  }
-  /**
-   * Write a provided metadata object to HDFS.
-   * @param metadata MrsImagePyramidMetadata
-   * @throws IOException 
-   * @see MrsPyramidMetadataWriter#write(MrsPyramidMetadata)
-  */
-  @Override
-  public void write(MrsPyramidMetadata metadata) throws IOException
+/**
+ * Write the (already loaded) metadata for the provider to HDFS
+ *
+ * @throws IOException
+ * @see MrsPyramidMetadataWriter#write()
+ */
+@Override
+public void write() throws IOException
+{
+  MrsPyramidMetadata metadata = provider.getMetadataReader(null).read();
+
+  write(metadata);
+}
+
+/**
+ * Write a provided metadata object to HDFS.
+ *
+ * @param metadata MrsImagePyramidMetadata
+ * @throws IOException
+ * @see MrsPyramidMetadataWriter#write(MrsPyramidMetadata)
+ */
+@Override
+public void write(MrsPyramidMetadata metadata) throws IOException
+{
+  if (!(provider instanceof HdfsMrsImageDataProvider))
   {
-    if (!(provider instanceof HdfsMrsImageDataProvider))
-    {
-      throw new IOException("Expected an instance of HdfsMrsImageDataprovider instead of " +
+    throw new IOException("Expected an instance of HdfsMrsImageDataprovider instead of " +
         provider.getClass().getCanonicalName());
-    }
-    final Path path = new Path(((HdfsMrsImageDataProvider)provider).getResolvedResourceName(true),
-        HdfsMrsImageDataProvider.METADATA);
-
-    final FileSystem fs = HadoopFileUtils.getFileSystem(conf, path);
-    if (fs.exists(path))
-    {
-      fs.delete(path, false);
-    }
-
-    log.debug("Saving metadata to " + path.toString());
-    FSDataOutputStream os = null;
-    try
-    {
-      os = HadoopFileUtils.getFileSystem(conf, path).create(path);
-      metadata.save(os);
-    }
-    catch (Exception e)
-    {
-      throw new IOException(e);
-    }
-    finally
-    {
-      if (os != null)
-      {
-        os.close();
-      }
-    }
-
-    // reload the metadata after a save;
-    provider.getMetadataReader(null).reload();
   }
+  final Path path = new Path(((HdfsMrsImageDataProvider) provider).getResolvedResourceName(true),
+      HdfsMrsImageDataProvider.METADATA);
+
+  final FileSystem fs = HadoopFileUtils.getFileSystem(conf, path);
+  if (fs.exists(path))
+  {
+    fs.delete(path, false);
+  }
+
+  log.debug("Saving metadata to " + path.toString());
+  FSDataOutputStream os = null;
+  try
+  {
+    os = HadoopFileUtils.getFileSystem(conf, path).create(path);
+    metadata.save(os);
+  }
+  catch (Exception e)
+  {
+    throw new IOException(e);
+  }
+  finally
+  {
+    if (os != null)
+    {
+      os.close();
+    }
+  }
+
+  // reload the metadata after a save;
+  provider.getMetadataReader(null).reload();
+}
 
 }

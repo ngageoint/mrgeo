@@ -14,16 +14,17 @@
      ~ See the License for the specific language governing permissions and limitations under the License.
      ~
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.mrgeo</groupId>
     <artifactId>mrgeo</artifactId>
-    <version>1.1.0-SNAPSHOT</version>
+    <version>1.2.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>distribution</artifactId>
-  <version>1.1.0-SNAPSHOT</version>
+  <version>1.2.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -60,7 +61,8 @@
             <!-- merge some of the names together -->
             <licenseMerges>
               <!-- Apache 2.0 -->
-              <licenseMerge>The Apache Software License, Version 2.0|Apache Software License - Version 2.0</licenseMerge>
+              <licenseMerge>The Apache Software License, Version 2.0|Apache Software License - Version 2.0
+              </licenseMerge>
               <licenseMerge>The Apache Software License, Version 2.0|Apache License, Version 2.0</licenseMerge>
               <licenseMerge>The Apache Software License, Version 2.0|Apache License Version 2.0</licenseMerge>
               <licenseMerge>The Apache Software License, Version 2.0|Apache License 2.0</licenseMerge>
@@ -79,7 +81,9 @@
               <licenseMerge>Berkeley Software Distribution (BSD) License for HSQL|BSD License for HSQL</licenseMerge>
               <!-- CDDL 1.0 -->
               <licenseMerge>Common Development and Distribution License (CDDL) v1.0|CDDL 1.0</licenseMerge>
-              <licenseMerge>Common Development and Distribution License (CDDL) v1.0|COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0</licenseMerge>
+              <licenseMerge>Common Development and Distribution License (CDDL) v1.0|COMMON DEVELOPMENT AND DISTRIBUTION
+                LICENSE (CDDL) Version 1.0
+              </licenseMerge>
               <!-- CDDL 1.1 -->
               <licenseMerge>Common Development and Distribution License (CDDL) v1.1|CDDL 1.1</licenseMerge>
               <!-- Eclipse 1.0 -->
@@ -87,12 +91,15 @@
               <licenseMerge>Eclipse Public License - Version 1.0|Eclipse Public License v1.0</licenseMerge>
               <!-- LGPL -->
               <licenseMerge>GNU Lesser General Public License (LGPL), Version 2.1|LGPL 2.1</licenseMerge>
-              <licenseMerge>GNU Lesser General Public License (LGPL), Version 2.1|Lesser General Public License (LGPL)</licenseMerge>
+              <licenseMerge>GNU Lesser General Public License (LGPL), Version 2.1|Lesser General Public License (LGPL)
+              </licenseMerge>
               <licenseMerge>GNU Lesser General Public License (LGPL), Version 2.1|lgpl</licenseMerge>
               <!-- LGPL with classpath exception -->
               <licenseMerge>GNU General Public Library, v2.0 w/ Classpath Exception|GPL2 w/ CPE</licenseMerge>
               <!-- IU Extreme (fixed typo) -->
-              <licenseMerge>Indiana University Extreme! Lab Software License, version 1.1.1|Indiana University Extreme! Lab Software License, vesion 1.1.1</licenseMerge>
+              <licenseMerge>Indiana University Extreme! Lab Software License, version 1.1.1|Indiana University Extreme!
+                Lab Software License, vesion 1.1.1
+              </licenseMerge>
             </licenseMerges>
           </configuration>
         </plugin>
@@ -136,7 +143,7 @@
               <goal>deploy-file</goal>
             </goals>
             <phase>none</phase>
-            <configuration />
+            <configuration/>
           </execution>
         </executions>
       </plugin>

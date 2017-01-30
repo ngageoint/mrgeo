@@ -16,12 +16,13 @@
 
 package org.mrgeo.mapalgebra
 
+import java.awt.image.DataBuffer
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
-import org.mrgeo.data.raster.RasterWritable
+import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.geometry.GeometryFactory
@@ -30,32 +31,32 @@ import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.mapalgebra.vector.paint.VectorPainter
+import org.mrgeo.mapalgebra.vector.paint.VectorPainter.AggregationType
 import org.mrgeo.utils.tms.{Bounds, TMSUtils}
-import org.mrgeo.utils.{LatLng, StringUtils, SparkUtils}
+import org.mrgeo.utils.{LatLng, SparkUtils, StringUtils}
 
 
-abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externalizable
-{
-  var rasterRDD: Option[RasterRDD] = None
-  var vectorMapOp: Option[VectorMapOp] = None
-  var aggregationType: VectorPainter.AggregationType = VectorPainter.AggregationType.MASK
-  var tilesize: Int = -1
-  var zoom: Int = -1
-  var column: Option[String] = None
-  var bounds: Option[Bounds] = None
-  var rasterForBoundsMapOp: Option[RasterMapOp] = None
+abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externalizable {
+  var rasterRDD:Option[RasterRDD] = None
+  var vectorMapOp:Option[VectorMapOp] = None
+  var aggregationType:VectorPainter.AggregationType = VectorPainter.AggregationType.MASK
+  var tilesize:Int = -1
+  var zoom:Int = -1
+  var column:Option[String] = None
+  var bounds:Option[Bounds] = None
+  var rasterForBoundsMapOp:Option[RasterMapOp] = None
 
-  override def rdd(): Option[RasterRDD] = {
+  override def rdd():Option[RasterRDD] = {
     rasterRDD
   }
 
-  override def registerClasses(): Array[Class[_]] = {
+  override def registerClasses():Array[Class[_]] = {
     // get all the Geometry classes from the GeometryFactory
     GeometryFactory.getClasses
   }
 
 
-  override def readExternal(in: ObjectInput): Unit = {
+  override def readExternal(in:ObjectInput):Unit = {
     aggregationType = VectorPainter.AggregationType.valueOf(in.readUTF())
     tilesize = in.readInt()
     zoom = in.readInt()
@@ -73,7 +74,7 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
     }
   }
 
-  override def writeExternal(out: ObjectOutput): Unit = {
+  override def writeExternal(out:ObjectOutput):Unit = {
     out.writeUTF(aggregationType.toString)
     out.writeInt(tilesize)
     out.writeInt(zoom)
@@ -94,16 +95,21 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
     }
   }
 
-  override def execute(context: SparkContext): Boolean = {
-    val vectorRDD: VectorRDD = vectorMapOp.getOrElse(throw new IOException("Missing vector input")).
-      rdd().getOrElse(throw new IOException("Missing vector RDD"))
+  override def execute(context:SparkContext):Boolean = {
+    val vectorRDD:VectorRDD = vectorMapOp.getOrElse(throw new IOException("Missing vector input")).
+        rdd().getOrElse(throw new IOException("Missing vector RDD"))
     if (rasterForBoundsMapOp.isDefined) {
       bounds = Some(rasterForBoundsMapOp.get.metadata().getOrElse(
         throw new IOException("Unable to get metadata for the bounds raster")).getBounds)
     }
-    val result = rasterize(vectorRDD)
-    rasterRDD = Some(RasterRDD(result))
-    val noData = Double.NaN
+    rasterRDD = Some(RasterRDD(rasterize(vectorRDD)))
+
+    val noData = if (aggregationType == AggregationType.MASK || aggregationType == AggregationType.MASK2) {
+      RasterUtils.getDefaultNoDataForType(DataBuffer.TYPE_BYTE)
+    }
+    else {
+      Float.NaN
+    }
     metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, noData,
       bounds = null, calcStats = false))
     true
@@ -119,21 +125,20 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
     * for each of those tiles.
     *
     */
-  def rasterize(vectorRDD: VectorRDD): RDD[(TileIdWritable, RasterWritable)]
+  def rasterize(vectorRDD:VectorRDD):RDD[(TileIdWritable, RasterWritable)]
 
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = {
+  override def setup(job:JobArguments, conf:SparkConf):Boolean = {
     true
   }
 
-  override def teardown(job: JobArguments, conf: SparkConf): Boolean = {
+  override def teardown(job:JobArguments, conf:SparkConf):Boolean = {
     true
   }
 
-  def initialize(node:ParserNode, variables: String => Option[ParserNode]): Unit = {
+  def initialize(node:ParserNode, variables:String => Option[ParserNode]):Unit = {
     val usageMsg = "RasterizeVector and RasterizePoints take these arguments. (source vector, aggregation type, cellsize, [column], [bounds])"
     if (!(node.getNumChildren == 3 || node.getNumChildren == 4 || node.getNumChildren == 5 ||
-      node.getNumChildren == 7 || node.getNumChildren == 8))
-    {
+          node.getNumChildren == 7 || node.getNumChildren == 8)) {
       throw new ParserException(usageMsg)
     }
     vectorMapOp = VectorMapOp.decodeToVector(node.getChild(0), variables)
@@ -147,11 +152,14 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
           VectorPainter.AggregationType.valueOf(aggType.toUpperCase)
         }
         catch {
-          case e: java.lang.IllegalArgumentException => throw new ParserException("Aggregation type must be one of: " +
-            StringUtils.join(VectorPainter.AggregationType.values, ", "))
+          case e:java.lang.IllegalArgumentException => throw new ParserException("Aggregation type must be one of: " +
+                                                                                 StringUtils.join(
+                                                                                   VectorPainter.AggregationType.values,
+                                                                                   ", "))
         }
       case None =>
-        throw new ParserException("Aggregation type must be one of: " + StringUtils.join(VectorPainter.AggregationType.values, ", "))
+        throw new ParserException(
+          "Aggregation type must be one of: " + StringUtils.join(VectorPainter.AggregationType.values, ", "))
     }
 
     if (aggregationType == VectorPainter.AggregationType.GAUSSIAN) {
@@ -190,7 +198,7 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
             rasterForBoundsMapOp = RasterMapOp.decodeToRaster(node.getChild(3), variables)
           }
           catch {
-            case e: ParserException => {
+            case e:ParserException => {
               // Since the fourth and last argument is not a raster, it must be a column
               column = MapOp.decodeString(node.getChild(3))
             }
@@ -213,9 +221,9 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
 
     // All the arguments have been parsed, now validate the column based on the aggregation type
     aggregationType match {
-      case VectorPainter.AggregationType.MASK =>
+      case VectorPainter.AggregationType.MASK | VectorPainter.AggregationType.MASK2 =>
         if (column.isDefined) {
-          throw new ParserException("A column name must not be specified with MASK")
+          throw new ParserException("A column name must not be specified with MASK or MASK2")
         }
       case VectorPainter.AggregationType.SUM => {
         // SUM can be used with or without a column name being specified. If used
@@ -231,32 +239,18 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
     }
   }
 
-  private def parseBounds(node: ParserNode, variables: String => Option[ParserNode], startIndex: Int): Unit = {
-    // Make sure there are enough child nodes
-    if (node.getNumChildren < startIndex + 4) {
-      throw new ParserException("Cannot define bounds from fewer than four values")
-    }
-    val b: Array[Double] = new Array[Double](4)
-    for (i <- 0 until 4) {
-      b(i) = MapOp.decodeDouble(node.getChild(startIndex + i), variables) match {
-        case Some(boundsVal) => boundsVal
-        case None =>
-          throw new ParserException("You must provide minX, minY, maxX, maxY bounds values")
-      }
-    }
-    bounds = Some(new Bounds(b(0), b(1), b(2), b(3)))
-  }
-
-  def initialize(vector: Option[VectorMapOp], aggregator: String, cellsize: String,
-                 bounds: Either[String, Option[RasterMapOp]], column: String): Unit = {
+  def initialize(vector:Option[VectorMapOp], aggregator:String, cellsize:String,
+                 bounds:Either[String, Option[RasterMapOp]], column:String):Unit = {
     vectorMapOp = vector
     aggregationType =
         try {
           VectorPainter.AggregationType.valueOf(aggregator.toUpperCase)
         }
         catch {
-          case e: IllegalArgumentException => throw new ParserException("Aggregation type must be one of: " +
-              StringUtils.join(VectorPainter.AggregationType.values, ", "))
+          case e:IllegalArgumentException => throw new ParserException("Aggregation type must be one of: " +
+                                                                       StringUtils
+                                                                           .join(VectorPainter.AggregationType.values,
+                                                                             ", "))
         }
 
     if (aggregationType == VectorPainter.AggregationType.GAUSSIAN) {
@@ -306,6 +300,22 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
         this.rasterForBoundsMapOp = rasterForBoundsMapOp
       }
     }
+  }
+
+  private def parseBounds(node:ParserNode, variables:String => Option[ParserNode], startIndex:Int):Unit = {
+    // Make sure there are enough child nodes
+    if (node.getNumChildren < startIndex + 4) {
+      throw new ParserException("Cannot define bounds from fewer than four values")
+    }
+    val b:Array[Double] = new Array[Double](4)
+    for (i <- 0 until 4) {
+      b(i) = MapOp.decodeDouble(node.getChild(startIndex + i), variables) match {
+        case Some(boundsVal) => boundsVal
+        case None =>
+          throw new ParserException("You must provide minX, minY, maxX, maxY bounds values")
+      }
+    }
+    bounds = Some(new Bounds(b(0), b(1), b(2), b(3)))
   }
 
 }

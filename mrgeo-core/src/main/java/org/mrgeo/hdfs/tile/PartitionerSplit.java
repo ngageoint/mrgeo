@@ -16,121 +16,57 @@
 
 package org.mrgeo.hdfs.tile;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.apache.hadoop.fs.*;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.mrgeo.hdfs.partitioners.SplitGenerator;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 
 import java.io.*;
-import java.util.Scanner;
 
 public class PartitionerSplit extends Splits
 {
-  private static final String SPACER = " ";
-  public static final String SPLIT_FILE = "partitions";
+public static final String SPLIT_FILE = "partitions";
+private static final String SPACER = " ";
 
-  public static class PartitionerSplitInfo extends SplitInfo
+@Override
+public String findSplitFile(Path parent) throws IOException
+{
+  Path file = new Path(parent, SPLIT_FILE);
+  try
   {
-    private int partition;
-    private long tileid;
-
-    public PartitionerSplitInfo(long tileid, int partition)
+    if (HadoopFileUtils.exists(file))
     {
-      this.tileid = tileid;
-      this.partition = partition;
-    }
-
-    public PartitionerSplitInfo()
-    {
-      partition = -1;
-      tileid = -1;
-    }
-
-    @Override
-    boolean compareEQ(long tileId)
-    {
-      return tileId == this.tileid;
-    }
-
-    @Override
-    boolean compareLE(long tileId)
-    {
-      return tileId <= this.tileid;
-    }
-
-    @Override
-    boolean compareLT(long tileId)
-    {
-      return tileId < this.tileid;
-    }
-
-    @Override
-    boolean compareGE(long tileId)
-    {
-      return tileId >= this.tileid;
-    }
-
-    @Override
-    boolean compareGT(long tileId)
-    {
-      return tileId > this.tileid;
-    }
-
-    @Override
-    public long getTileId()
-    {
-      return tileid;
-    }
-
-    @Override
-    public int  getPartition() { return partition; }
-
-    public String toString()
-    {
-      return "tile id = " + tileid + ", partition = " + partition;
-    }
-
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException
-    {
-      out.writeLong(tileid);
-      out.writeInt(partition);
-    }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
-    {
-      tileid = in.readLong();
-      partition = in.readInt();
+      return file.toString();
     }
   }
-
-  @Override
-  public String findSplitFile(Path parent) throws IOException
+  catch (IOException e)
   {
-    Path file = new Path(parent, SPLIT_FILE);
-    try
-    {
-      if (HadoopFileUtils.exists(file))
-      {
-        return file.toString();
-      }
-    }
-    catch (IOException e)
-    {
-      throw new IOException("Error opening split file: " + file.toString(), e);
-    }
-
-    throw new IOException("Split file not found: " + file.toString());
+    throw new IOException("Error opening split file: " + file.toString(), e);
   }
 
-  @Override
-  public void generateSplits(SplitGenerator generator)
+  throw new IOException("Split file not found: " + file.toString());
+}
+
+@Override
+public void generateSplits(SplitGenerator generator)
+{
+  splits = generator.getPartitions();
+}
+
+@Override
+public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
+{
+  int count = in.readInt();
+  splits = new PartitionerSplitInfo[count];
+
+  for (int i = 0; i < splits.length; i++)
   {
-    splits = generator.getPartitions();
+    splits[i] = new PartitionerSplitInfo(in.readLong(), in.readInt());
   }
 
-  // Looks like reading and writing Partitioner splits to and from a file was never used
+}
+
+// Looks like reading and writing Partitioner splits to and from a file was never used
 //  public void readSplits(InputStream stream)
 //  {
 //    Scanner reader = new Scanner(stream);
@@ -173,33 +109,103 @@ public class PartitionerSplit extends Splits
 //    writeSplits(getOutputStream(new Path(parent, SPLIT_FILE)));
 //  }
 
+protected FileSystem getFileSystem(Path parent) throws IOException
+{
+  return HadoopFileUtils.getFileSystem(parent);
+}
+
+protected boolean fileExists(Path file) throws IOException
+{
+  return HadoopFileUtils.exists(file);
+}
+
+protected InputStream getInputStream(Path path) throws IOException
+{
+  return getFileSystem(path).open(path);
+}
+
+protected OutputStream getOutputStream(Path path) throws IOException
+{
+  return getFileSystem(path).create(path);
+}
+
+public static class PartitionerSplitInfo extends SplitInfo
+{
+  private int partition;
+  private long tileid;
+
+  public PartitionerSplitInfo(long tileid, int partition)
+  {
+    this.tileid = tileid;
+    this.partition = partition;
+  }
+
+  public PartitionerSplitInfo()
+  {
+    partition = -1;
+    tileid = -1;
+  }
+
+  @Override
+  public long getTileId()
+  {
+    return tileid;
+  }
+
+  @Override
+  public int getPartition()
+  {
+    return partition;
+  }
+
+  public String toString()
+  {
+    return "tile id = " + tileid + ", partition = " + partition;
+  }
+
+  @Override
+  public void writeExternal(ObjectOutput out) throws IOException
+  {
+    out.writeLong(tileid);
+    out.writeInt(partition);
+  }
+
   @Override
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
   {
-    int count = in.readInt();
-    splits = new PartitionerSplitInfo[count];
-
-    for (int i = 0; i < splits.length; i++)
-    {
-      splits[i] = new PartitionerSplitInfo(in.readLong(), in.readInt());
-    }
-
+    tileid = in.readLong();
+    partition = in.readInt();
   }
 
-  protected FileSystem getFileSystem(Path parent) throws IOException {
-    return HadoopFileUtils.getFileSystem(parent);
+  @Override
+  boolean compareEQ(long tileId)
+  {
+    return tileId == this.tileid;
   }
 
-  protected boolean fileExists(Path file) throws IOException {
-    return HadoopFileUtils.exists(file);
+  @Override
+  boolean compareLE(long tileId)
+  {
+    return tileId <= this.tileid;
   }
 
-  protected InputStream getInputStream(Path path) throws IOException {
-    return getFileSystem(path).open(path);
+  @Override
+  boolean compareLT(long tileId)
+  {
+    return tileId < this.tileid;
   }
 
-  protected OutputStream getOutputStream(Path path) throws IOException {
-    return getFileSystem(path).create(path);
+  @Override
+  boolean compareGE(long tileId)
+  {
+    return tileId >= this.tileid;
   }
+
+  @Override
+  boolean compareGT(long tileId)
+  {
+    return tileId > this.tileid;
+  }
+}
 
 }

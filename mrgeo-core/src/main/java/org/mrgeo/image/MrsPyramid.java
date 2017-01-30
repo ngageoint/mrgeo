@@ -20,16 +20,13 @@ import com.google.common.base.Optional;
 import com.google.common.cache.*;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.conf.Configuration;
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.KVIterator;
 import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.data.image.MrsImageDataProvider;
-import org.mrgeo.data.image.MrsPyramidMetadataWriter;
 import org.mrgeo.data.image.MrsImageReader;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
@@ -39,18 +36,16 @@ import org.mrgeo.utils.tms.TileBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.image.Raster;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 public class MrsPyramid
 {
-static Logger log = LoggerFactory.getLogger(MrsPyramid.class);
-
 private final static int IMAGE_CACHE_SIZE = 3;
 private final static int IMAGE_CACHE_EXPIRE = 10; // minutes
-
+static Logger log = LoggerFactory.getLogger(MrsPyramid.class);
+final private MrsImageDataProvider provider;
 final LoadingCache<Integer, Optional<MrsImage>> imageCache = CacheBuilder.newBuilder()
     .maximumSize(IMAGE_CACHE_SIZE)
     .expireAfterAccess(IMAGE_CACHE_EXPIRE, TimeUnit.SECONDS)
@@ -66,7 +61,8 @@ final LoadingCache<Integer, Optional<MrsImage>> imageCache = CacheBuilder.newBui
 
               notification.getValue().get().close();
             }
-          }})
+          }
+        })
     .build(new CacheLoader<Integer, Optional<MrsImage>>()
     {
       @Override
@@ -78,9 +74,6 @@ final LoadingCache<Integer, Optional<MrsImage>> imageCache = CacheBuilder.newBui
       }
     });
 
-
-final private MrsImageDataProvider provider;
-
 private MrsPyramid(MrsImageDataProvider provider)
 {
   super();
@@ -89,58 +82,7 @@ private MrsPyramid(MrsImageDataProvider provider)
 
 }
 
-public Bounds getBounds()
-{
-  return getMetadataInternal().getBounds();
-}
-
-public LongRectangle getTileBounds(int zoomLevel)
-{
-  return getMetadataInternal().getTileBounds(zoomLevel);
-}
-
-public int getTileSize()
-{
-  return getMetadataInternal().getTilesize();
-}
-
-public int getMaximumLevel()
-{
-  return getMetadataInternal().getMaxZoomLevel();
-}
-
-public int getNumLevels()
-{
-  return getMetadataInternal().getMaxZoomLevel();
-}
-
-/**
- * Return true if there is data at each of the pyramid levels.
- *
- * @return
- */
-public boolean hasPyramids()
-{
-  MrsPyramidMetadata metadata = getMetadataInternal();
-  return metadata.hasPyramids();
-}
-
-public static void calculateMetadataWithProvider(final String pyramidname, final int zoom,
-    final MrsImageDataProvider provider,
-    final AdHocDataProvider statsProvider,
-    final double[] defaultValues,
-    final Bounds bounds, final String protectionLevel) throws IOException
-{
-  // update the pyramid level stats
-  if (statsProvider != null)
-  {
-    ImageStats[] levelStats = ImageStats.readStats(statsProvider);
-
-    calculateMetadata(pyramidname, zoom, provider, levelStats, defaultValues,
-        bounds, protectionLevel);
-  }
-}
-
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 public static void calculateMetadata(final String pyramidname, final int zoom,
     final MrsImageDataProvider provider,
     final ImageStats[] levelStats,
@@ -166,66 +108,24 @@ public static void calculateMetadata(final String pyramidname, final int zoom,
   metadata.setBounds(bounds);
   metadata.setName(zoom);
   metadata.setDefaultValues(defaultValues);
-  if(protectionLevel != null && !protectionLevel.equals("null"))
+  if (protectionLevel != null && !protectionLevel.equals("null"))
   {
     metadata.setProtectionLevel(protectionLevel);
   }
 
-  calculateMetadata(zoom, provider, levelStats, metadata);
-}
-
-public static void calculateMetadata(final int zoom,
-    final MrsImageDataProvider provider,
-    final ImageStats[] levelStats,
-    final MrsPyramidMetadata metadata) throws IOException
-{
-
-
-  // HACK!!! (kinda...) Need to make metadata is there so the provider can get the
-  //          MrsImageReader (it does a canOpen(), which makes sure metadata is present)
-  MrsPyramidMetadataWriter metadataWriter = provider.getMetadataWriter();
-  metadataWriter.write(metadata);
 
   final MrsImageReader reader = provider.getMrsTileReader(zoom);
   try
   {
 
-    final KVIterator<TileIdWritable, Raster> rasterIter = reader.get();
+    final KVIterator<TileIdWritable, MrGeoRaster> rasterIter = reader.get();
 
     if (rasterIter != null && rasterIter.hasNext())
     {
-      final Raster raster = rasterIter.next();
+      final MrGeoRaster raster = rasterIter.next();
 
-      final int tilesize = raster.getWidth();
-
-      final Bounds bounds = metadata.getBounds();
-
-      final TileBounds tb = TMSUtils.boundsToTile(bounds, zoom, tilesize);
-      metadata.setTileBounds(zoom, new LongRectangle(tb.w, tb.s, tb.e, tb.n));
-
-      final Pixel pll = TMSUtils.latLonToPixels(bounds.s, bounds.w, zoom,
-          tilesize);
-      final Pixel pur = TMSUtils.latLonToPixels(bounds.n, bounds.e, zoom,
-          tilesize);
-      metadata.setPixelBounds(zoom, new LongRectangle(0, 0, pur.px - pll.px, pur.py - pll.py));
-
-      metadata.setBands(raster.getNumBands());
-      metadata.setTilesize(tilesize);
-      metadata.setTileType(raster.getTransferType());
-
-      metadata.setName(zoom, Integer.toString(zoom));
-      // update the pyramid level stats
-      metadata.setImageStats(zoom, levelStats);
-
-      // set the image level stats too which are the same as the max zoom level
-      metadata.setStats(levelStats);
+      calculateMetadata(zoom, raster, provider, levelStats, metadata);
     }
-    else
-    {
-      log.error("Error calculating MrsPyramid metadata, could not get a valid raster from the MrsImage");
-    }
-
-    provider.getMetadataWriter(null).write(metadata);
   }
   finally
   {
@@ -233,22 +133,44 @@ public static void calculateMetadata(final int zoom,
   }
 }
 
-//  public static boolean delete(final String name)
-//  {
-//    try
-//    {
-//      pyramidCache.invalidate(name);
-//      HadoopFileUtils.delete(name);
-//
-//      return true;
-//    }
-//    catch (final IOException e)
-//    {
-//    }
-//
-//    return false;
-//  }
+public static void calculateMetadata(final int zoom,
+    final MrGeoRaster raster,
+    final MrsImageDataProvider provider,
+    final ImageStats[] levelStats,
+    final MrsPyramidMetadata metadata) throws IOException
+{
 
+  final int tilesize = raster.width();
+
+  final Bounds bounds = metadata.getBounds();
+
+  final TileBounds tb = TMSUtils.boundsToTile(bounds, zoom, tilesize);
+  metadata.setTileBounds(zoom, new LongRectangle(tb.w, tb.s, tb.e, tb.n));
+
+  final Pixel pll = TMSUtils.latLonToPixels(bounds.s, bounds.w, zoom,
+      tilesize);
+  final Pixel pur = TMSUtils.latLonToPixels(bounds.n, bounds.e, zoom,
+      tilesize);
+  metadata.setPixelBounds(zoom, new LongRectangle(0, 0, pur.px - pll.px, pur.py - pll.py));
+
+  metadata.setBands(raster.bands());
+  metadata.setTilesize(tilesize);
+  metadata.setTileType(raster.datatype());
+
+  metadata.setName(zoom, Integer.toString(zoom));
+  // update the pyramid level stats
+  metadata.setImageStats(zoom, levelStats);
+
+  // set the image level stats too which are the same as the max zoom level
+  if (zoom == metadata.getMaxZoomLevel())
+  {
+    metadata.setStats(levelStats);
+  }
+
+  provider.getMetadataWriter().write(metadata);
+}
+
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 public static boolean isValid(final String name, final ProviderProperties providerProperties)
 {
   try
@@ -291,6 +213,58 @@ public static MrsPyramid open(final MrsImageDataProvider provider) throws IOExce
   return new MrsPyramid(provider);
 }
 
+public Bounds getBounds()
+{
+  return getMetadataInternal().getBounds();
+}
+
+//  public static boolean delete(final String name)
+//  {
+//    try
+//    {
+//      pyramidCache.invalidate(name);
+//      HadoopFileUtils.delete(name);
+//
+//      return true;
+//    }
+//    catch (final IOException e)
+//    {
+//    }
+//
+//    return false;
+//  }
+
+public LongRectangle getTileBounds(int zoomLevel)
+{
+  return getMetadataInternal().getTileBounds(zoomLevel);
+}
+
+public int getTileSize()
+{
+  return getMetadataInternal().getTilesize();
+}
+
+public int getMaximumLevel()
+{
+  return getMetadataInternal().getMaxZoomLevel();
+}
+
+public int getNumLevels()
+{
+  return getMetadataInternal().getMaxZoomLevel();
+}
+
+/**
+ * Return true if there is data at each of the pyramid levels.
+ *
+ * @return
+ */
+public boolean hasPyramids()
+{
+  MrsPyramidMetadata metadata = getMetadataInternal();
+  return metadata.hasPyramids();
+}
+
 public MrsPyramidMetadata.Classification getClassification() throws IOException
 {
   return provider.getMetadataReader().read().getClassification();
@@ -298,7 +272,6 @@ public MrsPyramidMetadata.Classification getClassification() throws IOException
 
 /**
  * Be sure to also call MrsImage.close() on the returned MrsImage, or else there'll be a leak
- *
  */
 public MrsImage getHighestResImage() throws IOException
 {
@@ -307,7 +280,6 @@ public MrsImage getHighestResImage() throws IOException
 
 /**
  * Be sure to also call MrsImage.close() on the returned MrsImage, or else there'll be a leak
- *
  */
 @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST_OF_RETURN_VALUE", justification = "We _are_ checking!")
 public MrsImage getImage(final int level) throws IOException
@@ -324,7 +296,7 @@ public MrsImage getImage(final int level) throws IOException
   {
     if (e.getCause() instanceof IOException)
     {
-      throw (IOException)e.getCause();
+      throw (IOException) e.getCause();
     }
     throw new IOException(e);
   }
@@ -361,33 +333,10 @@ private MrsPyramidMetadata getMetadataInternal()
   }
   catch (IOException e)
   {
-    e.printStackTrace();
+    log.error("Exception thrown", e);
   }
 
   return null;
 }
-
-//  public static void reloadMetadata(String pyramid) throws IOException
-//  {
-//    if (pyramid != null && !pyramid.isEmpty())
-//    {
-//      //    System.out.println("invalidating cache for : " + pyramid);
-//      //    pyramidCache.invalidate(pyramid);
-//
-//      // just like the open, we need to unqualify the pyramid name to remove any hdfs://... stuff
-//      Path unqualified = HadoopFileUtils.unqualifyPath(new Path(pyramid));
-//      MrsPyramid py = pyramidCache.getIfPresent(unqualified.toString());
-//
-//      if (py != null)
-//      {
-//        MrsPyramidMetadata metadata = py.getMetadata();
-//        metadata.reload();
-//      }
-//
-//      log.debug("invalidating pyramid cache: " + unqualified.toString());
-//    }
-//  }
-
-
 
 }

@@ -16,14 +16,10 @@
 
 package org.mrgeo.image;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.lang3.ArrayUtils;
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.util.DefaultPrettyPrinter;
-import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.Pixel;
@@ -44,7 +40,7 @@ import java.util.Map;
  * The contents of the pyramid are generally rasters.  The
  * metadata object describes geospatial bounds, geospatial
  * tiled bounds, and pixel bounds of images.
- *
+ * <p>
  * A pyramid of imagery is a set of images produced from a
  * base zoom level and then all derived image levels from
  * the base.  For example, a set of images are used to produce
@@ -52,66 +48,54 @@ import java.util.Map;
  * The images of 12 are used to create image for zoom level 11
  * and then zoom level 11 is used for 10 and so on until zoom level
  * 1 is created.  So, the pyramid exists from 12 to 1.
- *
  */
 public class MrsPyramidMetadata implements Serializable
 {
 private static final Logger log = LoggerFactory.getLogger(MrsPyramidMetadata.class);
 // version
 private static final long serialVersionUID = 1L;
-
-
-/**
- * TileMetadata is a container of the multiple types of
- * bounds for tiled data.
- */
-public static class TileMetadata implements Serializable
-{
-  private static final long serialVersionUID = 1L;
-
-  // tile bounds (min tx, min ty, max tx, max ty)
-  public LongRectangle tileBounds = null;
-
-  // hdfs path or accumulo table for the image min, max, mean pixel values
-  public String name = null;
-
-  // basic constructor
-  public TileMetadata()
-  {
-  }
-
-} // end TileMetadata
-  
-  
-  /*
-   * start globals section
-   */
-
 protected String pyramid; // base hdfs path or accumulo table for the pyramid
 
+
+/*
+ * start globals section
+ */
 // NOTE: bounds, and pixel bounds are for the exact image data, they do
 // not include the extra "slop" around the edges of the tile.
 protected Bounds bounds; // The bounds of the image in decimal degrees.
-
 protected int tilesize; // tile width/height, in pixels
-
 protected int maxZoomLevel; // maximum zoom level (minimum pixel size)
-
 protected Map<String, String> tags = new HashMap<>(); // freeform k,v pairs of tags
-
 protected String protectionLevel = "";
+private ImageMetadata[] imageData = null; // data specific to a single
 
-  /*
-   * end globals section
-   */
+/*
+ * end globals section
+ */
+private int bands = 0; // number of bands in the image
+private double[][] quantiles; // quantiles computed in each band for the entire image pyramid
+
+/*
+ * start get section
+ */
+// default (pixel) value, by band. Geotools calls these defaults, but they are
+// really
+// the nodata value for each pixel
+private double[] defaultValues;
+private int tileType; // pixel type for the image
+private ImageStats[] stats; // min, max, mean, std dev of pixel values by band for the source resolution level image
+private String[][] categories; // categories for each band in the image
+private Classification classification = Classification.Continuous;
+private String resamplingMethod;
 
 public MrsPyramidMetadata()
 {
 }
 
-public MrsPyramidMetadata(MrsPyramidMetadata copy) {
+public MrsPyramidMetadata(MrsPyramidMetadata copy)
+{
   this.pyramid = copy.pyramid;
-  this.bounds = copy.bounds == null? null : copy.bounds.clone();
+  this.bounds = copy.bounds == null ? null : copy.bounds.clone();
   this.tilesize = copy.tilesize;
   this.maxZoomLevel = copy.maxZoomLevel;
   this.tags.putAll(copy.tags);
@@ -126,7 +110,7 @@ public MrsPyramidMetadata(MrsPyramidMetadata copy) {
   else
   {
     quantiles = new double[copy.quantiles.length][];
-    for (int b=0; b < copy.quantiles.length; b++)
+    for (int b = 0; b < copy.quantiles.length; b++)
     {
       if (copy.quantiles[b] != null)
       {
@@ -141,7 +125,7 @@ public MrsPyramidMetadata(MrsPyramidMetadata copy) {
   else
   {
     categories = new String[copy.categories.length][];
-    for (int b=0; b < copy.categories.length; b++)
+    for (int b = 0; b < copy.categories.length; b++)
     {
       if (copy.categories[b] != null)
       {
@@ -178,14 +162,51 @@ public MrsPyramidMetadata(MrsPyramidMetadata copy) {
   this.stats = ArrayUtils.clone(copy.stats);
 }
 
-  /*
-   * start get section
-   */
+/**
+ * Loading a metadata file from the local file system.  The objects of
+ * the file are stored in a json format.  This enables the ObjectMapper
+ * to parse out the values correctly.
+ *
+ * @param file metadata file on the local file system to load
+ * @return a valid MrsPyramidMetadata object
+ * @throws IOException
+ */
+@Deprecated
+public static MrsPyramidMetadata load(final File file) throws IOException
+{
+  final ObjectMapper mapper = new ObjectMapper();
+  final MrsPyramidMetadata metadata = mapper.readValue(file, MrsPyramidMetadata.class);
 
+  // make sure the name of the pyramid is set correctly for where the
+  // metadata file was pulled
+  metadata.setPyramid("file://" + file.getParentFile().getAbsolutePath());
+
+  return metadata;
+} // end load - File
+
+/**
+ * Loading metadata from an InputStream.  The objects of
+ * the file are stored in a json format.  This enables the ObjectMapper
+ * to parse out the values correctly.
+ *
+ * @param stream - the stream attached to the metadata input
+ * @return a valid MrsPyramidMetadata object
+ * @throws IOException
+ */
+public static MrsPyramidMetadata load(final InputStream stream) throws IOException
+{
+  final ObjectMapper mapper = new ObjectMapper();
+  return mapper.readValue(stream, MrsPyramidMetadata.class);
+} // end load - InputStream
 
 public Bounds getBounds()
 {
   return bounds;
+}
+
+public void setBounds(final Bounds bounds)
+{
+  this.bounds = bounds;
 }
 
 public String getName(final int zoomlevel)
@@ -202,6 +223,37 @@ public int getMaxZoomLevel()
   return maxZoomLevel;
 }
 
+  /*
+   * end get section
+   */
+
+  
+  /*
+   * start set section
+   */
+
+public void setMaxZoomLevel(final int zoomlevel)
+{
+  if (imageData == null)
+  {
+    for (int i = 0; i <= zoomlevel; i++)
+    {
+      imageData = ArrayUtils.add(imageData, new ImageMetadata());
+    }
+  }
+  else if (zoomlevel < maxZoomLevel)
+  {
+    imageData = ArrayUtils.subarray(imageData, 0, zoomlevel + 1);
+  }
+  else if (zoomlevel > maxZoomLevel)
+  {
+    for (int i = maxZoomLevel + 1; i <= zoomlevel; i++)
+    {
+      imageData = ArrayUtils.add(imageData, new ImageMetadata());
+    }
+  }
+  this.maxZoomLevel = zoomlevel;
+}
 
 @JsonIgnore
 public String getPyramid()
@@ -209,6 +261,10 @@ public String getPyramid()
   return pyramid;
 }
 
+public void setPyramid(final String pyramid)
+{
+  this.pyramid = pyramid;
+}
 
 public LongRectangle getTileBounds(final int zoomlevel)
 {
@@ -225,15 +281,25 @@ public LongRectangle getTileBounds(final int zoomlevel)
   return null;
 }
 
-
 public int getTilesize()
 {
   return tilesize;
 }
 
+public void setTilesize(final int size)
+{
+  tilesize = size;
+}
+
 public Map<String, String> getTags()
 {
   return tags;
+}
+
+public void setTags(final Map<String, String> tags)
+{
+  // make a copy of the tags...
+  this.tags = new HashMap<>(tags);
 }
 
 @JsonIgnore
@@ -257,6 +323,14 @@ public String getProtectionLevel()
 {
   return protectionLevel;
 }
+
+public void setProtectionLevel(final String protectionLevel)
+{
+  this.protectionLevel = protectionLevel;
+}
+  /*
+   * end set section
+   */
 
 /**
  * Returns the quantiles for the specified band for this image. Note that the return value
@@ -293,6 +367,31 @@ public double[][] getQuantiles()
   return q;
 }
 
+
+  /*
+   * start globals section
+   */
+
+public void setQuantiles(double[][] quantiles)
+{
+  if (quantiles == null)
+  {
+    this.quantiles = new double[getBands()][];
+  }
+  else
+  {
+    this.quantiles = new double[quantiles.length][];
+    for (int i = 0; i < quantiles.length; i++)
+    {
+      if (quantiles[i] != null)
+      {
+        this.quantiles[i] = ArrayUtils.clone(quantiles[i]);
+      }
+    }
+  }
+}
+// pyramid-level image
+
 /**
  * Returns the categories for the specified band for this image. Note that the return value
  * can be null.
@@ -328,93 +427,6 @@ public String[][] getCategories()
   return c;
 }
 
-  /*
-   * end get section
-   */
-
-  
-  /*
-   * start set section
-   */
-
-public void setBounds(final Bounds bounds)
-{
-  this.bounds = bounds;
-}
-
-
-public void setName(final int zoomlevel)
-{
-  setName(zoomlevel, Integer.toString(zoomlevel));
-}
-
-
-public void setName(final int zoomlevel, final String name)
-{
-  if (imageData == null || zoomlevel > maxZoomLevel)
-  {
-    setMaxZoomLevel(zoomlevel);
-  }
-  imageData[zoomlevel].name = name;
-}
-
-
-public void setPyramid(final String pyramid)
-{
-  this.pyramid = pyramid;
-}
-
-
-public void setTilesize(final int size)
-{
-  tilesize = size;
-}
-
-public void setTags(final Map<String, String> tags)
-{
-  // make a copy of the tags...
-  this.tags = new HashMap<>(tags);
-}
-
-@JsonIgnore
-public void setTag(final String tag, final String value)
-{
-  tags.put(tag, value);
-}
-
-public void setProtectionLevel(final String protectionLevel)
-{
-  this.protectionLevel = protectionLevel;
-}
-
-public void setQuantiles(double[][] quantiles)
-{
-  if (quantiles == null)
-  {
-    this.quantiles = new double[getBands()][];
-  }
-  else
-  {
-    this.quantiles = new double[quantiles.length][];
-    for (int i = 0; i < quantiles.length; i++)
-    {
-      if (quantiles[i] != null)
-      {
-        this.quantiles[i] = ArrayUtils.clone(quantiles[i]);
-      }
-    }
-  }
-}
-
-@JsonIgnore
-public void setQuantiles(final int band, final double[] quantiles)
-{
-  if (this.quantiles == null) {
-    this.quantiles = new double[getBands()][];
-  }
-  this.quantiles[band] = quantiles.clone();
-}
-
 public void setCategories(String[][] categories)
 {
   if (categories == null)
@@ -434,16 +446,49 @@ public void setCategories(String[][] categories)
   }
 }
 
+public void setName(final int zoomlevel)
+{
+  setName(zoomlevel, Integer.toString(zoomlevel));
+}
+
+public void setName(final int zoomlevel, final String name)
+{
+  if (imageData == null || zoomlevel > maxZoomLevel)
+  {
+    setMaxZoomLevel(zoomlevel);
+  }
+  imageData[zoomlevel].name = name;
+}
+
+@JsonIgnore
+public void setTag(final String tag, final String value)
+{
+  tags.put(tag, value);
+}
+
+@JsonIgnore
+public void setQuantiles(final int band, final double[] quantiles)
+{
+  if (this.quantiles == null)
+  {
+    this.quantiles = new double[getBands()][];
+  }
+  this.quantiles[band] = quantiles.clone();
+}
+
 @JsonIgnore
 public void setCategories(final int band, final String[] categories)
 {
-  if (this.categories == null) {
+  if (this.categories == null)
+  {
     this.categories = new String[getBands()][];
   }
   this.categories[band] = categories.clone();
 }
+
+
   /*
-   * end set section
+   * end globals section
    */
 
 /**
@@ -465,241 +510,31 @@ public boolean hasPyramids()
   return (levels == getMaxZoomLevel());
 }
 
-/**
- * ImageMetadata is a container of the multiple types of
- * bounds for images.
- */
-public static class ImageMetadata extends MrsPyramidMetadata.TileMetadata
-{
-  private static final long serialVersionUID = 1L;
-
-  // pixel bounds of the image (0, 0, width, height)
-  public LongRectangle pixelBounds = null;
-
-  // statistics of the image
-  public ImageStats[] stats = null;
-
-  // basic constructor
-  public ImageMetadata()
-  {
-  }
-
-  // For backward compatibility with older image pyramids that
-  // still have a reference to the "image" property. It was renamed
-  // to "name".
-  public void setImage(final String image)
-  {
-    name = image;
-  }
-} // end ImageMetadata
-
-
-  /*
-   * start globals section
-   */
-
-private ImageMetadata[] imageData = null; // data specific to a single
-// pyramid-level image
-
-private int bands = 0; // number of bands in the image
-private double[][] quantiles; // quantiles computed in each band for the entire image pyramid
-
-// default (pixel) value, by band. Geotools calls these defaults, but they are
-// really
-// the nodata value for each pixel
-private double[] defaultValues;
-private int tileType; // pixel type for the image
-
-private ImageStats[] stats; // min, max, mean, std dev of pixel values by band for the source resolution level image
-
-private String[][] categories; // categories for each band in the image
-
-private Classification classification = Classification.Continuous;
-
-private String resamplingMethod;
-
-
-  /*
-   * end globals section
-   */
-
-// types
-public enum Classification {
-  Categorical, Continuous
-}
-
   /*
    * start methods
    */
-
-/**
- * Loading a metadata file from the local file system.  The objects of
- * the file are stored in a json format.  This enables the ObjectMapper
- * to parse out the values correctly.
- *
- * @param file metadata file on the local file system to load
- * @return a valid MrsPyramidMetadata object
- * @throws JsonGenerationException
- * @throws JsonMappingException
- * @throws IOException
- */
-@Deprecated
-public static MrsPyramidMetadata load(final File file) throws IOException
-{
-  final ObjectMapper mapper = new ObjectMapper();
-  final MrsPyramidMetadata metadata = mapper.readValue(file, MrsPyramidMetadata.class);
-
-  // make sure the name of the pyramid is set correctly for where the
-  // metadata file was pulled
-  metadata.setPyramid("file://" + file.getParentFile().getAbsolutePath());
-
-  return metadata;
-} // end load - File
-
-
-/**
- * Loading metadata from an InputStream.  The objects of
- * the file are stored in a json format.  This enables the ObjectMapper
- * to parse out the values correctly.
- *
- * @param stream - the stream attached to the metadata input
- * @return a valid MrsPyramidMetadata object
- * @throws JsonGenerationException
- * @throws JsonMappingException
- * @throws IOException
- */
-public static MrsPyramidMetadata load(final InputStream stream) throws IOException
-{
-  final ObjectMapper mapper = new ObjectMapper();
-  return mapper.readValue(stream, MrsPyramidMetadata.class);
-} // end load - InputStream
-
-
-  /*
-   * Helper functions for types used in rasters and databuffers
-   */
-
-public static int toBytes(final int tiletype)
-{
-  switch (tiletype)
-  {
-  case DataBuffer.TYPE_BYTE:
-  {
-    return 1;
-  }
-  case DataBuffer.TYPE_FLOAT:
-  {
-    return RasterUtils.FLOAT_BYTES;
-  }
-  case DataBuffer.TYPE_DOUBLE:
-  {
-    return RasterUtils.DOUBLE_BYTES;
-  }
-  case DataBuffer.TYPE_INT:
-  {
-    return RasterUtils.INT_BYTES;
-  }
-  case DataBuffer.TYPE_SHORT:
-  {
-    return RasterUtils.SHORT_BYTES;
-  }
-  case DataBuffer.TYPE_USHORT:
-  {
-    return RasterUtils.USHORT_BYTES;
-  }
-  }
-
-  return 0;
-} // end toBytes
-
-
-public static int toTileType(final String tiletype)
-{
-  if (tiletype.equals("Byte"))
-  {
-    return DataBuffer.TYPE_BYTE;
-  }
-  if (tiletype.equals("Float"))
-  {
-    return DataBuffer.TYPE_FLOAT;
-  }
-  if (tiletype.equals("Double"))
-  {
-    return DataBuffer.TYPE_DOUBLE;
-  }
-  if (tiletype.equals("Int"))
-  {
-    return DataBuffer.TYPE_INT;
-  }
-  if (tiletype.equals("Short"))
-  {
-    return DataBuffer.TYPE_SHORT;
-  }
-  if (tiletype.equals("UShort"))
-  {
-    return DataBuffer.TYPE_USHORT;
-  }
-
-  return DataBuffer.TYPE_UNDEFINED;
-} // end toTileType
-
-
-public static String toTileTypeText(final int tiletype)
-{
-  switch (tiletype)
-  {
-  case DataBuffer.TYPE_BYTE:
-  {
-    return "Byte";
-  }
-  case DataBuffer.TYPE_FLOAT:
-  {
-    return "Float";
-  }
-  case DataBuffer.TYPE_DOUBLE:
-  {
-    return "Double";
-  }
-  case DataBuffer.TYPE_INT:
-  {
-    return "Int";
-  }
-  case DataBuffer.TYPE_SHORT:
-  {
-    return "Short";
-  }
-  case DataBuffer.TYPE_USHORT:
-  {
-    return "UShort";
-  }
-  }
-
-  return "Undefined";
-} // end toTileTypeText
-
-
-  /*
-   * end helper functions
-   */
-
 
 public int getBands()
 {
   return bands;
 }
 
+public void setBands(final int bands)
+{
+  this.bands = bands;
+}
 
 @JsonIgnore
-public double getPixelHeight(int zoom) {
+public double getPixelHeight(int zoom)
+{
   return TMSUtils.resolution(zoom, tilesize);
 }
 
-
 @JsonIgnore
-public double getPixelWidth(int zoom) {
+public double getPixelWidth(int zoom)
+{
   return TMSUtils.resolution(zoom, tilesize);
 }
-
 
 @JsonIgnore
 public double getDefaultValue(final int band)
@@ -712,7 +547,6 @@ public double getDefaultValue(final int band)
   return Double.NaN;
 }
 
-
 @JsonIgnore
 public byte getDefaultValueByte(final int band)
 {
@@ -724,13 +558,11 @@ public byte getDefaultValueByte(final int band)
   return 0;
 }
 
-
 @JsonIgnore
 public double getDefaultValueDouble(final int band)
 {
   return getDefaultValue(band);
 }
-
 
 @JsonIgnore
 public float getDefaultValueFloat(final int band)
@@ -743,7 +575,6 @@ public float getDefaultValueFloat(final int band)
   return Float.NaN;
 }
 
-
 @JsonIgnore
 public int getDefaultValueInt(final int band)
 {
@@ -754,7 +585,6 @@ public int getDefaultValueInt(final int band)
 
   return 0;
 }
-
 
 @JsonIgnore
 public long getDefaultValueLong(final int band)
@@ -767,12 +597,15 @@ public long getDefaultValueLong(final int band)
   return 0;
 }
 
-
 public double[] getDefaultValues()
 {
-  return  ArrayUtils.clone(defaultValues);
+  return ArrayUtils.clone(defaultValues);
 }
 
+public void setDefaultValues(final double[] defaultValues)
+{
+  this.defaultValues = ArrayUtils.clone(defaultValues);
+}
 
 @JsonIgnore
 public byte[] getDefaultValuesByte()
@@ -858,215 +691,15 @@ public short[] getDefaultValuesShort()
 }
 
 @JsonIgnore
-public Number[] getDefaultValuesNumber()
+public double[] getDefaultValuesNumber()
 {
-  final Number[] defaults = new Number[bands];
-  for (int i = 0; i < bands; i++)
-  {
-    defaults[i] = defaultValues[i];
-  }
-
-  return defaults;
+  return Arrays.copyOf(defaultValues, defaultValues.length);
 }
 
 public ImageMetadata[] getImageMetadata()
 {
   return ArrayUtils.clone(imageData);
 }
-
-
-public LongRectangle getPixelBounds(final int zoomlevel)
-{
-  if (imageData != null)
-  {
-    if (zoomlevel < imageData.length)
-    {
-      return imageData[zoomlevel].pixelBounds;
-    }
-    return getOrCreatePixelBounds(zoomlevel);
-  }
-  return null;
-}
-
-@SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS", justification = "api")
-public ImageStats[] getImageStats(final int zoomlevel)
-{
-  if (imageData != null)
-  {
-    if (zoomlevel < imageData.length)
-    {
-      return imageData[zoomlevel].stats;
-    }
-
-    // if we don't have this level, return the highest level available
-    return imageData[imageData.length - 1].stats;
-  }
-  return null;
-}
-
-
-public ImageStats getImageStats(final int zoomlevel, int band)
-{
-
-  if (imageData != null)
-  {
-    if (zoomlevel < imageData.length)
-    {
-      if (imageData[zoomlevel].stats != null && band < imageData[zoomlevel].stats.length)
-      {
-        return imageData[zoomlevel].stats[band];
-      }
-    }
-    if (imageData[imageData.length - 1].stats != null && band < imageData[imageData.length - 1].stats.length)
-    {
-      return imageData[imageData.length - 1].stats[band];
-    }
-  }
-  return null;
-}
-
-
-public ImageStats getStats(int band)
-{
-  return (stats == null) ? null : stats[band];
-}
-
-
-public ImageStats[] getStats()
-{
-  return ArrayUtils.clone(stats);
-}
-
-
-public LongRectangle getOrCreateTileBounds(final int zoomlevel)
-{
-  if (imageData != null && zoomlevel < imageData.length)
-  {
-    return imageData[zoomlevel].tileBounds;
-  }
-
-  LongRectangle tilebounds = getTileBounds(zoomlevel);
-  if (tilebounds == null)
-  {
-    TileBounds tb = TMSUtils.boundsToTile(bounds, zoomlevel, tilesize);
-    tilebounds = new LongRectangle(tb.w, tb.s, tb.e, tb.n);
-  }
-  return tilebounds;
-}
-
-
-public LongRectangle getOrCreatePixelBounds(final int zoomlevel)
-{
-  if (imageData != null && zoomlevel < imageData.length)
-  {
-    return imageData[zoomlevel].pixelBounds;
-  }
-
-//    TMSUtils.Bounds b = new TMSUtils.Bounds(bounds.getMinX(), bounds.getMinY(),
-//        bounds.getMaxX(), bounds.getMaxY());
-
-  Pixel ll = TMSUtils.latLonToPixels(bounds.w, bounds.s, zoomlevel, tilesize);
-  Pixel ur = TMSUtils.latLonToPixels(bounds.e, bounds.n, zoomlevel, tilesize);
-
-  return new LongRectangle(0, 0, ur.px - ll.px, ur.py - ll.py);
-}
-
-
-public int getTileType()
-{
-  return tileType;
-}
-
-
-public Classification getClassification()
-{
-  return classification;
-}
-
-
-/**
- * Return the minimum and maximum values from the statistics for the image at the requested zoom
- * level
- * @param zoomLevel requested zoom level
- * @return array with position one containing the statistical minimum value and position two
- * containing the maximum value
- */
-public double[] getExtrema(final int zoomLevel)
-{
-  double[] extrema = new double[3];
-  ImageStats st = getImageStats(zoomLevel, 0);
-  if (st != null)
-  {
-    extrema[0] = st.min;
-    extrema[1] = st.max;
-  }
-  else
-  {
-    log.warn("No statistics have been calculated on the requested image " +
-        pyramid + "/" + imageData[zoomLevel].name + ".  Using default range of 0.0 to 1.0...");
-    extrema[0] = 0.0;
-    extrema[1] = 1.0;
-  }
-  return extrema;
-}
-
-
-public String getResamplingMethod()
-{
-  return resamplingMethod;
-}
-
-
-public void setResamplingMethod(String resamplingMethod)
-{
-  this.resamplingMethod = resamplingMethod;
-}
-
-
-
-public void save(final OutputStream stream) throws IOException
-{
-  final ObjectMapper mapper = new ObjectMapper();
-  try
-  {
-    DefaultPrettyPrinter pp = new DefaultPrettyPrinter();
-    pp.indentArraysWith(new DefaultPrettyPrinter.Lf2SpacesIndenter());
-
-    //mapper.prettyPrintingWriter(pp).writeValue(stream, this);
-    mapper.writer(pp).writeValue(stream, this);
-  }
-  catch (NoSuchMethodError e)
-  {
-    // if we don't have the pretty printer, just write the json
-    mapper.writeValue(stream, this);
-  }
-}
-
-
-  /*
-   * start set section
-   */
-
-public void setBands(final int bands)
-{
-  this.bands = bands;
-}
-
-
-public void setDefaultValues(final double[] defaultValues)
-{
-  this.defaultValues = ArrayUtils.clone(defaultValues);
-}
-
-//public void setDefaultValues(final Number[] defaultValues)
-//{
-//  this.defaultValues = new double[defaultValues.length];
-//  for (int i = 0; i < defaultValues.length; i++)
-//  {
-//    this.defaultValues[i] = defaultValues[i].doubleValue();
-//  }
-//}
-
 
 public void setImageMetadata(final ImageMetadata[] metadata)
 {
@@ -1104,30 +737,193 @@ public void setImageMetadata(final ImageMetadata[] metadata)
 
 }
 
-
-public void setMaxZoomLevel(final int zoomlevel)
+public LongRectangle getPixelBounds(final int zoomlevel)
 {
-  if (imageData == null)
+  if (imageData != null)
   {
-    for (int i = 0; i <= zoomlevel; i++)
+    if (zoomlevel < imageData.length)
     {
-      imageData = ArrayUtils.add(imageData, new ImageMetadata());
+      return imageData[zoomlevel].pixelBounds;
     }
+    return getOrCreatePixelBounds(zoomlevel);
   }
-  else if (zoomlevel < maxZoomLevel)
-  {
-    imageData = ArrayUtils.subarray(imageData, 0, zoomlevel + 1);
-  }
-  else if (zoomlevel > maxZoomLevel)
-  {
-    for (int i = maxZoomLevel + 1; i <= zoomlevel; i++)
-    {
-      imageData = ArrayUtils.add(imageData, new ImageMetadata());
-    }
-  }
-  this.maxZoomLevel = zoomlevel;
+  return null;
 }
 
+@SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS", justification = "api")
+public ImageStats[] getImageStats(final int zoomlevel)
+{
+  if (imageData != null)
+  {
+    if (zoomlevel < imageData.length)
+    {
+      return imageData[zoomlevel].stats;
+    }
+
+    // if we don't have this level, return the highest level available
+    return imageData[imageData.length - 1].stats;
+  }
+  return null;
+}
+
+public ImageStats getImageStats(final int zoomlevel, int band)
+{
+
+  if (imageData != null)
+  {
+    if (zoomlevel < imageData.length)
+    {
+      if (imageData[zoomlevel].stats != null && band < imageData[zoomlevel].stats.length)
+      {
+        return imageData[zoomlevel].stats[band];
+      }
+    }
+    if (imageData[imageData.length - 1].stats != null && band < imageData[imageData.length - 1].stats.length)
+    {
+      return imageData[imageData.length - 1].stats[band];
+    }
+  }
+  return null;
+}
+
+public ImageStats getStats(int band)
+{
+  return (stats == null) ? null : stats[band];
+}
+
+public ImageStats[] getStats()
+{
+  return ArrayUtils.clone(stats);
+}
+
+public void setStats(final ImageStats[] stats)
+{
+  this.stats = ArrayUtils.clone(stats);
+}
+
+public LongRectangle getOrCreateTileBounds(final int zoomlevel)
+{
+  if (imageData != null && zoomlevel < imageData.length)
+  {
+    return imageData[zoomlevel].tileBounds;
+  }
+
+  LongRectangle tilebounds = getTileBounds(zoomlevel);
+  if (tilebounds == null)
+  {
+    TileBounds tb = TMSUtils.boundsToTile(bounds, zoomlevel, tilesize);
+    tilebounds = new LongRectangle(tb.w, tb.s, tb.e, tb.n);
+  }
+  return tilebounds;
+}
+
+public LongRectangle getOrCreatePixelBounds(final int zoomlevel)
+{
+  if (imageData != null && zoomlevel < imageData.length)
+  {
+    return imageData[zoomlevel].pixelBounds;
+  }
+
+//    TMSUtils.Bounds b = new TMSUtils.Bounds(bounds.getMinX(), bounds.getMinY(),
+//        bounds.getMaxX(), bounds.getMaxY());
+
+  Pixel ll = TMSUtils.latLonToPixels(bounds.w, bounds.s, zoomlevel, tilesize);
+  Pixel ur = TMSUtils.latLonToPixels(bounds.e, bounds.n, zoomlevel, tilesize);
+
+  return new LongRectangle(0, 0, ur.px - ll.px, ur.py - ll.py);
+}
+
+public int getTileType()
+{
+  return tileType;
+}
+
+public void setTileType(final int tileType)
+{
+  this.tileType = tileType;
+}
+
+@JsonIgnore
+public boolean isFloatingPoint()
+{
+  return (tileType == DataBuffer.TYPE_FLOAT || tileType == DataBuffer.TYPE_DOUBLE);
+}
+
+public Classification getClassification()
+{
+  return classification;
+}
+
+public void setClassification(Classification classification)
+{
+  this.classification = classification;
+}
+
+
+  /*
+   * start set section
+   */
+
+/**
+ * Return the minimum and maximum values from the statistics for the image at the requested zoom
+ * level
+ *
+ * @param zoomLevel requested zoom level
+ * @return array with position one containing the statistical minimum value and position two
+ * containing the maximum value
+ */
+public double[] getExtrema(final int zoomLevel)
+{
+  double[] extrema = new double[3];
+  ImageStats st = getImageStats(zoomLevel, 0);
+  if (st != null)
+  {
+    extrema[0] = st.min;
+    extrema[1] = st.max;
+  }
+  else
+  {
+    log.warn("No statistics have been calculated on the requested image " +
+        pyramid + "/" + imageData[zoomLevel].name + ".  Using default range of 0.0 to 1.0...");
+    extrema[0] = 0.0;
+    extrema[1] = 1.0;
+  }
+  return extrema;
+}
+
+public String getResamplingMethod()
+{
+  return resamplingMethod;
+}
+
+//public void setDefaultValues(final Number[] defaultValues)
+//{
+//  this.defaultValues = new double[defaultValues.length];
+//  for (int i = 0; i < defaultValues.length; i++)
+//  {
+//    this.defaultValues[i] = defaultValues[i].doubleValue();
+//  }
+//}
+
+public void setResamplingMethod(String resamplingMethod)
+{
+  this.resamplingMethod = resamplingMethod;
+}
+
+@SuppressWarnings("squid:S1166") // Exception caught and handled
+public void save(final OutputStream stream) throws IOException
+{
+  final ObjectMapper mapper = new ObjectMapper();
+  try
+  {
+    mapper.writerWithDefaultPrettyPrinter().writeValue(stream, this);
+  }
+  catch (NoSuchMethodError ignored)
+  {
+    // if we don't have the pretty printer, just write the json
+    mapper.writeValue(stream, this);
+  }
+}
 
 public void setPixelBounds(final int zoomlevel, final LongRectangle pixelBounds)
 {
@@ -1159,16 +955,32 @@ public void setImageStats(final int zoomlevel, final ImageStats[] stats)
 }
 
 
-public void setStats(final ImageStats[] stats)
+// types
+public enum Classification
 {
-  this.stats = ArrayUtils.clone(stats);
+  Categorical, Continuous
 }
 
-
-public void setTileType(final int tileType)
+/**
+ * TileMetadata is a container of the multiple types of
+ * bounds for tiled data.
+ */
+public static class TileMetadata implements Serializable
 {
-  this.tileType = tileType;
-}
+  private static final long serialVersionUID = 1L;
+
+  // tile bounds (min tx, min ty, max tx, max ty)
+  public LongRectangle tileBounds = null;
+
+  // hdfs path or accumulo table for the image min, max, mean pixel values
+  public String name = null;
+
+  // basic constructor
+  public TileMetadata()
+  {
+  }
+
+} // end TileMetadata
 
 
   /* Note: Commented out because having two versions of the setter, one with @JsonIgnore
@@ -1182,11 +994,33 @@ public void setTileType(final int tileType)
 //      this.tileType = toTileType(tileType);
 //    }
 
-public void setClassification(Classification classification)
+/**
+ * ImageMetadata is a container of the multiple types of
+ * bounds for images.
+ */
+public static class ImageMetadata extends MrsPyramidMetadata.TileMetadata
 {
-  this.classification = classification;
-}
+  private static final long serialVersionUID = 1L;
 
+  // pixel bounds of the image (0, 0, width, height)
+  public LongRectangle pixelBounds = null;
+
+  // statistics of the image
+  public ImageStats[] stats = null;
+
+  // basic constructor
+  public ImageMetadata()
+  {
+  }
+
+  // For backward compatibility with older image pyramids that
+  // still have a reference to the "image" property. It was renamed
+  // to "name".
+  public void setImage(final String image)
+  {
+    name = image;
+  }
+} // end ImageMetadata
 
 
 } // end MrsPyramidMetadata

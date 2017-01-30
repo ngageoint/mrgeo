@@ -31,33 +31,33 @@ import java.io.IOException;
 @SuppressFBWarnings(value = "URF_UNREAD_FIELD", justification = "'context' kept for completeness")
 public class DelimitedVectorOutputFormatProvider implements VectorOutputFormatProvider
 {
-  private HdfsVectorDataProvider provider;
-  private VectorOutputFormatContext context;
+private HdfsVectorDataProvider provider;
+private VectorOutputFormatContext context;
 
-  public DelimitedVectorOutputFormatProvider(HdfsVectorDataProvider provider,
-                                             VectorOutputFormatContext context)
-  {
-    this.provider = provider;
-    this.context = context;
-  }
+public DelimitedVectorOutputFormatProvider(HdfsVectorDataProvider provider,
+    VectorOutputFormatContext context)
+{
+  this.provider = provider;
+  this.context = context;
+}
 
-  @Override
-  public OutputFormat<FeatureIdWritable, Geometry> getOutputFormat(String input)
-  {
-    return new CsvOutputFormat();
-  }
+@Override
+public OutputFormat<FeatureIdWritable, Geometry> getOutputFormat(String input)
+{
+  return new CsvOutputFormat();
+}
 
-  @Override
-  public void setupJob(Job job) throws DataProviderException, IOException
-  {
-    job.setOutputKeyClass(FeatureIdWritable.class);
-    job.setOutputValueClass(Geometry.class);
-    job.setOutputFormatClass(CsvOutputFormat.class);
-    CsvOutputFormat.setup(new Path(provider.getResolvedResourceName(false)), job);
-  }
+@Override
+public void setupJob(Job job) throws DataProviderException, IOException
+{
+  job.setOutputKeyClass(FeatureIdWritable.class);
+  job.setOutputValueClass(Geometry.class);
+  job.setOutputFormatClass(CsvOutputFormat.class);
+  CsvOutputFormat.setup(new Path(provider.getResolvedResourceName(false)), job);
+}
 
-  @Override
-  public void teardown(Job job) throws DataProviderException
-  {
-  }
+@Override
+public void teardown(Job job) throws DataProviderException
+{
+}
 }

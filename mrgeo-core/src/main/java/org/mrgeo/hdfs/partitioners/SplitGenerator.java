@@ -19,7 +19,9 @@ package org.mrgeo.hdfs.partitioners;
 
 import org.mrgeo.hdfs.tile.SplitInfo;
 
-public interface SplitGenerator {
-  SplitInfo[] getSplits();
-  SplitInfo[] getPartitions();
+public interface SplitGenerator
+{
+SplitInfo[] getSplits();
+
+SplitInfo[] getPartitions();
 }

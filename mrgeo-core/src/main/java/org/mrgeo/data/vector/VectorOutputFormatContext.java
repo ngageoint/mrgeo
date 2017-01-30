@@ -18,15 +18,15 @@ package org.mrgeo.data.vector;
 
 public class VectorOutputFormatContext
 {
-  private String output;
+private String output;
 
-  public VectorOutputFormatContext(final String output)
-  {
-    this.output = output;
-  }
+public VectorOutputFormatContext(final String output)
+{
+  this.output = output;
+}
 
-  public String getOutput()
-  {
-    return output;
-  }
+public String getOutput()
+{
+  return output;
+}
 }

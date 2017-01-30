@@ -29,46 +29,46 @@ import java.util.List;
 
 public class VectorInputFormat extends InputFormat<FeatureIdWritable, Geometry>
 {
-  static final Logger log = LoggerFactory.getLogger(VectorInputFormat.class);
+static final Logger log = LoggerFactory.getLogger(VectorInputFormat.class);
 
-  @Override
-  public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException
+@Override
+public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException
+{
+  boolean debugEnabled = log.isDebugEnabled();
+  VectorInputFormatContext ifContext = VectorInputFormatContext.load(context.getConfiguration());
+  List<InputSplit> results = new ArrayList<InputSplit>();
+  if (debugEnabled)
   {
-    boolean debugEnabled = log.isDebugEnabled();
-    VectorInputFormatContext ifContext = VectorInputFormatContext.load(context.getConfiguration());
-    List<InputSplit> results = new ArrayList<InputSplit>();
-    if (debugEnabled)
-    {
-      log.debug("Number of inputs to get splits for: " + ifContext.getInputs().size());
-    }
-    for (String input: ifContext.getInputs())
-    {
-      if (debugEnabled)
-      {
-        log.debug("Getting splits for input: " + input);
-      }
-      List<InputSplit> nativeSplits = getNativeSplits(context, ifContext, input);
-      if (nativeSplits != null && !nativeSplits.isEmpty())
-      {
-        for (InputSplit nativeSplit: nativeSplits)
-        {
-          VectorInputSplit newSplit = new VectorInputSplit(input, nativeSplit);
-          results.add(newSplit);
-        }
-      }
-    }
-    if (debugEnabled)
-    {
-      log.debug("VectorInputFormat.getSplits returns: " + results.size());
-    }
-    return results;
+    log.debug("Number of inputs to get splits for: " + ifContext.getInputs().size());
   }
-
-  @Override
-  public RecordReader<FeatureIdWritable, Geometry> createRecordReader(InputSplit split,
-      TaskAttemptContext context) throws IOException, InterruptedException
+  for (String input : ifContext.getInputs())
   {
-    return new VectorRecordReader();
+    if (debugEnabled)
+    {
+      log.debug("Getting splits for input: " + input);
+    }
+    List<InputSplit> nativeSplits = getNativeSplits(context, ifContext, input);
+    if (nativeSplits != null && !nativeSplits.isEmpty())
+    {
+      for (InputSplit nativeSplit : nativeSplits)
+      {
+        VectorInputSplit newSplit = new VectorInputSplit(input, nativeSplit);
+        results.add(newSplit);
+      }
+    }
+  }
+  if (debugEnabled)
+  {
+    log.debug("VectorInputFormat.getSplits returns: " + results.size());
+  }
+  return results;
+}
+
+@Override
+public RecordReader<FeatureIdWritable, Geometry> createRecordReader(InputSplit split,
+    TaskAttemptContext context) throws IOException, InterruptedException
+{
+  return new VectorRecordReader();
 //    if (!(split instanceof VectorInputSplit))
 //    {
 //      throw new IOException("Expected a VectorInputSplit but got " + split.getClass().getName());
@@ -79,21 +79,21 @@ public class VectorInputFormat extends InputFormat<FeatureIdWritable, Geometry>
 //    RecordReader<FeatureIdWritable, Geometry> recordReader = dp.getRecordReader();
 //    recordReader.initialize(inputSplit, context);
 //    return recordReader;
-  }
-  
-  private List<InputSplit> getNativeSplits(JobContext context,
-      VectorInputFormatContext ifContext,
-      String input) throws IOException, InterruptedException
+}
+
+private List<InputSplit> getNativeSplits(JobContext context,
+    VectorInputFormatContext ifContext,
+    String input) throws IOException, InterruptedException
+{
+  VectorDataProvider dp = DataProviderFactory.getVectorDataProvider(input, AccessMode.READ,
+      context.getConfiguration());
+  VectorInputFormatProvider ifProvider = dp.getVectorInputFormatProvider(ifContext);
+  List<InputSplit> results = ifProvider.getInputFormat(input).getSplits(context);
+  if (log.isDebugEnabled())
   {
-    VectorDataProvider dp = DataProviderFactory.getVectorDataProvider(input, AccessMode.READ,
-        context.getConfiguration());
-    VectorInputFormatProvider ifProvider = dp.getVectorInputFormatProvider(ifContext);
-    List<InputSplit> results = ifProvider.getInputFormat(input).getSplits(context);
-    if (log.isDebugEnabled())
-    {
-      log.debug("vector input format provider class is " + ifProvider.getClass().getName());
-      log.debug("VectorInputFormat.getNativeSplits returns: " + results.size());
-    }
-    return results;
+    log.debug("vector input format provider class is " + ifProvider.getClass().getName());
+    log.debug("VectorInputFormat.getNativeSplits returns: " + results.size());
   }
+  return results;
+}
 }

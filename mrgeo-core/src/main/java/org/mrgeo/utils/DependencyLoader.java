@@ -40,7 +40,10 @@ import java.io.*;
 import java.net.JarURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Pattern;
@@ -55,14 +58,14 @@ private static boolean printedMrGeoHomeWarning = false;
 private static boolean printMissingDependencies = false;
 private static Set<String> missingDependencyList = new HashSet<>();
 
-public static void setPrintMissingDependencies(boolean print)
-{
-  printMissingDependencies = print;
-}
-
 public static boolean getPrintMissingDependencies()
 {
   return printMissingDependencies;
+}
+
+public static void setPrintMissingDependencies(boolean print)
+{
+  printMissingDependencies = print;
 }
 
 public static void resetMissingDependencyList()
@@ -77,7 +80,7 @@ public static Set<String> getMissingDependencyList()
 
 public static void printMissingDependencies()
 {
-  for (String missing: missingDependencyList)
+  for (String missing : missingDependencyList)
   {
     log.warn("Could not find dependency in classpath: " + missing);
   }
@@ -115,7 +118,7 @@ public static Set<String> copyDependencies(final Set<String> localDependencies, 
 //    deps.addAll(conf.getStringCollection(MRJobConfig.CLASSPATH_FILES));
 
   // copy the dependencies to hdfs, if needed
-  for (String local: localDependencies)
+  for (String local : localDependencies)
   {
     File file = new File(local);
 
@@ -125,7 +128,7 @@ public static Set<String> copyDependencies(final Set<String> localDependencies, 
   Set<String> qualified = new HashSet<>();
 
   // fully qualify the dependency
-  for(String dep: deps)
+  for (String dep : deps)
   {
     qualified.add(fs.makeQualified(new Path(dep)).toString());
   }
@@ -150,7 +153,7 @@ public static String[] getAndCopyDependencies(final String[] clazzes, Configurat
   }
 
   String[] qualified = new String[]{};
-  for (String clazz: clazzes)
+  for (String clazz : clazzes)
   {
     qualified = ArrayUtils.addAll(qualified, getAndCopyDependencies(clazz, conf));
   }
@@ -174,14 +177,14 @@ public static String getMasterJar(final Class<?> clazz) throws IOException
   if (properties != null)
   {
     boolean developmentMode = MrGeoProperties.isDevelopmentMode();
-    for (Dependency d: properties)
+    for (Dependency d : properties)
     {
       if (d.master)
       {
         Set<Dependency> master = new HashSet<Dependency>();
         master.add(d);
 
-        for (File m: getJarsFromProperties(master, !developmentMode))
+        for (File m : getJarsFromProperties(master, !developmentMode))
         {
           return m.getCanonicalPath();
         }
@@ -190,6 +193,82 @@ public static String getMasterJar(final Class<?> clazz) throws IOException
   }
 
   return null;
+}
+
+public static Set<String> getUnqualifiedDependencies(final Class<?> clazz) throws IOException
+{
+  Set<File> files = findDependencies(clazz);
+
+  Set<String> deps = new HashSet<String>();
+  for (File f : files)
+  {
+    deps.add(f.getName());
+  }
+
+  return deps;
+}
+
+public static void addDependencies(final Job job, final Class<?> clazz) throws IOException
+{
+  if (HadoopUtils.isLocal(job.getConfiguration()))
+  {
+    return;
+  }
+  FileSystem fs = HadoopFileUtils.getFileSystem(job.getConfiguration());
+  Path hdfsBase =
+      new Path(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_DISTRIBUTED_CACHE, "/mrgeo/jars"));
+
+  Set<Dependency> properties = loadDependenciesByReflection(clazz);
+  if (properties != null)
+  {
+    addDependencies(job.getConfiguration(), clazz);
+  }
+  else
+  {
+    // properties not found... all we can do is load from the classpath
+    addClassPath(job, fs, hdfsBase);
+    job.setJarByClass(clazz);
+  }
+}
+
+public static void addDependencies(final Configuration conf, final Class<?> clazz) throws IOException
+{
+  if (HadoopUtils.isLocal(conf))
+  {
+    return;
+  }
+  FileSystem fs = HadoopFileUtils.getFileSystem(conf);
+  Path hdfsBase =
+      new Path(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_DISTRIBUTED_CACHE, "/mrgeo/jars"));
+
+  Set<String> existing = getClasspath(conf);
+  boolean developmentMode = MrGeoProperties.isDevelopmentMode();
+  Set<Dependency> properties = loadDependenciesByReflection(clazz);
+  if (properties != null)
+  {
+    for (File p : getJarsFromProperties(properties, !developmentMode))
+    {
+      addFileToClasspath(conf, existing, fs, hdfsBase, p);
+    }
+    for (Dependency d : properties)
+    {
+      if (d.master)
+      {
+        Set<Dependency> master = new HashSet<Dependency>();
+        master.add(d);
+
+        for (File m : getJarsFromProperties(master, !developmentMode))
+        {
+          log.debug("Setting map.reduce.jar to " + m.getCanonicalPath());
+          conf.set("mapreduce.job.jar", m.getCanonicalPath());
+        }
+      }
+    }
+  }
+  else
+  {
+    log.warn("Unable to load dependencies by reflection for " + clazz.getName());
+  }
 }
 
 private static Set<File> findDependencies(Class<?> clazz) throws IOException
@@ -213,19 +292,6 @@ private static Set<File> findDependencies(Class<?> clazz) throws IOException
     }
   }
   return files;
-}
-
-public static Set<String> getUnqualifiedDependencies(final Class<?> clazz) throws IOException
-{
-  Set<File> files = findDependencies(clazz);
-
-  Set<String> deps = new HashSet<String>();
-  for (File f : files)
-  {
-    deps.add(f.getName());
-  }
-
-  return deps;
 }
 
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File comes from classpath")
@@ -258,29 +324,6 @@ private static Set<File> findFilesInClasspath(String base) throws IOException
   return files;
 }
 
-public static void addDependencies(final Job job, final Class<?> clazz) throws IOException
-{
-  if (HadoopUtils.isLocal(job.getConfiguration()))
-  {
-    return;
-  }
-  FileSystem fs = HadoopFileUtils.getFileSystem(job.getConfiguration());
-  Path hdfsBase =
-      new Path(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_DISTRIBUTED_CACHE, "/mrgeo/jars"));
-
-  Set<Dependency> properties = loadDependenciesByReflection(clazz);
-  if (properties != null)
-  {
-    addDependencies(job.getConfiguration(), clazz);
-  }
-  else
-  {
-    // properties not found... all we can do is load from the classpath
-    addClassPath(job, fs, hdfsBase);
-    job.setJarByClass(clazz);
-  }
-}
-
 private static Set<String> getClasspath(Configuration conf)
 {
   String cp = conf.get(CLASSPATH_FILES, "");
@@ -294,46 +337,6 @@ private static Set<String> getClasspath(Configuration conf)
     }
   }
   return results;
-}
-
-public static void addDependencies(final Configuration conf, final Class<?> clazz) throws IOException
-{
-  if (HadoopUtils.isLocal(conf))
-  {
-    return;
-  }
-  FileSystem fs = HadoopFileUtils.getFileSystem(conf);
-  Path hdfsBase =
-      new Path(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_DISTRIBUTED_CACHE, "/mrgeo/jars"));
-
-  Set<String> existing = getClasspath(conf);
-  boolean developmentMode = MrGeoProperties.isDevelopmentMode();
-  Set<Dependency> properties = loadDependenciesByReflection(clazz);
-  if (properties != null)
-  {
-    for (File p : getJarsFromProperties(properties, !developmentMode))
-    {
-      addFileToClasspath(conf, existing, fs, hdfsBase, p);
-    }
-    for (Dependency d: properties)
-    {
-      if (d.master)
-      {
-        Set<Dependency> master = new HashSet<Dependency>();
-        master.add(d);
-
-        for (File m: getJarsFromProperties(master, !developmentMode))
-        {
-          log.debug("Setting map.reduce.jar to " + m.getCanonicalPath());
-          conf.set("mapreduce.job.jar", m.getCanonicalPath());
-        }
-      }
-    }
-  }
-  else
-  {
-    log.warn("Unable to load dependencies by reflection for " + clazz.getName());
-  }
 }
 
 private static Set<File> getJarsFromProperties(Set<Dependency> dependencies,
@@ -423,13 +426,15 @@ private static Set<File> findJarsInClasspath(final Set<String> jars, boolean rec
   }
   else
   {
-    log.error(MrGeoConstants.MRGEO_COMMON_HOME + " is not defined, and may result in inability to find dependent JAR files");
+    log.error(
+        MrGeoConstants.MRGEO_COMMON_HOME + " is not defined, and may result in inability to find dependent JAR files");
   }
 
   // now perform any variable replacement in the classpath
   Map<String, String> envMap = System.getenv();
 
-  for (Map.Entry<String, String>entry : envMap.entrySet()) {
+  for (Map.Entry<String, String> entry : envMap.entrySet())
+  {
     String key = entry.getKey();
     String value = entry.getValue();
 
@@ -497,7 +502,9 @@ private static void findJars(File file, Set<File> paths, Set<String> filesLeft,
           }
           else if (recurseDirectories)
           {
-            log.debug("In findJars recursing on dir: " + f.getPath() + " with paths: " + paths.size() + " and filesLeft: " + filesLeft.size());
+            log.debug(
+                "In findJars recursing on dir: " + f.getPath() + " with paths: " + paths.size() + " and filesLeft: " +
+                    filesLeft.size());
             findJars(f, paths, filesLeft, recurseDirectories);
 
             if (filesLeft.isEmpty())
@@ -587,7 +594,8 @@ private static void addClassPath(Job job, FileSystem fs, Path hdfsBase) throws I
 //  }
 
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File comes from classpath")
-private static void addFilesToClassPath(Configuration conf, Set<String> existing, FileSystem fs, Path hdfsBase, String base) throws IOException
+private static void addFilesToClassPath(Configuration conf, Set<String> existing, FileSystem fs, Path hdfsBase,
+    String base) throws IOException
 {
   File f = new File(base);
   if (f.exists())
@@ -613,7 +621,8 @@ private static void addFilesToClassPath(Configuration conf, Set<String> existing
   }
 }
 
-private static void addFileToClasspath(Configuration conf, Set<String> existing, FileSystem fs, Path hdfsBase, File file) throws IOException
+private static void addFileToClasspath(Configuration conf, Set<String> existing, FileSystem fs, Path hdfsBase,
+    File file) throws IOException
 {
   Path hdfsPath = new Path(hdfsBase, file.getName());
   if (!existing.contains(hdfsPath.toString()))
@@ -642,6 +651,7 @@ private static void addFileToClasspath(Configuration conf, Set<String> existing,
   }
 }
 
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 private static Set<Dependency> loadDependenciesByReflection(Class<?> clazz) throws IOException
 {
   String jar = ClassUtil.findContainingJar(clazz);
@@ -754,7 +764,7 @@ private static Set<Dependency> readDependencies(InputStream is) throws IOExcepti
   if (log.isDebugEnabled())
   {
     log.debug("Dependencies: ");
-    for (Dependency d: deps)
+    for (Dependency d : deps)
     {
       log.debug("  " + makeJarFromDependency(d));
     }
@@ -817,7 +827,6 @@ private static Set<Dependency> loadDependenciesFromJar(final String jarname) thr
   }
   catch (IOException e)
   {
-    e.printStackTrace();
     throw new IOException("Error Loading dependency properties file", e);
   }
 

@@ -17,72 +17,72 @@
 package org.mrgeo.services.utils;
 
 import com.google.common.io.ByteStreams;
-import com.meterware.httpunit.WebResponse;
-import com.sun.jersey.api.client.ClientResponse;
 import org.junit.Assert;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.GDALUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.image.Raster;
+import javax.ws.rs.core.Response;
 import java.io.*;
 
 import static org.junit.Assert.assertTrue;
 
-//import javax.imageio.ImageIO;
 
+@SuppressWarnings("all") // Test code, not included in production
 public class ImageTestUtils
 {
-  private static final Logger log = LoggerFactory.getLogger(ImageTestUtils.class);
+private static final Logger log = LoggerFactory.getLogger(ImageTestUtils.class);
 
-  public static void outputImageMatchesBaseline(final WebResponse response,
+public static void outputImageMatchesBaseline(final Response response,
     final String baselineImage) throws IOException
-  {
-    final File baseline = new File(baselineImage);
+{
+  final File baseline = new File(baselineImage);
 
-    assertTrue(baseline.exists());
+  assertTrue(baseline.exists());
 
-    log.debug("Response content length: " + response.getContentLength());
+  log.debug("Response content length: " + response.getLength());
 
-    Raster raster = GDALUtils.toRaster(GDALUtils.open(response.getInputStream()));
-    Assert.assertNotNull("Test Image: not loaded, could not read stream", raster);
+  MrGeoRaster raster = MrGeoRaster.fromDataset(GDALUtils.open(response.readEntity(InputStream.class)));
+  Assert.assertNotNull("Test Image: not loaded, could not read stream", raster);
 
-    TestUtils.compareRasters(baseline, raster);
-  }
-  
-  public static void outputImageMatchesBaseline(final ClientResponse response,
-    final String baselineImage) throws IOException
-  {
-    final File baseline = new File(baselineImage);
+  TestUtils.compareRasters(baseline, raster);
+}
 
-    assertTrue(baseline.exists());
+//  public static void outputImageMatchesBaseline(final ClientResponse response,
+//    final String baselineImage) throws IOException
+//  {
+//    final File baseline = new File(baselineImage);
+//
+//    assertTrue(baseline.exists());
+//
+//    log.debug("Response content length: " + response.getLength());
+//    response.
+//    MrGeoRaster raster = MrGeoRaster.fromDataset(GDALUtils.open(response.getEntityInputStream()));
+//    Assert.assertNotNull("Test Image: not loaded, could not read stream", raster);
+//
+//    TestUtils.compareRasters(baseline, raster);
+//  }
 
-    log.debug("Response content length: " + response.getLength());
-    Raster raster = GDALUtils.toRaster(GDALUtils.open(response.getEntityInputStream()));
-    Assert.assertNotNull("Test Image: not loaded, could not read stream", raster);
+//  public static void writeBaselineImage(final ClientResponse response, final String path)
+//    throws IOException
+//  {
+//    writeBaselineImage(response.getEntityInputStream(), path);
+//  }
 
-    TestUtils.compareRasters(baseline, raster);
-  }
-
-  public static void writeBaselineImage(final ClientResponse response, final String path)
+public static void writeBaselineImage(final InputStream stream, final String path)
     throws IOException
-  {
-    writeBaselineImage(response.getEntityInputStream(), path);
-  }
+{
+  final OutputStream outputStream = new FileOutputStream(new File(path));
+  ByteStreams.copy(stream, outputStream);
+  outputStream.close();
 
-  public static void writeBaselineImage(final InputStream stream, final String path)
+}
+
+public static void writeBaselineImage(final Response response, final String path)
     throws IOException
-  {
-    final OutputStream outputStream = new FileOutputStream(new File(path));
-    ByteStreams.copy(stream, outputStream);
-    outputStream.close();
-
-  }
-
-  public static void writeBaselineImage(final WebResponse response, final String path)
-    throws IOException
-  {
-    writeBaselineImage(response.getInputStream(), path);
-  }
+{
+  writeBaselineImage(response.readEntity(InputStream.class), path);
+}
 }

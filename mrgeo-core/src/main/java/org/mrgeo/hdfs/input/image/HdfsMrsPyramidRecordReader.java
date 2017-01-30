@@ -19,7 +19,6 @@ package org.mrgeo.hdfs.input.image;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hdfs.BlockReaderFactory;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
@@ -33,119 +32,120 @@ import java.io.IOException;
 
 public class HdfsMrsPyramidRecordReader extends RecordReader<TileIdWritable, RasterWritable>
 {
-  private SequenceFile.Reader reader;
-  private TileIdWritable key;
-  private RasterWritable value;
-  private long startTileId;
-  private long endTileId;
-  private long recordCount = 0;
-  private boolean more = true;
+private SequenceFile.Reader reader;
+private TileIdWritable key;
+private RasterWritable value;
+private long startTileId;
+private long endTileId;
+private long recordCount = 0;
+private boolean more = true;
 
-  // Factory for creating instances of SequenceFile.Reader
-  private ReaderFactory readerFactory;
+// Factory for creating instances of SequenceFile.Reader
+private ReaderFactory readerFactory;
 
-  // Default constructor injects Default Reader Factory
-  public HdfsMrsPyramidRecordReader() {
-    this.readerFactory = new ReaderFactory();
-  }
+// Default constructor injects Default Reader Factory
+public HdfsMrsPyramidRecordReader()
+{
+  this.readerFactory = new ReaderFactory();
+}
 
-  // Constructor for injecting a ReaderFactory implementation
-  public HdfsMrsPyramidRecordReader(ReaderFactory readerFactory) {
-    this.readerFactory = readerFactory;
-  }
+// Constructor for injecting a ReaderFactory implementation
+public HdfsMrsPyramidRecordReader(ReaderFactory readerFactory)
+{
+  this.readerFactory = readerFactory;
+}
 
-  @Override
-  public TileIdWritable getCurrentKey()
+@Override
+public TileIdWritable getCurrentKey()
+{
+  return key;
+}
+
+@Override
+public RasterWritable getCurrentValue()
+{
+  return value;
+}
+
+@Override
+// TODO eaw this should probably throw an UnsupportedOperationException since it does not meet the contract on getProgress because recordCount is never updated
+public float getProgress() throws IOException, InterruptedException
+{
+  if (startTileId == endTileId)
   {
-    return key;
+    return 0.0f;
   }
-
-  @Override
-  public RasterWritable getCurrentValue()
+  else
   {
-    return value;
+    return Math.min(1.0f, (recordCount - startTileId) / (float) (endTileId - startTileId));
   }
+}
 
-  @Override
-  // TODO eaw this should probably throw an UnsupportedOperationException since it does not meet the contract on getProgress because recordCount is never updated
-  public float getProgress() throws IOException, InterruptedException
+@Override
+public void close() throws IOException
+{
+  reader.close();
+}
+
+@Override
+public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
+    InterruptedException
+{
+  // TODO eaw - Better to use isAssignableFrom so it doesn't break if TiledInputSplit is ever subclassed
+  if (split instanceof TiledInputSplit)
   {
-    if (startTileId == endTileId)
+    TiledInputSplit tiledInputSplit = (TiledInputSplit) split;
+    startTileId = tiledInputSplit.getStartTileId();
+    endTileId = tiledInputSplit.getEndTileId();
+    // TODO, can use tiledInputSplit instead of casting split again
+    FileSplit fileSplit = (FileSplit) ((TiledInputSplit) split).getWrappedSplit();
+    Configuration conf = context.getConfiguration();
+    Path path = fileSplit.getPath();
+    FileSystem fs = path.getFileSystem(conf);
+
+    // Use a factory to create the reader reader to make this class easier to test and support decoupling the reader
+    // lifecycle from this object's lifecycle.
+    this.reader = readerFactory.createReader(fs, path, conf);
+
+    try
     {
-      return 0.0f;
+      this.key = (TileIdWritable) reader.getKeyClass().newInstance();
+      this.value = (RasterWritable) reader.getValueClass().newInstance();
     }
-    else
+    catch (InstantiationException | IllegalAccessException e)
     {
-      return Math.min(1.0f, (recordCount - startTileId) / (float) (endTileId - startTileId));
+      throw new IOException(e);
     }
   }
-
-  @Override
-  public void close() throws IOException
+  else
   {
-    reader.close();
+    // TODO eaw - IllegalArgumentException would be more appropriate here
+    throw new IOException("Expected a TiledInputSplit but received " + split.getClass().getName());
   }
+}
 
-  @Override
-  public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
-      InterruptedException
+@Override
+public boolean nextKeyValue() throws IOException, InterruptedException
+{
+  // TODO eaw evaluate whether it is needed to store more as an instance member.  If not, use a local variable instead
+  if (more)
   {
-    // TODO eaw - Better to use isAssignableFrom so it doesn't break if TiledInputSplit is ever subclassed
-    if (split instanceof TiledInputSplit)
+    more = reader.next(key, value);
+    if (!more)
     {
-      TiledInputSplit tiledInputSplit = (TiledInputSplit)split;
-      startTileId = tiledInputSplit.getStartTileId();
-      endTileId = tiledInputSplit.getEndTileId();
-      // TODO, can use tiledInputSplit instead of casting split again
-      FileSplit fileSplit = (FileSplit)((TiledInputSplit)split).getWrappedSplit();
-      Configuration conf = context.getConfiguration();
-      Path path = fileSplit.getPath();
-      FileSystem fs = path.getFileSystem(conf);
-
-      // Use a factory to create the reader reader to make this class easier to test and support decoupling the reader
-      // lifecycle from this object's lifecycle.
-      this.reader = readerFactory.createReader(fs, path, conf);
-
-      try
-      {
-        this.key = (TileIdWritable)reader.getKeyClass().newInstance();
-        this.value = (RasterWritable)reader.getValueClass().newInstance();
-      }
-      catch (InstantiationException e)
-      {
-        e.printStackTrace();
-      }
-      catch (IllegalAccessException e)
-      {
-        e.printStackTrace();
-      }
-    }
-    else
-    {
-      // TODO eaw - IllegalArgumentException would be more appropriate here
-      throw new IOException("Expected a TiledInputSplit but received " + split.getClass().getName());
+      key = null;
+      value = null;
     }
   }
+  return more;
+}
 
-  @Override
-  public boolean nextKeyValue() throws IOException, InterruptedException
+// Default ReaderFactory
+static class ReaderFactory
+{
+  public SequenceFile.Reader createReader(FileSystem fs, Path path, Configuration config) throws IOException
   {
-    // TODO eaw evaluate whether it is needed to store more as an instance member.  If not, use a local variable instead
-    if (more)
-    {
-      more = reader.next(key, value);
-      if (!more) {
-        key = null;
-        value = null;
-      }
-    }
-    return more;
+    return new SequenceFile.Reader(fs, path, config);
   }
-
-  // Default ReaderFactory
-  static class ReaderFactory {
-    public SequenceFile.Reader createReader(FileSystem fs, Path path, Configuration config) throws IOException {
-      return new SequenceFile.Reader(fs, path, config);
-    }
-  }
+}
 }

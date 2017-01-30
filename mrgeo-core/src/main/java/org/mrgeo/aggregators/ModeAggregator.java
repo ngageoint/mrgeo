@@ -15,11 +15,12 @@
  */
 
 /**
- * 
+ *
  */
 package org.mrgeo.aggregators;
 
 import org.apache.commons.lang3.NotImplementedException;
+import org.mrgeo.utils.FloatUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,103 +32,184 @@ import java.util.Map;
 public class ModeAggregator implements Aggregator
 {
 
-  @Override
-  public double aggregate(double[] values, double nodata)
+@Override
+public double aggregate(double[] values, double nodata)
+{
+  HashMap<Double, Integer> freqs = new HashMap<Double, Integer>();
+
+  for (double val : values)
   {
-    HashMap<Double,Integer> freqs = new HashMap<Double,Integer>();
-
-    for (double val : values) {
-      if (Double.compare(val, nodata) != 0)
-      {
-        Integer freq = freqs.get(val);
-        freqs.put(val, (freq == null ? 1 : freq+1));
-      }
+    if (FloatUtils.isNotNodata(val, nodata))
+    {
+      Integer freq = freqs.get(val);
+      freqs.put(val, (freq == null ? 1 : freq + 1));
     }
-
-    double mode = nodata;
-    int maxFreq = 0;
-
-    for (Map.Entry<Double,Integer> entry : freqs.entrySet()) {
-      int freq = entry.getValue();
-      if (freq > maxFreq) {
-        maxFreq = freq;
-        mode = entry.getKey();
-      }
-    }
-
-    return mode;
   }
 
-  @Override
-  public float aggregate(float[] values, float nodata)
-  {
-    HashMap<Float,Integer> freqs = new HashMap<Float,Integer>();
+  double mode = nodata;
+  int maxFreq = 0;
 
-    for (float val : values) {
-      if (Float.compare(val, nodata) != 0)
-      {
-        Integer freq = freqs.get(val);
-        freqs.put(val, (freq == null ? 1 : freq+1));
-      }
+  for (Map.Entry<Double, Integer> entry : freqs.entrySet())
+  {
+    int freq = entry.getValue();
+    if (freq > maxFreq)
+    {
+      maxFreq = freq;
+      mode = entry.getKey();
     }
+  }
 
-    float mode = nodata;
-    int maxFreq = 0;
+  return mode;
+}
 
-    for (Map.Entry<Float,Integer> entry : freqs.entrySet()) {
-      int freq = entry.getValue();
-      if (freq > maxFreq) {
-        maxFreq = freq;
-        mode = entry.getKey();
-      }
+@Override
+public float aggregate(float[] values, float nodata)
+{
+  HashMap<Float, Integer> freqs = new HashMap<Float, Integer>();
+
+  for (float val : values)
+  {
+    if (FloatUtils.isNotNodata(val, nodata))
+    {
+      Integer freq = freqs.get(val);
+      freqs.put(val, (freq == null ? 1 : freq + 1));
     }
-
-    return mode;
   }
 
-  @Override
-  public int aggregate(int[] values, int nodata)
-  {
-    HashMap<Integer,Integer> freqs = new HashMap<Integer,Integer>();
+  float mode = nodata;
+  int maxFreq = 0;
 
-    for (int val : values) {
-      if (val != nodata)
-      {
-        Integer freq = freqs.get(val);
-        freqs.put(val, (freq == null ? 1 : freq+1));
-      }
+  for (Map.Entry<Float, Integer> entry : freqs.entrySet())
+  {
+    int freq = entry.getValue();
+    if (freq > maxFreq)
+    {
+      maxFreq = freq;
+      mode = entry.getKey();
     }
+  }
 
-    int mode = nodata;
-    int maxFreq = 0;
+  return mode;
+}
 
-    for (Map.Entry<Integer,Integer> entry : freqs.entrySet()) {
-      int freq = entry.getValue();
-      if (freq > maxFreq) {
-        maxFreq = freq;
-        mode = entry.getKey();
-      }
+@Override
+public int aggregate(int[] values, int nodata)
+{
+  HashMap<Integer, Integer> freqs = new HashMap<Integer, Integer>();
+
+  for (int val : values)
+  {
+    if (val != nodata)
+    {
+      Integer freq = freqs.get(val);
+      freqs.put(val, (freq == null ? 1 : freq + 1));
     }
-
-    return mode;
   }
 
-  @Override
-  public double aggregate(double[][]values, double weightx, double weighty, double nodata)
+  int mode = nodata;
+  int maxFreq = 0;
+
+  for (Map.Entry<Integer, Integer> entry : freqs.entrySet())
   {
-    throw new NotImplementedException("Not yet implemented");
-  }
-  
-  @Override
-  public float aggregate(float[][]values, double weightx, double weighty, float nodata)
-  {
-    throw new NotImplementedException("Not yet implemented");
+    int freq = entry.getValue();
+    if (freq > maxFreq)
+    {
+      maxFreq = freq;
+      mode = entry.getKey();
+    }
   }
 
-  @Override
-  public int aggregate(final int[][] values, final double weightx, final double weighty, final int nodata)
+  return mode;
+}
+
+@Override
+public short aggregate(short[] values, short nodata)
+{
+  HashMap<Short, Integer> freqs = new HashMap<>();
+
+  for (short val : values)
   {
-    throw new NotImplementedException("Not yet implemented");
+    if (val != nodata)
+    {
+      Integer freq = freqs.get(val);
+      freqs.put(val, (freq == null ? 1 : freq + 1));
+    }
   }
+
+  short mode = nodata;
+  int maxFreq = 0;
+
+  for (Map.Entry<Short, Integer> entry : freqs.entrySet())
+  {
+    int freq = entry.getValue();
+    if (freq > maxFreq)
+    {
+      maxFreq = freq;
+      mode = entry.getKey();
+    }
+  }
+
+  return mode;
+}
+
+@Override
+public byte aggregate(byte[] values, byte nodata)
+{
+  HashMap<Byte, Integer> freqs = new HashMap<>();
+
+  for (byte val : values)
+  {
+    if (val != nodata)
+    {
+      Integer freq = freqs.get(val);
+      freqs.put(val, (freq == null ? 1 : freq + 1));
+    }
+  }
+
+  byte mode = nodata;
+  int maxFreq = 0;
+
+  for (Map.Entry<Byte, Integer> entry : freqs.entrySet())
+  {
+    int freq = entry.getValue();
+    if (freq > maxFreq)
+    {
+      maxFreq = freq;
+      mode = entry.getKey();
+    }
+  }
+
+  return mode;
+}
+
+@Override
+public double aggregate(double[][] values, double weightx, double weighty, double nodata)
+{
+  throw new NotImplementedException("Not yet implemented");
+}
+
+@Override
+public float aggregate(float[][] values, double weightx, double weighty, float nodata)
+{
+  throw new NotImplementedException("Not yet implemented");
+}
+
+@Override
+public byte aggregate(byte[][] values, double weightx, double weighty, byte nodata)
+{
+  throw new NotImplementedException("Not yet implemented");
+}
+
+@Override
+public short aggregate(short[][] values, double weightx, double weighty, short nodata)
+{
+  throw new NotImplementedException("Not yet implemented");
+}
+
+@Override
+public int aggregate(final int[][] values, final double weightx, final double weighty, final int nodata)
+{
+  throw new NotImplementedException("Not yet implemented");
+}
 
 }

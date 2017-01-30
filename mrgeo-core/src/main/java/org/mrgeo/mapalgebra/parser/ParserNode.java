@@ -21,49 +21,53 @@ import java.util.List;
 
 public class ParserNode
 {
-  Object nativeNode;
-  private String name;
-  private List<ParserNode> children = new ArrayList<ParserNode>();
+Object nativeNode;
+private String name;
+private List<ParserNode> children = new ArrayList<ParserNode>();
 
-  public Object getNativeNode()
-  {
-    return nativeNode;
-  }
+public Object getNativeNode()
+{
+  return nativeNode;
+}
 
-  public void setNativeNode(Object nativeNode)
-  {
-    this.nativeNode = nativeNode;
-  }
+public void setNativeNode(Object nativeNode)
+{
+  this.nativeNode = nativeNode;
+}
 
-  public String getName()
-  {
-    return name;
-  }
+public String getName()
+{
+  return name;
+}
 
-  public void setName(String name)
-  {
-    this.name = name;
-  }
+public void setName(String name)
+{
+  this.name = name;
+}
 
-  public int getNumChildren()
-  {
-    return children.size();
-  }
+public int getNumChildren()
+{
+  return children.size();
+}
 
-  public ParserNode getChild(int index)
-  {
-    return children.get(index);
-  }
+public ParserNode getChild(int index)
+{
+  return children.get(index);
+}
 
-  public List<ParserNode> getChildren() { return children; }
-  public void addChild(ParserNode child)
-  {
-    children.add(child);
-  }
+public List<ParserNode> getChildren()
+{
+  return children;
+}
 
-  @Override
-  public String toString()
-  {
-    return "[" + name + "]";
-  }
+public void addChild(ParserNode child)
+{
+  children.add(child);
+}
+
+@Override
+public String toString()
+{
+  return "[" + name + "]";
+}
 }

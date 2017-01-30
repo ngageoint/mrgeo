@@ -16,7 +16,6 @@
 
 package org.mrgeo.cmd.server;
 
-import com.sun.jersey.spi.container.servlet.ServletContainer;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.cli.*;
 import org.apache.hadoop.conf.Configuration;
@@ -25,6 +24,7 @@ import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.glassfish.jersey.servlet.ServletContainer;
 import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
@@ -45,9 +45,8 @@ import java.net.UnknownHostException;
 public class WebServer extends Command
 {
 
-private Options options;
-
 private static Logger log = LoggerFactory.getLogger(WebServer.class);
+private Options options;
 
 public WebServer()
 {
@@ -132,13 +131,14 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
   }
   catch (Exception e)
   {
-    e.printStackTrace();
+    log.error("Exception thrown", e);
   }
 
   return -1;
 }
 
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File() checking for existence")
+@SuppressWarnings("squid:S00112") // Passing on exception thrown from 3rd party API
 private Server startWebServer(int httpPort) throws Exception
 {
   System.out.println("Starting embedded web server on port " + httpPort);
@@ -164,7 +164,8 @@ private Server startWebServer(int httpPort) throws Exception
       }
       else
       {
-        System.out.println("Not serving static web content because web.server.static.root is not a directory: " + webRoot);
+        System.out
+            .println("Not serving static web content because web.server.static.root is not a directory: " + webRoot);
       }
     }
     else
@@ -183,7 +184,7 @@ private Server startWebServer(int httpPort) throws Exception
   server.setHandler(coll);
   ServletHolder servletHolder = new ServletHolder(new ServletContainer());
   servletHolder.setInitParameter("javax.ws.rs.Application", "org.mrgeo.application.Application");
-  servletHolder.setInitParameter("com.sun.jersey.api.json.POJOMappingFeature", "true");
+  //servletHolder.setInitParameter("com.sun.jersey.api.json.POJOMappingFeature", "true");
   servletHolder.setInitOrder(1);
   context.addServlet(servletHolder, "/*");
 //    context.addServlet("org.mrgeo.services.wms.WmsGenerator", "/WmsGenerator/*");
@@ -192,6 +193,7 @@ private Server startWebServer(int httpPort) throws Exception
   return server;
 }
 
+@SuppressWarnings("squid:S00112") // Passing on exception thrown from 3rd party API
 private void runWebServer(int httpPort) throws Exception
 {
   Server server = startWebServer(httpPort);
@@ -207,6 +209,7 @@ private String getHostName()
   }
   catch (UnknownHostException e)
   {
+    log.error("Exception thrown", e);
     System.err.println("Unknown host");
   }
   return "localhost";

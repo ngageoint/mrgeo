@@ -29,12 +29,12 @@ import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.mapalgebra.MapOp
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserFunctionNode, ParserNode, ParserVariableNode}
 //import org.mrgeo.utils.MrGeoImplicits._
-import org.mrgeo.utils.tms.{TileBounds, TMSUtils}
-import org.mrgeo.utils.{GDALUtils, SparkUtils}
+import org.mrgeo.utils.SparkUtils
+import org.mrgeo.utils.tms.{TMSUtils, TileBounds}
 
 object RasterMapOp {
 
-  val EPSILON: Double = 1e-8
+  val EPSILON:Double = 1e-8
 
   def isNodata(value:Double, nodata:Double):Boolean = {
     if (nodata.isNaN) {
@@ -44,6 +44,7 @@ object RasterMapOp {
       nodata == value
     }
   }
+
   def isNotNodata(value:Double, nodata:Double):Boolean = {
     if (nodata.isNaN) {
       !value.isNaN
@@ -62,25 +63,26 @@ object RasterMapOp {
     }
   }
 
-  def decodeToRaster(node:ParserNode, variables: String => Option[ParserNode]): Option[RasterMapOp] = {
+  def decodeToRaster(node:ParserNode, variables:String => Option[ParserNode]):Option[RasterMapOp] = {
     node match {
-    case func: ParserFunctionNode => func.getMapOp match {
-    case raster: RasterMapOp => Some(raster)
-    case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
-    }
-    case variable: ParserVariableNode =>
-      MapOp.decodeVariable(variable, variables).getOrElse(throw new ParserException("Variable \"" + node + " has not been assigned")) match {
-      case func: ParserFunctionNode => func.getMapOp match {
-      case raster: RasterMapOp => Some(raster)
-      case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
+      case func:ParserFunctionNode => func.getMapOp match {
+        case raster:RasterMapOp => Some(raster)
+        case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
       }
+      case variable:ParserVariableNode =>
+        MapOp.decodeVariable(variable, variables)
+            .getOrElse(throw new ParserException("Variable \"" + node + " has not been assigned")) match {
+          case func:ParserFunctionNode => func.getMapOp match {
+            case raster:RasterMapOp => Some(raster)
+            case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
+          }
+          case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
+        }
       case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
-      }
-    case _ => throw new ParserException("Term \"" + node + "\" is not a raster input")
     }
   }
 
-  def createEmptyRasterRDD(context: SparkContext, tb: TileBounds, zoom: Int) = {
+  def createEmptyRasterRDD(context:SparkContext, tb:TileBounds, zoom:Int) = {
     val tileBuilder = Array.newBuilder[(TileIdWritable, RasterWritable)]
     for (ty <- tb.s to tb.n) {
       for (tx <- tb.w to tb.e) {
@@ -103,7 +105,7 @@ abstract class RasterMapOp extends MapOp {
 
   def rdd():Option[RasterRDD]
 
-  def rdd(zoom: Int):Option[RasterRDD] = {
+  def rdd(zoom:Int):Option[RasterRDD] = {
     if (meta != null && zoom == meta.getMaxZoomLevel) {
       rdd()
     }
@@ -112,42 +114,55 @@ abstract class RasterMapOp extends MapOp {
     }
   }
 
-  def metadata():Option[MrsPyramidMetadata] =  Option(meta)
-  def metadata(meta:MrsPyramidMetadata) = { this.meta = meta}
+  def metadata():Option[MrsPyramidMetadata] = Option(meta)
 
-  def save(output: String, providerProperties:ProviderProperties, context:SparkContext) = {
+  def metadata(meta:MrsPyramidMetadata) = {
+    this.meta = meta
+  }
+
+  def save(output:String, providerProperties:ProviderProperties, context:SparkContext) = {
     rdd() match {
-    case Some(rdd) =>
-      val provider: MrsImageDataProvider =
-        DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerProperties)
-      metadata() match {
-      case Some(metadata) =>
-        val meta = metadata
+      case Some(rdd) =>
+        val provider:MrsImageDataProvider =
+          DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerProperties)
+        metadata() match {
+          case Some(metadata) =>
+            val meta = metadata
 
-        SparkUtils.saveMrsPyramid(rdd, provider, meta, meta.getMaxZoomLevel,
-          context.hadoopConfiguration, providerproperties =  providerProperties)
+            SparkUtils.saveMrsPyramid(rdd, provider, meta, meta.getMaxZoomLevel,
+              context.hadoopConfiguration, providerproperties = providerProperties)
+          case _ =>
+            throw new IOException("Unable to save - no metadata was assigned in " + this.getClass.getName)
+        }
       case _ =>
-        throw new IOException("Unable to save - no metadata was assigned in " + this.getClass.getName)
-      }
-    case _ =>
-      throw new IOException("Unable to save - no RDD was assigned in " + this.getClass.getName)
+        throw new IOException("Unable to save - no RDD was assigned in " + this.getClass.getName)
     }
   }
 
   def toRaster(exact:Boolean = false) = {
-    val rasterrdd = rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + getClass.getName))
+    val rasterrdd = rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + getClass.getName))
     SparkUtils.mergeTiles(rasterrdd, meta.getMaxZoomLevel, meta.getTilesize, meta.getDefaultValues,
-      if (exact) meta.getBounds else null)
+      if (exact) {
+        meta.getBounds
+      }
+      else {
+        null
+      })
   }
 
   def toDataset(exact:Boolean = false) = {
-    val rasterrdd = rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + getClass.getName))
+    val rasterrdd = rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + getClass.getName))
 
     val zoom = meta.getMaxZoomLevel
     val tilesize = meta.getTilesize
 
     val raster = SparkUtils.mergeTiles(rasterrdd, zoom, tilesize, meta.getDefaultValues,
-      if (exact) meta.getBounds else null)
+      if (exact) {
+        meta.getBounds
+      }
+      else {
+        null
+      })
 
     val bounds = if (exact) {
       meta.getBounds
@@ -156,7 +171,6 @@ abstract class RasterMapOp extends MapOp {
       TMSUtils.tileBounds(meta.getBounds, zoom, tilesize)
     }
 
-    GDALUtils.toDataset(raster, meta.getDefaultValue(0), bounds)
-
+    raster.toDataset(bounds, meta.getDefaultValuesDouble)
   }
 }

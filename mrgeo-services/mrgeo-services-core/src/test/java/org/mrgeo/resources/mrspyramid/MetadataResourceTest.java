@@ -16,85 +16,115 @@
 
 package org.mrgeo.resources.mrspyramid;
 
-import com.sun.jersey.api.NotFoundException;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.core.DefaultResourceConfig;
-import com.sun.jersey.spi.inject.SingletonTypeInjectableProvider;
-import com.sun.jersey.test.framework.JerseyTest;
-import com.sun.jersey.test.framework.LowLevelAppDescriptor;
-import com.sun.jersey.test.framework.spi.container.TestContainerFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import junit.framework.Assert;
-import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
-import org.codehaus.jackson.map.ObjectMapper;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.test.JerseyTest;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.mrgeo.FilteringInMemoryTestContainerFactory;
 import org.mrgeo.core.MrGeoConstants;
-import org.mrgeo.junit.UnitTest;
 import org.mrgeo.image.MrsPyramidMetadata;
+import org.mrgeo.junit.UnitTest;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
 
-import javax.ws.rs.core.Context;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Application;
+import javax.ws.rs.core.Response;
 import java.awt.image.DataBuffer;
 
 
+@SuppressWarnings("all") // Test code, not included in production
 public class MetadataResourceTest extends JerseyTest
 {
-    private MrsPyramidService service;
+private MrsPyramidService service;
 
-    @Override
-    protected LowLevelAppDescriptor configure()
+@Override
+public void setUp() throws Exception
+{
+  super.setUp();
+  Mockito.reset(service);
+}
+
+@Test
+@Category(UnitTest.class)
+public void testGetMetadataBadPath() throws Exception
+{
+  Mockito.when(service.getMetadata(Mockito.anyString())).thenAnswer(new Answer()
+  {
+    public Object answer(InvocationOnMock invocation)
     {
-        DefaultResourceConfig resourceConfig = new DefaultResourceConfig();
-        service = Mockito.mock(MrsPyramidService.class);
-
-        resourceConfig.getSingletons().add( new SingletonTypeInjectableProvider<Context, MrsPyramidService>(MrsPyramidService.class, service) {});
-
-        resourceConfig.getClasses().add(MetadataResource.class);
-        resourceConfig.getClasses().add(JacksonJsonProvider.class);
-
-        return new LowLevelAppDescriptor.Builder( resourceConfig ).build();
+      throw new NotFoundException("Path does not exist - " + invocation.getArguments()[0]);
     }
 
+  });
+
+  String resultImg = "small-elevation-bad-path";
+
+  Response response = target("metadata/" + resultImg)
+      .request().get();
+
+  Assert.assertEquals(404, response.getStatus());
+  Assert.assertEquals("Path does not exist - " + resultImg, response.readEntity(String.class));
+}
+
+@Test
+@Category(UnitTest.class)
+public void testGetMetadata() throws Exception
+{
+  Mockito.when(service.getMetadata(Mockito.anyString())).thenReturn(getMetaData());
+
+  String response = target("metadata/all-ones")
+      .request().get(String.class);
+
+  ObjectMapper mapper = new ObjectMapper();
+  MrsPyramidMetadata md = mapper.readValue(response, MrsPyramidMetadata.class);
+  Assert.assertEquals(1, md.getBands());
+  Assert.assertEquals(10, md.getMaxZoomLevel());
+  Bounds bounds = md.getBounds();
+
+  Assert.assertEquals("Bad bounds - min x", 141.7066, bounds.w, 0.0001);
+  Assert.assertEquals("Bad bounds - min y", -18.3733, bounds.s, 0.0001);
+  Assert.assertEquals("Bad bounds - max x", 142.56, bounds.e, 0.0001);
+  Assert.assertEquals("Bad bounds - max y", -17.52, bounds.n, 0.0001);
+
+  Assert.assertEquals(MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, md.getTilesize());
+  Assert.assertEquals(DataBuffer.TYPE_FLOAT, md.getTileType());
+
+  LongRectangle tb = md.getTileBounds(10);
+  Assert.assertEquals("Bad tile bounds - min x", 915, tb.getMinX());
+  Assert.assertEquals("Bad tile bounds - min y", 203, tb.getMinY());
+  Assert.assertEquals("Bad tile bounds - max x", 917, tb.getMaxX());
+  Assert.assertEquals("Bad tile bounds - max y", 206, tb.getMaxY());
+}
+
+@Override
+protected Application configure()
+{
+  service = Mockito.mock(MrsPyramidService.class);
+
+  ResourceConfig config = new ResourceConfig();
+  config.register(MetadataResource.class);
+  config.register(new AbstractBinder()
+  {
     @Override
-    protected TestContainerFactory getTestContainerFactory()
+    protected void configure()
     {
-        return new FilteringInMemoryTestContainerFactory();
+      bind(service).to(MrsPyramidService.class);
     }
+  });
+  return config;
+}
 
-    @Override
-    public void setUp() throws Exception
-    {
-        super.setUp();
-        Mockito.reset(service);
-    }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testGetMetadataBadPath() throws Exception {
-    Mockito.when(service.getMetadata(Mockito.anyString())).thenAnswer(new Answer() {
-              public Object answer(InvocationOnMock invocation) {
-                  StringBuilder builder = new StringBuilder();
-                  builder.append("Path does not exist - ").append(invocation.getArguments()[0]);
-                  throw new NotFoundException(builder.toString());
-              }
-          });
-    WebResource webResource = resource();
-    String resultImg = "small-elevation-bad-path";
-    ClientResponse res = webResource.path("metadata/" + resultImg).get(ClientResponse.class);
-    Assert.assertEquals(404, res.getStatus());
-    Assert.assertEquals("Path does not exist - " + resultImg, res.getEntity(String.class));
-  }
-
-  private String getMetaData() {
-      return "{\"bounds\":" +
-      "{\"minY\":-18.373333333333342,\"minX\":141.7066666666667,\"maxY\":-17.52000000000001,\"maxX\":142.56000000000003},\"maxZoomLevel\":10,\"imageMetadata\":" +
+private String getMetaData()
+{
+  return "{\"bounds\":" +
+      "{\"s\":-18.373333333333342,\"w\":141.7066666666667,\"n\":-17.52000000000001,\"e\":142.56000000000003},\"maxZoomLevel\":10,\"imageMetadata\":" +
       "[{\"pixelBounds\":null,\"tileBounds\":null,\"image\":null}," +
       "{\"pixelBounds\":{\"minY\":0,\"minX\":0,\"maxY\":3,\"maxX\":2}," +
       "\"tileBounds\":{\"minY\":0,\"minX\":1,\"maxY\":0,\"maxX\":1}," +
@@ -109,32 +139,5 @@ public class MetadataResourceTest extends JerseyTest
       "\"image\":\"9\"},{\"pixelBounds\":{\"minY\":0,\"minX\":0,\"maxY\":1243,\"maxX\":1243},\"tileBounds\":{\"minY\":203,\"minX\":915,\"maxY\":206,\"maxX\":917}," +
       "\"image\":\"10\"}]," +
       "\"bands\":1,\"defaultValues\":[-9999.0],\"tilesize\":512,\"tileType\":4}";
-  }
-
-  @Test
-  @Category(UnitTest.class)
-  public void testGetMetadata() throws Exception {
-    Mockito.when(service.getMetadata(Mockito.anyString())).thenReturn(getMetaData());
-    WebResource webResource = resource();
-    String content = webResource.path("metadata/all-ones" ).get(String.class);
-    ObjectMapper mapper = new ObjectMapper();
-    MrsPyramidMetadata md = mapper.readValue(content, MrsPyramidMetadata.class);
-    Assert.assertEquals(1, md.getBands());
-    Assert.assertEquals(10, md.getMaxZoomLevel());
-    Bounds bounds = md.getBounds();
-
-    Assert.assertEquals("Bad bounds - min x", 141.7066, bounds.w, 0.0001);
-    Assert.assertEquals("Bad bounds - min y", -18.3733, bounds.s, 0.0001);
-    Assert.assertEquals("Bad bounds - max x", 142.56, bounds.e, 0.0001);
-    Assert.assertEquals("Bad bounds - max y", -17.52, bounds.n, 0.0001);
-
-    Assert.assertEquals(MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, md.getTilesize());
-    Assert.assertEquals(DataBuffer.TYPE_FLOAT, md.getTileType());
-
-    LongRectangle tb = md.getTileBounds(10);
-    Assert.assertEquals("Bad tile bounds - min x", 915, tb.getMinX());
-    Assert.assertEquals("Bad tile bounds - min y", 203, tb.getMinY());
-    Assert.assertEquals("Bad tile bounds - max x", 917, tb.getMaxX());
-    Assert.assertEquals("Bad tile bounds - max y", 206, tb.getMaxY());
-  }
+}
 }

@@ -30,14 +30,15 @@ import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.KVIterator;
 import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsPyramid;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.mapalgebra.parser.ParserException;
-import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.mrgeo.test.TestUtils;
@@ -47,73 +48,53 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.image.DataBuffer;
-import java.awt.image.Raster;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * @author jason.surratt
- *
- */
+@SuppressWarnings("all") // Test code, not included in production
 public class MapAlgebraIntegrationTest extends LocalRunnerTest
 {
 // only set this to true to generate new baseline images after correcting tests; image comparison
 // tests won't be run when is set to true
 public final static boolean GEN_BASELINE_DATA_ONLY = false;
-
-private static final String smallElevationName = "small-elevation";
-private static String smallElevation = Defs.INPUT + smallElevationName;
-protected static Path smallElevationPath;
-
-private static final String greeceName = "greece";
-private static String greece = Defs.INPUT + greeceName;
-
-
-public static TestUtils.ValueTranslator nanTranslatorTo255 = new TestUtils.NaNTranslator(255.0f);;
 protected static final String pointsName = "input1"; // .tsv
-protected static String pointsPath;
-
+private static final String smallElevationName = "small-elevation";
+private static final String greeceName = "greece";
 private static final String allones = "all-ones";
-private static Path allonesPath;
 private static final String alltwos = "all-twos";
-private static Path alltwosPath;
 private static final String allhundreds = "all-hundreds";
-private static Path allhundredsPath;
+;
 private static final String allhundredsleft = "all-hundreds-shifted-left";
-private static Path allhundredsleftPath;
 private static final String allhundredshalf = "all-hundreds-shifted-half";
-private static Path allhundredshalfPath;
 private static final String allhundredsup = "all-hundreds-shifted-up";
-private static Path allhundredsupPath;
 private static final String allonesnopyramids = "all-ones-no-pyramids";
 private static final String allonesholes = "all-ones-with-holes";
 private static final String allhundredsholes = "all-hundreds-with-holes";
 // the kph-for-small-elevation overlaps small-elevation and all-ones and has some missing
 // tiles so we can perform some nodata checks against it.
 private static final String kphforsmallelevation = "kph-for-small-elevation";
-
-private static String smallelevationtif = Defs.INPUT + "small-elevation.tif";
-
 private static final String regularpoints = "regular-points";
-private static Path regularpointsPath;
-
-private static MapOpTestUtils testUtils;
-// Vector private static MapOpTestVectorUtils vectorTestUtils;
-
 private static final Logger log = LoggerFactory.getLogger(MapAlgebraIntegrationTest.class);
+public static TestUtils.ValueTranslator nanTranslatorTo255 = new TestUtils.NaNTranslator(255.0f);
+protected static Path smallElevationPath;
+protected static String pointsPath;
+private static String smallElevation = Defs.INPUT + smallElevationName;
+private static String greece = Defs.INPUT + greeceName;
+private static Path allonesPath;
+private static Path alltwosPath;
+private static Path allhundredsPath;
+private static Path allhundredsleftPath;
+private static Path allhundredshalfPath;
+private static Path allhundredsupPath;
+private static String smallelevationtif = Defs.INPUT + "small-elevation.tif";
+private static Path regularpointsPath;
+// Vector private static MapOpTestVectorUtils vectorTestUtils;
+private static MapOpTestUtils testUtils;
 
 //  private static String factor1 = "fs_Bazaars_v2";
 //  private static String factor2 = "fs_Bus_Stations_v2";
 //  private static String eventsPdfs = "eventsPdfs";
-
 private ProviderProperties providerProperties = null;
-
-@Before
-public void setup()
-{
-  MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, testUtils.getInputHdfs().toUri().toString());
-  MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_VECTOR, testUtils.getInputHdfs().toUri().toString());
-}
 
 @BeforeClass
 public static void init() throws IOException
@@ -172,6 +153,15 @@ public static void init() throws IOException
   file = new File(greece);
   greece = new Path("file://" + file.getAbsolutePath()).toString();
 
+}
+
+@Before
+public void setup()
+{
+  MrGeoProperties.getInstance()
+      .setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, testUtils.getInputHdfs().toUri().toString());
+  MrGeoProperties.getInstance()
+      .setProperty(MrGeoConstants.MRGEO_HDFS_VECTOR, testUtils.getInputHdfs().toUri().toString());
 }
 
 @Test
@@ -295,13 +285,13 @@ public void aspectDefaultFlatValue() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                  String.format("aspect([%s], \"rad\")", smallElevation), -9999);
+        String.format("aspect([%s], \"rad\")", smallElevation), -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                  String.format("aspect([%s], \"rad\")", smallElevation));
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("aspect([%s], \"rad\")", smallElevation));
   }
 }
 
@@ -312,13 +302,13 @@ public void aspectNaNFlatValue() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                  String.format("aspect([%s], \"rad\", \"NaN\")", smallElevation), -9999);
+        String.format("aspect([%s], \"rad\", \"NaN\")", smallElevation), -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                  String.format("aspect([%s], \"rad\", \"NaN\")", smallElevation));
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("aspect([%s], \"rad\", \"NaN\")", smallElevation));
   }
 }
 
@@ -428,7 +418,7 @@ public void buildpyramid() throws Exception
 
   // make sure the levels don't exist
   MrsPyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
-  MrsPyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+  MrsPyramidMetadata.ImageMetadata md[] = metadata.getImageMetadata();
 
   for (int i = 1; i < md.length; i++)
   {
@@ -464,7 +454,7 @@ public void buildpyramid() throws Exception
 
     // levels should exist
     metadata = testUtils.getImageMetadata(allonesnopyramids);
-    md =  metadata.getImageMetadata();
+    md = metadata.getImageMetadata();
 
     for (int i = 1; i < md.length; i++)
     {
@@ -489,7 +479,7 @@ public void buildpyramidAfterSave() throws Exception
 
   // make sure the levels don't exist
   MrsPyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
-  MrsPyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+  MrsPyramidMetadata.ImageMetadata md[] = metadata.getImageMetadata();
 
   for (int i = 1; i < md.length; i++)
   {
@@ -525,7 +515,7 @@ public void buildpyramidAfterSave() throws Exception
 
     // levels should exist for save-test
     metadata = testUtils.getImageMetadata("save-test");
-    md =  metadata.getImageMetadata();
+    md = metadata.getImageMetadata();
 
     for (int i = 1; i < md.length; i++)
     {
@@ -539,7 +529,7 @@ public void buildpyramidAfterSave() throws Exception
 
     // but not for allones
     metadata = testUtils.getImageMetadata(allonesnopyramids);
-    md =  metadata.getImageMetadata();
+    md = metadata.getImageMetadata();
     for (int i = 1; i < md.length; i++)
     {
       MrsPyramidMetadata.ImageMetadata d = md[i];
@@ -573,7 +563,7 @@ public void buildpyramidAlternate() throws Exception
 
   // make sure the levels don't exist
   MrsPyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
-  MrsPyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+  MrsPyramidMetadata.ImageMetadata md[] = metadata.getImageMetadata();
 
   for (int i = 1; i < md.length; i++)
   {
@@ -609,7 +599,7 @@ public void buildpyramidAlternate() throws Exception
 
     // levels should exist
     metadata = testUtils.getImageMetadata(allonesnopyramids);
-    md =  metadata.getImageMetadata();
+    md = metadata.getImageMetadata();
 
     for (int i = 1; i < md.length; i++)
     {
@@ -634,7 +624,7 @@ public void buildpyramidDoesNotExist() throws Exception
 
   // make sure the levels don't exist
   MrsPyramidMetadata metadata = testUtils.getImageMetadata(allonesnopyramids);
-  MrsPyramidMetadata.ImageMetadata md[] =  metadata.getImageMetadata();
+  MrsPyramidMetadata.ImageMetadata md[] = metadata.getImageMetadata();
 
   for (int i = 1; i < md.length; i++)
   {
@@ -657,8 +647,8 @@ public void buildpyramidDoesNotExist() throws Exception
   }
 
   testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-        String.format("buildpyramid([%s] + 1)", path));
+      TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+      String.format("buildpyramid([%s] + 1)", path));
 }
 
 @Test
@@ -724,8 +714,6 @@ public void complicated() throws Exception
             smallElevationPath, smallElevationPath));
   }
 }
-
-
 
 
 @Test
@@ -863,15 +851,15 @@ public void cropFromDerivedInput() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                  String.format(
-                                          "crop([%s] + 0, 142.05, -17.75, 142.2, -17.65)", smallElevationPath), -9999);
+        String.format(
+            "crop([%s] + 0, 142.05, -17.75, 142.2, -17.65)", smallElevationPath), -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                  String.format(
-                                          "crop([%s] + 0,  142.05, -17.75, 142.2, -17.65)", smallElevationPath));
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format(
+            "crop([%s] + 0,  142.05, -17.75, 142.2, -17.65)", smallElevationPath));
   }
 }
 
@@ -882,15 +870,15 @@ public void cropToRaster() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                  String.format(
-                                          "crop([%s], [%s]);", smallElevationPath, kphforsmallelevation), -9999);
+        String.format(
+            "crop([%s], [%s]);", smallElevationPath, kphforsmallelevation), -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                  String.format(
-                                          "crop([%s], [%s])", smallElevationPath, kphforsmallelevation));
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format(
+            "crop([%s], [%s])", smallElevationPath, kphforsmallelevation));
   }
 }
 
@@ -901,15 +889,15 @@ public void cropToRasterFromDerivedInput() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                  String.format(
-                                          "crop([%s] + 0, [%s]);", smallElevationPath, kphforsmallelevation), -9999);
+        String.format(
+            "crop([%s] + 0, [%s]);", smallElevationPath, kphforsmallelevation), -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                  String.format(
-                                          "crop([%s] + 0, [%s])", smallElevationPath, kphforsmallelevation));
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format(
+            "crop([%s] + 0, [%s])", smallElevationPath, kphforsmallelevation));
   }
 }
 
@@ -941,17 +929,17 @@ public void cropExactFromDerivedInput() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                  String.format(
-                                          "cropExact([%s] + 0,  142.05, -17.75, 142.2, -17.65)",
-                                          smallElevationPath), -9999);
+        String.format(
+            "cropExact([%s] + 0,  142.05, -17.75, 142.2, -17.65)",
+            smallElevationPath), -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                  String.format(
-                                          "cropExact([%s] + 0,  142.05, -17.75, 142.2, -17.65)",
-                                          smallElevationPath));
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format(
+            "cropExact([%s] + 0,  142.05, -17.75, 142.2, -17.65)",
+            smallElevationPath));
   }
 }
 
@@ -962,15 +950,15 @@ public void cropExactToRaster() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                  String.format(
-                                          "cropExact([%s], [%s]);", smallElevationPath, kphforsmallelevation), -9999);
+        String.format(
+            "cropExact([%s], [%s]);", smallElevationPath, kphforsmallelevation), -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                  String.format(
-                                          "cropExact([%s], [%s])", smallElevationPath, kphforsmallelevation));
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format(
+            "cropExact([%s], [%s])", smallElevationPath, kphforsmallelevation));
   }
 }
 
@@ -981,15 +969,15 @@ public void cropExactToRasterFromDerivedInput() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                  String.format(
-                                          "cropExact([%s] + 0, [%s]);", smallElevationPath, kphforsmallelevation), -9999);
+        String.format(
+            "cropExact([%s] + 0, [%s]);", smallElevationPath, kphforsmallelevation), -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                  String.format(
-                                          "cropExact([%s] + 0, [%s])", smallElevationPath, kphforsmallelevation));
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format(
+            "cropExact([%s] + 0, [%s])", smallElevationPath, kphforsmallelevation));
   }
 }
 
@@ -1034,13 +1022,15 @@ public void export() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-        String.format("export([%s], \"%s\", \"true\")", allones, testUtils.getInputLocalFor(testname.getMethodName())), -9999);
+        String.format("export([%s], \"%s\", \"true\")", allones, testUtils.getInputLocalFor(testname.getMethodName())),
+        -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-        String.format("export([%s], \"%s\", \"true\")", allones, testUtils.getOutputLocalFor(testname.getMethodName())));
+        String
+            .format("export([%s], \"%s\", \"true\")", allones, testUtils.getOutputLocalFor(testname.getMethodName())));
 
     // now check the file that was saved...
     testUtils.compareLocalRasterOutput(testname.getMethodName(), TestUtils.nanTranslatorToMinus9999);
@@ -1190,18 +1180,19 @@ public void fillToRasterBounds() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                  String.format("fillBounds([%s], -1, [%s])",
-                                                kphforsmallelevation, allhundreds), -9999);
+        String.format("fillBounds([%s], -1, [%s])",
+            kphforsmallelevation, allhundreds), -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                  String.format("fillBounds([%s], -1, [%s])",
-                                                kphforsmallelevation, allhundreds));
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("fillBounds([%s], -1, [%s])",
+            kphforsmallelevation, allhundreds));
     // Make sure that the output nodata value is 255 (the value
     // returned from RasterUtils.getDefaultNoDataForType with DataBuffer.TYPE_BYTE
-    MrsPyramid pyramid = MrsPyramid.open((new Path(testUtils.getOutputHdfs(), testname.getMethodName())).toString(), providerProperties);
+    MrsPyramid pyramid =
+        MrsPyramid.open((new Path(testUtils.getOutputHdfs(), testname.getMethodName())).toString(), providerProperties);
     Assert.assertNotNull("Unable to load output image", pyramid);
     MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Unable to load output image metadata", metadata);
@@ -1213,7 +1204,8 @@ public void fillToRasterBounds() throws Exception
     Assert.assertEquals(203, tb.getMinY());
     Assert.assertEquals(206, tb.getMaxY());
     // Make sure the output type is the same as the input type
-    MrsPyramid inputPyramid = MrsPyramid.open((new Path(testUtils.getOutputHdfs(), testname.getMethodName())).toString(), providerProperties);
+    MrsPyramid inputPyramid =
+        MrsPyramid.open((new Path(testUtils.getOutputHdfs(), testname.getMethodName())).toString(), providerProperties);
     Assert.assertNotNull("Unable to load input image", inputPyramid);
     MrsPyramidMetadata inputMetadata = inputPyramid.getMetadata();
     Assert.assertNotNull("Unable to load input image metadata", inputMetadata);
@@ -1221,7 +1213,7 @@ public void fillToRasterBounds() throws Exception
     for (int b = 0; b < inputMetadata.getBands(); b++)
     {
       Assert.assertEquals("Unexpected nodata value in band " + b, inputMetadata.getDefaultValue(b),
-                          metadata.getDefaultValue(b), 1e-8);
+          metadata.getDefaultValue(b), 1e-8);
     }
     Assert.assertEquals(inputMetadata.getTileType(), metadata.getTileType());
   }
@@ -1324,6 +1316,7 @@ public void isNodata() throws Exception
         String.format("isNodata([%s])", allones));
   }
 }
+
 @Test
 @Category(IntegrationTest.class)
 public void isNull() throws Exception
@@ -1351,16 +1344,17 @@ public void isNodataWithMissingTiles() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                  String.format("isNodata([%s])", kphforsmallelevation), -9999);
+        String.format("isNodata([%s])", kphforsmallelevation), -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                  String.format("isNodata([%s])", kphforsmallelevation));
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("isNodata([%s])", kphforsmallelevation));
     // Make sure that the output nodata value is 255 (the value
     // returned from RasterUtils.getDefaultNoDataForType with DataBuffer.TYPE_BYTE
-    MrsPyramid pyramid = MrsPyramid.open((new Path(testUtils.getOutputHdfs(), testname.getMethodName())).toString(), providerProperties);
+    MrsPyramid pyramid =
+        MrsPyramid.open((new Path(testUtils.getOutputHdfs(), testname.getMethodName())).toString(), providerProperties);
     Assert.assertNotNull("Unable to load output image", pyramid);
     MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Unable to load output image metadata", metadata);
@@ -1384,17 +1378,18 @@ public void isNodataWithBoundsRaster() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                  String.format("isNodataBounds([%s], [%s])",
-                                                kphforsmallelevation, allhundreds), -9999);
+        String.format("isNodataBounds([%s], [%s])",
+            kphforsmallelevation, allhundreds), -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                  String.format("isNodataBounds([%s], [%s])", kphforsmallelevation, allhundreds));
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("isNodataBounds([%s], [%s])", kphforsmallelevation, allhundreds));
     // Make sure that the output nodata value is 255 (the value
     // returned from RasterUtils.getDefaultNoDataForType with DataBuffer.TYPE_BYTE
-    MrsPyramid pyramid = MrsPyramid.open((new Path(testUtils.getOutputHdfs(), testname.getMethodName())).toString(), providerProperties);
+    MrsPyramid pyramid =
+        MrsPyramid.open((new Path(testUtils.getOutputHdfs(), testname.getMethodName())).toString(), providerProperties);
     Assert.assertNotNull("Unable to load output image", pyramid);
     MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Unable to load output image metadata", metadata);
@@ -1418,18 +1413,19 @@ public void isNodataWithBounds() throws Exception
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                  String.format("isNodataBounds([%s], 141.719, -18.247, 142.617, -17.264)",
-                                                kphforsmallelevation), -9999);
+        String.format("isNodataBounds([%s], 141.719, -18.247, 142.617, -17.264)",
+            kphforsmallelevation), -9999);
   }
   else
   {
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                  TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                  String.format("isNodataBounds([%s], 141.719, -18.247, 142.617, -17.264)",
-                                                kphforsmallelevation));
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("isNodataBounds([%s], 141.719, -18.247, 142.617, -17.264)",
+            kphforsmallelevation));
     // Make sure that the output nodata value is 255 (the value
     // returned from RasterUtils.getDefaultNoDataForType with DataBuffer.TYPE_BYTE
-    MrsPyramid pyramid = MrsPyramid.open((new Path(testUtils.getOutputHdfs(), testname.getMethodName())).toString(), providerProperties);
+    MrsPyramid pyramid =
+        MrsPyramid.open((new Path(testUtils.getOutputHdfs(), testname.getMethodName())).toString(), providerProperties);
     Assert.assertNotNull("Unable to load output image", pyramid);
     MrsPyramidMetadata metadata = pyramid.getMetadata();
     Assert.assertNotNull("Unable to load output image metadata", metadata);
@@ -1567,6 +1563,7 @@ public void mosaicOverlapTwosTop() throws Exception
         String.format("mosaic([%s], [%s])", alltwosPath, allhundredsPath));
   }
 }
+
 @Test
 @Category(IntegrationTest.class)
 public void mosaicButtedLeft() throws Exception
@@ -1583,6 +1580,7 @@ public void mosaicButtedLeft() throws Exception
         String.format("mosaic([%s], [%s])", alltwosPath, allhundredsleftPath));
   }
 }
+
 @Test
 @Category(IntegrationTest.class)
 public void mosaicButtedTop() throws Exception
@@ -1599,6 +1597,7 @@ public void mosaicButtedTop() throws Exception
         String.format("mosaic([%s], [%s])", alltwosPath, allhundredsupPath));
   }
 }
+
 @Test
 @Category(IntegrationTest.class)
 public void mosaicPartialOverlapTwosTop() throws Exception
@@ -1615,6 +1614,7 @@ public void mosaicPartialOverlapTwosTop() throws Exception
         String.format("mosaic([%s], [%s])", alltwosPath, allhundredshalfPath));
   }
 }
+
 @Test
 @Category(IntegrationTest.class)
 public void mosaicPartialOverlapHundredsTop() throws Exception
@@ -1885,6 +1885,7 @@ public void slopeGradient() throws Exception
 
   }
 }
+
 @Test
 @Category(IntegrationTest.class)
 public void slopeRad() throws Exception
@@ -1903,6 +1904,7 @@ public void slopeRad() throws Exception
 
   }
 }
+
 @Test
 @Category(IntegrationTest.class)
 public void slopeDeg() throws Exception
@@ -2224,313 +2226,313 @@ public void testDataTypeFloat() throws Exception
   }
 }
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void tpi() throws Exception
+@Test
+@Category(IntegrationTest.class)
+public void tpi() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
   {
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                    String.format("tpi([%s])", smallElevation), -9999);
-    }
-    else
-    {
-      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                    String.format("tpi([%s])", smallElevation));
-    }
-  }
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void focalStatMin() throws Exception
-  {
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                    String.format("focalStat(\"min\", [%s], \"3p\", \"true\")", smallElevation), -9999);
-    }
-    else
-    {
-      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                    String.format("focalStat(\"min\", [%s], \"3p\", \"true\")", smallElevation));
-    }
-  }
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void focalStatMax() throws Exception
-  {
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                    String.format("focalStat(\"max\", [%s], \"3p\", \"true\")", smallElevation), -9999);
-    }
-    else
-    {
-      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                    String.format("focalStat(\"max\", [%s], \"3p\", \"true\")", smallElevation));
-    }
-  }
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void focalStatMean() throws Exception
-  {
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                    String.format("focalStat(\"mean\", [%s], \"3p\", \"true\")", smallElevation), -9999);
-    }
-    else
-    {
-      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                    String.format("focalStat(\"mean\", [%s], \"3p\", \"true\")", smallElevation));
-    }
-  }
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void focalStatMedian() throws Exception
-  {
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                    String.format("focalStat(\"median\", [%s], \"3p\", \"true\")", smallElevation), -9999);
-    }
-    else
-    {
-      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                    String.format("focalStat(\"median\", [%s], \"3p\", \"true\")", smallElevation));
-    }
-  }
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void focalStatRange() throws Exception
-  {
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                    String.format("focalStat(\"range\", [%s], \"3p\", \"true\")", smallElevation), -9999);
-    }
-    else
-    {
-      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                    String.format("focalStat(\"range\", [%s], \"3p\", \"true\")", smallElevation));
-    }
-  }
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void focalStatStdDev() throws Exception
-  {
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                    String.format("focalStat(\"stddev\", [%s], \"3p\", \"true\")", smallElevation), -9999);
-    }
-    else
-    {
-      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                    String.format("focalStat(\"stddev\", [%s], \"3p\", \"true\")", smallElevation));
-    }
-  }
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void focalStatVariance() throws Exception
-  {
-    if (GEN_BASELINE_DATA_ONLY)
-    {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                  String.format("focalStat(\"variance\", [%s], \"3p\", \"true\")", smallElevation), -9999);
-    }
-    else
-    {
-      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                    String.format("focalStat(\"variance\", [%s], \"3p\", \"true\")", smallElevation));
-    }
+        String.format("tpi([%s])", smallElevation), -9999);
   }
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void focalStatSumWithNoData() throws Exception
+  else
   {
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                    String.format("focalStat(\"sum\", [%s], \"3p\", \"true\")", allonesholes), -9999);
-    }
-    else
-    {
-      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                    String.format("focalStat(\"sum\", [%s], \"3p\", \"true\")", allonesholes));
-    }
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("tpi([%s])", smallElevation));
   }
+}
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void focalStatSumWithoutIgnoreNoData() throws Exception
+@Test
+@Category(IntegrationTest.class)
+public void focalStatMin() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
   {
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                    String.format("focalStat(\"sum\", [%s], \"3p\", \"false\")", allonesholes), -9999);
-    }
-    else
-    {
-      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                    String.format("focalStat(\"sum\", [%s], \"3p\", \"false\")", allonesholes));
-    }
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("focalStat(\"min\", [%s], \"3p\", \"true\")", smallElevation), -9999);
   }
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void focalStatMinMetersEvenNeighborhood() throws Exception
+  else
   {
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                    String.format("focalStat(\"min\", [%s], \"300m\", \"true\")", smallElevation), -9999);
-    }
-    else
-    {
-      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                    String.format("focalStat(\"min\", [%s], \"300m\", \"true\")", smallElevation));
-    }
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("focalStat(\"min\", [%s], \"3p\", \"true\")", smallElevation));
   }
+}
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void focalStatSumEvenNeighborhood() throws Exception
+@Test
+@Category(IntegrationTest.class)
+public void focalStatMax() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
   {
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                    String.format("focalStat(\"sum\", [%s], \"4p\", \"true\")", allonesholes), -9999);
-    }
-    else
-    {
-      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                    String.format("focalStat(\"sum\", [%s], \"4p\", \"true\")", allonesholes));
-    }
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("focalStat(\"max\", [%s], \"3p\", \"true\")", smallElevation), -9999);
   }
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void focalStatCountEvenNeighborhood() throws Exception
+  else
   {
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                    String.format("focalStat(\"count\", [%s], \"4p\", \"true\")", allonesholes), -9999);
-    }
-    else
-    {
-      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                    String.format("focalStat(\"count\", [%s], \"4p\", \"true\")", allonesholes));
-    }
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("focalStat(\"max\", [%s], \"3p\", \"true\")", smallElevation));
   }
+}
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void focalStatCountEvenNeighborhoodWithoutIgnore() throws Exception
+@Test
+@Category(IntegrationTest.class)
+public void focalStatMean() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
   {
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
-                                    String.format("focalStat(\"count\", [%s], \"4p\", \"false\")", allonesholes), -9999);
-    }
-    else
-    {
-      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                    TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
-                                    String.format("focalStat(\"count\", [%s], \"4p\", \"false\")", allonesholes));
-    }
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("focalStat(\"mean\", [%s], \"3p\", \"true\")", smallElevation), -9999);
   }
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void bitwiseXor() throws Exception
+  else
   {
-    String stmt = String.format("convert([%s], \"byte\", \"truncate\") ^ (0x80 | 0x60)", allhundredsholes);
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(this.conf, testname.getMethodName(), stmt, 255);
-    }
-    else
-    {
-      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                    nanTranslatorTo255, nanTranslatorTo255,
-                                    stmt);
-    }
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("focalStat(\"mean\", [%s], \"3p\", \"true\")", smallElevation));
   }
+}
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void bitwiseAnd() throws Exception
+@Test
+@Category(IntegrationTest.class)
+public void focalStatMedian() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
   {
-    String stmt = String.format("convert([%s], \"byte\", \"truncate\") & (0x80 | 0x60)", allhundredsholes);
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(this.conf, testname.getMethodName(), stmt, 255);
-    }
-    else
-    {
-      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                    nanTranslatorTo255, nanTranslatorTo255,
-                                    stmt);
-    }
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("focalStat(\"median\", [%s], \"3p\", \"true\")", smallElevation), -9999);
   }
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void bitwiseOr() throws Exception
+  else
   {
-    String stmt = String.format("convert([%s], \"byte\", \"truncate\") | 0x80", allhundredsholes);
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(this.conf, testname.getMethodName(), stmt, 255);
-    }
-    else
-    {
-      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                    nanTranslatorTo255, nanTranslatorTo255,
-                                    stmt);
-    }
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("focalStat(\"median\", [%s], \"3p\", \"true\")", smallElevation));
   }
+}
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void bitwiseComplement() throws Exception
+@Test
+@Category(IntegrationTest.class)
+public void focalStatRange() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
   {
-    String stmt = String.format("~convert([%s], \"byte\", \"truncate\")", allhundredsholes);
-    if (GEN_BASELINE_DATA_ONLY)
-    {
-      testUtils.generateBaselineTif(this.conf, testname.getMethodName(), stmt, 255);
-    }
-    else
-    {
-      testUtils.runRasterExpression(this.conf, testname.getMethodName(),
-                                    nanTranslatorTo255, nanTranslatorTo255,
-                                    stmt);
-    }
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("focalStat(\"range\", [%s], \"3p\", \"true\")", smallElevation), -9999);
   }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("focalStat(\"range\", [%s], \"3p\", \"true\")", smallElevation));
+  }
+}
 
-  private void checkDataTypes(int type) throws IOException
+@Test
+@Category(IntegrationTest.class)
+public void focalStatStdDev() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("focalStat(\"stddev\", [%s], \"3p\", \"true\")", smallElevation), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("focalStat(\"stddev\", [%s], \"3p\", \"true\")", smallElevation));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void focalStatVariance() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("focalStat(\"variance\", [%s], \"3p\", \"true\")", smallElevation), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("focalStat(\"variance\", [%s], \"3p\", \"true\")", smallElevation));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void focalStatSumWithNoData() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("focalStat(\"sum\", [%s], \"3p\", \"true\")", allonesholes), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("focalStat(\"sum\", [%s], \"3p\", \"true\")", allonesholes));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void focalStatSumWithoutIgnoreNoData() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("focalStat(\"sum\", [%s], \"3p\", \"false\")", allonesholes), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("focalStat(\"sum\", [%s], \"3p\", \"false\")", allonesholes));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void focalStatMinMetersEvenNeighborhood() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("focalStat(\"min\", [%s], \"300m\", \"true\")", smallElevation), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("focalStat(\"min\", [%s], \"300m\", \"true\")", smallElevation));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void focalStatSumEvenNeighborhood() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("focalStat(\"sum\", [%s], \"4p\", \"true\")", allonesholes), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("focalStat(\"sum\", [%s], \"4p\", \"true\")", allonesholes));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void focalStatCountEvenNeighborhood() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("focalStat(\"count\", [%s], \"4p\", \"true\")", allonesholes), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("focalStat(\"count\", [%s], \"4p\", \"true\")", allonesholes));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void focalStatCountEvenNeighborhoodWithoutIgnore() throws Exception
+{
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(),
+        String.format("focalStat(\"count\", [%s], \"4p\", \"false\")", allonesholes), -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+        String.format("focalStat(\"count\", [%s], \"4p\", \"false\")", allonesholes));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void bitwiseXor() throws Exception
+{
+  String stmt = String.format("convert([%s], \"byte\", \"truncate\") ^ (0x80 | 0x60)", allhundredsholes);
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), stmt, 255);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        nanTranslatorTo255, nanTranslatorTo255,
+        stmt);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void bitwiseAnd() throws Exception
+{
+  String stmt = String.format("convert([%s], \"byte\", \"truncate\") & (0x80 | 0x60)", allhundredsholes);
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), stmt, 255);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        nanTranslatorTo255, nanTranslatorTo255,
+        stmt);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void bitwiseOr() throws Exception
+{
+  String stmt = String.format("convert([%s], \"byte\", \"truncate\") | 0x80", allhundredsholes);
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), stmt, 255);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        nanTranslatorTo255, nanTranslatorTo255,
+        stmt);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void bitwiseComplement() throws Exception
+{
+  String stmt = String.format("~convert([%s], \"byte\", \"truncate\")", allhundredsholes);
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), stmt, 255);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        nanTranslatorTo255, nanTranslatorTo255,
+        stmt);
+  }
+}
+
+private void checkDataTypes(int type) throws IOException
 {
   MrsPyramid
       pyramid = MrsPyramid.open(testUtils.getOutputHdfsFor(testname.getMethodName()).toString(), providerProperties);
@@ -2544,11 +2546,11 @@ public void testDataTypeFloat() throws Exception
   MrsImage image = pyramid.getImage(metadata.getMaxZoomLevel());
   org.junit.Assert.assertNotNull("Can't load image", image);
 
-  KVIterator<TileIdWritable, Raster> iter = image.getTiles();
+  KVIterator<TileIdWritable, MrGeoRaster> iter = image.getTiles();
   while (iter.hasNext())
   {
-    Raster raster = iter.currentValue();
-    org.junit.Assert.assertEquals("Bad tile type", type, raster.getSampleModel().getDataType());
+    MrGeoRaster raster = iter.currentValue();
+    org.junit.Assert.assertEquals("Bad tile type", type, raster.datatype());
 
     iter.next();
   }

@@ -24,22 +24,38 @@ import java.util.List;
 public class JobsListResponse
 {
 
-  private List<JobInfoResponse> _jobInfos = new ArrayList<JobInfoResponse>();
-  public List<JobInfoResponse> getJobInfo() { return _jobInfos; }
-  public void setJobInfo(List<JobInfoResponse> jobInfos) { this._jobInfos = jobInfos; }
-  
-  private String _nextUrl;
-  public String getNextURL() { return _nextUrl; }
-  public void setNextURL(String nextUrl)
-  {
-    this._nextUrl = nextUrl;
-  }
+private List<JobInfoResponse> _jobInfos = new ArrayList<JobInfoResponse>();
+private String _nextUrl;
+private String _prevUrl;
 
-  private String _prevUrl;
-  public String getPrevURL() { return _prevUrl; }
-  public void setPrevURL(String prevUrl)
-  {
-    this._prevUrl = prevUrl;
-  }
+public List<JobInfoResponse> getJobInfo()
+{
+  return _jobInfos;
+}
+
+public void setJobInfo(List<JobInfoResponse> jobInfos)
+{
+  this._jobInfos = jobInfos;
+}
+
+public String getNextURL()
+{
+  return _nextUrl;
+}
+
+public void setNextURL(String nextUrl)
+{
+  this._nextUrl = nextUrl;
+}
+
+public String getPrevURL()
+{
+  return _prevUrl;
+}
+
+public void setPrevURL(String prevUrl)
+{
+  this._prevUrl = prevUrl;
+}
 
 }

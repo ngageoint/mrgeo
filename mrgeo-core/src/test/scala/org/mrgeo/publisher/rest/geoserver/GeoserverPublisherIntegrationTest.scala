@@ -1,6 +1,7 @@
 package org.mrgeo.publisher.rest.geoserver
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.mrgeo.core.MrGeoProperties
 import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.mapalgebra.raster.RasterMapOp
@@ -11,7 +12,6 @@ import org.mrgeo.publisher.rest.RestClient
 import org.mrgeo.publisher.rest.geoserver.GeoserverPublisherConfigurator._
 import org.mrgeo.utils.tms.{Bounds, TMSUtils}
 import org.mrgeo.utils.{GDALUtils, LongRectangle}
-import org.scalatest
 import org.scalatest.{BeforeAndAfter, FlatSpec, Ignore}
 
 import scala.collection.JavaConverters._
@@ -27,10 +27,12 @@ import scala.collection.JavaConverters._
   * to point the alias the geoserver being tested to that endpoint.
   */
 @Ignore
+@SuppressWarnings(Array("all")) // test code, not included in production
 class GeoserverPublisherIntegrationTest extends FlatSpec with BeforeAndAfter with RasterMapOpTestSupport {
 
   private val profileName = "mrgeo-geoserver-publisher-integration-test"
-  private val geoserverUrl = "http://localhost:8080/geoserver/rest" // http://geoserver:8080/geoserver/rest"
+  private val geoserverUrl = "http://localhost:8080/geoserver/rest"
+  // http://geoserver:8080/geoserver/rest"
   private val workspace = "mrgeo-geoserver-publisher-integration-test-workspace"
   private val namespace = "mrgeo-geoserver-publisher-integration-test-namespace"
   private val namespaceUri = "http://mrgeo-geoserver-publisher-integration-test-namespace-uri"
@@ -42,20 +44,18 @@ class GeoserverPublisherIntegrationTest extends FlatSpec with BeforeAndAfter wit
 
   private val pyramidName = "org.mrgeo.rest.geoserver.GeoserverPublisherIntegratonTest.pyramidName"
   private val epsg = "EPSG:4326"
-  // This needs to be initialized after the master password is set, otherwise it will prime the properties instance and
-  // diasable property decryption
-  private var nativeCRSString: String = _
   private val projectionPolicy = "REPROJECT_TO_DECLARED"
   private val nativeFormat = "GEOTIFF"
   private val supportedFormats = List("GIF", "PNG", "JPEG", "TIFF", "ImageMosaic", "GEOTIFF", "ArcGrid", "Gtopo30")
-
-  private val tileIds: Array[Long] = Array(11, 12, 19, 20)
+  private val tileIds:Array[Long] = Array(11, 12, 19, 20)
   private val zoomLevel = 3
   private val tileSize = 512
-  private val bounds: Bounds = new Bounds(-44, -44, 44, 44)
-
-  var subject: GeoserverPublisher = _
-  var inputImage: RasterMapOp = _
+  private val bounds:Bounds = new Bounds(-44, -44, 44, 44)
+  var subject:GeoserverPublisher = _
+  var inputImage:RasterMapOp = _
+  // This needs to be initialized after the master password is set, otherwise it will prime the properties instance and
+  // diasable property decryption
+  private var nativeCRSString:String = _
 
   before {
     // Set up the conf with the geoserver properties
@@ -96,12 +96,13 @@ class GeoserverPublisherIntegrationTest extends FlatSpec with BeforeAndAfter wit
     mrGeoProperties.put(s"${MRGEO_PUBLISHER_PROPERTY_PREFIX}.${profileName}.${GEOSERVER_PASSWORD_PROPERTY}",
       s"ENC(${encryptedGeoserverPassword})")
     mrGeoProperties.put(s"${MRGEO_PUBLISHER_PROPERTY_PREFIX}.${profileName}.${WORKSPACE_NAME_PROPERTY}", workspace)
-    mrGeoProperties.put(s"${MRGEO_PUBLISHER_PROPERTY_PREFIX}.${profileName}.${COVERAGE_STORE_NAME_PROPERTY}", coverageStoreName)
+    mrGeoProperties
+        .put(s"${MRGEO_PUBLISHER_PROPERTY_PREFIX}.${profileName}.${COVERAGE_STORE_NAME_PROPERTY}", coverageStoreName)
   }
 
   def verifyGeoserverImageData = {
     val url = s"${GeoserverPublisher.WORKSPACES_URL}/${workspace}/${GeoserverPublisher.COVERAGE_STORES_URL}/" +
-      s"${coverageStoreName}/${GeoserverPublisher.COVERAGES_URL}/${pyramidName}.json"
+              s"${coverageStoreName}/${GeoserverPublisher.COVERAGES_URL}/${pyramidName}.json"
     val jsonCoverage = new RestClient(geoserverUrl, "admin", "geoserver").getJson(url)
     assert(jsonCoverage != null)
     val jsonMapper = new ObjectMapper
@@ -114,7 +115,7 @@ class GeoserverPublisherIntegrationTest extends FlatSpec with BeforeAndAfter wit
       * @param expectedNodeValue
       * @param nodeValues
       */
-    def verifyNodes(expectedNodeValue: Any, nodeValues: List[Any]): Unit = {
+    def verifyNodes(expectedNodeValue:Any, nodeValues:List[Any]):Unit = {
       nodeValues.foreach(nv => {
         assertResult(expectedNodeValue) {
           nv
@@ -122,7 +123,7 @@ class GeoserverPublisherIntegrationTest extends FlatSpec with BeforeAndAfter wit
       })
     }
 
-    def verifyBoundingBox: Unit = {
+    def verifyBoundingBox:Unit = {
       val nativeBoundingBoxNode = coverageNode.get("nativeBoundingBox")
       val latLonBoundingBoxNode = coverageNode.get("latLonBoundingBox")
       verifyNodes(bounds.w, List(
@@ -147,9 +148,9 @@ class GeoserverPublisherIntegrationTest extends FlatSpec with BeforeAndAfter wit
       ))
     }
 
-    def verifyGrid: Unit = {
-      val imageMetadata: MrsPyramidMetadata = inputImage.metadata.get
-      val rect: LongRectangle = imageMetadata.getPixelBounds(zoomLevel)
+    def verifyGrid:Unit = {
+      val imageMetadata:MrsPyramidMetadata = inputImage.metadata.get
+      val rect:LongRectangle = imageMetadata.getPixelBounds(zoomLevel)
 
       val gridNode = coverageNode.get("grid")
       assertResult(2) {
@@ -178,9 +179,10 @@ class GeoserverPublisherIntegrationTest extends FlatSpec with BeforeAndAfter wit
       ))
     }
 
+    @SuppressFBWarnings(value = Array[String]("NP_LOAD_OF_KNOWN_NULL_VALUE"), justification = "Scala generated code")
     def verifyDimensions = {
       val dimensionsNode = coverageNode.get("dimensions")
-      dimensionsNode.get("coverageDimension").asScala.zipWithIndex.foreach{case (dimensionNode, bandIndex) => {
+      dimensionsNode.get("coverageDimension").asScala.zipWithIndex.foreach { case (dimensionNode, bandIndex) => {
         assertResult(s"band ${bandIndex}") {
           dimensionNode.get("name").asText()
         }
@@ -192,7 +194,8 @@ class GeoserverPublisherIntegrationTest extends FlatSpec with BeforeAndAfter wit
         assertResult((1.0, 1.0)) {
           (rangeNode.get("min").asDouble(), rangeNode.get("max").asDouble())
         }
-      }}
+      }
+      }
     }
 
     verifyNodes(pyramidName, List(

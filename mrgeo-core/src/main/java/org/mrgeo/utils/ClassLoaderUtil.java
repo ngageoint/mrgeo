@@ -20,6 +20,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.io.FilenameUtils;
 import org.jboss.vfs.VFS;
 import org.jboss.vfs.VirtualFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,19 +38,7 @@ import java.util.jar.JarFile;
 
 public class ClassLoaderUtil
 {
-private static class Thief extends ClassLoader
-{
-  Thief(ClassLoader cl)
-  {
-    super(cl);
-  }
-
-  @Override
-  public Package[] getPackages()
-  {
-    return super.getPackages();
-  }
-}
+private static final Logger log = LoggerFactory.getLogger(ClassLoaderUtil.class);
 
 public static Collection<String> getMostJars()
 {
@@ -63,7 +53,7 @@ public static Collection<String> getMostJars()
   }
   catch (Exception e1)
   {
-    e1.printStackTrace();
+    log.error("Exception thrown", e1);
   }
 
   final TreeSet<String> result = new TreeSet<>();
@@ -95,7 +85,7 @@ public static Collection<String> getMostJars()
         }
         catch (IOException e)
         {
-          e.printStackTrace();
+          log.error("Exception thrown", e);
         }
       }
       return true;
@@ -125,7 +115,7 @@ public static List<URL> getChildResources(String path) throws IOException, Class
     }
     else if (resource.getProtocol().equalsIgnoreCase("VFS"))
     {
-      result.addAll( loadVfs( resource ));
+      result.addAll(loadVfs(resource));
     }
     else
     {
@@ -137,21 +127,25 @@ public static List<URL> getChildResources(String path) throws IOException, Class
   return result;
 }
 
-public static List<URL> loadVfs( URL resource ) throws IOException
+public static List<URL> loadVfs(URL resource) throws IOException
 {
   List<URL> result = new LinkedList<URL>();
 
-  try {
-    VirtualFile r = VFS.getChild( resource.toURI() );
-    if ( r.exists() && r.isDirectory() ) {
-      for ( VirtualFile f : r.getChildren() )
+  try
+  {
+    VirtualFile r = VFS.getChild(resource.toURI());
+    if (r.exists() && r.isDirectory())
+    {
+      for (VirtualFile f : r.getChildren())
       {
-        result.add( f.asFileURL() );
+        result.add(f.asFileURL());
       }
     }
-  } catch (URISyntaxException e) {
-    System.out.println( "Problem reading resource '" + resource + "':\n " + e.getMessage() );
-    e.printStackTrace();
+  }
+  catch (URISyntaxException e)
+  {
+    System.out.println("Problem reading resource '" + resource + "':\n " + e.getMessage());
+    log.error("Exception thrown", e);
   }
 
   return result;
@@ -213,55 +207,60 @@ public static List<URL> loadDirectory(String filePath) throws IOException
   return result;
 }
 
-
-public static void addLibraryPath(final String pathToAdd) throws Exception {
-  final Field usrPathsField = ClassLoader.class.getDeclaredField("usr_paths");
-
-  AccessController.doPrivileged(new PrivilegedAction<Object>()
-  {
-    public Boolean run()
-    {
-      try
-      {
-        usrPathsField.setAccessible(true);
-
-        //get array of paths
-        final String[] paths = (String[]) usrPathsField.get(null);
-
-        //check if the path to add is already present
-        for (String path : paths)
-        {
-          if (path.equals(pathToAdd))
-          {
-            return true;
-          }
-        }
-
-        //add the new path
-        final String[] newPaths = Arrays.copyOf(paths, paths.length + 1);
-        newPaths[newPaths.length - 1] = pathToAdd;
-        usrPathsField.set(null, newPaths);
-        return true;
-      }
-      catch (IllegalAccessException e)
-      {
-        return false;
-      }
-    }
-  });
-}
-
-private static String indent(int level)
+@SuppressWarnings("squid:S1166") // exceptions are caught and returned as false
+public static void addLibraryPath(final String pathToAdd)
 {
-  StringBuilder s = new StringBuilder();
-  for (int i = 0; i < level * 3; i++)
+  try
   {
-    s.append(" ");
+    final Field usrPathsField = ClassLoader.class.getDeclaredField("usr_paths");
+
+    AccessController.doPrivileged(new PrivilegedAction<Object>()
+    {
+      public Boolean run()
+      {
+        try
+        {
+          usrPathsField.setAccessible(true);
+
+          //get array of paths
+          final String[] paths = (String[]) usrPathsField.get(null);
+
+          //check if the path to add is already present
+          for (String path : paths)
+          {
+            if (path.equals(pathToAdd))
+            {
+              return true;
+            }
+          }
+
+          //add the new path
+          final String[] newPaths = new String[paths.length + 1];
+          System.arraycopy(paths, 0, newPaths, 1, paths.length);
+          //final String[] newPaths = Arrays.copyOf(paths, paths.length + 1);
+          newPaths[0] = pathToAdd;
+          usrPathsField.set(null, newPaths);
+
+
+          System.setProperty("java.library.path", StringUtils.join(newPaths, ":"));
+          final Field sysPathsField = ClassLoader.class.getDeclaredField("sys_paths");
+          sysPathsField.setAccessible(true);
+          sysPathsField.set(null, null);
+
+
+          return true;
+        }
+        catch (IllegalAccessException | NoSuchFieldException ignored)
+        {
+          return false;
+        }
+      }
+    });
   }
-
-  return s.toString();
+  catch (NoSuchFieldException ignored)
+  {
+  }
 }
-
 
 @SuppressFBWarnings(value = "WEAK_FILENAMEUTILS", justification = "filename comes from classloader")
 public static void dumpClasspath(ClassLoader loader, int level)
@@ -293,13 +292,15 @@ public static void dumpClasspath(ClassLoader loader, int level)
     }
     Arrays.sort(names);
 
-    for (String name: names)
+    for (String name : names)
     {
       System.out.println(indent(level + 1) + name);
     }
   }
   else
+  {
     System.out.println("\t(cannot display components as not a URLClassLoader)");
+  }
 
   System.out.println("");
   if (loader.getParent() != null)
@@ -307,5 +308,30 @@ public static void dumpClasspath(ClassLoader loader, int level)
     dumpClasspath(loader.getParent(), level + 1);
   }
 
+}
+
+private static String indent(int level)
+{
+  StringBuilder s = new StringBuilder();
+  for (int i = 0; i < level * 3; i++)
+  {
+    s.append(" ");
+  }
+
+  return s.toString();
+}
+
+private static class Thief extends ClassLoader
+{
+  Thief(ClassLoader cl)
+  {
+    super(cl);
+  }
+
+  @Override
+  public Package[] getPackages()
+  {
+    return super.getPackages();
+  }
 }
 }

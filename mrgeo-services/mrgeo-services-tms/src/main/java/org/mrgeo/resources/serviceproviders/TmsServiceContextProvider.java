@@ -16,22 +16,19 @@
 
 package org.mrgeo.resources.serviceproviders;
 
-import com.sun.jersey.spi.inject.SingletonTypeInjectableProvider;
 import org.mrgeo.services.tms.TmsService;
 
-import javax.ws.rs.core.Context;
+import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Provider;
 
-/**
- * @author Steve Ingram
- *         Date: 11/1/13
- */
 @Provider
-public class TmsServiceContextProvider extends SingletonTypeInjectableProvider<Context, TmsService> {
+public class TmsServiceContextProvider implements ContextResolver<TmsService>
+{
+private static final TmsService instance = new TmsService();
 
-    private static final TmsService instance = new TmsService();
-
-    public TmsServiceContextProvider() {
-        super(TmsService.class, instance);
-    }
+@Override
+public TmsService getContext(Class<?> type)
+{
+  return instance;
+}
 }

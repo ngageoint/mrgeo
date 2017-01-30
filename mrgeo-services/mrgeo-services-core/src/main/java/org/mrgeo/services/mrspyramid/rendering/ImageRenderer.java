@@ -17,9 +17,8 @@
 package org.mrgeo.services.mrspyramid.rendering;
 
 import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.utils.tms.Bounds;
-
-import java.awt.image.Raster;
 
 
 /**
@@ -29,84 +28,72 @@ import java.awt.image.Raster;
  */
 public interface ImageRenderer
 {
-  /**
-   * Returns the default value used in the source raster data
-   * 
-   */
-  double[] getDefaultValues();
 
-  /**
-   * Returns the minimum/maximum raster values from the source data
-   * 
-   */
-  double[] getExtrema();
+/**
+ * Returns the default value used in the source raster data
+ */
+double[] getDefaultValues();
 
-  /**
-   * Returns the mime types for the image renderer
-   **/
-  String[] getMimeTypes();
+/**
+ * Returns the minimum/maximum raster values from the source data
+ */
+double[] getExtrema();
 
-  /**
-   * Returns the WMS format types for the image renderer
-   * 
-   */
-  String[] getWmsFormats();
+/**
+ * Returns the mime types for the image renderer
+ **/
+String[] getMimeTypes();
 
-  /**
-   * Determines if the rendered image was rendered as transparent
-   **/
-  boolean outputIsTransparent();
+/**
+ * Returns the WMS format types for the image renderer
+ */
+String[] getWmsFormats();
 
-  /**
-   * GetMap implementation
-   * 
-   * @param pyramidName
-   *          name of the source data layer
-   * @param bounds
-   *          requested bounds
-   * @param width
-   *          requested image width
-   * @param height
-   *          requested image height
-   * @return rendered image
-   * @throws Exception
-   */
-  Raster renderImage(String pyramidName, Bounds bounds, int width, int height, ProviderProperties providerProperties,
-    String epsg) throws Exception;
+/**
+ * Determines if the rendered image was rendered as transparent
+ **/
+boolean outputIsTransparent();
 
-  Raster renderImage(String pyramidName, Bounds bounds, ProviderProperties providerProperties, String epsg)
-    throws Exception;
+/**
+ * GetMap implementation
+ *
+ * @param pyramidName name of the source data layer
+ * @param bounds      requested bounds
+ * @param width       requested image width
+ * @param height      requested image height
+ * @return rendered image
+ */
+MrGeoRaster renderImage(String pyramidName, Bounds bounds, int width, int height, ProviderProperties providerProperties,
+    String epsg) throws ImageRendererException;
 
-  /**
-   * GetTile implementation
-   * 
-   * @param pyramidName
-   *          name of the source data layer
-   * @param tileColumn
-   *          x tile coordinate
-   * @param tileRow
-   *          y tile coordinate
-   * @param scale
-   *          requested image resolution
-   * @return rendered image
-   * @throws Exception
-   */
-  Raster renderImage(String pyramidName, int tileColumn, int tileRow, double scale,
-    ProviderProperties providerProperties) throws Exception;
+MrGeoRaster renderImage(String pyramidName, Bounds bounds, ProviderProperties providerProperties, String epsg)
+    throws ImageRendererException;
 
-  Raster renderImage(String pyramidName, int tileColumn, int tileRow, double scale,
+/**
+ * GetTile implementation
+ *
+ * @param pyramidName name of the source data layer
+ * @param tileColumn  x tile coordinate
+ * @param tileRow     y tile coordinate
+ * @param scale       requested image resolution
+ * @return rendered image
+ */
+MrGeoRaster renderImage(String pyramidName, int tileColumn, int tileRow, double scale,
+    ProviderProperties providerProperties) throws ImageRendererException;
+
+MrGeoRaster renderImage(String pyramidName, int tileColumn, int tileRow, double scale,
     String maskName, double maskMax,
-    ProviderProperties providerProperties) throws Exception;
+    ProviderProperties providerProperties) throws ImageRendererException;
 
-  Raster renderImage(String pyramidName, int tileColumn, int tileRow, double scale,
-    String maskName, ProviderProperties providerProperties) throws Exception;
+MrGeoRaster renderImage(String pyramidName, int tileColumn, int tileRow, double scale,
+    String maskName, ProviderProperties providerProperties) throws ImageRendererException;
 
-  Raster renderImage(String pyramidName, int tileColumn, int tileRow, int zoom,
-    ProviderProperties providerProperties) throws Exception;
+MrGeoRaster renderImage(String pyramidName, int tileColumn, int tileRow, int zoom,
+    ProviderProperties providerProperties) throws ImageRendererException;
 
-  Raster renderImage(String pyramidName, int tileColumn, int tileRow, int zoom, String maskName,
-    double maskMax, ProviderProperties providerProperties) throws Exception;
+MrGeoRaster renderImage(String pyramidName, int tileColumn, int tileRow, int zoom, String maskName,
+    double maskMax, ProviderProperties providerProperties) throws ImageRendererException;
 
-  Raster renderImage(String pyramidName, int tileColumn, int tileRow, int zoom, String maskName,
-      final ProviderProperties providerProperties) throws Exception;
+MrGeoRaster renderImage(String pyramidName, int tileColumn, int tileRow, int zoom, String maskName,
+    final ProviderProperties providerProperties) throws ImageRendererException;
 }

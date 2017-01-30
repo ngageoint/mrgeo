@@ -1,9 +1,8 @@
 ﻿# -*- coding: utf-8 -*-
 import json
-import os
-import sys
-
 import math
+import os
+
 from pymrgeo import MrGeo
 from pymrgeo.rastermapop import RasterMapOp
 
@@ -19,18 +18,20 @@ def toa_reflectance(image, metadata, band):
     rad = ((image * mult) + add)
     return rad
 
+
 def toa_radiance(image, metadata, band):
     scales = metadata['L1_METADATA_FILE']['RADIOMETRIC_RESCALING']
 
     mult = scales['RADIANCE_MULT_BAND_' + str(band)]
     add = scales['RADIANCE_ADD_BAND_' + str(band)]
 
-    sun_elev = metadata['L1_METADATA_FILE']['IMAGE_ATTRIBUTES']['SUN_ELEVATION'] * 0.0174533 # degrees to rad
+    sun_elev = metadata['L1_METADATA_FILE']['IMAGE_ATTRIBUTES']['SUN_ELEVATION'] * 0.0174533  # degrees to rad
 
     print('band: ' + str(band) + ' mult: ' + str(mult) + ' add: ' + str(add))
 
     refl = ((image * mult) + add) / math.sin(sun_elev)
     return refl
+
 
 if __name__ == "__main__":
 
@@ -77,10 +78,10 @@ if __name__ == "__main__":
     mrgeo.start()
 
     bqa = mrgeo.ingest_image(landsat['bqa'])
-    #bqa.export('/data/export/landsat-bqa.tif', singleFile=True)
+    # bqa.export('/data/export/landsat-bqa.tif', singleFile=True)
 
     cloud_mask = bqa < 32768  # 0 where clouds, 1 where no clouds
-    #cloud_mask.export('/data/export/landsat-clouds.tif', singleFile=True)
+    # cloud_mask.export('/data/export/landsat-clouds.tif', singleFile=True)
 
     red = cloud_mask.con(positiveRaster=mrgeo.ingest_image(landsat[4]), negativeConst=RasterMapOp.nan())
     green = cloud_mask.con(positiveRaster=mrgeo.ingest_image(landsat[3]), negativeConst=RasterMapOp.nan())
@@ -119,7 +120,6 @@ if __name__ == "__main__":
     # rgb = rgb.convert('byte', 'fit')
 
     rgb.export('/data/export/landsat-rgb-refl.tif', singleFile=True)
-
 
     # ones = mrgeo.load_image("all-ones-save")
 

@@ -44,91 +44,75 @@ import java.util.Properties;
 @Path("/About")
 public class AboutResource
 {
-  private static final Logger log = LoggerFactory.getLogger(AboutResource.class);
+private static final Logger log = LoggerFactory.getLogger(AboutResource.class);
 
-  @Context
-  UriInfo uriInfo;
+@Context
+UriInfo uriInfo;
 
-  @Context
-  SecurityContext sc;
+@Context
+SecurityContext sc;
 
-  private Properties props;
+private Properties props;
 
-  private Properties getConfiguration()
+@GET
+@Produces(MediaType.APPLICATION_XML)
+public Response doGet()
+{
+  boolean debugMode = uriInfo.getQueryParameters().containsKey("debug");
+  XMLOutputFactory factory = XMLOutputFactory.newInstance();
+  factory.setProperty("javax.xml.stream.isRepairingNamespaces", Boolean.TRUE);
+  XMLStreamWriter xmlWriter;
+  try
   {
-    if (props == null)
+    StringWriter writer = new StringWriter();
+    xmlWriter = factory.createXMLStreamWriter(writer);
+    xmlWriter.writeStartElement("About");
+
+    URL buildInfoUrl = Thread.currentThread().getContextClassLoader().getResource(
+        "org/mrgeo/services/build.info");
+    Properties buildInfo = new Properties();
+    assert buildInfoUrl != null;
+    buildInfo.load(buildInfoUrl.openStream());
+
+    String imageBase = Configuration.getInstance().getProperties().getProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, "");
+
+    xmlWriter.writeAttribute("name", buildInfo.getProperty("name"));
+    xmlWriter.writeAttribute("version", buildInfo.getProperty("version"));
+    xmlWriter.writeAttribute("imagebase", imageBase);
+    String user = null;
+    Principal principal = sc.getUserPrincipal();
+    if (principal != null)
     {
-      try
-      {
-        props = Configuration.getInstance().getProperties();
-      }
-      catch (IllegalStateException e)
-      {
-        log.error("About error: " + e.getMessage(), e);
-      }
+      user = principal.getName();
     }
-    return props;
-  }
+    xmlWriter.writeAttribute("user", user != null ? user : "*unknown*");
 
-  @GET
-  @Produces(MediaType.APPLICATION_XML)
-  public Response doGet()
-  {
-    boolean debugMode = uriInfo.getQueryParameters().containsKey("debug");
-    XMLOutputFactory factory = XMLOutputFactory.newInstance();
-    factory.setProperty("javax.xml.stream.isRepairingNamespaces", Boolean.TRUE);
-    XMLStreamWriter xmlWriter;
-    try
+    xmlWriter.writeStartElement("Properties");
+    for (Object o : getConfiguration().entrySet())
     {
-      StringWriter writer = new StringWriter();
-      xmlWriter = factory.createXMLStreamWriter(writer);
-      xmlWriter.writeStartElement("About");
-
-      URL buildInfoUrl = Thread.currentThread().getContextClassLoader().getResource(
-          "org/mrgeo/services/build.info");
-      Properties buildInfo = new Properties();
-      assert buildInfoUrl != null;
-      buildInfo.load(buildInfoUrl.openStream());
-
-      String imageBase = Configuration.getInstance().getProperties().getProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, "");
-
-      xmlWriter.writeAttribute("name", buildInfo.getProperty("name"));
-      xmlWriter.writeAttribute("version", buildInfo.getProperty("version"));
-      xmlWriter.writeAttribute("imagebase", imageBase);
-      String user = null;
-      Principal principal = sc.getUserPrincipal();
-      if (principal != null)
-      {
-        user = principal.getName();
-      }
-      xmlWriter.writeAttribute("user", user != null ? user : "*unknown*");
-
-      xmlWriter.writeStartElement("Properties");
-      for (Object o : getConfiguration().entrySet())
-      {
-        Map.Entry prop = (Map.Entry) o;
-        xmlWriter.writeStartElement("Property");
-        xmlWriter.writeAttribute("name", (String) prop.getKey());
-        xmlWriter.writeAttribute("value", (String) prop.getValue());
-        xmlWriter.writeEndElement();
-      }
+      Map.Entry prop = (Map.Entry) o;
+      xmlWriter.writeStartElement("Property");
+      xmlWriter.writeAttribute("name", (String) prop.getKey());
+      xmlWriter.writeAttribute("value", (String) prop.getValue());
       xmlWriter.writeEndElement();
+    }
+    xmlWriter.writeEndElement();
 
-      xmlWriter.writeStartElement("MapAlgebra");
-      //ServiceLoader<MapOpFactory> loader = ServiceLoader.load(MapOpFactory.class);
+    xmlWriter.writeStartElement("MapAlgebra");
+    //ServiceLoader<MapOpFactory> loader = ServiceLoader.load(MapOpFactory.class);
 
-      for (Tuple3<String, String, String> op: MapOpFactory.describe())
-      {
-        xmlWriter.writeStartElement("Operation");
-        xmlWriter.writeAttribute("name", op._1());
-        xmlWriter.writeStartElement("Description");
-        xmlWriter.writeCharacters(op._2());
-        xmlWriter.writeEndElement();
-        xmlWriter.writeStartElement("Usage");
-        xmlWriter.writeCharacters(op._3());
-        xmlWriter.writeEndElement();
-        xmlWriter.writeEndElement();
-      }
+    for (Tuple3<String, String, String> op : MapOpFactory.describe())
+    {
+      xmlWriter.writeStartElement("Operation");
+      xmlWriter.writeAttribute("name", op._1());
+      xmlWriter.writeStartElement("Description");
+      xmlWriter.writeCharacters(op._2());
+      xmlWriter.writeEndElement();
+      xmlWriter.writeStartElement("Usage");
+      xmlWriter.writeCharacters(op._3());
+      xmlWriter.writeEndElement();
+      xmlWriter.writeEndElement();
+    }
 //      for (MapOpFactory s : loader)
 //      {
 //        for (String n : s.getMapOpNames())
@@ -138,52 +122,68 @@ public class AboutResource
 //          xmlWriter.writeEndElement();
 //        }
 //      }
+    xmlWriter.writeEndElement();
+
+
+    if (debugMode)
+    {
+      xmlWriter.writeStartElement("ClassPath");
+
+      xmlWriter.writeStartElement("SystemClassPath");
+      xmlWriter.writeCharacters(System.getProperty("java.class.path", null));
       xmlWriter.writeEndElement();
 
+      xmlWriter.writeStartElement("ClassLoader");
+      xmlWriter.writeComment("This is not an exhaustive jar list, but it should be pretty good.");
 
-      if (debugMode)
+      for (String s : ClassLoaderUtil.getMostJars())
       {
-        xmlWriter.writeStartElement("ClassPath");
-
-        xmlWriter.writeStartElement("SystemClassPath");
-        xmlWriter.writeCharacters(System.getProperty("java.class.path", null));
+        xmlWriter.writeStartElement("jar");
+        xmlWriter.writeAttribute("url", s);
         xmlWriter.writeEndElement();
+      }
 
-        xmlWriter.writeStartElement("ClassLoader");
-        xmlWriter.writeComment("This is not an exhaustive jar list, but it should be pretty good.");
-
-        for (String s : ClassLoaderUtil.getMostJars())
-        {
-          xmlWriter.writeStartElement("jar");
-          xmlWriter.writeAttribute("url", s);
-          xmlWriter.writeEndElement();
-        }
-
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        Enumeration<URL> urls = classLoader.getResources("");
-        while (urls.hasMoreElements())
-        {
-          URL resource = urls.nextElement();
-          xmlWriter.writeStartElement(resource.getProtocol());
-          xmlWriter.writeAttribute("url", resource.toString());
-          xmlWriter.writeEndElement();
-        }
-
-        xmlWriter.writeEndElement();
+      ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+      Enumeration<URL> urls = classLoader.getResources("");
+      while (urls.hasMoreElements())
+      {
+        URL resource = urls.nextElement();
+        xmlWriter.writeStartElement(resource.getProtocol());
+        xmlWriter.writeAttribute("url", resource.toString());
         xmlWriter.writeEndElement();
       }
 
       xmlWriter.writeEndElement();
-      xmlWriter.flush();
-      xmlWriter.close();
-      writer.close();
-      return Response.status(Response.Status.ACCEPTED).entity(writer.getBuffer().toString()).build();
+      xmlWriter.writeEndElement();
     }
-    catch (IOException | XMLStreamException e)
+
+    xmlWriter.writeEndElement();
+    xmlWriter.flush();
+    xmlWriter.close();
+    writer.close();
+    return Response.status(Response.Status.ACCEPTED).entity(writer.getBuffer().toString()).build();
+  }
+  catch (IOException | XMLStreamException e)
+  {
+    log.error("Got exception", e);
+    throw new WebApplicationException(
+        Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build());
+  }
+}
+
+private Properties getConfiguration()
+{
+  if (props == null)
+  {
+    try
     {
-      log.error("Got exception", e);
-      throw new WebApplicationException(
-              Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build() );
+      props = Configuration.getInstance().getProperties();
+    }
+    catch (IllegalStateException e)
+    {
+      log.error("About error: " + e.getMessage(), e);
     }
   }
+  return props;
+}
 }

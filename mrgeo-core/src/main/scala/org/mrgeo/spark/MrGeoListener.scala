@@ -28,12 +28,12 @@ import org.apache.spark.scheduler._
 
 
 class MrGeoListener(val context:SparkContext) extends SparkListener {
-  override def onStageCompleted(stageCompleted: SparkListenerStageCompleted): Unit = {
+  override def onStageCompleted(stageCompleted:SparkListenerStageCompleted):Unit = {
     println("Stage Completed " + stageCompleted)
     super.onStageCompleted(stageCompleted)
   }
 
-  override def onStageSubmitted(stageSubmitted: SparkListenerStageSubmitted): Unit = {
+  override def onStageSubmitted(stageSubmitted:SparkListenerStageSubmitted):Unit = {
     println("Stage Submitted " + stageSubmitted.stageInfo.name)
 
     println("  RDDs in stage")
@@ -41,14 +41,14 @@ class MrGeoListener(val context:SparkContext) extends SparkListener {
       println("    " + info.name)
     })
 
-//    val pools = context.getAllPools
-//    val rdds = context.getRDDStorageInfo
+    //    val pools = context.getAllPools
+    //    val rdds = context.getRDDStorageInfo
     val tracker = context.statusTracker
 
-     tracker.getActiveJobIds().foreach(id => {
-       val jobinfo = tracker.getJobInfo(id)
-       println(id)
-     })
+    tracker.getActiveJobIds().foreach(id => {
+      val jobinfo = tracker.getJobInfo(id)
+      println(id)
+    })
     tracker.getActiveStageIds().foreach(id => {
       val stageinfo = tracker.getStageInfo(id)
       println(id)
@@ -56,83 +56,83 @@ class MrGeoListener(val context:SparkContext) extends SparkListener {
     super.onStageSubmitted(stageSubmitted)
   }
 
-  override def onTaskStart(taskStart: SparkListenerTaskStart): Unit = {
+  override def onTaskStart(taskStart:SparkListenerTaskStart):Unit = {
     println("Task Start " + taskStart)
 
-//    val pools = context.getAllPools
-//    val rdds = context.getRDDStorageInfo
-//    val tracker = context.statusTracker
+    //    val pools = context.getAllPools
+    //    val rdds = context.getRDDStorageInfo
+    //    val tracker = context.statusTracker
 
     super.onTaskStart(taskStart)
   }
 
-  override def onTaskGettingResult(taskGettingResult: SparkListenerTaskGettingResult): Unit = {
+  override def onTaskGettingResult(taskGettingResult:SparkListenerTaskGettingResult):Unit = {
     println("Task Get Result " + taskGettingResult)
     super.onTaskGettingResult(taskGettingResult)
   }
 
-  override def onTaskEnd(taskEnd: SparkListenerTaskEnd): Unit = {
+  override def onTaskEnd(taskEnd:SparkListenerTaskEnd):Unit = {
     println("Task End " + taskEnd)
 
-//    val pools = context.getAllPools
-//    val rdds = context.getRDDStorageInfo
-//    val tracker = context.statusTracker
+    //    val pools = context.getAllPools
+    //    val rdds = context.getRDDStorageInfo
+    //    val tracker = context.statusTracker
 
     super.onTaskEnd(taskEnd)
   }
 
-  override def onJobStart(jobStart: SparkListenerJobStart): Unit = {
+  override def onJobStart(jobStart:SparkListenerJobStart):Unit = {
     println("Job Start " + jobStart)
     super.onJobStart(jobStart)
   }
 
-  override def onJobEnd(jobEnd: SparkListenerJobEnd): Unit = {
+  override def onJobEnd(jobEnd:SparkListenerJobEnd):Unit = {
     println("Job End " + jobEnd)
     super.onJobEnd(jobEnd)
   }
 
-  override def onEnvironmentUpdate(environmentUpdate: SparkListenerEnvironmentUpdate): Unit = {
+  override def onEnvironmentUpdate(environmentUpdate:SparkListenerEnvironmentUpdate):Unit = {
     println("Environment Update ")
     super.onEnvironmentUpdate(environmentUpdate)
   }
 
-  override def onBlockManagerAdded(blockManagerAdded: SparkListenerBlockManagerAdded): Unit = {
+  override def onBlockManagerAdded(blockManagerAdded:SparkListenerBlockManagerAdded):Unit = {
     println("BlockManager Added " + blockManagerAdded)
     super.onBlockManagerAdded(blockManagerAdded)
   }
 
-  override def onBlockManagerRemoved(blockManagerRemoved: SparkListenerBlockManagerRemoved): Unit = {
+  override def onBlockManagerRemoved(blockManagerRemoved:SparkListenerBlockManagerRemoved):Unit = {
     println("BlockManager Removed " + blockManagerRemoved)
     super.onBlockManagerRemoved(blockManagerRemoved)
   }
 
-  override def onUnpersistRDD(unpersistRDD: SparkListenerUnpersistRDD): Unit = {
+  override def onUnpersistRDD(unpersistRDD:SparkListenerUnpersistRDD):Unit = {
     println("UnpersistRDD " + unpersistRDD)
     super.onUnpersistRDD(unpersistRDD)
   }
 
-  override def onApplicationStart(applicationStart: SparkListenerApplicationStart): Unit = {
+  override def onApplicationStart(applicationStart:SparkListenerApplicationStart):Unit = {
     println("Application Start " + applicationStart)
     super.onApplicationStart(applicationStart)
   }
 
-  override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd): Unit = {
+  override def onApplicationEnd(applicationEnd:SparkListenerApplicationEnd):Unit = {
     println("Application End " + applicationEnd)
     super.onApplicationEnd(applicationEnd)
   }
 
-  override def onExecutorMetricsUpdate(executorMetricsUpdate: SparkListenerExecutorMetricsUpdate): Unit = {
+  override def onExecutorMetricsUpdate(executorMetricsUpdate:SparkListenerExecutorMetricsUpdate):Unit = {
     println("ExecutorMetrics Update " + executorMetricsUpdate)
     super.onExecutorMetricsUpdate(executorMetricsUpdate)
   }
 
-//  override def onExecutorAdded(executorAdded: SparkListenerExecutorAdded): Unit = {
-//    println("Executor Added " + executorAdded)
-//    super.onExecutorAdded(executorAdded)
-//  }
-//
-//  override def onExecutorRemoved(executorRemoved: SparkListenerExecutorRemoved): Unit = {
-//    println("Executor Removed " + executorRemoved)
-//    super.onExecutorRemoved(executorRemoved)
-//  }
+  //  override def onExecutorAdded(executorAdded: SparkListenerExecutorAdded): Unit = {
+  //    println("Executor Added " + executorAdded)
+  //    super.onExecutorAdded(executorAdded)
+  //  }
+  //
+  //  override def onExecutorRemoved(executorRemoved: SparkListenerExecutorRemoved): Unit = {
+  //    println("Executor Removed " + executorRemoved)
+  //    super.onExecutorRemoved(executorRemoved)
+  //  }
 }

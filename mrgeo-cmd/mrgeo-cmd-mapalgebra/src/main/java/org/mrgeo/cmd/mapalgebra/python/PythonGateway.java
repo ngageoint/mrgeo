@@ -17,7 +17,6 @@
 package org.mrgeo.cmd.mapalgebra.python;
 
 import org.apache.commons.cli.*;
-import org.apache.commons.io.IOExceptionWithCause;
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.MrGeo;
@@ -26,14 +25,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import py4j.GatewayServer;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Semaphore;
 
 public class PythonGateway extends Command
 {
@@ -41,7 +39,7 @@ private static final Logger log = LoggerFactory.getLogger(PythonGateway.class);
 
 Queue<Integer> portQueue = null;
 
-public static Options createOptions()
+private static Options createOptions()
 {
   Options result = MrGeo.createOptions();
 
@@ -49,7 +47,8 @@ public static Options createOptions()
   port.setRequired(true);
   result.addOption(port);
 
-  Option portrange = new Option("pr", "port-range", true, "Port range for mail py4j communications (\"minport-maxport\")");
+  Option portrange =
+      new Option("pr", "port-range", true, "Port range for mail py4j communications (\"minport-maxport\")");
   portrange.setRequired(false);
   result.addOption(portrange);
 
@@ -110,7 +109,7 @@ public int run(final String[] args, final Configuration conf,
   }
   catch (ParseException e)
   {
-    e.printStackTrace();
+    log.error("Exception thrown", e);
     return -1;
   }
 }
@@ -133,12 +132,12 @@ private int remoteConnection(int listenPort)
   }
   catch (IOException e)
   {
-    log.error("Can not establish listening socket");
-    e.printStackTrace();
+    log.error("Can not establish listening socket {}", e);
     return -1;
   }
 }
 
+@SuppressWarnings("squid:S1313") // Hardcoded IP gets local hostname...
 private GatewayServer setupSingleServer(Socket clientSocket) throws IOException
 {
   // Start a GatewayServer on an ephemeral port, unless we have a port range
@@ -152,7 +151,7 @@ private GatewayServer setupSingleServer(Socket clientSocket) throws IOException
     }
     catch (NoSuchElementException e)
     {
-      throw new IOException("PythonGatewayServer is out of available ports, failing)");
+      throw new IOException("PythonGatewayServer is out of available ports, failing)", e);
     }
     try
     {
@@ -160,7 +159,7 @@ private GatewayServer setupSingleServer(Socket clientSocket) throws IOException
     }
     catch (NoSuchElementException e)
     {
-      throw new IOException("PythonGatewayServer is out of available ports, failing)");
+      throw new IOException("PythonGatewayServer is out of available ports, failing)", e);
     }
   }
 
@@ -207,7 +206,7 @@ private void setupThreadedServer(final Socket clientSocket) throws IOException
       catch (IOException e)
       {
         log.error("Error in thread: " + this.getName() + "(" + this.getId() + "), exiting");
-        e.printStackTrace();
+        log.error("Exception thrown", e);
       }
     }
   }.start();

@@ -39,111 +39,12 @@ import java.util.Scanner;
 
 public class FileSplit extends Splits
 {
-private static final String SPACER = " ";
 public static final String SPLIT_FILE = "splits";
 public static final String OLD_SPLIT_FILE = "splits.txt";
-
-private static final String VERSION="v3";
+private static final String SPACER = " ";
+private static final String VERSION = "v3";
 // negative magic number telling if the split is an old (version 2) splitfile.  v1 is deprecated
 private static final long VERSION_2 = -12345;
-
-
-public static class FileSplitInfo extends SplitInfo
-{
-  private String name;
-  private long startId;
-  private long endId;
-  private int partition;
-
-  // constructor for serialization
-  public FileSplitInfo() {}
-
-  public FileSplitInfo(long startId, long endId, String name, int partition)
-  {
-    this.name = name;
-    this.partition = partition;
-    this.startId = startId;
-    this.endId = endId;
-  }
-
-  @Override
-  boolean compareEQ(long tileId)
-  {
-    return tileId == this.endId;
-  }
-
-  @Override
-  boolean compareLE(long tileId)
-  {
-    return tileId <= this.endId;
-  }
-
-  @Override
-  boolean compareLT(long tileId)
-  {
-    return tileId < this.endId;
-  }
-
-  @Override
-  boolean compareGE(long tileId)
-  {
-    return tileId >= this.endId;
-  }
-
-  @Override
-  boolean compareGT(long tileId)
-  {
-    return tileId > this.endId;
-  }
-
-  public long getTileId()
-  {
-    return endId;
-  }
-  public int  getPartition() { return partition; }
-
-
-  public String getName()
-  {
-    return name;
-  }
-
-  public long getStartId()
-  {
-    return startId;
-  }
-
-  public long getEndId()
-  {
-    return endId;
-  }
-
-  public String toString()
-  {
-    return "startId = " + startId +
-        ", endId = " + endId +
-        ", name = " + name +
-        ", partition = " + partition;
-  }
-
-  @Override
-  public void writeExternal(ObjectOutput out) throws IOException
-  {
-    out.writeLong(startId);
-    out.writeLong(endId);
-    out.writeUTF(name);
-    out.writeInt(partition);
-  }
-
-  @Override
-  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
-  {
-    startId = in.readLong();
-    endId = in.readLong();
-    name = in.readUTF();
-    partition = in.readInt();
-  }
-}
 
 public void generateSplits(FileSplitInfo[] splits)
 {
@@ -194,7 +95,8 @@ public void generateSplits(Path parent, Configuration conf) throws IOException
       MapFile.Reader reader = createMapFileReader(conf, mapfile);
       TileIdWritable firstKey = (TileIdWritable) reader.getClosest(new TileIdWritable(0), val);
       TileIdWritable lastKey = (TileIdWritable) reader.getClosest(new TileIdWritable(Long.MAX_VALUE), val, true);
-      if (firstKey != null && lastKey != null) {
+      if (firstKey != null && lastKey != null)
+      {
         list.add(new FileSplit.FileSplitInfo(firstKey.get(), lastKey.get(), mapfile.getName(), partition));
       }
 
@@ -232,7 +134,7 @@ public String findSplitFile(Path parent) throws IOException
   throw new IOException("Split file not found: " + file.toString());
 }
 
-  @Override
+@Override
 public void generateSplits(SplitGenerator generator)
 {
   splits = generator.getSplits();
@@ -254,15 +156,17 @@ public void readSplits(InputStream stream) throws SplitException
       if (split == VERSION_2)
       {
         throw new SplitException("Old version 2 splits file, you need to convert it to version 3, " +
-                "this can be done by calling readSplits(path) instead of readSplits(stream)");
+            "this can be done by calling readSplits(path) instead of readSplits(stream)");
       }
-      else {
+      else
+      {
         throw new SplitException("Unrecognized splits");
       }
     }
   }
 }
 
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 public boolean isVersion2(Path splitsfile) throws IOException
 {
   if (!fileExists(splitsfile))
@@ -284,7 +188,6 @@ public boolean isVersion2(Path splitsfile) throws IOException
   }
 }
 
-
 public void readSplits(Path parent) throws IOException
 {
   if (isVersion2(new Path(parent, SPLIT_FILE)))
@@ -305,13 +208,13 @@ public void writeSplits(OutputStream stream) throws SplitException
   PrintWriter writer = new PrintWriter(stream);
   writer.println(VERSION);
   writer.println(splits.length);
-  for (SplitInfo split: splits)
+  for (SplitInfo split : splits)
   {
     writer.print(((FileSplitInfo) split).getStartId());
     writer.print(SPACER);
-    writer.print(((FileSplitInfo)split).getEndId());
+    writer.print(((FileSplitInfo) split).getEndId());
     writer.print(SPACER);
-    writer.print(((FileSplitInfo)split).getName());
+    writer.print(((FileSplitInfo) split).getName());
     writer.print(SPACER);
     writer.println(split.getPartition());
   }
@@ -323,7 +226,7 @@ public void writeSplits(Path parent) throws IOException
   writeSplits(getOutputStream(new Path(parent, SPLIT_FILE)));
 }
 
-  @Override
+@Override
 public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
 {
   int count = in.readInt();
@@ -336,49 +239,156 @@ public void readExternal(ObjectInput in) throws IOException, ClassNotFoundExcept
 
 }
 
-  protected MapFile.Reader createMapFileReader(Configuration conf, Path mapfile) throws IOException {
-    return new MapFile.Reader(mapfile, conf);
-  }
+protected MapFile.Reader createMapFileReader(Configuration conf, Path mapfile) throws IOException
+{
+  return new MapFile.Reader(mapfile, conf);
+}
 
-  protected FileSystem getFileSystem(Path parent) throws IOException {
-    return HadoopFileUtils.getFileSystem(parent);
-  }
+protected FileSystem getFileSystem(Path parent) throws IOException
+{
+  return HadoopFileUtils.getFileSystem(parent);
+}
 
-  protected boolean fileExists(Path file) throws IOException {
-    return HadoopFileUtils.exists(file);
-  }
+protected boolean fileExists(Path file) throws IOException
+{
+  return HadoopFileUtils.exists(file);
+}
 
-  protected InputStream getInputStream(Path path) throws IOException {
-    return getFileSystem(path).open(path);
-  }
+protected InputStream getInputStream(Path path) throws IOException
+{
+  return getFileSystem(path).open(path);
+}
 
-  protected OutputStream getOutputStream(Path path) throws IOException {
-    return getFileSystem(path).create(path);
-  }
+protected OutputStream getOutputStream(Path path) throws IOException
+{
+  return getFileSystem(path).create(path);
+}
 
-  private void readSplits(Scanner reader)
+private void readSplits(Scanner reader)
+{
+  int count = Integer.parseInt(reader.nextLine());
+  List<FileSplitInfo> splitsList = new ArrayList<FileSplitInfo>(count);
+
+  for (int i = 0; i < count; i++)
   {
-    int count = Integer.parseInt(reader.nextLine());
-    List<FileSplitInfo> splitsList = new ArrayList<FileSplitInfo>(count);
-
-    for (int i = 0; i < count; i++)
+    long startTileId = reader.nextLong();
+    long endTileId = reader.nextLong();
+    String name = reader.next();
+    int partition = reader.nextInt();
+    // There may be partitions with no tiles in them when ingested imagery has
+    // no data within the region of that particular split. We account for that
+    // by ignoring those empty partitions when reading the data so as not to
+    // waste time processing empty partitions. When there are no tiles in the
+    // partition, the startTileId will be greater than the endTileId.
+    if (startTileId <= endTileId)
     {
-      long startTileId = reader.nextLong();
-      long endTileId = reader.nextLong();
-      String name = reader.next();
-      int partition = reader.nextInt();
-      // There may be partitions with no tiles in them when ingested imagery has
-      // no data within the region of that particular split. We account for that
-      // by ignoring those empty partitions when reading the data so as not to
-      // waste time processing empty partitions. When there are no tiles in the
-      // partition, the startTileId will be greater than the endTileId.
-      if (startTileId <= endTileId)
-      {
-        splitsList.add(new FileSplitInfo(startTileId, endTileId, name, partition));
-      }
+      splitsList.add(new FileSplitInfo(startTileId, endTileId, name, partition));
     }
-    splits = new FileSplitInfo[splitsList.size()];
-    splitsList.toArray(splits);
   }
+  splits = new FileSplitInfo[splitsList.size()];
+  splitsList.toArray(splits);
+}
+
+public static class FileSplitInfo extends SplitInfo
+{
+  private String name;
+  private long startId;
+  private long endId;
+  private int partition;
+
+  // constructor for serialization
+  public FileSplitInfo()
+  {
+  }
+
+  public FileSplitInfo(long startId, long endId, String name, int partition)
+  {
+    this.name = name;
+    this.partition = partition;
+    this.startId = startId;
+    this.endId = endId;
+  }
+
+  public long getTileId()
+  {
+    return endId;
+  }
+
+  public int getPartition()
+  {
+    return partition;
+  }
+
+  public String getName()
+  {
+    return name;
+  }
+
+  public long getStartId()
+  {
+    return startId;
+  }
+
+  public long getEndId()
+  {
+    return endId;
+  }
+
+  public String toString()
+  {
+    return "startId = " + startId +
+        ", endId = " + endId +
+        ", name = " + name +
+        ", partition = " + partition;
+  }
+
+  @Override
+  public void writeExternal(ObjectOutput out) throws IOException
+  {
+    out.writeLong(startId);
+    out.writeLong(endId);
+    out.writeUTF(name);
+    out.writeInt(partition);
+  }
+
+  @Override
+  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
+  {
+    startId = in.readLong();
+    endId = in.readLong();
+    name = in.readUTF();
+    partition = in.readInt();
+  }
+
+  @Override
+  boolean compareEQ(long tileId)
+  {
+    return tileId == this.endId;
+  }
+
+  @Override
+  boolean compareLE(long tileId)
+  {
+    return tileId <= this.endId;
+  }
+
+  @Override
+  boolean compareLT(long tileId)
+  {
+    return tileId < this.endId;
+  }
+
+  @Override
+  boolean compareGE(long tileId)
+  {
+    return tileId >= this.endId;
+  }
+
+  @Override
+  boolean compareGT(long tileId)
+  {
+    return tileId > this.endId;
+  }
+}
 
 }

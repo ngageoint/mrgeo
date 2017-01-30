@@ -16,32 +16,33 @@
 
 package org.mrgeo.mapalgebra
 
-import java.io.{File, IOException}
+import java.io.File
 
 import junit.framework.Assert
 import org.apache.hadoop.fs.Path
-import org.junit.{BeforeClass, Test}
 import org.junit.experimental.categories.Category
+import org.junit.{BeforeClass, Test}
 import org.mrgeo.core.Defs
-import org.mrgeo.data.{ProviderProperties, DataProviderFactory}
+import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
 import org.mrgeo.junit.{IntegrationTest, UnitTest}
 import org.mrgeo.mapalgebra.parser.ParserException
-import org.mrgeo.test.{TestUtils, MapOpTestUtils, LocalRunnerTest}
+import org.mrgeo.test.{LocalRunnerTest, MapOpTestUtils}
 import org.scalatest.junit.AssertionsForJUnit
 
-object QuantilesMapOpTest
-{
-  def EPSILON = 1e-8
-  def SAMPLED_EPSILON = 1.0
-  def smallElevationName: String = "small-elevation-nopyramids"
-  var smallElevation: String = Defs.INPUT + smallElevationName
-  var smallElevationPath: Path = null
+@SuppressWarnings(Array("all")) // Test code, not included in production
+object QuantilesMapOpTest {
+  var smallElevation:String = Defs.INPUT + smallElevationName
+  var smallElevationPath:Path = _
+  var testUtils:MapOpTestUtils = _
 
-  var testUtils: MapOpTestUtils = null
+  def EPSILON = 1e-8
+
+  def SAMPLED_EPSILON = 1.0
+
+  def smallElevationName = "small-elevation-nopyramids"
 
   @BeforeClass
-  def init()
-  {
+  def init() {
     testUtils = new MapOpTestUtils(classOf[QuantilesMapOpTest])
 
     var file = new File(smallElevation)
@@ -50,20 +51,19 @@ object QuantilesMapOpTest
   }
 }
 
-class QuantilesMapOpTest extends LocalRunnerTest with AssertionsForJUnit
-{
+class QuantilesMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
   @Test
-  @Category(Array[Class[_]] { classOf[UnitTest] })
-  def testNoArgs() : Unit =
-  {
+  @Category(Array[Class[_]] {
+    classOf[UnitTest]
+  })
+  def testNoArgs():Unit = {
     val exp = s"quantiles()"
-    try
-    {
+    try {
       MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""))
       Assert.fail("Should have gotten a ParserException")
     }
     catch {
-      case e: ParserException => {
+      case e:ParserException => {
         // Verify the content of the error message
         Assert.assertTrue(e.getMessage.contains("quantiles usage"))
       }
@@ -71,17 +71,17 @@ class QuantilesMapOpTest extends LocalRunnerTest with AssertionsForJUnit
   }
 
   @Test
-  @Category(Array[Class[_]] { classOf[UnitTest] })
-  def testMissingNumQuantileArg() : Unit =
-  {
+  @Category(Array[Class[_]] {
+    classOf[UnitTest]
+  })
+  def testMissingNumQuantileArg():Unit = {
     val exp = s"quantiles([${QuantilesMapOpTest.smallElevation}])"
-    try
-    {
+    try {
       MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""))
       Assert.fail("Should have gotten a ParserException")
     }
     catch {
-      case e: ParserException => {
+      case e:ParserException => {
         // Verify the content of the error message
         Assert.assertTrue(e.getMessage.contains("quantiles usage"))
       }
@@ -89,17 +89,17 @@ class QuantilesMapOpTest extends LocalRunnerTest with AssertionsForJUnit
   }
 
   @Test
-  @Category(Array[Class[_]] { classOf[UnitTest] })
-  def testMissingImageArg() : Unit =
-  {
+  @Category(Array[Class[_]] {
+    classOf[UnitTest]
+  })
+  def testMissingImageArg():Unit = {
     val exp = s"quantiles(4)"
-    try
-    {
+    try {
       MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""))
       Assert.fail("Should have gotten a ParserException")
     }
     catch {
-      case e: ParserException => {
+      case e:ParserException => {
         // Verify the content of the error message
         Assert.assertTrue(e.getMessage.contains("quantiles usage"))
       }
@@ -107,17 +107,17 @@ class QuantilesMapOpTest extends LocalRunnerTest with AssertionsForJUnit
   }
 
   @Test
-  @Category(Array[Class[_]] { classOf[UnitTest] })
-  def testBadNumQuantilesValue() : Unit =
-  {
+  @Category(Array[Class[_]] {
+    classOf[UnitTest]
+  })
+  def testBadNumQuantilesValue():Unit = {
     val exp = s"""quantiles([${QuantilesMapOpTest.smallElevation}], \"bad-arg\")"""
-    try
-    {
+    try {
       MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""))
       Assert.fail("Should have gotten a ParserException")
     }
     catch {
-      case e: ParserException => {
+      case e:ParserException => {
         // Verify the content of the error message
         Assert.assertTrue(e.getMessage.contains("The value for the numQuantiles parameter must be an integer"))
       }
@@ -125,17 +125,17 @@ class QuantilesMapOpTest extends LocalRunnerTest with AssertionsForJUnit
   }
 
   @Test
-  @Category(Array[Class[_]] { classOf[UnitTest] })
-  def testBadFractionValue() : Unit =
-  {
+  @Category(Array[Class[_]] {
+    classOf[UnitTest]
+  })
+  def testBadFractionValue():Unit = {
     val exp = s"""quantiles([${QuantilesMapOpTest.smallElevation}], 10, \"bad-arg\")"""
-    try
-    {
+    try {
       MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""))
       Assert.fail("Should have gotten a ParserException")
     }
     catch {
-      case e: ParserException => {
+      case e:ParserException => {
         // Verify the content of the error message
         Assert.assertTrue(e.getMessage.contains("The value for the fraction parameter must be a number"))
       }
@@ -143,17 +143,17 @@ class QuantilesMapOpTest extends LocalRunnerTest with AssertionsForJUnit
   }
 
   @Test
-  @Category(Array[Class[_]] { classOf[UnitTest] })
-  def testBadImageArg() : Unit =
-  {
+  @Category(Array[Class[_]] {
+    classOf[UnitTest]
+  })
+  def testBadImageArg():Unit = {
     val exp = "quantiles(\"abc\", 4)"
-    try
-    {
+    try {
       MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""))
       Assert.fail("Should have gotten a ParserException")
     }
     catch {
-      case e: ParserException => {
+      case e:ParserException => {
         // Verify the content of the error message
         Assert.assertTrue("Unexpected message: " + e.getMessage,
           e.getMessage.contains("is not a raster input"))
@@ -162,15 +162,17 @@ class QuantilesMapOpTest extends LocalRunnerTest with AssertionsForJUnit
   }
 
   @Test
-  @Category(Array[Class[_]] { classOf[IntegrationTest] })
-  def testNumQuantilesTooBig() : Unit =
-  {
+  @Category(Array[Class[_]] {
+    classOf[IntegrationTest]
+  })
+  def testNumQuantilesTooBig():Unit = {
     try {
       val exp = s"quantiles([${QuantilesMapOpTest.smallElevation}], 2000000)"
       QuantilesMapOpTest.testUtils.runMapAlgebraExpression(conf,
         testname.getMethodName, exp)
-    } catch {
-      case e: ParserException => {
+    }
+    catch {
+      case e:ParserException => {
         // Verify the content of the error message
         Assert.assertTrue("Unexpected message: " + e.getMessage,
           e.getMessage.contains("Unable to compute quantiles because there are only"))
@@ -179,15 +181,17 @@ class QuantilesMapOpTest extends LocalRunnerTest with AssertionsForJUnit
   }
 
   @Test
-  @Category(Array[Class[_]] { classOf[IntegrationTest] })
-  def testFractionNumQuantilesTooBig() : Unit =
-  {
+  @Category(Array[Class[_]] {
+    classOf[IntegrationTest]
+  })
+  def testFractionNumQuantilesTooBig():Unit = {
     try {
       val exp = s"quantiles([${QuantilesMapOpTest.smallElevation}], 20000, 0.01)"
       QuantilesMapOpTest.testUtils.runMapAlgebraExpression(conf,
         testname.getMethodName, exp)
-    } catch {
-      case e: ParserException => {
+    }
+    catch {
+      case e:ParserException => {
         // Verify the content of the error message
         Assert.assertTrue("Unexpected message: " + e.getMessage,
           e.getMessage.contains("Unable to compute quantiles because there are only"))
@@ -196,9 +200,10 @@ class QuantilesMapOpTest extends LocalRunnerTest with AssertionsForJUnit
   }
 
   @Test
-  @Category(Array[Class[_]] { classOf[IntegrationTest] })
-  def testAllPixelsQuartiles() : Unit =
-  {
+  @Category(Array[Class[_]] {
+    classOf[IntegrationTest]
+  })
+  def testAllPixelsQuartiles():Unit = {
     QuantilesMapOpTest.testUtils.runMapAlgebraExpression(this.conf, testname.getMethodName,
       String.format("quantiles([%s], 4)", QuantilesMapOpTest.smallElevation))
     // Validate the quantiles in the resulting metadata
@@ -217,9 +222,10 @@ class QuantilesMapOpTest extends LocalRunnerTest with AssertionsForJUnit
   }
 
   @Test
-  @Category(Array[Class[_]] { classOf[IntegrationTest] })
-  def testAllPixelsDeciles() : Unit =
-  {
+  @Category(Array[Class[_]] {
+    classOf[IntegrationTest]
+  })
+  def testAllPixelsDeciles():Unit = {
     QuantilesMapOpTest.testUtils.runMapAlgebraExpression(this.conf, testname.getMethodName,
       String.format("quantiles([%s], 10)", QuantilesMapOpTest.smallElevation))
     // Validate the quantiles in the resulting metadata
@@ -244,9 +250,10 @@ class QuantilesMapOpTest extends LocalRunnerTest with AssertionsForJUnit
   }
 
   @Test
-  @Category(Array[Class[_]] { classOf[IntegrationTest] })
-  def testRandomPixelsQuartiles() : Unit =
-  {
+  @Category(Array[Class[_]] {
+    classOf[IntegrationTest]
+  })
+  def testRandomPixelsQuartiles():Unit = {
     QuantilesMapOpTest.testUtils.runMapAlgebraExpression(this.conf, testname.getMethodName,
       String.format("quantiles([%s], 4, 0.5)", QuantilesMapOpTest.smallElevation))
     // Validate the quantiles in the resulting metadata
@@ -259,22 +266,13 @@ class QuantilesMapOpTest extends LocalRunnerTest with AssertionsForJUnit
     val metadata = metadataReader.read()
     Assert.assertNotNull("Unable to read metadata", metadata)
     val quantiles = metadata.getQuantiles(0)
-    // Make sure each quantile value is different than what would be expected
-    // from the quantile computation based on the full set of data. But they should
-    // at least be within a close range of those values.
-    // NOTE: theoretically, the SAMPLED_EPSILON should be calculated using some
-    // statistical principals.
-    validateQuantileEstimate(67.483246, 0, quantiles)
+    // Check to see if the quantile values are at least close to the values that would
+    // be returned when all of the pixels are used in the quantiles computation. We
+    // may need to revisit this check if we start to see this test fail because the
+    // resulting quantiles will be different every time the test is run (since it
+    // used random pixel values).
     Assert.assertEquals(67.483246, quantiles(0), QuantilesMapOpTest.SAMPLED_EPSILON)
-    validateQuantileEstimate(87.27524, 1, quantiles)
     Assert.assertEquals(87.27524, quantiles(1), QuantilesMapOpTest.SAMPLED_EPSILON)
-    validateQuantileEstimate(110.95636, 2, quantiles)
     Assert.assertEquals(110.95636, quantiles(2), QuantilesMapOpTest.SAMPLED_EPSILON)
-  }
-
-  private def validateQuantileEstimate(exactValue: Double, quantile:Int, quantiles: Array[Double]): Unit = {
-    Assert.assertTrue(s"Quantile ${quantile + 1} should not match the exact quantile value",
-      ((quantiles(quantile) < (exactValue - QuantilesMapOpTest.EPSILON)) ||
-        (quantiles(quantile) > (exactValue + QuantilesMapOpTest.EPSILON))))
   }
 }

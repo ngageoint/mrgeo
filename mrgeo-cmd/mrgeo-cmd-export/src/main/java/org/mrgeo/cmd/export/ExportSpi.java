@@ -24,22 +24,22 @@ import org.mrgeo.cmd.CommandSpi;
 public class ExportSpi extends CommandSpi
 {
 
-  @Override
-  public Class<? extends Command> getCommandClass()
-  {
-    return Export.class;
-  }
+@Override
+public Class<? extends Command> getCommandClass()
+{
+  return Export.class;
+}
 
-  @Override
-  public String getCommandName()
-  {
-    return "export";
-  }
+@Override
+public String getCommandName()
+{
+  return "export";
+}
 
-  @Override
-  public String getDescription()
-  {
-    return "Export a MrsPyramid image to a geotiff";
-  }
-  
+@Override
+public String getDescription()
+{
+  return "Export a MrsPyramid image";
+}
+
 }

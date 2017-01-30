@@ -1,10 +1,9 @@
-
 from unittest import TestCase
+
 from pymrgeo.mrgeo import MrGeo
 
 
 class MrGeoStartTests(TestCase):
-
     mrgeo = None
 
     @classmethod
@@ -56,4 +55,3 @@ class MrGeoStartTests(TestCase):
         images = self.mrgeo.create_points([])
 
         self.assertEqual(images, None, "Should be None")
-

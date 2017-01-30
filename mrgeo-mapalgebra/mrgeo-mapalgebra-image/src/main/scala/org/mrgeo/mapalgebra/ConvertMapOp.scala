@@ -21,41 +21,40 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.utils.{FloatUtils, SparkUtils}
 import org.mrgeo.utils.MrGeoImplicits._
+import org.mrgeo.utils.{FloatUtils, SparkUtils}
 
 @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
 object ConvertMapOp extends MapOpRegistrar {
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("convert")
   }
 
-  def create(raster: RasterMapOp, toType: String, conversionMethod: String = "truncate") =
+  def create(raster:RasterMapOp, toType:String, conversionMethod:String = "truncate") =
     new ConvertMapOp(Some(raster), Some(toType), Some(conversionMethod))
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new ConvertMapOp(node, variables)
 
-  def truncateValue(value: Double, oldMin: Double, oldMax: Double, toType: Int): Double =
-  {
+  def truncateValue(value:Double, oldMin:Double, oldMax:Double, toType:Int):Double = {
     toType match {
       // We want values from 0 .. 254 rather than -127 .. 127
       case DataBuffer.TYPE_BYTE => Math.max(Math.min(value, 254.0), 0.0)
       case DataBuffer.TYPE_SHORT => Math.max(Math.min(value, Short.MaxValue.toDouble), (Short.MinValue + 1).toDouble)
       case DataBuffer.TYPE_INT => Math.max(Math.min(value, Int.MaxValue.toDouble), (Int.MinValue + 1).toDouble)
       case DataBuffer.TYPE_FLOAT => Math.max(Math.min(value, Float.MaxValue.toDouble), Float.MinValue.toDouble)
-      case DataBuffer.TYPE_DOUBLE => Math.max(Math.min(value, Double.MaxValue), Double.MinValue) // should not get called
+      case DataBuffer.TYPE_DOUBLE => Math
+          .max(Math.min(value, Double.MaxValue), Double.MinValue) // should not get called
     }
   }
 
-  def modValue(value: Double, oldMin: Double, oldMax: Double, toType: Int): Double =
-  {
+  def modValue(value:Double, oldMin:Double, oldMax:Double, toType:Int):Double = {
     toType match {
       // We want values from 0 .. 255 rather than -127 .. 127
       case DataBuffer.TYPE_BYTE => value % 254.0
@@ -66,8 +65,7 @@ object ConvertMapOp extends MapOpRegistrar {
     }
   }
 
-  def fitValue(value: Double, oldMin: Double, oldMax: Double, toType: Int): Double =
-  {
+  def fitValue(value:Double, oldMin:Double, oldMax:Double, toType:Int):Double = {
     val range = toType match {
       // We want values from 0 .. 254 rather than -127 .. 127
       case DataBuffer.TYPE_BYTE => (0.0, 254.0)
@@ -97,10 +95,10 @@ object ConvertMapOp extends MapOpRegistrar {
     * @param tileType
     * @return
     */
-  def computeOutputNodata(meta: MrsPyramidMetadata, conversionMethod: String,
-                          tileType: String): Array[Number] = {
+  def computeOutputNodata(meta:MrsPyramidMetadata, conversionMethod:String,
+                          tileType:String):Array[Number] = {
     val newNodata = new Array[Number](meta.getBands)
-    var b: Int = 0
+    var b:Int = 0
     while (b < newNodata.length) {
       val inputNodata = meta.getDefaultValue(b)
       newNodata(b) = tileType.toLowerCase() match {
@@ -130,9 +128,9 @@ object ConvertMapOp extends MapOpRegistrar {
           }
         case "int" =>
           if (conversionMethod.equalsIgnoreCase("truncate")) {
-              if (inputNodata >= Int.MinValue && inputNodata <= Int.MaxValue) {
-                inputNodata.toInt.toDouble
-              }
+            if (inputNodata >= Int.MinValue && inputNodata <= Int.MaxValue) {
+              inputNodata.toInt.toDouble
+            }
             else {
               Int.MinValue.toDouble
             }
@@ -151,8 +149,13 @@ object ConvertMapOp extends MapOpRegistrar {
 
 @SuppressFBWarnings(value = Array("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"), justification = "Scala generated code")
 class ConvertMapOp extends RasterMapOp with Externalizable {
+  private var rasterRDD:Option[RasterRDD] = None
+  private var inputMapOp:Option[RasterMapOp] = None
+  private var toType:Option[String] = None
+  private var conversionMethod:Option[String] = None
+
   // Available tile types in increasing order of range
-  def tileTypeSizeOrdering = Array[Int] (
+  def tileTypeSizeOrdering = Array[Int](
     DataBuffer.TYPE_BYTE,
     DataBuffer.TYPE_SHORT,
     DataBuffer.TYPE_USHORT,
@@ -160,23 +163,8 @@ class ConvertMapOp extends RasterMapOp with Externalizable {
     DataBuffer.TYPE_FLOAT,
     DataBuffer.TYPE_DOUBLE
   )
-  private var rasterRDD: Option[RasterRDD] = None
 
-  private var inputMapOp: Option[RasterMapOp] = None
-  private var toType: Option[String] = None
-  private var conversionMethod: Option[String] = None
-
-  private[mapalgebra] def this(raster:Option[RasterMapOp], toType: Option[String],
-    conversionMethod:Option[String]) =
-  {
-    this()
-
-    this.inputMapOp = raster
-    this.toType = toType
-    this.conversionMethod = conversionMethod
-  }
-
-  def this(node: ParserNode, variables: String => Option[ParserNode]) {
+  def this(node:ParserNode, variables:String => Option[ParserNode]) {
     this()
 
     if ((node.getNumChildren < 2) || (node.getNumChildren > 3)) {
@@ -200,7 +188,7 @@ class ConvertMapOp extends RasterMapOp with Externalizable {
       conversionMethod match {
         case Some(cm) => {
           cm.toLowerCase match {
-            case "truncate" | "mod" | "fit" => { }
+            case "truncate" | "mod" | "fit" => {}
             case _ => throw new ParserException("conversionMethod must be truncate, mod or fit")
           }
         }
@@ -212,16 +200,17 @@ class ConvertMapOp extends RasterMapOp with Externalizable {
     }
   }
 
-  override def rdd(): Option[RasterRDD] = {
+  override def rdd():Option[RasterRDD] = {
     rasterRDD
   }
 
-  override def execute(context: SparkContext): Boolean = {
-    val input:RasterMapOp = inputMapOp getOrElse(throw new IOException("Input MapOp not valid!"))
-    val tt = toType getOrElse(throw new IOException("toType not valid!"))
-    val cm = conversionMethod getOrElse(throw new IOException("conversionMethod not valid!"))
+  override def execute(context:SparkContext):Boolean = {
+    val input:RasterMapOp = inputMapOp getOrElse (throw new IOException("Input MapOp not valid!"))
+    val tt = toType getOrElse (throw new IOException("toType not valid!"))
+    val cm = conversionMethod getOrElse (throw new IOException("conversionMethod not valid!"))
 
-    val meta = input.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
+    val meta = input.metadata() getOrElse
+               (throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
 
     val newTileType = tt.toLowerCase() match {
       case "byte" => DataBuffer.TYPE_BYTE
@@ -245,8 +234,8 @@ class ConvertMapOp extends RasterMapOp with Externalizable {
         }
       }
       // Perform conversion work
-      val rdd = input.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " +
-        inputMapOp.getClass.getName))
+      val rdd = input.rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " +
+                                                             inputMapOp.getClass.getName))
       val newNodata = ConvertMapOp.computeOutputNodata(meta, cm, tt)
       // For performance, pre-compute whether each band's nodata value is NaN or not
       val oldNodata = meta.getDefaultValues
@@ -260,8 +249,8 @@ class ConvertMapOp extends RasterMapOp with Externalizable {
           meta.getDefaultValues)
       }
       val result = rdd.map(U => {
-        val src = RasterWritable.toRaster(U._2)
-        val dst = RasterUtils.createEmptyRaster(meta.getTilesize, meta.getTilesize, meta.getBands,
+        val src = RasterWritable.toMrGeoRaster(U._2)
+        val dst = MrGeoRaster.createEmptyRaster(meta.getTilesize, meta.getTilesize, meta.getBands,
           newTileType, newNodata)
         val converter = cm match {
           case "truncate" => ConvertMapOp.truncateValue(_, _, _, _)
@@ -269,12 +258,15 @@ class ConvertMapOp extends RasterMapOp with Externalizable {
           case "fit" => ConvertMapOp.fitValue(_, _, _, _)
         }
         var py = 0
-        while (py < src.getHeight) {
+        val h = src.height()
+        val w = src.width()
+        val bands = src.bands()
+        while (py < h) {
           var px = 0
-          while (px < src.getWidth) {
-            var b: Int = 0
-            while (b < src.getNumBands) {
-              val srcVal = src.getSampleDouble(px, py, b)
+          while (px < w) {
+            var b:Int = 0
+            while (b < bands) {
+              val srcVal = src.getPixelDouble(px, py, b)
               val dstVal = if (oldNodataIsNan(b)) {
                 if (java.lang.Double.isNaN(srcVal)) {
                   newNodata(b).doubleValue()
@@ -296,7 +288,7 @@ class ConvertMapOp extends RasterMapOp with Externalizable {
                   converter(srcVal, stats(b).min, stats(b).max, newTileType)
                 }
               }
-              dst.setSample(px, py, b, dstVal)
+              dst.setPixel(px, py, b, dstVal)
               b += 1
             }
             px += 1
@@ -312,18 +304,27 @@ class ConvertMapOp extends RasterMapOp with Externalizable {
     true
   }
 
-//  override def registerClasses(): Array[Class[_]] = {
-//  }
-
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = {
+  override def setup(job:JobArguments, conf:SparkConf):Boolean = {
     true
   }
 
-  override def teardown(job: JobArguments, conf: SparkConf): Boolean = {
+  //  override def registerClasses(): Array[Class[_]] = {
+  //  }
+
+  override def teardown(job:JobArguments, conf:SparkConf):Boolean = {
     true
   }
 
-  override def readExternal(in: ObjectInput): Unit = {}
+  override def readExternal(in:ObjectInput):Unit = {}
 
-  override def writeExternal(out: ObjectOutput): Unit = {}
+  override def writeExternal(out:ObjectOutput):Unit = {}
+
+  private[mapalgebra] def this(raster:Option[RasterMapOp], toType:Option[String],
+                               conversionMethod:Option[String]) = {
+    this()
+
+    this.inputMapOp = raster
+    this.toType = toType
+    this.conversionMethod = conversionMethod
+  }
 }

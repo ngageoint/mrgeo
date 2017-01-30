@@ -25,31 +25,29 @@ import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.job.{JobArguments, MrGeoJob}
 import org.mrgeo.utils.{Logging, SparkUtils}
 
-@SuppressFBWarnings(value=Array("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD"), justification = "Scala generated code")
+@SuppressFBWarnings(value = Array("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD"), justification = "Scala generated code")
 object MrGeoYarnJob extends Logging {
 
-  def main(args:Array[String]): Unit = {
+  def main(args:Array[String]):Unit = {
     logInfo("Running a MrGeoYarnJob!")
 
     logInfo("Job Arguments: ")
     args.foreach(p => logInfo("   " + p))
 
-    val job: JobArguments = new JobArguments(args)
+    val job:JobArguments = new JobArguments(args)
 
     // if we have an argfile, read the parameters and put them into the job
-    if (job.hasSetting(MrGeoYarnDriver.ARGFILE))
-    {
+    if (job.hasSetting(MrGeoYarnDriver.ARGFILE)) {
       val filename = new Path(job.getSetting(MrGeoYarnDriver.ARGFILE))
 
       val stream = HadoopFileUtils.open(filename)
-      try
-      {
+      try {
         val isr = new InputStreamReader(stream)
         try {
           val input = new BufferedReader(isr)
           try {
-            var key: String = ""
-            var value: String = ""
+            var key:String = ""
+            var value:String = ""
 
             key = input.readLine()
             value = input.readLine()
@@ -94,13 +92,11 @@ object MrGeoYarnJob extends Logging {
             input.close()
           }
         }
-        finally
-        {
+        finally {
           isr.close()
         }
       }
-      finally
-      {
+      finally {
         if (stream != null) {
           stream.close()
         }
@@ -110,12 +106,12 @@ object MrGeoYarnJob extends Logging {
     }
 
     if (job.params.contains(MrGeoYarnDriver.DRIVER)) {
-      val driver: String = job.params.getOrElseUpdate(MrGeoYarnDriver.DRIVER, "")
+      val driver:String = job.params.getOrElseUpdate(MrGeoYarnDriver.DRIVER, "")
 
       val clazz = getClass.getClassLoader.loadClass(driver)
       if (clazz != null) {
         logInfo("Found MrGeo driver: " + driver)
-        val mrgeo: MrGeoJob = clazz.newInstance().asInstanceOf[MrGeoJob]
+        val mrgeo:MrGeoJob = clazz.newInstance().asInstanceOf[MrGeoJob]
 
         // set all the spark settings back...
         val conf = SparkUtils.getConfiguration
@@ -126,7 +122,9 @@ object MrGeoYarnJob extends Logging {
         logInfo("Setting up job: " + job.name)
         if (mrgeo.setup(job, conf)) {
           logInfo("SparkConf parameters")
-          conf.getAll.foreach(kv => {logDebug("  " + kv._1 + ": " + kv._2)})
+          conf.getAll.foreach(kv => {
+            logDebug("  " + kv._1 + ": " + kv._2)
+          })
 
           val context = SparkContext.getOrCreate(conf)
 

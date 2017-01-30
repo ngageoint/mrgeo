@@ -10,11 +10,35 @@ import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.{MapAlgebra, MapOp}
 
-@SuppressFBWarnings(value=Array("UPM_UNCALLED_PRIVATE_METHOD"), justification = "Scala constant")
+@SuppressFBWarnings(value = Array("UPM_UNCALLED_PRIVATE_METHOD"), justification = "Scala constant")
 class SaveVectorMapOp extends VectorMapOp with Externalizable {
-  private var vectorRDD: Option[VectorRDD] = None
-  private var input: Option[VectorMapOp] = None
+  var providerProperties:ProviderProperties = null
+  private var vectorRDD:Option[VectorRDD] = None
+  private var input:Option[VectorMapOp] = None
   private var output:String = null
+
+  override def rdd():Option[VectorRDD] = vectorRDD
+
+  override def execute(context:SparkContext):Boolean = {
+    input match {
+      case Some(v) =>
+        v.save(output, providerProperties, context)
+      case None => throw new IOException("Error saving vector")
+    }
+
+    true
+  }
+
+  override def setup(job:JobArguments, conf:SparkConf):Boolean = {
+    providerProperties = ProviderProperties.fromDelimitedString(job.getSetting(MapAlgebra.ProviderProperties, ""))
+    true
+  }
+
+  override def teardown(job:JobArguments, conf:SparkConf):Boolean = true
+
+  override def readExternal(in:ObjectInput):Unit = {}
+
+  override def writeExternal(out:ObjectOutput):Unit = {}
 
   private[mapalgebra] def this(inputMapOp:Option[VectorMapOp], name:String) = {
     this()
@@ -23,7 +47,7 @@ class SaveVectorMapOp extends VectorMapOp with Externalizable {
     output = name
   }
 
-  private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
+  private[mapalgebra] def this(node:ParserNode, variables:String => Option[ParserNode]) = {
     this()
 
     if (node.getNumChildren != 2) {
@@ -37,28 +61,5 @@ class SaveVectorMapOp extends VectorMapOp with Externalizable {
     }
 
   }
-
-  override def rdd(): Option[VectorRDD] = vectorRDD
-
-  override def execute(context: SparkContext): Boolean = {
-    input match {
-      case Some(v) =>
-        v.save(output, providerProperties, context)
-      case None => throw new IOException("Error saving vector")
-    }
-
-    true
-  }
-
-  var providerProperties:ProviderProperties = null
-
-  override def setup(job: JobArguments, conf:SparkConf): Boolean = {
-    providerProperties = ProviderProperties.fromDelimitedString(job.getSetting(MapAlgebra.ProviderProperties, ""))
-    true
-  }
-
-  override def teardown(job: JobArguments, conf:SparkConf): Boolean = true
-  override def readExternal(in: ObjectInput): Unit = {}
-  override def writeExternal(out: ObjectOutput): Unit = {}
 
 }

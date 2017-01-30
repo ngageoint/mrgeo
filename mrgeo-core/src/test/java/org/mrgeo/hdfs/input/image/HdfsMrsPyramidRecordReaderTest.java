@@ -20,52 +20,56 @@ import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 
 import java.io.IOException;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-/**
- * Created by ericwood on 6/10/16.
- */
-public class HdfsMrsPyramidRecordReaderTest {
+@SuppressWarnings("all") // test code, not included in production
+public class HdfsMrsPyramidRecordReaderTest
+{
+private TaskAttemptContext mockContext;
+private SequenceFile.Reader mockReader;
+private Configuration mockConfig;
+private TiledInputSplit mockTiledInputSplit;
+private HdfsMrsPyramidRecordReader subject;
+private TileIdWritable mockTileId;
+private RasterWritable mockRaster;
+private FileSplit mockFileSplit;
+private Path mockPath;
+private TileIdWritable[] tileIds = {
+    new TileIdWritable(1L),
+    new TileIdWritable(2L),
+    new TileIdWritable(3L)
+};
+private RasterWritable[] rasters = {
+    RasterWritable.fromBytes("ABCD".getBytes()),
+    RasterWritable.fromBytes("EFGH".getBytes()),
+    RasterWritable.fromBytes("IJKL".getBytes())
+};
 
 
+@Before
+public void setUp() throws Exception
+{
 
-    private TaskAttemptContext mockContext;
-    private SequenceFile.Reader mockReader;
-    private Configuration mockConfig;
-    private TiledInputSplit mockTiledInputSplit;
-    private HdfsMrsPyramidRecordReader subject;
-    private TileIdWritable mockTileId;
-    private RasterWritable mockRaster;
-    private FileSplit mockFileSplit;
-    private Path mockPath;
-    private TileIdWritable[] tileIds = {new TileIdWritable(1L), new TileIdWritable(2L), new TileIdWritable(3L)};
-    private RasterWritable[] rasters = {new RasterWritable("AB".getBytes()),
-                                        new RasterWritable("CD".getBytes()),
-                                        new RasterWritable("EF".getBytes())};
+  // Create Mocks
+  mockContext = new TaskAttemptContextBuilder().configuration(
+      new ConfigurationBuilder().build()
+  ).build();
 
+  mockTiledInputSplit = new TiledInputSplitBuilder().wrappedSplit(
+      new FileSplitBuilder().path(
+          new PathBuilder().fileSystem(
+              new FileSystemBuilder().build())
+              .build())
+          .build())
+      .build();
 
-    @Before
-    public void setUp() throws Exception {
-        // Create Mocks
-        mockContext = new TaskAttemptContextBuilder().configuration(
-                new ConfigurationBuilder().build()
-        ).build();
-
-        mockTiledInputSplit = new TiledInputSplitBuilder().wrappedSplit(
-                new FileSplitBuilder().path(
-                        new PathBuilder().fileSystem(
-                                new FileSystemBuilder().build())
-                        .build())
-                .build())
-        .build();
-
-        mockReader = new SequenceFileReaderBuilder()
-                .keyClass(TileIdWritable.class)
-                .valueClass(RasterWritable.class)
-                .keys(tileIds)
-                .values(rasters)
-        .build();
+  mockReader = new SequenceFileReaderBuilder()
+      .keyClass(TileIdWritable.class)
+      .valueClass(RasterWritable.class)
+      .keys(tileIds)
+      .values(rasters)
+      .build();
 
 //        mockTiledInputSplit = mock(TiledInputSplit.class);
 //        mockContext = mock(TaskAttemptContext.class);
@@ -76,52 +80,73 @@ public class HdfsMrsPyramidRecordReaderTest {
 //        mockPath = mock(Path.class);
 //        mockFileSystem = mock(FileSystem.class);
 
-        // Instance under test
-        subject = new HdfsMrsPyramidRecordReader(new HdfsMrsPyramidRecordReader.ReaderFactory() {
-            public SequenceFile.Reader createReader(FileSystem fs, Path path, Configuration config) {
-                return mockReader;
-            }
-        });
-
-        subject.initialize(mockTiledInputSplit, mockContext);
-
+  // Instance under test
+  subject = new HdfsMrsPyramidRecordReader(new HdfsMrsPyramidRecordReader.ReaderFactory()
+  {
+    public SequenceFile.Reader createReader(FileSystem fs, Path path, Configuration config)
+    {
+      return mockReader;
     }
+  });
 
-    private void setupTiledInputSplit(long startTileId, long endTileId) {
-        when(mockTiledInputSplit.getStartTileId()).thenReturn(startTileId);
-        when(mockTiledInputSplit.getEndTileId()).thenReturn(endTileId);
+  subject.initialize(mockTiledInputSplit, mockContext);
+
+}
+
+@After
+public void tearDown() throws Exception
+{
+
+}
+
+@Test
+@Category(UnitTest.class)
+public void getProgress() throws Exception
+{
+
+}
+
+@Test
+@Category(UnitTest.class)
+public void close() throws Exception
+{
+
+}
+
+@Test
+@Category(UnitTest.class)
+public void testInitializeWithNonTiledInputSplit() throws Exception
+{
+  InputSplit mockSplit = mock(InputSplit.class);
+  try
+  {
+    subject.initialize(mockSplit, mockContext);
+    Assert.fail("initialize did not throw an exception if the input split was not a TiledInputSplit");
+  }
+  catch (IOException e)
+  {
+    // Passed so do nothing
+  }
+}
+
+@Test
+@Category(UnitTest.class)
+public void testNextKeyValue() throws Exception
+{
+
+  for (int i = 0; i < tileIds.length; i++)
+  {
+    Assert.assertTrue("more key values exist", subject.nextKeyValue());
+    byte[] r1 = rasters[i].copyBytes();
+    byte[] r2 = subject.getCurrentValue().copyBytes();
+    for (int b = 0; b < rasters[i].getSize(); b++)
+    {
+      Assert.assertEquals(r1[b], r2[b]);
     }
-
-    @After
-    public void tearDown() throws Exception {
-
-    }
-
-    @Test
-    @Category(UnitTest.class)
-    public void getProgress() throws Exception {
-
-    }
-
-    @Test
-    @Category(UnitTest.class)
-    public void close() throws Exception {
-
-    }
-
-    @Test
-    @Category(UnitTest.class)
-    public void testInitializeWithNonTiledInputSplit() throws Exception {
-        InputSplit mockSplit = mock(InputSplit.class);
-        try {
-            subject.initialize(mockSplit, mockContext);
-            Assert.fail("initialize did not throw an exception if the input split was not a TiledInputSplit");
-        }
-        catch (IOException e) {
-            // Passed so do nothing
-        }
-    }
-
+    Assert.assertEquals(tileIds[i].get(), subject.getCurrentKey().get());
+  }
+  Assert.assertFalse("no more key values exist", subject.nextKeyValue());
+}
 
 
 //    @Test
@@ -134,16 +159,11 @@ public class HdfsMrsPyramidRecordReaderTest {
 //
 //    }
 
-    @Test
-    @Category(UnitTest.class)
-    public void testNextKeyValue() throws Exception {
+private void setupTiledInputSplit(long startTileId, long endTileId)
+{
+  when(mockTiledInputSplit.getStartTileId()).thenReturn(startTileId);
+  when(mockTiledInputSplit.getEndTileId()).thenReturn(endTileId);
+}
 
-        for (int i = 0; i < tileIds.length; i++) {
-            Assert.assertTrue("more key values exist", subject.nextKeyValue());
-            Assert.assertEquals(subject.getCurrentKey(), tileIds[i]);
-            Assert.assertEquals(subject.getCurrentValue(), rasters[i]);
-        }
-        Assert.assertFalse("no more key values exist", subject.nextKeyValue());
-    }
 
 }

@@ -23,33 +23,39 @@ import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object SinMapOp extends MapOpRegistrar {
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("sin")
   }
+
   def create(raster:RasterMapOp):MapOp =
     new SinMapOp(Some(raster))
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new SinMapOp(node, variables)
 
 }
 
 class SinMapOp extends RawUnaryMathMapOp {
 
-  private[unarymath] def this(raster: Option[RasterMapOp]) = {
+  private[unarymath] def this(raster:Option[RasterMapOp]) = {
     this()
     input = raster
   }
 
-  private[unarymath] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
+  private[unarymath] def this(node:ParserNode, variables:String => Option[ParserNode]) = {
     this()
 
     initialize(node, variables)
   }
 
-  override private[unarymath] def function(a: Double): Double = Math.sin(a)
+  override private[unarymath] def function(a:Double):Double = Math.sin(a)
 
-  override private[unarymath] def datatype():Int = { DataBuffer.TYPE_FLOAT }
-  override private[unarymath] def nodata():Double = { Float.NaN }
+  override private[unarymath] def datatype():Int = {
+    DataBuffer.TYPE_FLOAT
+  }
+
+  override private[unarymath] def nodata():Double = {
+    Float.NaN
+  }
 
 }

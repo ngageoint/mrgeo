@@ -19,24 +19,24 @@ package org.mrgeo.data.image;
 public class MrsPyramidReaderContext
 {
 
-  int zoomlevel;
+int zoomlevel;
 
-  public MrsPyramidReaderContext()
-  {
-  }
+public MrsPyramidReaderContext()
+{
+}
 
-  public MrsPyramidReaderContext(int zoomlevel)
-  {
-    this.zoomlevel = zoomlevel;
-  }
+public MrsPyramidReaderContext(int zoomlevel)
+{
+  this.zoomlevel = zoomlevel;
+}
 
-  public int getZoomlevel()
-  {
-    return zoomlevel;
-  }
-  
-  public void setZoomlevel(int zoom)
-  {
-    zoomlevel = zoom;
-  }
+public int getZoomlevel()
+{
+  return zoomlevel;
+}
+
+public void setZoomlevel(int zoom)
+{
+  zoomlevel = zoom;
+}
 }

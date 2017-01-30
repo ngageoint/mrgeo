@@ -6,8 +6,8 @@ from threading import Lock
 from py4j.java_gateway import java_import
 
 import constants
-import mapopgenerator
 import java_gateway
+import mapopgenerator
 from rastermapop import RasterMapOp
 from vectormapop import VectorMapOp
 
@@ -56,7 +56,6 @@ class MrGeo(object):
 
     def _create_job(self):
         if not self._job:
-
             jvm = self._get_jvm()
             java_import(jvm, "org.mrgeo.job.*")
 
@@ -89,7 +88,7 @@ class MrGeo(object):
                 self._localGateway = True
             else:
                 self.gateway = pysparkContext._gateway
-                self.gateway_client = self.gateway.gateway_client
+                self.gateway_client = pysparkContext._jsc._gateway_client
                 self.sparkContext = pysparkContext._jsc.sc()
 
             self._create_job()
@@ -140,7 +139,8 @@ class MrGeo(object):
         java_gateway.set_field(job, "jars",
                                jvm.StringUtils.concatUnique(
                                    jvm.DependencyLoader.getAndCopyDependencies("org.mrgeo.mapalgebra.MapAlgebra", None),
-                                   jvm.DependencyLoader.getAndCopyDependencies(jvm.MapOpFactory.getMapOpClassNames(), None)))
+                                   jvm.DependencyLoader.getAndCopyDependencies(jvm.MapOpFactory.getMapOpClassNames(),
+                                                                               None)))
 
         conf = jvm.MrGeoDriver.prepareJob(job)
 
@@ -184,7 +184,7 @@ class MrGeo(object):
             if self.sparkContext:
                 self.sparkContext.stop()
                 self.sparkContext = None
-            # self._job = None
+                # self._job = None
 
         self._started = False
 
@@ -235,10 +235,10 @@ class MrGeo(object):
         mapop = jvm.MrsPyramidMapOp.apply(dp)
         mapop.context(self.sparkContext)
 
-
         return RasterMapOp(mapop=mapop, gateway=self.gateway, context=self.sparkContext, job=self._job)
 
-    def ingest_image(self, name, zoom=-1, categorical=False, skip_category_load=False):
+    def ingest_image(self, name, zoom=-1, skip_preprocessing=False, nodata_override=None,
+                     categorical=False, skip_category_load=False, protection_level=""):
         if not self._started:
             print("ERROR:  You must call start() before ingest_image()")
             sys.stdout.flush()
@@ -247,7 +247,8 @@ class MrGeo(object):
         jvm = self._get_jvm()
         job = self._get_job()
 
-        mapop = jvm.IngestImageMapOp.createMapOp(name, zoom, categorical, skip_category_load)
+        mapop = jvm.IngestImageMapOp.createMapOp(name, zoom, skip_preprocessing, nodata_override,
+                                                 categorical, skip_category_load, protection_level)
 
         if (mapop.setup(job, self.sparkContext.getConf()) and
                 mapop.execute(self.sparkContext) and

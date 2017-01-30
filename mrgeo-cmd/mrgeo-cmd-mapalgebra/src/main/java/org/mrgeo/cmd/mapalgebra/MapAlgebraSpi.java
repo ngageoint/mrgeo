@@ -24,22 +24,22 @@ import org.mrgeo.cmd.CommandSpi;
 public class MapAlgebraSpi extends CommandSpi
 {
 
-  @Override
-  public Class<? extends Command> getCommandClass()
-  {
-    return MapAlgebra.class;
-  }
+@Override
+public Class<? extends Command> getCommandClass()
+{
+  return MapAlgebra.class;
+}
 
-  @Override
-  public String getCommandName()
-  {
-    return "mapalgebra";
-  }
+@Override
+public String getCommandName()
+{
+  return "mapalgebra";
+}
 
-  @Override
-  public String getDescription()
-  {
-    return "Execute a mapalgebra command";
-  }
-  
+@Override
+public String getDescription()
+{
+  return "Execute a mapalgebra command";
+}
+
 }

@@ -17,10 +17,8 @@
 package org.mrgeo.core;
 
 /**
- *
  * MrGeoConstants is a class for maintaining the constants
  * for the runtime environment of MrGeo.
- *
  */
 public class MrGeoConstants
 {
@@ -78,6 +76,9 @@ public static final String MRGEO_FORCE_MEMORYINTENSIVE = "force.memoryintensive.
 
 public static final String MRGEO_MAX_PROCESSING_MEM = "max.processing.memory";
 public static final String MRGEO_SHUFFLE_FRACTION = "shuffle.fraction";
+
+
+public static final String MRGEO_AUTOPERSISTANCE = "autopersistance";
 
 
 /*

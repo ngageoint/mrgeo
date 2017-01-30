@@ -18,42 +18,43 @@ package org.mrgeo.data.image;
 
 public class MrsPyramidWriterContext
 {
-  private int zoomlevel;
-  private int partNum;
-  private String protectionLevel;
+private int zoomlevel;
+private int partNum;
+private String protectionLevel;
 
-  public MrsPyramidWriterContext()
-  {
-  }
-  public MrsPyramidWriterContext(int zoomlevel, int partition, String protectionLevel)
-  {
-    this.zoomlevel = zoomlevel;
-    this.partNum = partition;
-    this.protectionLevel = protectionLevel;
-  }
+public MrsPyramidWriterContext()
+{
+}
 
-  public int getZoomlevel()
-  {
-    return zoomlevel;
-  }
-  
-  public void setZoomlevel(int zoom)
-  {
-    zoomlevel = zoom;
-  }
-  
-  public int getPartNum()
-  {
-    return partNum;
-  }
-  
-  public void setPartNum(int part)
-  {
-    partNum = part;
-  }
+public MrsPyramidWriterContext(int zoomlevel, int partition, String protectionLevel)
+{
+  this.zoomlevel = zoomlevel;
+  this.partNum = partition;
+  this.protectionLevel = protectionLevel;
+}
 
-  public String getProtectionLevel()
-  {
-    return protectionLevel;
-  }
+public int getZoomlevel()
+{
+  return zoomlevel;
+}
+
+public void setZoomlevel(int zoom)
+{
+  zoomlevel = zoom;
+}
+
+public int getPartNum()
+{
+  return partNum;
+}
+
+public void setPartNum(int part)
+{
+  partNum = part;
+}
+
+public String getProtectionLevel()
+{
+  return protectionLevel;
+}
 }

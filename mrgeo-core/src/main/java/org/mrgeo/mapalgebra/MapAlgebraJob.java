@@ -20,6 +20,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.aggregators.MeanAggregator;
 import org.mrgeo.buildpyramid.BuildPyramid;
 import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.ProtectionLevelUtils;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
@@ -31,51 +32,55 @@ import org.slf4j.LoggerFactory;
 
 public class MapAlgebraJob implements RunnableJob
 {
-  private static final Logger _log = LoggerFactory.getLogger(MapAlgebraJob.class);
-  String expression;
-  String output;
-  private JobResults jobResults;
-  private String protectionLevel;
-  private ProviderProperties providerProperties;
+private static final Logger _log = LoggerFactory.getLogger(MapAlgebraJob.class);
+String expression;
+String output;
+private JobResults jobResults;
+private String protectionLevel;
+private ProviderProperties providerProperties;
 
-  public MapAlgebraJob(String expression, String output,
-      final String protectionLevel,
-      final ProviderProperties providerProperties)
+public MapAlgebraJob(String expression, String output,
+    final String protectionLevel,
+    final ProviderProperties providerProperties)
+{
+  this.expression = expression;
+  this.output = output;
+  this.protectionLevel = protectionLevel;
+  this.providerProperties = providerProperties;
+}
+
+@Override
+public void setJobResults(JobResults jr)
+{
+  this.jobResults = jr;
+}
+
+@Override
+public void run()
+{
+  try
   {
-    this.expression = expression;
-    this.output = output;
-    this.protectionLevel = protectionLevel;
-    this.providerProperties = providerProperties;
-  }
-  
-  @Override
-  public void setJobResults(JobResults jr) {
-    this.jobResults = jr;
-  }
-  
-  @Override
-  public void run()
-  {
-    try
+    jobResults.starting();
+    boolean valid = org.mrgeo.mapalgebra.MapAlgebra.validate(expression, providerProperties);
+    if (valid)
     {
-      jobResults.starting();
-      boolean valid = org.mrgeo.mapalgebra.MapAlgebra.validate(expression, providerProperties);
-      if (valid) {
-        MrsImageDataProvider dp =
-                DataProviderFactory.getMrsImageDataProvider(output, DataProviderFactory.AccessMode.OVERWRITE, providerProperties);
-        String useProtectionLevel = ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel);
-        Configuration conf = HadoopUtils.createConfiguration();
-        if (org.mrgeo.mapalgebra.MapAlgebra.mapalgebra(expression, output, conf,
-                                                       providerProperties, useProtectionLevel)) {
-          BuildPyramid.build(output, new MeanAggregator(), conf, providerProperties);
-          jobResults.succeeded();
-        }
+      MrsImageDataProvider dp =
+          DataProviderFactory
+              .getMrsImageDataProvider(output, DataProviderFactory.AccessMode.OVERWRITE, providerProperties);
+      String useProtectionLevel = ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel);
+      Configuration conf = HadoopUtils.createConfiguration();
+      if (org.mrgeo.mapalgebra.MapAlgebra.mapalgebra(expression, output, conf,
+          providerProperties, useProtectionLevel))
+      {
+        BuildPyramid.build(output, new MeanAggregator(), conf, providerProperties);
+        jobResults.succeeded();
       }
     }
-    catch (Exception e)
-    {
-      _log.error("Exception occurred while processing mapalgebra job " + e.getMessage(), e);
-      jobResults.failed(e.getMessage());
-    }
   }
+  catch (DataProviderNotFound | ProtectionLevelUtils.ProtectionLevelException e)
+  {
+    _log.error("Exception occurred while processing mapalgebra job {}", e);
+    jobResults.failed(e.getMessage());
+  }
+}
 }

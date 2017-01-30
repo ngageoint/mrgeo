@@ -19,31 +19,28 @@ package org.mrgeo.resources.tms;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.MrGeoConstants;
-import org.mrgeo.junit.UnitTest;
 import org.mrgeo.image.MrsPyramidMetadata;
+import org.mrgeo.junit.UnitTest;
 import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 
 import javax.activation.MimetypesFileTypeMap;
-import javax.ws.rs.core.Response;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // Test code, not included in production
 public class TileMapServiceResourceTest
 {
 
@@ -92,10 +89,12 @@ public void testNormalizeUrl()
 @Category(UnitTest.class)
 public void testRootResourceXml()
 {
-  final String response = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><Services><TileMapService href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0\" title=\"MrGeo Tile Map Service\" version=\"1.0.0\"/></Services>";
+  final String response =
+      "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><Services><TileMapService href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0\" title=\"MrGeo Tile Map Service\" version=\"1.0.0\"/></Services>";
 
 
-  try {
+  try
+  {
     Document doc = tms.rootResourceXml("http://localhost:8080/mrgeo-services/api/tms/");
     TransformerFactory tf = TransformerFactory.newInstance();
     Transformer transformer = tf.newTransformer();
@@ -103,7 +102,9 @@ public void testRootResourceXml()
     transformer.transform(new DOMSource(doc), new StreamResult(writer));
     String output = writer.getBuffer().toString();
     assertEquals(response, output);
-  } catch (ParserConfigurationException | TransformerException ex) {
+  }
+  catch (ParserConfigurationException | TransformerException ex)
+  {
     log.error("Failed to generate root resource xml", ex);
   }
 }
@@ -119,7 +120,8 @@ public void testMrsPyramidToTileMapServiceXml()
   names.add("CostDistance");
   names.add("Elevation");
 
-  try {
+  try
+  {
     Document doc = tms.mrsPyramidToTileMapServiceXml("http://localhost:8080/mrgeo-services/api/tms/1.0.0", names);
     TransformerFactory tf = TransformerFactory.newInstance();
     Transformer transformer = tf.newTransformer();
@@ -127,7 +129,9 @@ public void testMrsPyramidToTileMapServiceXml()
     transformer.transform(new DOMSource(doc), new StreamResult(writer));
     String output = writer.getBuffer().toString();
     assertEquals(response, output);
-  } catch (ParserConfigurationException | TransformerException | UnsupportedEncodingException ex) {
+  }
+  catch (ParserConfigurationException | TransformerException | UnsupportedEncodingException ex)
+  {
     log.error("Failed to convert metadata to TileMapService xml", ex);
   }
 }
@@ -139,50 +143,27 @@ public void testMrsPyramidMetadataToTileMapXml()
 {
   final String raster = "CostDistanceHumveeV2";
 
-  final String response = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><TileMap tilemapservice=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0\" version=\"1.0.0\"><Title>CostDistanceHumveeV2</Title><Abstract/><SRS>EPSG:4326</SRS><BoundingBox maxx=\"72.0\" maxy=\"35.0\" minx=\"68.0\" miny=\"33.0\"/><Origin x=\"-180.0\" y=\"-90.0\"/><TileFormat extension=\"tif\" height=\"512\" mime-type=\"image/tiff\" width=\"512\"/><TileSets profile=\"global-geodetic\"><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistanceHumveeV2/1\" order=\"0\" units-per-pixel=\"0.3515625\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistanceHumveeV2/2\" order=\"1\" units-per-pixel=\"0.17578125\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistanceHumveeV2/3\" order=\"2\" units-per-pixel=\"0.087890625\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistanceHumveeV2/4\" order=\"3\" units-per-pixel=\"0.0439453125\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistanceHumveeV2/5\" order=\"4\" units-per-pixel=\"0.02197265625\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistanceHumveeV2/6\" order=\"5\" units-per-pixel=\"0.010986328125\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistanceHumveeV2/7\" order=\"6\" units-per-pixel=\"0.0054931640625\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistanceHumveeV2/8\" order=\"7\" units-per-pixel=\"0.00274658203125\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistanceHumveeV2/9\" order=\"8\" units-per-pixel=\"0.001373291015625\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistanceHumveeV2/10\" order=\"9\" units-per-pixel=\"6.866455078125E-4\"/></TileSets></TileMap>";
+  final String response =
+      "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><TileMap tilemapservice=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0\" version=\"1.0.0\"><Title>CostDistanceHumveeV2</Title><Abstract/><SRS>EPSG:4326</SRS><BoundingBox maxx=\"72.0\" maxy=\"35.0\" minx=\"68.0\" miny=\"33.0\"/><Origin x=\"-180.0\" y=\"-90.0\"/><TileFormat extension=\"tif\" height=\"512\" mime-type=\"image/tiff\" width=\"512\"/><TileSets profile=\"global-geodetic\"><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistanceHumveeV2/1\" order=\"0\" units-per-pixel=\"0.3515625\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistanceHumveeV2/2\" order=\"1\" units-per-pixel=\"0.17578125\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistanceHumveeV2/3\" order=\"2\" units-per-pixel=\"0.087890625\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistanceHumveeV2/4\" order=\"3\" units-per-pixel=\"0.0439453125\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistanceHumveeV2/5\" order=\"4\" units-per-pixel=\"0.02197265625\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistanceHumveeV2/6\" order=\"5\" units-per-pixel=\"0.010986328125\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistanceHumveeV2/7\" order=\"6\" units-per-pixel=\"0.0054931640625\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistanceHumveeV2/8\" order=\"7\" units-per-pixel=\"0.00274658203125\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistanceHumveeV2/9\" order=\"8\" units-per-pixel=\"0.001373291015625\"/><TileSet href=\"http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistanceHumveeV2/10\" order=\"9\" units-per-pixel=\"6.866455078125E-4\"/></TileSets></TileMap>";
   MrsPyramidMetadata mpm = new MrsPyramidMetadata();
   mpm.setBounds(new Bounds(68, 33, 72, 35));
   mpm.setMaxZoomLevel(10);
   mpm.setTilesize(MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT);
 
-  try {
-    Document doc = tms.mrsPyramidMetadataToTileMapXml(raster, "global-geodetic", "http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistanceHumveeV2/", mpm);
+  try
+  {
+    Document doc = tms.mrsPyramidMetadataToTileMapXml(raster, "global-geodetic",
+        "http://localhost:8080/mrgeo-services/api/tms/1.0.0/CostDistanceHumveeV2/", mpm);
     TransformerFactory tf = TransformerFactory.newInstance();
     Transformer transformer = tf.newTransformer();
     StringWriter writer = new StringWriter();
     transformer.transform(new DOMSource(doc), new StreamResult(writer));
     String output = writer.getBuffer().toString();
     assertEquals(response, output);
-  } catch (ParserConfigurationException | TransformerException ex) {
+  }
+  catch (ParserConfigurationException | TransformerException ex)
+  {
     log.error("Failed to convert metadata to TileMap xml", ex);
-  }
-
-}
-
-@Test
-@Category(UnitTest.class)
-public void testReturnEmptyTile()
-{
-  TileMapServiceResource tms = new TileMapServiceResource();
-  try {
-    Response resp = tms.returnEmptyTile(MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, "png");
-    assertEquals(Response.Status.OK.getStatusCode(), resp.getStatus());
-  } catch (IOException ex) {
-    log.error("IOException occurred", ex);
-    fail();
-  } catch (Exception e) {
-    log.error("Exception occurred", e);
-    fail();
-  }
-  try {
-    Response resp = tms.returnEmptyTile(MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT, "jpg");
-    assertEquals(Response.Status.OK.getStatusCode(), resp.getStatus());
-  } catch (IOException ex) {
-    log.error("IOException occurred", ex);
-    fail();
-  } catch (Exception e) {
-    log.error("Exception occurred", e);
-    fail();
   }
 
 }

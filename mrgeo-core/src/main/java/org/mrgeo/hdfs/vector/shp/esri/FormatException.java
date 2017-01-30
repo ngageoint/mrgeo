@@ -19,17 +19,17 @@ package org.mrgeo.hdfs.vector.shp.esri;
 public class FormatException extends java.lang.Exception
 {
 
-  /**
-     *
-     */
-  private static final long serialVersionUID = 1L;
+/**
+ *
+ */
+private static final long serialVersionUID = 1L;
 
-  public FormatException()
-  {
-  }
+public FormatException()
+{
+}
 
-  public FormatException(String msg)
-  {
-    super(msg);
-  }
+public FormatException(String msg)
+{
+  super(msg);
+}
 }

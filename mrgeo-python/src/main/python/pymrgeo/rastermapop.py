@@ -1,11 +1,9 @@
-
-
 import copy
+
 from pymrgeo.instance import is_instance_of as iio
 
 
 class RasterMapOp(object):
-
     mapop = None
     gateway = None
     context = None

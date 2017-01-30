@@ -27,8 +27,6 @@ import org.mrgeo.data.ProtectionLevelValidator;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.rdd.RasterRDD;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.hdfs.partitioners.FileSplitPartitioner;
-import org.mrgeo.image.MrsPyramidMetadata;
 
 import java.io.IOException;
 
@@ -45,12 +43,14 @@ public MrsImageOutputFormatProvider(ImageOutputFormatContext context)
   this.context = context;
 }
 
+public abstract void save(RasterRDD raster, Configuration conf);
+
+public abstract void finalizeExternalSave(final Configuration conf) throws DataProviderException;
 
 /**
  * For any additional Spark configuration besides setting
  * the actual output format class (see getOutputFormatClass method in
  * this interface), place that initialization code in this method.
- *
  */
 protected Configuration setupOutput(Configuration conf) throws DataProviderException
 {
@@ -69,16 +69,13 @@ protected Configuration setupOutput(Configuration conf) throws DataProviderExcep
 
     return job.getConfiguration();
   }
-  catch(IOException e)
+  catch (IOException e)
   {
     throw new DataProviderException("Error configuring a spark job ", e);
   }
 }
 
 protected abstract OutputFormat<WritableComparable<?>, Writable> getOutputFormat();
-
-public abstract void save(RasterRDD raster, Configuration conf);
-public abstract void finalizeExternalSave(final Configuration conf) throws DataProviderException;
 }
 
 

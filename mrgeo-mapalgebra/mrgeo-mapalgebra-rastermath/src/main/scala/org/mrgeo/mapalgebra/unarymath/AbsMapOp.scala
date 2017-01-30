@@ -21,29 +21,29 @@ import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object AbsMapOp extends MapOpRegistrar {
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("abs")
   }
 
   def create(raster:RasterMapOp):MapOp =
     new AbsMapOp(Some(raster))
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new AbsMapOp(node, variables)
 }
 
 class AbsMapOp extends RawUnaryMathMapOp {
 
-  private[unarymath] def this(raster: Option[RasterMapOp]) = {
+  private[unarymath] def this(raster:Option[RasterMapOp]) = {
     this()
     input = raster
   }
 
-  private[unarymath] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
+  private[unarymath] def this(node:ParserNode, variables:String => Option[ParserNode]) = {
     this()
 
     initialize(node, variables)
   }
 
-  override private[unarymath] def function(a: Double): Double = Math.abs(a)
+  override private[unarymath] def function(a:Double):Double = Math.abs(a)
 }

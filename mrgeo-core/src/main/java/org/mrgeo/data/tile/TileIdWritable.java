@@ -27,27 +27,30 @@ public class TileIdWritable extends LongWritable implements Serializable
 {
 private static final long serialVersionUID = 1L;
 
-	public TileIdWritable() {
-		super();
-	}
+public TileIdWritable()
+{
+  super();
+}
 
-	public TileIdWritable(long value) {
-		super(value);
-	}
+public TileIdWritable(long value)
+{
+  super(value);
+}
 
-	public TileIdWritable(TileIdWritable writable) {
-		this(writable.get());
-	}
+public TileIdWritable(TileIdWritable writable)
+{
+  this(writable.get());
+}
 
-  // we could use the default serializations here, but instead we'll just do it manually
-  private void writeObject(ObjectOutputStream stream) throws IOException
-  {
-    stream.writeLong(get());
-  }
+// we could use the default serializations here, but instead we'll just do it manually
+private void writeObject(ObjectOutputStream stream) throws IOException
+{
+  stream.writeLong(get());
+}
 
-  private void readObject(ObjectInputStream stream) throws IOException
-  {
-    set(stream.readLong());
-  }
+private void readObject(ObjectInputStream stream) throws IOException
+{
+  set(stream.readLong());
+}
 
 }

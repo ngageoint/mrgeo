@@ -34,7 +34,7 @@ object MrGeoYarnDriver {
 
 class MrGeoYarnDriver {
 
-  def run (job:JobArguments, cl:ClassLoader, conf:SparkConf) = {
+  def run(job:JobArguments, cl:ClassLoader, conf:SparkConf) = {
     // need to get initialize spark.deploy.yarn... by reflection, because it is package private
     // to org.apache.spark
 
@@ -68,7 +68,7 @@ class MrGeoYarnDriver {
   }
 
   @SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "Using File to strip path from a file")
-  def toYarnArgs(job:JobArguments, cl:ClassLoader, conf:SparkConf) :Array[String] = {
+  def toYarnArgs(job:JobArguments, cl:ClassLoader, conf:SparkConf):Array[String] = {
     val args = new ArrayBuffer[String]()
 
     //        "  --jar JAR_PATH             Path to your application's JAR file (required in yarn-cluster mode)\n" +
@@ -94,8 +94,8 @@ class MrGeoYarnDriver {
     //    conf.set("spark.yarn.jar", sparkJar)
     //    conf.set("spark.yarn.jar", "/home/hadoop/spark/lib/spark-assembly-1.3.1-hadoop2.4.0.jar")
 
-    val driverClass = MrGeoYarnJob.getClass.getName.replaceAll("\\$","")
-    val driverJar =  SparkUtils.jarForClass(driverClass, cl)
+    val driverClass = MrGeoYarnJob.getClass.getName.replaceAll("\\$", "")
+    val driverJar = SparkUtils.jarForClass(driverClass, cl)
 
     args += "--class"
     args += driverClass
@@ -109,13 +109,13 @@ class MrGeoYarnDriver {
       // For Spark 1.6.0, passing --num-executors no longer works. Instead, you
       // have to set the spark.executor.instances configuration setting.
       conf.set("spark.executor.instances", job.executors.toString)
+      conf.set("spark.executor.cores", job.cores.toString)
       args += "--num-executors"
       //args += executors.toString
       args += job.executors.toString
     }
     args += "--executor-cores"
-//    args += conf.get("spark.executor.cores", "1")
-    args +=  job.cores.toString
+    args += job.cores.toString
 
     // spark.executor.memory is the total memory available to spark,
     // --executor-memory is the memory per executor.  Go figure...
@@ -124,9 +124,10 @@ class MrGeoYarnDriver {
     args += SparkUtils.kbtohuman(job.executorMemKb, "m")
 
     args += "--driver-cores"
-//    args += conf.get("spark.driver.cores", "1")
     args += "1"
 
+    // since in YARN, the driver is just another executor, we give it the same memory as a worker.  Anything
+    // less would just be wasted, unused memory.
     args += "--driver-memory"
     args += SparkUtils.kbtohuman(job.executorMemKb, "m")
 
@@ -162,9 +163,15 @@ class MrGeoYarnDriver {
     // put the params into a file that we'll send along to the driver...
     var length:Int = 0
     job.params.foreach(p => {
-      length += 12 +       // 12 for the other text needed in the args
-          p._1.length +
-          { if (p._2 != null) { p._2.length } else 4 } // length of "null"
+      length += 12 + // 12 for the other text needed in the args
+                p._1.length + {
+                  if (p._2 != null) {
+                    p._2.length
+                  }
+                  else {
+                    4
+                  }
+                } // length of "null"
     })
 
     // 100K is kinda arbitrary, but it's a nice pretty number

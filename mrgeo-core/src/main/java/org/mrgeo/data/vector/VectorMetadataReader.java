@@ -20,6 +20,7 @@ import java.io.IOException;
 
 public interface VectorMetadataReader
 {
-  public VectorMetadata read() throws IOException;
-  public VectorMetadata reload() throws IOException;
+public VectorMetadata read() throws IOException;
+
+public VectorMetadata reload() throws IOException;
 }

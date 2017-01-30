@@ -13,11 +13,11 @@ import org.mrgeo.mapalgebra.vector.VectorMapOp
 import scala.collection.mutable.ListBuffer
 
 object PointsMapOp {
-  def apply(coords: Array[Double]) = {
+  def apply(coords:Array[Double]) = {
     new PointsMapOp(coords)
   }
 
-  def apply(mapop:MapOp): Option[PointsMapOp] =
+  def apply(mapop:MapOp):Option[PointsMapOp] =
     mapop match {
       case pmo:PointsMapOp => Some(pmo)
       case _ => None
@@ -25,19 +25,70 @@ object PointsMapOp {
 }
 
 class PointsMapOp extends VectorMapOp with Externalizable {
-  var vectorrdd: Option[VectorRDD] = None
-  var srcCoordinates: Option[Array[Double]] = None
+  var vectorrdd:Option[VectorRDD] = None
+  var srcCoordinates:Option[Array[Double]] = None
 
-  private[mapalgebra] def this(coords: Array[Double]) = {
+  override def execute(context:SparkContext):Boolean = {
+    true
+  }
+
+  def getCoordCount():Int = {
+    srcCoordinates match {
+      case Some(coords) => {
+        coords.length
+      }
+      case None => -1
+    }
+  }
+
+  override def setup(job:JobArguments, conf:SparkConf):Boolean = {
+    true
+  }
+
+  override def teardown(job:JobArguments, conf:SparkConf):Boolean = true
+
+  override def readExternal(in:ObjectInput):Unit = {
+    val coordCount = in.readInt()
+    srcCoordinates = if (coordCount < 0) {
+      None
+    }
+    else {
+      val coords = Array.ofDim[Double](coordCount)
+      var i:Int = 0
+      while (i < coordCount) {
+        coords(i) = in.readDouble()
+        i += 1
+      }
+      Some(coords)
+    }
+  }
+
+  override def writeExternal(out:ObjectOutput):Unit = {
+    srcCoordinates match {
+      case Some(coords) => {
+        out.writeInt(coords.length)
+        coords.foreach(c => out.writeDouble(c))
+      }
+      case None => {
+        out.writeInt(-1)
+      }
+    }
+  }
+
+  override def rdd():Option[VectorRDD] = {
+    load()
+    vectorrdd
+  }
+
+  private[mapalgebra] def this(coords:Array[Double]) = {
     this()
 
     this.srcCoordinates = Some(coords)
   }
 
-  private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
+  private[mapalgebra] def this(node:ParserNode, variables:String => Option[ParserNode]) = {
     this()
-    if (node.getNumChildren % 2 != 0)
-    {
+    if (node.getNumChildren % 2 != 0) {
       throw new ParserException(
         "points takes a list of coordinates \"lon, lat, lon, lat, ...\"")
     }
@@ -45,16 +96,13 @@ class PointsMapOp extends VectorMapOp with Externalizable {
     val numCoords = node.getNumChildren
     val coords = Array.ofDim[Double](numCoords)
     for (i <- 0 until numCoords) {
-      coords(i) = MapOp.decodeDouble(node.getChild(i)).getOrElse(throw new ParserException("Invalid coordinate " + node.getChild(i).getName))
+      coords(i) = MapOp.decodeDouble(node.getChild(i))
+          .getOrElse(throw new ParserException("Invalid coordinate " + node.getChild(i).getName))
     }
     srcCoordinates = Some(coords)
   }
 
-  override def execute(context: SparkContext): Boolean = {
-    true
-  }
-
-  private def load(): Unit = {
+  private def load():Unit = {
     if (vectorrdd.isEmpty) {
       val pointsrdd = srcCoordinates match {
         case Some(coords) => {
@@ -70,53 +118,5 @@ class PointsMapOp extends VectorMapOp with Externalizable {
       }
       vectorrdd = Some(pointsrdd)
     }
-  }
-
-  def getCoordCount(): Int = {
-    srcCoordinates match {
-      case Some(coords) => {
-        coords.length
-      }
-      case None => -1
-    }
-  }
-
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = {
-    true
-  }
-
-  override def teardown(job: JobArguments, conf: SparkConf): Boolean = true
-
-  override def readExternal(in: ObjectInput): Unit = {
-    val coordCount = in.readInt()
-    srcCoordinates = if (coordCount < 0) {
-      None
-    }
-    else {
-      val coords = Array.ofDim[Double](coordCount)
-      var i: Int = 0
-      while (i < coordCount) {
-        coords(i) = in.readDouble()
-        i += 1
-      }
-      Some(coords)
-    }
-  }
-
-  override def writeExternal(out: ObjectOutput): Unit = {
-    srcCoordinates match {
-      case Some(coords) => {
-        out.writeInt(coords.length)
-        coords.foreach(c => out.writeDouble(c))
-      }
-      case None => {
-        out.writeInt(-1)
-      }
-    }
-  }
-
-  override def rdd(): Option[VectorRDD] = {
-    load()
-    vectorrdd
   }
 }

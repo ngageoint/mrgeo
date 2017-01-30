@@ -23,22 +23,22 @@ import org.mrgeo.cmd.CommandSpi;
 public class QuantilesSpi extends CommandSpi
 {
 
-  @Override
-  public Class<? extends Command> getCommandClass()
-  {
-    return Quantiles.class;
-  }
+@Override
+public Class<? extends Command> getCommandClass()
+{
+  return Quantiles.class;
+}
 
-  @Override
-  public String getCommandName()
-  {
-    return "quantiles";
-  }
+@Override
+public String getCommandName()
+{
+  return "quantiles";
+}
 
-  @Override
-  public String getDescription()
-  {
-    return "Compute quantiles for a MrsImage";
-  }
-  
+@Override
+public String getDescription()
+{
+  return "Compute quantiles for a MrsImage";
+}
+
 }

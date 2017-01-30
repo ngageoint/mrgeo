@@ -19,17 +19,16 @@ package org.mrgeo.mapalgebra
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.utils.MrGeoImplicits._
 import org.mrgeo.utils.SparkUtils
 
 object NormalizeMapOp extends MapOpRegistrar {
 
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("normalize")
   }
 
@@ -40,56 +39,32 @@ object NormalizeMapOp extends MapOpRegistrar {
     new NormalizeMapOp(Some(raster), Some(min), Some(max))
 
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new NormalizeMapOp(node, variables)
 }
 
 class NormalizeMapOp extends RasterMapOp with Externalizable {
-  private var rasterRDD: Option[RasterRDD] = None
+  private var rasterRDD:Option[RasterRDD] = None
 
-  private var inputMapOp: Option[RasterMapOp] = None
+  private var inputMapOp:Option[RasterMapOp] = None
   private var minVal:Option[Double] = None
   private var maxVal:Option[Double] = None
 
-  private[mapalgebra] def this(raster:Option[RasterMapOp], min:Option[Double], max:Option[Double]) = {
-    this()
-    inputMapOp = raster
-    minVal = min
-    maxVal = max
-  }
+  override def rdd():Option[RasterRDD] = rasterRDD
 
-  private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
-    this()
+  override def execute(context:SparkContext):Boolean = {
 
-    if (node.getNumChildren != 1 && node.getNumChildren != 3) {
-      throw new ParserException("Usage: normalize(<raster>, [min], [max])")
-    }
-
-    inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
-
-    if (node.getNumChildren == 3) {
-      minVal = MapOp.decodeDouble(node.getChild(1), variables)
-      maxVal = MapOp.decodeDouble(node.getChild(2), variables)
-    }
-  }
-
-  override def rdd(): Option[RasterRDD] = rasterRDD
-
-
-  override def execute(context: SparkContext): Boolean = {
-
-    val input: RasterMapOp = inputMapOp getOrElse (throw new IOException("Input MapOp not valid!"))
+    val input:RasterMapOp = inputMapOp getOrElse (throw new IOException("Input MapOp not valid!"))
 
     val meta = input.metadata() getOrElse
-        (throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
+               (throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
     val rdd = input.rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + inputMapOp.getClass.getName))
 
     val zoom = meta.getMaxZoomLevel
 
     val stats = if (minVal.isEmpty && maxVal.isEmpty) {
       val s = meta.getImageStats(zoom)
-      if (s == null)
-      {
+      if (s == null) {
         SparkUtils.calculateStats(rdd, meta.getBands, meta.getDefaultValues)
       }
       else {
@@ -103,29 +78,29 @@ class NormalizeMapOp extends RasterMapOp with Externalizable {
     val nodata = meta.getDefaultValue(0)
 
     val min = minVal match {
-    case Some(v) => v
-    case _ => stats(0).min
+      case Some(v) => v
+      case _ => stats(0).min
     }
 
     val max = maxVal match {
-    case Some(v) => v
-    case _ => stats(0).max
+      case Some(v) => v
+      case _ => stats(0).max
     }
 
     val range = max - min
 
     rasterRDD = Some(RasterRDD(rdd.map(tile => {
-      val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
+      val raster = RasterWritable.toMrGeoRaster(tile._2)
 
-      var y: Int = 0
-      while (y < raster.getHeight) {
-        var x: Int = 0
-        while (x < raster.getWidth) {
-          var b: Int = 0
-          while (b < raster.getNumBands) {
-            val v = raster.getSampleDouble(x, y, b)
+      var y:Int = 0
+      while (y < raster.height()) {
+        var x:Int = 0
+        while (x < raster.width()) {
+          var b:Int = 0
+          while (b < raster.bands()) {
+            val v = raster.getPixelDouble(x, y, b)
             if (RasterMapOp.isNotNodata(v, nodata)) {
-              raster.setSample(x, y, b, (v - min) / range)
+              raster.setPixel(x, y, b, (v - min) / range)
             }
             b += 1
           }
@@ -142,11 +117,35 @@ class NormalizeMapOp extends RasterMapOp with Externalizable {
     true
   }
 
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = true
-  override def teardown(job: JobArguments, conf: SparkConf): Boolean = true
+  override def setup(job:JobArguments, conf:SparkConf):Boolean = true
 
-  override def readExternal(in: ObjectInput): Unit = {}
-  override def writeExternal(out: ObjectOutput): Unit = {}
+  override def teardown(job:JobArguments, conf:SparkConf):Boolean = true
+
+  override def readExternal(in:ObjectInput):Unit = {}
+
+  override def writeExternal(out:ObjectOutput):Unit = {}
+
+  private[mapalgebra] def this(raster:Option[RasterMapOp], min:Option[Double], max:Option[Double]) = {
+    this()
+    inputMapOp = raster
+    minVal = min
+    maxVal = max
+  }
+
+  private[mapalgebra] def this(node:ParserNode, variables:String => Option[ParserNode]) = {
+    this()
+
+    if (node.getNumChildren != 1 && node.getNumChildren != 3) {
+      throw new ParserException("Usage: normalize(<raster>, [min], [max])")
+    }
+
+    inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
+
+    if (node.getNumChildren == 3) {
+      minVal = MapOp.decodeDouble(node.getChild(1), variables)
+      maxVal = MapOp.decodeDouble(node.getChild(2), variables)
+    }
+  }
 
 
 }

@@ -20,25 +20,25 @@ import java.io.IOException;
 
 public class DataProviderNotFound extends IOException
 {
-  private static final long serialVersionUID = 1L;
+private static final long serialVersionUID = 1L;
 
-  public DataProviderNotFound()
-  {
-    super();
-  }
+public DataProviderNotFound()
+{
+  super();
+}
 
-  public DataProviderNotFound(final String msg)
-  {
-    super(msg);
-  }
+public DataProviderNotFound(final String msg)
+{
+  super(msg);
+}
 
-  public DataProviderNotFound(final String msg, final Throwable cause)
-  {
-    super(msg, cause);
-  }
+public DataProviderNotFound(final String msg, final Throwable cause)
+{
+  super(msg, cause);
+}
 
-  public DataProviderNotFound(final Throwable cause)
-  {
-    super(cause);
-  }
+public DataProviderNotFound(final Throwable cause)
+{
+  super(cause);
+}
 }

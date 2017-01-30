@@ -36,25 +36,28 @@ public void connectionError(Exception e)
 }
 
 @Override
-public void connectionStarted(Py4JServerConnection py4JServerConnection) {
+public void connectionStarted(Py4JServerConnection py4JServerConnection)
+{
   Socket socket = py4JServerConnection.getSocket();
 
   log.warn("Started connection " +
-      socket.getInetAddress().getHostName() +"(" + socket.getInetAddress().getHostAddress() +
+      socket.getInetAddress().getHostName() + "(" + socket.getInetAddress().getHostAddress() +
       ")" + ":" + socket.getLocalPort());
 }
 
 @Override
-public void connectionStopped(Py4JServerConnection py4JServerConnection) {
+public void connectionStopped(Py4JServerConnection py4JServerConnection)
+{
   Socket socket = py4JServerConnection.getSocket();
 
   log.warn("Stopped connection " +
-      socket.getInetAddress().getHostName() +"(" + socket.getInetAddress().getHostAddress() +
+      socket.getInetAddress().getHostName() + "(" + socket.getInetAddress().getHostAddress() +
       ")" + ":" + socket.getLocalPort());
 
 }
 
 @Override
+@SuppressWarnings("squid:S1148") // Exception handler
 public void serverError(Exception e)
 {
   if (e instanceof SocketException && e.getLocalizedMessage().equals("Socket closed"))
@@ -64,7 +67,7 @@ public void serverError(Exception e)
   }
   else
   {
-    log.error("Server error");
+    log.error("Server error {}", e);
     e.printStackTrace();
     System.out.flush();
   }
@@ -100,7 +103,7 @@ public void serverStarted()
   }
   catch (IOException e)
   {
-    log.error("Gateway error: " + e.getMessage());
+    log.error("Gateway error {}", e);
   }
 
 }
@@ -110,7 +113,6 @@ public void serverStopped()
 {
   log.warn("Server stopped");
   System.out.flush();
-
 }
 
 private void sendGatewayPort(Socket clientSocket, int javaPythonPort, int pythonJavaPort) throws IOException
@@ -118,7 +120,7 @@ private void sendGatewayPort(Socket clientSocket, int javaPythonPort, int python
   // Communicate the bound port back to the caller via the caller-specified callback port
   log.info("Sending java->python port (" + javaPythonPort + ") and python->java port (" + pythonJavaPort +
       ") to pymrgeo running at " +
-      clientSocket.getInetAddress().getHostName() +"(" + clientSocket.getInetAddress().getHostAddress() +
+      clientSocket.getInetAddress().getHostName() + "(" + clientSocket.getInetAddress().getHostAddress() +
       ")" + ":" + clientSocket.getPort());
   try
   {

@@ -20,8 +20,8 @@ import org.mrgeo.mapalgebra.parser.jexl.JexlParserAdapter;
 
 public class ParserAdapterFactory
 {
-  public static ParserAdapter createParserAdapter()
-  {
-    return new JexlParserAdapter();
-  }
+public static ParserAdapter createParserAdapter()
+{
+  return new JexlParserAdapter();
+}
 }

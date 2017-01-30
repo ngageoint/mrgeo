@@ -36,281 +36,253 @@ import java.util.Set;
  */
 public class ImageHandlerFactory
 {
-  private static final Logger log = LoggerFactory.getLogger(ImageHandlerFactory.class);
+private static final Logger log = LoggerFactory.getLogger(ImageHandlerFactory.class);
 
-  // Became frustrated by the mime types not being picked up on deployed systems despite following
-  // the instructions in the documentation at:
-  // http://docs.oracle.com/javaee/5/api/javax/activation/MimetypesFileTypeMap.html
-  // Its currently far simpler to do some string comparisons to find the correct handler to use.
-  // If necessary, the former code used to convert the image format to a mime type can be revived
-  // from source history.
-  static Map<Class<?>, Map<String, Class<?>>> imageFormatHandlers = null;
-  static Map<Class<?>, Map<String, Class<?>>> mimeTypeHandlers = null;
+// Became frustrated by the mime types not being picked up on deployed systems despite following
+// the instructions in the documentation at:
+// http://docs.oracle.com/javaee/5/api/javax/activation/MimetypesFileTypeMap.html
+// Its currently far simpler to do some string comparisons to find the correct handler to use.
+// If necessary, the former code used to convert the image format to a mime type can be revived
+// from source history.
+static Map<Class<?>, Map<String, Class<?>>> imageFormatHandlers = null;
+static Map<Class<?>, Map<String, Class<?>>> mimeTypeHandlers = null;
 
-  /**
-   * Returns a MrGeo WMS "image handler" for the requested image format
-   * 
-   */
+/**
+ * Returns a MrGeo WMS "image handler" for the requested image format
+ */
 //  public static Object getHandler(final String format, final Class<?> handlerType) throws Exception
 //  {
 //    return getHandler(format, handlerType);
 //  }
+@SuppressWarnings("unused")
+public static Object getHandler(String imageFormat, final Class<?> handlerType)
+    throws IllegalAccessException, InstantiationException
+{
 
-  @SuppressWarnings("unused")
-  public static Object getHandler(String imageFormat, final Class<?> handlerType) throws Exception
+  if (imageFormatHandlers == null || mimeTypeHandlers == null)
   {
-
-    if (imageFormatHandlers == null || mimeTypeHandlers == null)
-    {
-      loadHandlers();
-    }
-
-    if ( org.apache.commons.lang3.StringUtils.isEmpty(imageFormat))
-    {
-      throw new IllegalArgumentException("NULL image format requested.");
-    }
-    log.debug("Requested image format: {}", imageFormat);
-    imageFormat = imageFormat.toLowerCase();
-
-    if (handlerType == null)
-    {
-      throw new IllegalArgumentException("NULL handler type requested.");
-    }
-    log.debug("Requested handler type: {}", handlerType.getName());
-
-    // first look in the mime types
-    if (mimeTypeHandlers.containsKey(handlerType))
-    {
-      final Map<String, Class<?>> handlers = mimeTypeHandlers.get(handlerType);
-
-      if (handlers.containsKey(imageFormat))
-      {
-        Object cl;
-        cl = handlers.get(imageFormat.toLowerCase()).newInstance();
-
-        return cl;
-      }
-    }
-
-    // now look in the formats
-    if (imageFormatHandlers.containsKey(handlerType))
-    {
-      final Map<String, Class<?>> handlers = imageFormatHandlers.get(handlerType);
-
-      if (handlers.containsKey(imageFormat))
-      {
-        Object cl;
-        cl = handlers.get(imageFormat.toLowerCase()).newInstance();
-
-        return cl;
-      }
-    }
-
-    throw new IllegalArgumentException("Unsupported image format - " + imageFormat);
+    loadHandlers();
   }
 
-  public static String[] getImageFormats(final Class<?> handlerType)
+  if (org.apache.commons.lang3.StringUtils.isEmpty(imageFormat))
   {
-    if (imageFormatHandlers == null || mimeTypeHandlers == null)
-    {
-      loadHandlers();
-    }
-
-    if (imageFormatHandlers.containsKey(handlerType))
-    {
-      final Map<String, Class<?>> handlers = imageFormatHandlers.get(handlerType);
-
-      return handlers.keySet().toArray(new String[0]);
-    }
-
-    throw new IllegalArgumentException("Invalid handler type: " + handlerType.getCanonicalName() +
-      ". Not supported.");
+    throw new IllegalArgumentException("NULL image format requested.");
   }
+  log.debug("Requested image format: {}", imageFormat);
+  imageFormat = imageFormat.toLowerCase();
 
-  public static String[] getMimeFormats(final Class<?> handlerType)
+  if (handlerType == null)
   {
-    if (imageFormatHandlers == null || mimeTypeHandlers == null)
-    {
-      loadHandlers();
-    }
-
-    if (mimeTypeHandlers.containsKey(handlerType))
-    {
-      final Map<String, Class<?>> handlers = mimeTypeHandlers.get(handlerType);
-
-      return handlers.keySet().toArray(new String[0]);
-    }
-
-    throw new IllegalArgumentException("Invalid handler type: " + handlerType.getCanonicalName() +
-      ". Not supported.");
+    throw new IllegalArgumentException("NULL handler type requested.");
   }
+  log.debug("Requested handler type: {}", handlerType.getName());
 
-  private static void addFormatHandlers(final Map<String, Class<?>> handlers, final Class<?> clazz)
+  // first look in the mime types
+  if (mimeTypeHandlers.containsKey(handlerType))
   {
-    try
-    {
+    final Map<String, Class<?>> handlers = mimeTypeHandlers.get(handlerType);
 
+    if (handlers.containsKey(imageFormat))
+    {
       Object cl;
-      cl = clazz.newInstance();
+      cl = handlers.get(imageFormat.toLowerCase()).newInstance();
 
-      Method method;
-      method = clazz.getMethod("getWmsFormats");
-      final Object o = method.invoke(cl);
-
-      String[] formats;
-      if (o != null)
-      {
-        formats = (String[]) o;
-
-        for (final String format : formats)
-        {
-          handlers.put(format, clazz);
-          log.info("      {}", format);
-        }
-      }
-    }
-    catch (final InstantiationException e)
-    {
-    }
-    catch (final IllegalAccessException e)
-    {
-    }
-    catch (final SecurityException e)
-    {
-    }
-    catch (final NoSuchMethodException e)
-    {
-    }
-    catch (final IllegalArgumentException e)
-    {
-    }
-    catch (final InvocationTargetException e)
-    {
+      return cl;
     }
   }
 
-  private static void addMimeHandlers(final Map<String, Class<?>> handlers, final Class<?> clazz)
+  // now look in the formats
+  if (imageFormatHandlers.containsKey(handlerType))
   {
-    try
-    {
+    final Map<String, Class<?>> handlers = imageFormatHandlers.get(handlerType);
 
+    if (handlers.containsKey(imageFormat))
+    {
       Object cl;
-      cl = clazz.newInstance();
+      cl = handlers.get(imageFormat.toLowerCase()).newInstance();
 
-      Method method;
-      method = clazz.getMethod("getMimeTypes");
-      final Object o = method.invoke(cl);
-
-      String[] formats;
-      if (o != null)
-      {
-        formats = (String[]) o;
-
-        for (final String format : formats)
-        {
-          handlers.put(format, clazz);
-          log.info("      {}", format);
-        }
-      }
-    }
-    catch (final InstantiationException e)
-    {
-    }
-    catch (final IllegalAccessException e)
-    {
-    }
-    catch (final SecurityException e)
-    {
-    }
-    catch (final NoSuchMethodException e)
-    {
-    }
-    catch (final IllegalArgumentException e)
-    {
-    }
-    catch (final InvocationTargetException e)
-    {
+      return cl;
     }
   }
 
-  /**
-   * Returns a MrGeo WMS "image handler" for the requested image format
-   * 
-   */
+  throw new IllegalArgumentException("Unsupported image format - " + imageFormat);
+}
 
-  private static synchronized void loadHandlers()
+public static String[] getImageFormats(final Class<?> handlerType)
+{
+  if (imageFormatHandlers == null || mimeTypeHandlers == null)
   {
-    if (imageFormatHandlers == null)
+    loadHandlers();
+  }
+
+  if (imageFormatHandlers.containsKey(handlerType))
+  {
+    final Map<String, Class<?>> handlers = imageFormatHandlers.get(handlerType);
+
+    return handlers.keySet().toArray(new String[0]);
+  }
+
+  throw new IllegalArgumentException("Invalid handler type: " + handlerType.getCanonicalName() +
+      ". Not supported.");
+}
+
+public static String[] getMimeFormats(final Class<?> handlerType)
+{
+  if (imageFormatHandlers == null || mimeTypeHandlers == null)
+  {
+    loadHandlers();
+  }
+
+  if (mimeTypeHandlers.containsKey(handlerType))
+  {
+    final Map<String, Class<?>> handlers = mimeTypeHandlers.get(handlerType);
+
+    return handlers.keySet().toArray(new String[0]);
+  }
+
+  throw new IllegalArgumentException("Invalid handler type: " + handlerType.getCanonicalName() +
+      ". Not supported.");
+}
+
+private static void addFormatHandlers(final Map<String, Class<?>> handlers, final Class<?> clazz)
+{
+  try
+  {
+
+    Object cl;
+    cl = clazz.newInstance();
+
+    Method method;
+    method = clazz.getMethod("getWmsFormats");
+    final Object o = method.invoke(cl);
+
+    String[] formats;
+    if (o != null)
     {
-      imageFormatHandlers = new HashMap<Class<?>, Map<String, Class<?>>>();
-      mimeTypeHandlers = new HashMap<Class<?>, Map<String, Class<?>>>();
+      formats = (String[]) o;
 
-      Reflections reflections = new Reflections("org.mrgeo"); // ClassUtils.getPackageName(ImageRenderer.class));
+      for (final String format : formats)
+      {
+        handlers.put(format, clazz);
+        log.info("      {}", format);
+      }
+    }
+  }
+  catch (final InstantiationException | InvocationTargetException |
+      IllegalArgumentException | NoSuchMethodException | SecurityException | IllegalAccessException e)
+  {
+    log.error("Exception thrown while processing class " + clazz.getName(), e);
+  }
+}
 
-      // image format renderers
-      mimeTypeHandlers.put(ImageRenderer.class, new HashMap<String, Class<?>>());
-      imageFormatHandlers.put(ImageRenderer.class, new HashMap<String, Class<?>>());
+private static void addMimeHandlers(final Map<String, Class<?>> handlers, final Class<?> clazz)
+{
+  try
+  {
 
-      Map<String, Class<?>> mimeHandlers = mimeTypeHandlers.get(ImageRenderer.class);
-      Map<String, Class<?>> formatHandlers = imageFormatHandlers.get(ImageRenderer.class);
+    Object cl;
+    cl = clazz.newInstance();
 
-      final Set<Class<? extends ImageRenderer>> imageRenderers = reflections
+    Method method;
+    method = clazz.getMethod("getMimeTypes");
+    final Object o = method.invoke(cl);
+
+    String[] formats;
+    if (o != null)
+    {
+      formats = (String[]) o;
+
+      for (final String format : formats)
+      {
+        handlers.put(format, clazz);
+        log.info("      {}", format);
+      }
+    }
+  }
+  catch (final InstantiationException | InvocationTargetException |
+      IllegalArgumentException | NoSuchMethodException | SecurityException | IllegalAccessException e)
+  {
+    log.debug("Exception thrown", e);
+  }
+}
+
+/**
+ * Returns a MrGeo WMS "image handler" for the requested image format
+ */
+
+private static synchronized void loadHandlers()
+{
+  if (imageFormatHandlers == null)
+  {
+    imageFormatHandlers = new HashMap<Class<?>, Map<String, Class<?>>>();
+    mimeTypeHandlers = new HashMap<Class<?>, Map<String, Class<?>>>();
+
+    Reflections reflections = new Reflections("org.mrgeo"); // ClassUtils.getPackageName(ImageRenderer.class));
+
+    // image format renderers
+    mimeTypeHandlers.put(ImageRenderer.class, new HashMap<String, Class<?>>());
+    imageFormatHandlers.put(ImageRenderer.class, new HashMap<String, Class<?>>());
+
+    Map<String, Class<?>> mimeHandlers = mimeTypeHandlers.get(ImageRenderer.class);
+    Map<String, Class<?>> formatHandlers = imageFormatHandlers.get(ImageRenderer.class);
+
+    final Set<Class<? extends ImageRenderer>> imageRenderers = reflections
         .getSubTypesOf(ImageRenderer.class);
 
-      for (final Class<? extends ImageRenderer> clazz : imageRenderers)
-      {
-        log.info("Registering Image Renderer: {}", clazz.getCanonicalName());
+    for (final Class<? extends ImageRenderer> clazz : imageRenderers)
+    {
+      log.info("Registering Image Renderer: {}", clazz.getCanonicalName());
 
-        log.info("  Mime Types");
-        addMimeHandlers(mimeHandlers, clazz);
+      log.info("  Mime Types");
+      addMimeHandlers(mimeHandlers, clazz);
 
-        log.info("  Format Strings");
-        addFormatHandlers(formatHandlers, clazz);
-      }
+      log.info("  Format Strings");
+      addFormatHandlers(formatHandlers, clazz);
+    }
 
-      //reflections = new Reflections(ClassUtils.getPackageName(ColorScaleApplier.class));
+    //reflections = new Reflections(ClassUtils.getPackageName(ColorScaleApplier.class));
 
-      // Color scale appliers
-      mimeTypeHandlers.put(ColorScaleApplier.class, new HashMap<String, Class<?>>());
-      imageFormatHandlers.put(ColorScaleApplier.class, new HashMap<String, Class<?>>());
+    // Color scale appliers
+    mimeTypeHandlers.put(ColorScaleApplier.class, new HashMap<String, Class<?>>());
+    imageFormatHandlers.put(ColorScaleApplier.class, new HashMap<String, Class<?>>());
 
-      mimeHandlers = mimeTypeHandlers.get(ColorScaleApplier.class);
-      formatHandlers = imageFormatHandlers.get(ColorScaleApplier.class);
+    mimeHandlers = mimeTypeHandlers.get(ColorScaleApplier.class);
+    formatHandlers = imageFormatHandlers.get(ColorScaleApplier.class);
 
-      final Set<Class<? extends ColorScaleApplier>> colorscaleappliers = reflections
+    final Set<Class<? extends ColorScaleApplier>> colorscaleappliers = reflections
         .getSubTypesOf(ColorScaleApplier.class);
 
-      for (final Class<? extends ColorScaleApplier> clazz : colorscaleappliers)
-      {
-        log.info("Registering Color Scale Applier: {}", clazz.getCanonicalName());
-        log.info("  Mime Types");
-        addMimeHandlers(mimeHandlers, clazz);
+    for (final Class<? extends ColorScaleApplier> clazz : colorscaleappliers)
+    {
+      log.info("Registering Color Scale Applier: {}", clazz.getCanonicalName());
+      log.info("  Mime Types");
+      addMimeHandlers(mimeHandlers, clazz);
 
-        log.info("  Format Strings");
-        addFormatHandlers(formatHandlers, clazz);
-      }
+      log.info("  Format Strings");
+      addFormatHandlers(formatHandlers, clazz);
+    }
 
-      //reflections = new Reflections(ClassUtils.getPackageName(ImageResponseWriter.class));
+    //reflections = new Reflections(ClassUtils.getPackageName(ImageResponseWriter.class));
 
-      // image response writers
-      mimeTypeHandlers.put(ImageResponseWriter.class, new HashMap<String, Class<?>>());
-      imageFormatHandlers.put(ImageResponseWriter.class, new HashMap<String, Class<?>>());
+    // image response writers
+    mimeTypeHandlers.put(ImageResponseWriter.class, new HashMap<String, Class<?>>());
+    imageFormatHandlers.put(ImageResponseWriter.class, new HashMap<String, Class<?>>());
 
-      mimeHandlers = mimeTypeHandlers.get(ImageResponseWriter.class);
-      formatHandlers = imageFormatHandlers.get(ImageResponseWriter.class);
-      final Set<Class<? extends ImageResponseWriter>> imageresponsewriters = reflections
+    mimeHandlers = mimeTypeHandlers.get(ImageResponseWriter.class);
+    formatHandlers = imageFormatHandlers.get(ImageResponseWriter.class);
+    final Set<Class<? extends ImageResponseWriter>> imageresponsewriters = reflections
         .getSubTypesOf(ImageResponseWriter.class);
 
-      for (final Class<? extends ImageResponseWriter> clazz : imageresponsewriters)
-      {
-        log.info("Registering Image Image Response Writer: {}", clazz.getCanonicalName());
-        log.info("  Mime Types");
-        addMimeHandlers(mimeHandlers, clazz);
+    for (final Class<? extends ImageResponseWriter> clazz : imageresponsewriters)
+    {
+      log.info("Registering Image Image Response Writer: {}", clazz.getCanonicalName());
+      log.info("  Mime Types");
+      addMimeHandlers(mimeHandlers, clazz);
 
-        log.info("  Format Strings");
-        addFormatHandlers(formatHandlers, clazz);
-      }
+      log.info("  Format Strings");
+      addFormatHandlers(formatHandlers, clazz);
     }
   }
+}
 
 }

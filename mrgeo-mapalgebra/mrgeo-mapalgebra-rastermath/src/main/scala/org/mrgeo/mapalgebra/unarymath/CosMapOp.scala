@@ -23,31 +23,37 @@ import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object CosMapOp extends MapOpRegistrar {
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("cos")
   }
+
   def create(raster:RasterMapOp):MapOp =
     new CosMapOp(Some(raster))
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new CosMapOp(node, variables)
 }
 
 class CosMapOp extends RawUnaryMathMapOp {
-  private[unarymath] def this(raster: Option[RasterMapOp]) = {
+  private[unarymath] def this(raster:Option[RasterMapOp]) = {
     this()
     input = raster
   }
 
-  private[unarymath] def this(node:ParserNode, variables: String => Option[ParserNode]) = {
+  private[unarymath] def this(node:ParserNode, variables:String => Option[ParserNode]) = {
     this()
 
     initialize(node, variables)
   }
 
-  override private[unarymath] def function(a: Double): Double = Math.cos(a)
+  override private[unarymath] def function(a:Double):Double = Math.cos(a)
 
-  override private[unarymath] def datatype():Int = { DataBuffer.TYPE_FLOAT }
-  override private[unarymath] def nodata():Double = { Float.NaN }
+  override private[unarymath] def datatype():Int = {
+    DataBuffer.TYPE_FLOAT
+  }
+
+  override private[unarymath] def nodata():Double = {
+    Float.NaN
+  }
 
 }

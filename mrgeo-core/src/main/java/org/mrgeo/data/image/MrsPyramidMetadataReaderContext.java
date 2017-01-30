@@ -19,8 +19,8 @@ package org.mrgeo.data.image;
 public class MrsPyramidMetadataReaderContext
 {
 
-  public MrsPyramidMetadataReaderContext()
-  {
-  }
+public MrsPyramidMetadataReaderContext()
+{
+}
 
 }
