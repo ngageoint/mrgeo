@@ -3747,6 +3747,12 @@
         <role>dev ops</role>
       </roles>
     </contributor>
+    <contributor>
+      <name>James McClain</name>
+      <roles>
+        <role>user</role>
+      </roles>
+    </contributor>
   </contributors>
   <scm>
     <connection>scm:git:file://${project.basedir}</connection>
