@@ -1,4 +1,4 @@
-node ('mrgeo'){
+node ('mrgeo-build'){
   // ---------------------------------------------
   // we want a clean workspace     
   stage 'Clear workspace'         
