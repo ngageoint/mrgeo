@@ -77,12 +77,12 @@ EOF'''
   //generate rpm
   stage 'Package MrGeo'
   //sh '''
-  #gem install bundler;
-  #echo "source 'https://rubygems.org'" > Gemfile
-  #echo "gem 'fpm'" >> Gemfile
-  #bundle install --path=vendor/bundle;
-  #bundle exec which fpm;
-  #bundle exec fpm --version;'''
+ // #gem install bundler;
+ // #echo "source 'https://rubygems.org'" > Gemfile
+//  #echo "gem 'fpm'" >> Gemfile
+//  #bundle install --path=vendor/bundle;
+//  #bundle exec which fpm;
+//  #bundle exec fpm --version;'''
 
   sh '''
   #ROOT_WORKSPACE=/jslave/workspace/DigitalGlobe/MrGeo
