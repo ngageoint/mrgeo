@@ -1,17 +1,19 @@
 node ('mrgeo-build'){
   // ---------------------------------------------
   // we want a clean workspace     
-  stage 'Clear workspace'         
+  stage ('Clear workspace') {        
   deleteDir()
+  }
   
   // ---------------------------------------------
   // checkout code     
-  stage 'Checkout'
+  stage ('Checkout'){
   checkout scm
+  }
   
   // ---------------------------------------------
   // build using maven     
-  stage 'Build'         
+  stage ('Build'){         
   def mvnHome = "${tool name: 'Maven'}"         
   echo "MVN_HOME: ${mvnHome}"
   
@@ -66,23 +68,25 @@ EOF'''
   ${mvnHome}/bin/mvn -e -s ${WORKSPACE}/maven-settings.xml -P${BUILD_VERSION} -Pskip-all-tests  -Dmodules=allU
   ${mvnHome}/bin/mvn versions:revert
   '''
-}
-
+  }
+  }
+  
   // ---------------------------------------------
   //archive artifacts     
-  stage 'Archive'         
+  stage ('Archive'){
   archive '**/distribution-tgz/target/*tar.gz'
+  }
   
   // ---------------------------------------------
   //generate rpm
-  stage 'Package MrGeo'
-  //sh '''
+  stage ('Package MrGeo'){
+ // sh '''
  // #gem install bundler;
  // #echo "source 'https://rubygems.org'" > Gemfile
-//  #echo "gem 'fpm'" >> Gemfile
-//  #bundle install --path=vendor/bundle;
-//  #bundle exec which fpm;
-//  #bundle exec fpm --version;'''
+ // #echo "gem 'fpm'" >> Gemfile
+ // #bundle install --path=vendor/bundle;
+ // #bundle exec which fpm;
+ // #bundle exec fpm --version;'''
 
   sh '''
   #ROOT_WORKSPACE=/jslave/workspace/DigitalGlobe/MrGeo
@@ -125,10 +129,11 @@ EOF'''
   color-scales/=/usr/lib/mrgeo/color-scales/ jar/=/usr/lib/mrgeo/
   
   mv ${TRIMMED_VERSION}.rpm ${PARENT_TARGET_DIR}/'''
+  }
   
   // ---------------------------------------------
   //generate pymrgeo rpm
-  stage 'Package pyMrGeo'
+  stage ('Package pyMrGeo'){
   sh '''#!/bin/bash
 
   # Set directory var
@@ -148,4 +153,5 @@ EOF'''
   bundle exec fpm -s dir -t rpm -n pymrgeo-${PY_VERSION}.rpm -p pymrgeo-${PY_VERSION}.rpm --prefix /usr/lib/python2.7/dist-packages --directories ./pymrgeo ./pymrgeo
   
   mv ${PYPI_DIR}/pymrgeo-${PY_VERSION}.rpm ${PARENT_TARGET_DIR}/'''
+  }
 }
