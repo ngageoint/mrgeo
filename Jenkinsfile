@@ -14,12 +14,18 @@ node ('mrgeo-build'){
   // ---------------------------------------------
   // build using maven     
   stage ('Build'){         
-  def mvnHome = "${tool name: 'Maven'}"         
+  def mvnHome = "${tool name: 'maven'}"         
   echo "MVN_HOME: ${mvnHome}"
   
-  withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: '<TO_BE_ADDED>', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME']]) {
-      
+  withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: '	c6aeb63d-8a56-4316-b367-3a1fcaae7f3b', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME']]) {
+  
+  // setting up confileFileProvider
+ configFileProvider([configFile(fileId: 'maven-settings', variable: 'MAVEN_SETTINGS')]) {
+    sh 'mvn -s $MAVEN_SETTINGS clean package'
+ }
+ 
   // set up local settings.xml for maven build
+/*
   sh '''
   set +x
 cat <<-EOF> ${WORKSPACE}/maven-settings.xml
@@ -38,9 +44,11 @@ cat <<-EOF> ${WORKSPACE}/maven-settings.xml
 <profiles></profiles>
  </settings>
 EOF'''
-
+*/
+    
   //env. properties file
-  sh '''#!/bin/bash
+  sh '''
+  #!/bin/bash
   source /etc/profile
   source ~/.bashrc
 
@@ -80,13 +88,14 @@ EOF'''
   // ---------------------------------------------
   //generate rpm
   stage ('Package MrGeo'){
- // sh '''
- // #gem install bundler;
- // #echo "source 'https://rubygems.org'" > Gemfile
- // #echo "gem 'fpm'" >> Gemfile
- // #bundle install --path=vendor/bundle;
- // #bundle exec which fpm;
- // #bundle exec fpm --version;'''
+    sh '''
+    gem install bundler;
+    echo "source 'https://rubygems.org'" > Gemfile
+    echo "gem 'fpm'" >> Gemfile
+    bundle install --path=vendor/bundle;
+    bundle exec which fpm;
+    bundle exec fpm --version;
+    '''
 
   sh '''
   #ROOT_WORKSPACE=/jslave/workspace/DigitalGlobe/MrGeo
@@ -134,7 +143,8 @@ EOF'''
   // ---------------------------------------------
   //generate pymrgeo rpm
   stage ('Package pyMrGeo'){
-  sh '''#!/bin/bash
+  sh '''
+  #!/bin/bash
 
   # Set directory var
   #ROOT_WORKSPACE=/jslave/workspace/DigitalGlobe/MrGeo
@@ -152,6 +162,7 @@ EOF'''
   # Generate RPM for pymrgeo
   bundle exec fpm -s dir -t rpm -n pymrgeo-${PY_VERSION}.rpm -p pymrgeo-${PY_VERSION}.rpm --prefix /usr/lib/python2.7/dist-packages --directories ./pymrgeo ./pymrgeo
   
-  mv ${PYPI_DIR}/pymrgeo-${PY_VERSION}.rpm ${PARENT_TARGET_DIR}/'''
+  mv ${PYPI_DIR}/pymrgeo-${PY_VERSION}.rpm ${PARENT_TARGET_DIR}/
+  '''
   }
 }
