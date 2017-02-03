@@ -69,13 +69,14 @@ EOF'''
     NEWVERSION=${VERSION}-${BUILD}
   fi
   echo "NEWVERSION" ${NEWVERSION}
-  mvnHome = "/usr/bin" 
+  mvn_Home="/usr/bin" 
+echo "mvn_Home" ${mvn_Home}
 
   # set mvn version, build, revert mvn version
-  ${mvnHome}/mvn -Dmodules=all versions:set -DnewVersion=${NEWVERSION}
+  ${mvn_Home}/mvn -Dmodules=all versions:set -DnewVersion=${NEWVERSION}
 #-s ${WORKSPACE}/maven-settings.xml
-  ${mvnHome}/mvn -e -P${BUILD_VERSION} -Pskip-all-tests  -Dmodules=allU
-  ${mvnHome}/mvn versions:revert
+  ${mvn_Home}/mvn -e -P${BUILD_VERSION} -Pskip-all-tests  -Dmodules=allU
+  ${mvn_Home}/mvn versions:revert
   '''
   }
   }
