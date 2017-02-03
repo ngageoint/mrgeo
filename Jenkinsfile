@@ -69,6 +69,7 @@ EOF'''
     NEWVERSION=${VERSION}-${BUILD}
   fi
   echo "NEWVERSION" ${NEWVERSION}
+  echo "MVN_HOME: ${mvnHome}"
 
   # set mvn version, build, revert mvn version
   ${mvnHome}/bin/mvn -Dmodules=all versions:set -DnewVersion=${NEWVERSION}
