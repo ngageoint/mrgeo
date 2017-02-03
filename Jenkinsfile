@@ -20,11 +20,10 @@ node ('mrgeo-build'){
   withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: '	c6aeb63d-8a56-4316-b367-3a1fcaae7f3b', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME']]) {
   
   // setting up confileFileProvider
- configFileProvider([configFile(fileId: 'maven-settings', variable: 'MAVEN_SETTINGS')]) {
-    sh 'mvn -s $MAVEN_SETTINGS clean package'
- }
- 
-  // set up local settings.xml for maven build
+ configFileProvider([configFile(fileId: '98f8f954-eb23-4a94-b4cf-40df824c0a5c', variable: 'MAVEN_SETTINGS')]) {
+   sh 'mvn -s $MAVEN_SETTINGS clean package'
+} 
+// set up local settings.xml for maven build
 /*
   sh '''
   set +x
