@@ -72,7 +72,8 @@ EOF'''
 
   # set mvn version, build, revert mvn version
   ${mvnHome}/bin/mvn -Dmodules=all versions:set -DnewVersion=${NEWVERSION}
-  ${mvnHome}/bin/mvn -e -s ${WORKSPACE}/maven-settings.xml -P${BUILD_VERSION} -Pskip-all-tests  -Dmodules=allU
+#-s ${WORKSPACE}/maven-settings.xml
+  ${mvnHome}/bin/mvn -e -P${BUILD_VERSION} -Pskip-all-tests  -Dmodules=allU
   ${mvnHome}/bin/mvn versions:revert
   '''
   }
