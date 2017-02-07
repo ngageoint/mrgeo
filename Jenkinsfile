@@ -90,17 +90,21 @@ echo "mvn_Home" ${mvn_Home}
   // ---------------------------------------------
   //generate rpm
   stage ('Package MrGeo'){
-    sh '''
+ /*   sh '''
     gem install bundler;
     echo "source 'https://rubygems.org'" > Gemfile
     echo "gem 'fpm'" >> Gemfile
     bundle install --path=vendor/bundle;
     bundle exec which fpm;
     bundle exec fpm --version;
-    '''
 
+    which fpm;
+    '''
+*/
+   
   sh '''
   #ROOT_WORKSPACE=/jslave/workspace/DigitalGlobe/MrGeo
+  echo "Starting packaging..."
   PARENT_TARGET_DIR=${WORKSPACE}/mrgeo-pipeline/distribution/target
   MRGEO_TAR=$(find ${PARENT_TARGET_DIR} -name "mrgeo-*.tar.gz")
   
