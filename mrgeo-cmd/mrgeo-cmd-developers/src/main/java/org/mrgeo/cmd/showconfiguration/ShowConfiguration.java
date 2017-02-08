@@ -95,7 +95,10 @@ public boolean isMrGeoSettingsPropertiesAvailable()
 {
   try (InputStream is = MrGeoProperties.class.getClass().getResourceAsStream(MrGeoConstants.MRGEO_SETTINGS))
   {
-    return true;
+    if (is != null) {
+      is.close();
+      return true;
+    }
   }
   catch (IOException ignored)
   {
