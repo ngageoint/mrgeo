@@ -21,8 +21,8 @@ node ('mrgeo-build'){
   
   // setting up confileFileProvider
  configFileProvider([configFile(fileId: '98f8f954-eb23-4a94-b4cf-40df824c0a5c', variable: 'MAVEN_SETTINGS')]) {
-   sh 'mvn -s $MAVEN_SETTINGS clean package'
-} 
+   //sh 'mvn -s $MAVEN_SETTINGS clean package'
+   
 // set up local settings.xml for maven build
 /*
   sh '''
@@ -70,22 +70,23 @@ EOF'''
   fi
   echo "NEWVERSION" ${NEWVERSION}
   mvn_Home="/usr/bin" 
-echo "mvn_Home" ${mvn_Home}
+  echo "mvn_Home" ${mvn_Home}
 
   # set mvn version, build, revert mvn version
   ${mvn_Home}/mvn -Dmodules=all versions:set -DnewVersion=${NEWVERSION}
-#-s ${WORKSPACE}/maven-settings.xml
-  ${mvn_Home}/mvn -e -P${BUILD_VERSION} -Pskip-all-tests  -Dmodules=allU
+  #-s ${WORKSPACE}/maven-settings.xml
+  ${mvn_Home}/mvn -e -P${BUILD_VERSION} -Pskip-all-tests  -Dmodules=all install -U
   ${mvn_Home}/mvn versions:revert
   '''
+ }
   }
   }
   
   // ---------------------------------------------
   //archive artifacts     
-  stage ('Archive'){
-  archive '**/distribution-tgz/target/*tar.gz'
-  }
+//  stage ('Archive'){
+//  archive '**/distribution-tgz/target/*tar.gz'
+//  }
   
   // ---------------------------------------------
   //generate rpm
