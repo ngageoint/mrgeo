@@ -50,18 +50,14 @@ EOF'''
   #!/bin/bash
   source /etc/profile
   source ~/.bashrc
-
   BUILD_VERSION=emr471
   echo "BUILD_VERSION: ${BUILD_VERSION}"
-
   # Set the existing version of the build
   VERSION=`scripts/mvn-build --quiet help:evaluate -Dexpression=project.version ${BUILD_VERSION} | grep -v \'\\[\' | tail -1`
   echo "VERSION" ${VERSION}
-
   # Set the build type
   BUILD=`scripts/mvn-build --quiet help:evaluate -Dexpression=final.classifier ${BUILD_VERSION} | grep -v \'\\[\' | tail -1`
   echo "BUILD" ${BUILD}
-
   # Check for SNAPSHOT, and add the BUILD as part of the version name
   if [[ ${VERSION} == *"-SNAPSHOT" ]]; then
     NEWVERSION=${VERSION%"-SNAPSHOT"}-${BUILD-SNAPSHOT}
@@ -71,7 +67,6 @@ EOF'''
   echo "NEWVERSION" ${NEWVERSION}
   mvn_Home="/usr/bin" 
   echo "mvn_Home" ${mvn_Home}
-
   # set mvn version, build, revert mvn version
   ${mvn_Home}/mvn -Dmodules=all versions:set -DnewVersion=${NEWVERSION}
   #-s ${WORKSPACE}/maven-settings.xml
@@ -98,7 +93,6 @@ EOF'''
     bundle install --path=vendor/bundle;
     bundle exec which fpm;
     bundle exec fpm --version;
-
     which fpm;
     '''
 */
@@ -110,21 +104,16 @@ EOF'''
   MRGEO_TAR=$(find ${PARENT_TARGET_DIR} -name "mrgeo-*.tar.gz")
   
   mkdir -p ${PARENT_TARGET_DIR}/rpm-creation
-
   cp ${MRGEO_TAR} ${PARENT_TARGET_DIR}/rpm-creation/
   cd ${PARENT_TARGET_DIR}/rpm-creation
-
   TARBALL_FILENAME=mrgeo-*.tar.gz
   NEWVERSION=$(echo ${TARBALL_FILENAME})
   TRIMMED_VERSION=${NEWVERSION::-7}
-
   tar -xvf mrgeo-*.tar.gz
   rm -f mrgeo-*.tar.gz
-
   #move jar files into jar folder for easier installation
   mkdir jar
   mv *.jar jar/
-
   echo \'#!/bin/bash\' >> set_mrgeo_env.sh
   echo \'\' >> set_mrgeo_env.sh
   echo \'sudo sh -c "echo export MRGEO_COMMON_HOME=/usr/lib/mrgeo" >> /etc/profile.d/mrgeo.sh\' >> set_mrgeo_env.sh
@@ -139,7 +128,6 @@ EOF'''
   echo \'echo "******************************* ENJOY! *********************************"\' >> set_mrgeo_env.sh
   echo \'\' >> set_mrgeo_env.sh
   chmod +x set_mrgeo_env.sh
-
   bundle exec fpm -s dir -t rpm -n ${TRIMMED_VERSION}.rpm -p ${TRIMMED_VERSION}.rpm --after-install ./set_mrgeo_env.sh \\
   bin/=/usr/lib/mrgeo/bin/ lib/=/usr/lib/mrgeo/lib/ conf/=/etc/mrgeo/conf/ \\
   color-scales/=/usr/lib/mrgeo/color-scales/ jar/=/usr/lib/mrgeo/
@@ -152,7 +140,6 @@ EOF'''
   stage ('Package pyMrGeo'){
   sh '''
   #!/bin/bash
-
   # Set directory var
   #ROOT_WORKSPACE=/jslave/workspace/DigitalGlobe/MrGeo
   MRGEO_DIR=${WORKSPACE}/mrgeo-pipeline
@@ -160,12 +147,9 @@ EOF'''
   PARENT_TARGET_DIR=${WORKSPACE}/mrgeo-pipeline/distribution/target
   
   PY_VERSION=0.0.7
-
   cd ${PYPI_DIR}/
-
   #clean up existing rpms
   rm -f *.rpm
-
   # Generate RPM for pymrgeo
   bundle exec fpm -s dir -t rpm -n pymrgeo-${PY_VERSION}.rpm -p pymrgeo-${PY_VERSION}.rpm --prefix /usr/lib/python2.7/dist-packages --directories ./pymrgeo ./pymrgeo
   
