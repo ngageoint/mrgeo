@@ -18,11 +18,13 @@ package org.mrgeo.quantiles
 
 import java.awt.image.DataBuffer
 import java.io.{Externalizable, ObjectInput, ObjectOutput, PrintWriter}
+import java.util.Random
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
-import org.apache.spark.rdd.{PairRDDFunctions, RDD}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data
 import org.mrgeo.data.ProviderProperties
@@ -35,11 +37,13 @@ import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.SparkUtils
 
 import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 @SuppressFBWarnings(value = Array("SE_NO_SUITABLE_CONSTRUCTOR_FOR_EXTERNALIZATION"),
   justification = "object has no constructor, empty Externalizable prevents object serialization")
 @SuppressFBWarnings(value = Array("UPM_UNCALLED_PRIVATE_METHOD"), justification = "Scala constant")
+@SuppressFBWarnings(value = Array("PREDICTABLE_RANDOM"),
+  justification = "Use of Random has no impact on security")
 object Quantiles extends MrGeoDriver with Externalizable {
   final private val Input = "input"
   final private val Output = "output"
@@ -69,124 +73,262 @@ object Quantiles extends MrGeoDriver with Externalizable {
     true
   }
 
-  def getDoublePixelValues(raster:MrGeoRaster, band:Int):Array[Double] = {
+  def getDoublePixelValues(raster: MrGeoRaster, band: Int, nodata: Double,
+                           fraction: Option[Float]): ArrayBuffer[Double] = {
     var x = 0
     var y = 0
 
     val width = raster.width()
     val height = raster.height()
 
-    val data = Array.ofDim[Double](width * height)
+    val data = new ArrayBuffer[Double](width * height)
 
     var cnt = 0
     while (y < height) {
       x = 0
       while (x < width) {
-        data(cnt) = raster.getPixelDouble(x, y, band)
-        cnt += 1
+        val pixelValue = raster.getPixelDouble(x, y, band)
+        if (!RasterMapOp.isNodata(pixelValue, nodata)) {
+          data += pixelValue
+          cnt += 1
+        }
 
         x += 1
       }
       y += 1
     }
-
+    // If a fraction is specified, then randomly sample the data without replacement
+    if (fraction.isDefined && fraction.get < 1.0f) {
+      val n = data.length
+      val m = math.floor(fraction.get * n).toInt
+      if (m < cnt) {
+        var j: Int = 0
+        val r = new Random()
+        while (j < m) {
+          val k = r.nextInt(n - j) + j
+          val keep = data(j)
+          data(j) = data(k)
+          data(k) = keep
+          j += 1
+        }
+        data.reduceToSize(m)
+      }
+      else {
+        // There aren't enough non-nodata pixels for the requested sample, so take what we get.
+        data.reduceToSize(cnt)
+      }
+    }
+    else {
+      // Use all of the non-nodata pixel values
+      data.reduceToSize(cnt)
+    }
     data
   }
 
-  def getFloatPixelValues(raster:MrGeoRaster, band:Int):Array[Float] = {
+  def getFloatPixelValues(raster: MrGeoRaster, band: Int, nodata: Double, fraction: Option[Float]): ArrayBuffer[Float] = {
     var x = 0
     var y = 0
 
     val width = raster.width()
     val height = raster.height()
 
-    val data = Array.ofDim[Float](width * height)
+    val data = new ArrayBuffer[Float](width * height)
 
     var cnt = 0
     while (y < height) {
       x = 0
       while (x < width) {
-        data(cnt) = raster.getPixelFloat(x, y, band)
-
-        cnt += 1
+        val pixelValue = raster.getPixelFloat(x, y, band)
+        if (!RasterMapOp.isNodata(pixelValue, nodata)) {
+          data += pixelValue
+          cnt += 1
+        }
 
         x += 1
       }
       y += 1
     }
-
+    // If a fraction is specified, then randomly sample the data without replacement
+    if (fraction.isDefined && fraction.get < 1.0f) {
+      val n = data.length
+      val m = math.floor(fraction.get * n).toInt
+      if (m < cnt) {
+        var j: Int = 0
+        val r = new Random()
+        while (j < m) {
+          val k = r.nextInt(n - j) + j
+          val keep = data(j)
+          data(j) = data(k)
+          data(k) = keep
+          j += 1
+        }
+        data.reduceToSize(m)
+      }
+      else {
+        // There aren't enough non-nodata pixels for the requested sample, so take what we get.
+        data.reduceToSize(cnt)
+      }
+    }
+    else {
+      // Use all of the non-nodata pixel values
+      data.reduceToSize(cnt)
+    }
     data
   }
 
-  def getIntPixelValues(raster:MrGeoRaster, band:Int):Array[Int] = {
+  def getIntPixelValues(raster: MrGeoRaster, band: Int, nodata: Double,
+                        fraction: Option[Float]): ArrayBuffer[Int] = {
     var x = 0
     var y = 0
 
     val width = raster.width()
     val height = raster.height()
 
-    val data = Array.ofDim[Int](width * height)
+    val data = new ArrayBuffer[Int](width * height)
 
     var cnt = 0
     while (y < height) {
       x = 0
       while (x < width) {
-        data(cnt) = raster.getPixelInt(x, y, band)
-        cnt += 1
+        val pixelValue = raster.getPixelInt(x, y, band)
+        if (!RasterMapOp.isNodata(pixelValue, nodata)) {
+          data += pixelValue
+          cnt += 1
+        }
 
         x += 1
       }
       y += 1
     }
-
+    // If a fraction is specified, then randomly sample the data without replacement
+    if (fraction.isDefined && fraction.get < 1.0f) {
+      val n = data.length
+      val m = math.floor(fraction.get * n).toInt
+      if (m < cnt) {
+        var j: Int = 0
+        val r = new Random()
+        while (j < m) {
+          val k = r.nextInt(n - j) + j
+          val keep = data(j)
+          data(j) = data(k)
+          data(k) = keep
+          j += 1
+        }
+        data.reduceToSize(m)
+      }
+      else {
+        // There aren't enough non-nodata pixels for the requested sample, so take what we get.
+        data.reduceToSize(cnt)
+      }
+    }
+    else {
+      // Use all of the non-nodata pixel values
+      data.reduceToSize(cnt)
+    }
     data
   }
 
-  def getShortPixelValues(raster:MrGeoRaster, band:Int):Array[Short] = {
+  def getShortPixelValues(raster: MrGeoRaster, band: Int, nodata: Double,
+                          fraction: Option[Float]): ArrayBuffer[Short] = {
     var x = 0
     var y = 0
 
     val width = raster.width()
     val height = raster.height()
 
-    val data = Array.ofDim[Short](width * height)
+    val data = new ArrayBuffer[Short](width * height)
 
     var cnt = 0
     while (y < height) {
       x = 0
       while (x < width) {
-        data(cnt) = raster.getPixelShort(x, y, band)
-        cnt += 1
+        val pixelValue = raster.getPixelShort(x, y, band)
+        if (!RasterMapOp.isNodata(pixelValue, nodata)) {
+          data += pixelValue
+          cnt += 1
+        }
 
         x += 1
       }
       y += 1
     }
-
+    // If a fraction is specified, then randomly sample the data without replacement
+    if (fraction.isDefined && fraction.get < 1.0f) {
+      val n = data.length
+      val m = math.floor(fraction.get * n).toInt
+      if (m < cnt) {
+        var j: Int = 0
+        val r = new Random()
+        while (j < m) {
+          val k = r.nextInt(n - j) + j
+          val keep = data(j)
+          data(j) = data(k)
+          data(k) = keep
+          j += 1
+        }
+        data.reduceToSize(m)
+      }
+      else {
+        // There aren't enough non-nodata pixels for the requested sample, so take what we get.
+        data.reduceToSize(cnt)
+      }
+    }
+    else {
+      // Use all of the non-nodata pixel values
+      data.reduceToSize(cnt)
+    }
     data
   }
 
-  def getBytePixelValues(raster:MrGeoRaster, band:Int):Array[Byte] = {
+  def getBytePixelValues(raster: MrGeoRaster, band: Int, nodata: Double,
+                         fraction: Option[Float]): ArrayBuffer[Byte] = {
     var x = 0
     var y = 0
 
     val width = raster.width()
     val height = raster.height()
 
-    val data = Array.ofDim[Byte](width * height)
+    val data = new ArrayBuffer[Byte](width * height)
 
     var cnt = 0
     while (y < height) {
       x = 0
       while (x < width) {
-        data(cnt) = raster.getPixelByte(x, y, band)
-        cnt += 1
+        val pixelValue = raster.getPixelByte(x, y, band)
+        if (!RasterMapOp.isNodata(pixelValue, nodata)) {
+          data += pixelValue
+          cnt += 1
+        }
 
         x += 1
       }
       y += 1
     }
-
+    // If a fraction is specified, then randomly sample the data without replacement
+    if (fraction.isDefined && fraction.get < 1.0f) {
+      val n = data.length
+      val m = math.floor(fraction.get * n).toInt
+      if (m < cnt) {
+        var j: Int = 0
+        val r = new Random()
+        while (j < m) {
+          val k = r.nextInt(n - j) + j
+          val keep = data(j)
+          data(j) = data(k)
+          data(k) = keep
+          j += 1
+        }
+        data.reduceToSize(m)
+      }
+      else {
+        // There aren't enough non-nodata pixels for the requested sample, so take what we get.
+        data.reduceToSize(cnt)
+      }
+    }
+    else {
+      // Use all of the non-nodata pixel values
+      data.reduceToSize(cnt)
+    }
     data
   }
 
@@ -196,89 +338,58 @@ object Quantiles extends MrGeoDriver with Externalizable {
     var result = new ListBuffer[Array[Double]]()
     while (b < meta.getBands) {
       val nodata = meta.getDefaultValue(b)
-      val sortedPixelValues:RDD[AnyVal] = meta.getTileType match {
-        case DataBuffer.TYPE_DOUBLE =>
-          var pixelValues = rdd.flatMap(U => {
-            getDoublePixelValues(RasterWritable.toMrGeoRaster(U._2), b)
-          }).filter(value => {
-            !RasterMapOp.isNodata(value, nodata)
-          })
-          if (fraction.isDefined && fraction.get < 1.0f) {
-            pixelValues = pixelValues.sample(false, fraction.get)
-          }
-          pixelValues.sortBy(x => x).asInstanceOf[RDD[AnyVal]]
-        case DataBuffer.TYPE_FLOAT =>
-          var pixelValues = rdd.flatMap(U => {
-            getFloatPixelValues(RasterWritable.toMrGeoRaster(U._2), b)
-          }).filter(value => {
-            !RasterMapOp.isNodata(value, nodata)
-          })
-          println(pixelValues.count())
-          if (fraction.isDefined && fraction.get < 1.0f) {
-            pixelValues = pixelValues.sample(false, fraction.get)
-          }
-          pixelValues.sortBy(x => x).asInstanceOf[RDD[AnyVal]]
-
-        case (DataBuffer.TYPE_INT | DataBuffer.TYPE_USHORT) =>
-          var pixelValues = rdd.flatMap(U => {
-            getIntPixelValues(RasterWritable.toMrGeoRaster(U._2), b)
-          }).filter(value => {
-            value != nodata.toInt
-          })
-          if (fraction.isDefined && fraction.get < 1.0f) {
-            pixelValues = pixelValues.sample(false, fraction.get)
-          }
-          pixelValues.sortBy(x => x).asInstanceOf[RDD[AnyVal]]
-        case DataBuffer.TYPE_SHORT =>
-          var pixelValues = rdd.flatMap(U => {
-            getShortPixelValues(RasterWritable.toMrGeoRaster(U._2), b)
-          }).filter(value => {
-            value != nodata.toShort
-          })
-          if (fraction.isDefined && fraction.get < 1.0f) {
-            pixelValues = pixelValues.sample(false, fraction.get)
-          }
-          pixelValues.sortBy(x => x).asInstanceOf[RDD[AnyVal]]
-        case DataBuffer.TYPE_BYTE =>
-          var pixelValues = rdd.flatMap(U => {
-            getBytePixelValues(RasterWritable.toMrGeoRaster(U._2), b)
-          }).filter(value => {
-            value != nodata.toByte
-          })
-          if (fraction.isDefined && fraction.get < 1.0f) {
-            pixelValues = pixelValues.sample(false, fraction.get)
-          }
-          pixelValues.sortBy(x => x).asInstanceOf[RDD[AnyVal]]
-      }
-      val count = sortedPixelValues.count()
-      // Build an RDD containing an entry for each individual quantile to compute.
-      // The key is the index into the set of sorted pixel values corresponding to
-      // the quantile. The value is the number of the quantile itself.
-      val quantiles = new Array[(Long, Int)](numberOfQuantiles - 1)
-      for (i <- quantiles.indices) {
-        val qFraction = 1.0f / numberOfQuantiles.toFloat * (i + 1).toFloat
-        quantiles(i) = ((qFraction * count).ceil.toLong, i)
-      }
-      val quantilesRdd = new PairRDDFunctions(rdd.context.parallelize(quantiles))
-      if (count >= quantiles.length) {
-        //        log.info("value count is " + count)
-        // Add an index as the key to the sorted pixel values so we can join on that key.
-        val sortedWithIndexKey = sortedPixelValues.zipWithIndex().map(_.swap)
-        val quantileValues = new Array[Double](quantiles.length)
-        // Join the two RDD's and the results contain an entry for each quantile
-        // with the quantile number and the pixel value corresponding to that quantile.
-        val joined = quantilesRdd.join(sortedWithIndexKey)
-        val localJoined = joined.collect()
-        localJoined.foreach(q => {
-          quantileValues(q._2._1) = q._2._2.toString.toDouble
+      val sortedPixelValues: RDD[AnyVal] = meta.getTileType match {
+      case DataBuffer.TYPE_DOUBLE =>
+        var pixelValues = rdd.flatMap(U => {
+          getDoublePixelValues(RasterWritable.toMrGeoRaster(U._2), b, nodata, fraction)
         })
-        //        if (log.isInfoEnabled) {
-        //          log.info("Setting quantiles for band " + b + " to:")
-        //          quantileValues.foreach(v => {
-        //            log.info("  " + v)
-        //          })
-        //        }
-        result += quantileValues
+        pixelValues.persist(StorageLevel.MEMORY_AND_DISK).sortBy(x => x).asInstanceOf[RDD[AnyVal]]
+      case DataBuffer.TYPE_FLOAT =>
+        var pixelValues = rdd.flatMap(U => {
+          getFloatPixelValues(RasterWritable.toMrGeoRaster(U._2), b, nodata, fraction)
+        })
+        pixelValues.persist(StorageLevel.MEMORY_AND_DISK).sortBy(x => x).asInstanceOf[RDD[AnyVal]]
+      case (DataBuffer.TYPE_INT | DataBuffer.TYPE_USHORT) =>
+        var pixelValues = rdd.flatMap(U => {
+          getIntPixelValues(RasterWritable.toMrGeoRaster(U._2), b, nodata, fraction)
+        })
+        pixelValues.persist(StorageLevel.MEMORY_AND_DISK).sortBy(x => x).asInstanceOf[RDD[AnyVal]]
+      case DataBuffer.TYPE_SHORT =>
+        var pixelValues = rdd.flatMap(U => {
+          getShortPixelValues(RasterWritable.toMrGeoRaster(U._2), b, nodata, fraction)
+        })
+        pixelValues.persist(StorageLevel.MEMORY_AND_DISK).sortBy(x => x).asInstanceOf[RDD[AnyVal]]
+      case DataBuffer.TYPE_BYTE =>
+        var pixelValues = rdd.flatMap(U => {
+          getBytePixelValues(RasterWritable.toMrGeoRaster(U._2), b, nodata, fraction)
+        })
+        pixelValues.persist(StorageLevel.MEMORY_AND_DISK).sortBy(x => x).asInstanceOf[RDD[AnyVal]]
+      }
+      try {
+        val count = sortedPixelValues.count()
+        // Build an RDD containing an entry for each individual quantile to compute.
+        // The key is the index into the set of sorted pixel values corresponding to
+        // the quantile. The value is the number of the quantile itself.
+        val quantileIndices = new Array[Long](numberOfQuantiles - 1)
+        for (i <- quantileIndices.indices) {
+          val qFraction = 1.0f / numberOfQuantiles.toFloat * (i + 1).toFloat
+          quantileIndices(i) = (qFraction * count).ceil.toLong
+        }
+        if (count >= quantileIndices.length) {
+          //        log.info("value count is " + count)
+          // Add an index as the key to the sorted pixel values so we can join on that key.
+          val sortedWithIndexKey = sortedPixelValues.zipWithIndex().map(_.swap)
+          val count = sortedWithIndexKey.count
+          val quantileValues = sortedWithIndexKey.filter(U => {
+            quantileIndices.contains(U._1)
+          }) //.sortByKey()
+          result += quantileValues.collect().map(U => {
+            U._2.toString.toDouble
+          }).sorted
+        }
+      }
+      finally {
+        sortedPixelValues.unpersist()
       }
       //      else {
       //        log.warn("Unable to compute quantiles because there are only " + count + " values")
