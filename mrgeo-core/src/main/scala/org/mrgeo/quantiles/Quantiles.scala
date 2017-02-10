@@ -23,7 +23,7 @@ import java.util.Random
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
-import org.apache.spark.rdd.{PairRDDFunctions, RDD}
+import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data
@@ -42,6 +42,8 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 @SuppressFBWarnings(value = Array("SE_NO_SUITABLE_CONSTRUCTOR_FOR_EXTERNALIZATION"),
   justification = "object has no constructor, empty Externalizable prevents object serialization")
 @SuppressFBWarnings(value = Array("UPM_UNCALLED_PRIVATE_METHOD"), justification = "Scala constant")
+@SuppressFBWarnings(value = Array("PREDICTABLE_RANDOM"),
+  justification = "Use of Random has no impact on security")
 object Quantiles extends MrGeoDriver with Externalizable {
   final private val Input = "input"
   final private val Output = "output"
