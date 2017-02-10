@@ -20,30 +20,57 @@ node ('mrgeo-build'){
   withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: '	c6aeb63d-8a56-4316-b367-3a1fcaae7f3b', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME']]) {
   
   // setting up confileFileProvider
- configFileProvider([configFile(fileId: '98f8f954-eb23-4a94-b4cf-40df824c0a5c', variable: 'MAVEN_SETTINGS')]) {
+// configFileProvider([configFile(fileId: '98f8f954-eb23-4a94-b4cf-40df824c0a5c', variable: 'MAVEN_SETTINGS')]) {
    //sh 'mvn -s $MAVEN_SETTINGS clean package'
    
 // set up local settings.xml for maven build
-/*
   sh '''
   set +x
 cat <<-EOF> ${WORKSPACE}/maven-settings.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
-<pluginGroups></pluginGroups>
-<proxies></proxies>
-<servers xmlns="http://maven.apache.org/SETTINGS/1.1.0">
+  <pluginGroups></pluginGroups>
+  <proxies></proxies>
+  <servers>
     <server>
-    <id>mrgeo-repository</id>
-    <username>${USERNAME}</username>
-    <password>${PASSWORD}</password>
-  </server>
-</servers>
-<mirrors></mirrors>
-<profiles></profiles>
- </settings>
-EOF'''
-*/
+      <id>mrgeo-maven-plugin</id>
+      <!-- access key -->
+      <username>AKIAJ4O4S2MEXU5EGGCQ</username>
+      <!-- secret key -->
+      <password>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</password>
+    </server>
+    <server>
+      <id>mrgeo-maven-release</id>
+      <username>AKIAJ4O4S2MEXU5EGGCQ</username>
+      <password>90VAcP1jhFU3Lc8Qrnrb9cklMw+j33CckBN9EoiU</password>
+    </server>
+    <server>
+      <id>mrgeo-maven-snapshot</id>
+      <username>AKIAJ4O4S2MEXU5EGGCQ</username>
+      <password>90VAcP1jhFU3Lc8Qrnrb9cklMw+j33CckBN9EoiU</password>
+    </server>
+    <server>
+      <id>mrgeo-repository</id>
+      <username>AKIAJ4O4S2MEXU5EGGCQ</username>
+      <password>90VAcP1jhFU3Lc8Qrnrb9cklMw+j33CckBN9EoiU</password>
+    </server>
+  </servers>
+  <mirrors></mirrors>
+  <profiles>
+    <profile>
+      <id>deploy-to-s3</id>
+      <properties>
+        <repository.url>s3://mrgeo-maven/release</repository.url>
+        <snapshot.repository.url>s3://mrgeo-maven/snapshot</snapshot.repository.url>
+      </properties>
+    </profile>
+  </profiles>
+  <activeProfiles>
+    <activeProfile>deploy-to-s3</activeProfile>
+  </activeProfiles>
+</settings>
+EOF
+'''
     
   //env. properties file
   sh '''
@@ -67,13 +94,14 @@ EOF'''
   echo "NEWVERSION" ${NEWVERSION}
   mvn_Home="/usr/bin" 
   echo "mvn_Home" ${mvn_Home}
+  echo ""
+
   # set mvn version, build, revert mvn version
   ${mvn_Home}/mvn -Dmodules=all versions:set -DnewVersion=${NEWVERSION}
-  #-s ${WORKSPACE}/maven-settings.xml
-  ${mvn_Home}/mvn -e -P${BUILD_VERSION} -Pskip-all-tests  -Dmodules=all deploy -U
+  ${mvn_Home}/mvn -e -s ${WORKSPACE}/maven-settings.xml -P${BUILD_VERSION} -Pskip-all-tests  -Dmodules=all deploy -U
   ${mvn_Home}/mvn versions:revert
   '''
- }
+// }
   }
   }
   
@@ -86,17 +114,6 @@ EOF'''
   // ---------------------------------------------
   //generate rpm
   stage ('Package MrGeo'){
- /*   sh '''
-    gem install bundler;
-    echo "source 'https://rubygems.org'" > Gemfile
-    echo "gem 'fpm'" >> Gemfile
-    bundle install --path=vendor/bundle;
-    bundle exec which fpm;
-    bundle exec fpm --version;
-    which fpm;
-    '''
-*/
-   
   sh '''
   #ROOT_WORKSPACE=/jslave/workspace/DigitalGlobe/MrGeo
   echo "Starting packaging..."
