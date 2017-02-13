@@ -180,7 +180,7 @@ EOF'''
   
   // ---------------------------------------------  
   // fortify
-  stage ('Fortify pyMrGeo')
+  stage ('Fortify pyMrGeo'){
   def fortifyPythonName = "pymrgeo-python"
   sh "/opt/hp_fortify_sca/bin/sourceanalyzer -b ${env.JOB_NAME} `find ./ -name '*.py'`"
   sh "/opt/hp_fortify_sca/bin/sourceanalyzer -b ${env.JOB_NAME} -scan -Xmx4G -64 -f fortifyResults-${fortifyPythonName}.fpr"
@@ -191,7 +191,7 @@ EOF'''
   
   // ---------------------------------------------
   //owasp
-  stage ('OWASP')
+  stage ('OWASP'){
   sh "/opt/dependency-check/bin/dependency-check.sh --project '${env.JOB_NAME}' --scan '.' --format 'XML' -disableBundleAudit --enableExperimental"
   withCredentials([[$class : 'StringBinding', credentialsId   : '2fa66d37-7265-4bf5-aa8a-696f032078e0', variable: 'API_KEY']]) {
     sh "/bin/curl -v --insecure -H 'Accept: application/json' -X POST --form file=@dependency-check-report.xml https://threadfix.devops.geointservices.io/rest/applications/14/upload?apiKey={$API_KEY}"
