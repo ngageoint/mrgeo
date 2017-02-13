@@ -160,7 +160,7 @@ EOF'''
   #!/bin/bash
   # Set directory var
   #ROOT_WORKSPACE=/jslave/workspace/DigitalGlobe/MrGeo
-  MRGEO_DIR=${WORKSPACE}/mrgeo-pipeline
+  MRGEO_DIR=${WORKSPACE}
   PYPI_DIR=${MRGEO_DIR}/mrgeo-python/src/main/python
   PARENT_TARGET_DIR=${WORKSPACE}/distribution/target
   
