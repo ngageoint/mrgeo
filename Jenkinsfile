@@ -174,4 +174,45 @@ EOF'''
   mv ${PYPI_DIR}/pymrgeo-${PY_VERSION}.rpm ${PARENT_TARGET_DIR}/
   '''
   }
+  
+  // ---------------------------------------------
+  // publish to AWS S3 bucket
+  stage ('Publish to S3'){
+  withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: '	c6aeb63d-8a56-4316-b367-3a1fcaae7f3b', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME']]) {
+  
+  sh '''set +x
+  PARENT_TARGET_DIR=${WORKSPACE}/distribution/target
+  
+  MRGEO_RPM=$(find ${PARENT_TARGET_DIR} -name "mrgeo*.rpm")
+  MRGEO_TAR=$(find ${PARENT_TARGET_DIR} -name "mrgeo*.tar.gz")
+  PYMRGEO_RPM=$(find ${PARENT_TARGET_DIR} -name "pymrgeo*.rpm")
+
+  echo "MRGEO_RPM" ${MRGEO_RPM}
+  echo "MRGEO_TAR" ${MRGEO_TAR}
+  echo "PYMRGEO_RPM" ${PYMRGEO_RPM}
+
+  #curl -v -u ${USERNAME}:${PASSWORD} --upload-file ${MRGEO_RPM} https://nexus.devops.geointservices.io/content/repositories/DG-Releases/org/mrgeo/
+  #curl -v -u ${USERNAME}:${PASSWORD} --upload-file ${MRGEO_TAR} https://nexus.devops.geointservices.io/content/repositories/DG-Releases/org/mrgeo/
+  #curl -v -u ${USERNAME}:${PASSWORD} --upload-file ${PYMRGEO_RPM} https://nexus.devops.geointservices.io/content/repositories/DG-Releases/org/mrgeo/
+  '''
+  }
+  }
+/*  stage("publish to s3") {
+    step([
+        $class: 'S3BucketPublisher',
+        entries: [[
+            sourceFile: 'mybinaryFile',
+            bucket: 'GoBinaries',
+            selectedRegion: 'eu-west-1',
+            noUploadOnFailure: true,
+            managedArtifacts: true,
+            flatten: true,
+            showDirectlyInBrowser: true,
+            keepForever: true,
+        ]],
+        profileName: 'myprofile',
+        dontWaitForConcurrentBuildCompletion: false, 
+    ])
+*/
+}
 }
