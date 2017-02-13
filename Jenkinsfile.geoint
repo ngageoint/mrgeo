@@ -196,7 +196,7 @@ EOF'''
   withCredentials([[$class : 'StringBinding', credentialsId   : '2fa66d37-7265-4bf5-aa8a-696f032078e0', variable: 'API_KEY']]) {
     sh "/bin/curl -v --insecure -H 'Accept: application/json' -X POST --form file=@dependency-check-report.xml https://threadfix.devops.geointservices.io/rest/applications/14/upload?apiKey={$API_KEY}"
     }
-  )
+  }
   
   // ---------------------------------------------
   // publish to nexus
