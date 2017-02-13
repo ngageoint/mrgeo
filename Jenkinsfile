@@ -117,7 +117,7 @@ EOF
   sh '''
   #ROOT_WORKSPACE=/jslave/workspace/DigitalGlobe/MrGeo
   echo "Starting packaging..."
-  PARENT_TARGET_DIR=${WORKSPACE}/mrgeo-pipeline/distribution/target
+  PARENT_TARGET_DIR=${WORKSPACE}/distribution/target
   MRGEO_TAR=$(find ${PARENT_TARGET_DIR} -name "mrgeo-*.tar.gz")
   
   mkdir -p ${PARENT_TARGET_DIR}/rpm-creation
@@ -161,7 +161,7 @@ EOF
   #ROOT_WORKSPACE=/jslave/workspace/DigitalGlobe/MrGeo
   MRGEO_DIR=${WORKSPACE}/mrgeo-pipeline
   PYPI_DIR=${MRGEO_DIR}/mrgeo-python/src/main/python
-  PARENT_TARGET_DIR=${WORKSPACE}/mrgeo-pipeline/distribution/target
+  PARENT_TARGET_DIR=${WORKSPACE}/distribution/target
   
   PY_VERSION=0.0.7
   cd ${PYPI_DIR}/
