@@ -20,12 +20,10 @@ node ('mrgeo-build'){
   withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: '	c6aeb63d-8a56-4316-b367-3a1fcaae7f3b', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME']]) {
   
   // setting up confileFileProvider
-// configFileProvider([configFile(fileId: '98f8f954-eb23-4a94-b4cf-40df824c0a5c', variable: 'MAVEN_SETTINGS')]) {
-   //sh 'mvn -s $MAVEN_SETTINGS clean package'
+  // configFileProvider([configFile(fileId: '98f8f954-eb23-4a94-b4cf-40df824c0a5c', variable: 'MAVEN_SETTINGS')]) {
    
 // set up local settings.xml for maven build
-  sh '''
-  set +x
+  sh '''set +x
 cat <<-EOF> ${WORKSPACE}/maven-settings.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
@@ -69,38 +67,40 @@ cat <<-EOF> ${WORKSPACE}/maven-settings.xml
     <activeProfile>deploy-to-s3</activeProfile>
   </activeProfiles>
 </settings>
-EOF
-'''
+EOF'''
     
   //env. properties file
   sh '''
   #!/bin/bash
   source /etc/profile
   source ~/.bashrc
+
   BUILD_VERSION=emr471
   echo "BUILD_VERSION: ${BUILD_VERSION}"
+
   # Set the existing version of the build
   VERSION=`scripts/mvn-build --quiet help:evaluate -Dexpression=project.version ${BUILD_VERSION} | grep -v \'\\[\' | tail -1`
   echo "VERSION" ${VERSION}
+
   # Set the build type
   BUILD=`scripts/mvn-build --quiet help:evaluate -Dexpression=final.classifier ${BUILD_VERSION} | grep -v \'\\[\' | tail -1`
   echo "BUILD" ${BUILD}
+
   # Check for SNAPSHOT, and add the BUILD as part of the version name
   if [[ ${VERSION} == *"-SNAPSHOT" ]]; then
     NEWVERSION=${VERSION%"-SNAPSHOT"}-${BUILD-SNAPSHOT}
   else
     NEWVERSION=${VERSION}-${BUILD}
   fi
+
   echo "NEWVERSION" ${NEWVERSION}
   mvn_Home="/usr/bin" 
   echo "mvn_Home" ${mvn_Home}
-  echo ""
 
   # set mvn version, build, revert mvn version
   ${mvn_Home}/mvn -Dmodules=all versions:set -DnewVersion=${NEWVERSION}
   ${mvn_Home}/mvn -e -s ${WORKSPACE}/maven-settings.xml -P${BUILD_VERSION} -Pskip-all-tests  -Dmodules=all deploy -U
-  ${mvn_Home}/mvn versions:revert
-  '''
+  ${mvn_Home}/mvn versions:revert'''
 // }
   }
   }
