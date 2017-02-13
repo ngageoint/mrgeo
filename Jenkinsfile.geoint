@@ -1,17 +1,19 @@
 node ('sl61'){
   // ---------------------------------------------
   // we want a clean workspace     
-  stage 'Clear workspace'         
+  stage ('Clear workspace'){         
   deleteDir()
+  }
   
   // ---------------------------------------------
   // checkout code     
-  stage 'Checkout'
+  stage ('Checkout'){
   checkout scm
+  }
   
   // ---------------------------------------------
   // build using maven     
-  stage 'Build'         
+  stage ('Build'){         
   def mvnHome = "${tool name: 'M3'}"         
   echo "MVN_HOME: ${mvnHome}"
   
@@ -69,15 +71,17 @@ EOF'''
   ${mvnHome}/bin/mvn versions:revert'''
  
 }
+}
 
   // ---------------------------------------------
   //archive artifacts     
-  stage 'Archive'         
+  stage ('Archive'){        
   archive '**/distribution-tgz/target/*tar.gz'
+  }
   
   // ---------------------------------------------
   //generate rpm
-  stage 'Package MrGeo'
+  stage ('Package MrGeo'){
   sh '''gem install bundler;
   echo "source 'https://rubygems.org'" > Gemfile
   echo "gem 'fpm'" >> Gemfile
@@ -125,10 +129,11 @@ EOF'''
   color-scales/=/usr/lib/mrgeo/color-scales/ jar/=/usr/lib/mrgeo/
   
   mv ${TRIMMED_VERSION}.rpm ${PARENT_TARGET_DIR}/'''
+  }
   
   // ---------------------------------------------
   //generate pymrgeo rpm
-  stage 'Package pyMrGeo'
+  stage ('Package pyMrGeo'){
   sh '''#!/bin/bash
 
   # Set directory var
@@ -148,20 +153,22 @@ EOF'''
   bundle exec fpm -s dir -t rpm -n pymrgeo-${PY_VERSION}.rpm -p pymrgeo-${PY_VERSION}.rpm --prefix /usr/lib/python2.7/dist-packages --directories ./pymrgeo ./pymrgeo
   
   mv ${PYPI_DIR}/pymrgeo-${PY_VERSION}.rpm ${PARENT_TARGET_DIR}/'''
-
+  }
+  
   // ---------------------------------------------
   // sonar
-  stage 'Sonar'
+  stage ('Sonar'){
   def sonarUrl = "https://sonar.geointservices.io"         
   def projectKey = "mrgeo:mrgeo"         
   def projectName = "mrgeo:mrgeo"         
   withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: '4d7ce3c3-2cba-4031-9ef0-df4a1926bbe5', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME']]) {
       sh "${mvnHome}/bin/mvn clean verify sonar:sonar -Dsonar.host.url=${sonarUrl} -Dsonar.projectKey=${projectKey} -Dsonar.projectName=${projectName} -Dsonar.login=${env.USERNAME} -Dsonar.password=${env.PASSWORD}"
       }
+  }
   
   // ---------------------------------------------
   // fortify
-  stage 'Fortify MrGeo'
+  stage ('Fortify MrGeo'){
   def fortifyJavaName = "mrgeo-java"
   sh "/opt/hp_fortify_sca/bin/sourceanalyzer -64 -b ${env.JOB_NAME} -clean"
   sh "/opt/hp_fortify_sca/bin/sourceanalyzer -64 -b ${env.JOB_NAME}       -Xmx3000M `find ./ -name '*.java'`"          
@@ -169,28 +176,31 @@ EOF'''
   withCredentials([[$class : 'StringBinding', credentialsId   : '2fa66d37-7265-4bf5-aa8a-696f032078e0', variable: 'API_KEY']]) {
     sh "/bin/curl -v --insecure -H 'Accept: application/json' -X POST --form file=@fortifyResults-${fortifyJavaName}.fpr https://threadfix.devops.geointservices.io/rest/applications/14/upload?apiKey={$API_KEY}"
     }
+  }
   
   // ---------------------------------------------  
   // fortify
-  stage 'Fortify pyMrGeo'
+  stage ('Fortify pyMrGeo')
   def fortifyPythonName = "pymrgeo-python"
   sh "/opt/hp_fortify_sca/bin/sourceanalyzer -b ${env.JOB_NAME} `find ./ -name '*.py'`"
   sh "/opt/hp_fortify_sca/bin/sourceanalyzer -b ${env.JOB_NAME} -scan -Xmx4G -64 -f fortifyResults-${fortifyPythonName}.fpr"
   withCredentials([[$class : 'StringBinding', credentialsId   : '2fa66d37-7265-4bf5-aa8a-696f032078e0', variable: 'API_KEY']]) {
     sh "/bin/curl -v --insecure -H 'Accept: application/json' -X POST --form file=@fortifyResults-${fortifyPythonName}.fpr https://threadfix.devops.geointservices.io/rest/applications/14/upload?apiKey={$API_KEY}"
     }
-
+  }
+  
   // ---------------------------------------------
   //owasp
-  stage 'OWASP'
+  stage ('OWASP')
   sh "/opt/dependency-check/bin/dependency-check.sh --project '${env.JOB_NAME}' --scan '.' --format 'XML' -disableBundleAudit --enableExperimental"
   withCredentials([[$class : 'StringBinding', credentialsId   : '2fa66d37-7265-4bf5-aa8a-696f032078e0', variable: 'API_KEY']]) {
     sh "/bin/curl -v --insecure -H 'Accept: application/json' -X POST --form file=@dependency-check-report.xml https://threadfix.devops.geointservices.io/rest/applications/14/upload?apiKey={$API_KEY}"
     }
- 
+  )
+  
   // ---------------------------------------------
   // publish to nexus
-  stage 'Publish'
+  stage ('Publish'){
   withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: '4d7ce3c3-2cba-4031-9ef0-df4a1926bbe5', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME']]) {
   
   sh '''set +x
@@ -204,5 +214,6 @@ EOF'''
   curl -v -u ${USERNAME}:${PASSWORD} --upload-file ${MRGEO_RPM} https://nexus.devops.geointservices.io/content/repositories/DG-Releases/org/mrgeo/
   curl -v -u ${USERNAME}:${PASSWORD} --upload-file ${MRGEO_TAR} https://nexus.devops.geointservices.io/content/repositories/DG-Releases/org/mrgeo/
   curl -v -u ${USERNAME}:${PASSWORD} --upload-file ${PYMRGEO_RPM} https://nexus.devops.geointservices.io/content/repositories/DG-Releases/org/mrgeo/'''
+  }
   }
 }
