@@ -145,7 +145,8 @@ EOF
   echo \'echo "******************************* ENJOY! *********************************"\' >> set_mrgeo_env.sh
   echo \'\' >> set_mrgeo_env.sh
   chmod +x set_mrgeo_env.sh
-  bundle exec fpm -s dir -t rpm -n ${TRIMMED_VERSION}.rpm -p ${TRIMMED_VERSION}.rpm --after-install ./set_mrgeo_env.sh \\
+  
+  fpm -s dir -t rpm -n ${TRIMMED_VERSION}.rpm -p ${TRIMMED_VERSION}.rpm --after-install ./set_mrgeo_env.sh \\
   bin/=/usr/lib/mrgeo/bin/ lib/=/usr/lib/mrgeo/lib/ conf/=/etc/mrgeo/conf/ \\
   color-scales/=/usr/lib/mrgeo/color-scales/ jar/=/usr/lib/mrgeo/
   
@@ -168,7 +169,7 @@ EOF
   #clean up existing rpms
   rm -f *.rpm
   # Generate RPM for pymrgeo
-  bundle exec fpm -s dir -t rpm -n pymrgeo-${PY_VERSION}.rpm -p pymrgeo-${PY_VERSION}.rpm --prefix /usr/lib/python2.7/dist-packages --directories ./pymrgeo ./pymrgeo
+  fpm -s dir -t rpm -n pymrgeo-${PY_VERSION}.rpm -p pymrgeo-${PY_VERSION}.rpm --prefix /usr/lib/python2.7/dist-packages --directories ./pymrgeo ./pymrgeo
   
   mv ${PYPI_DIR}/pymrgeo-${PY_VERSION}.rpm ${PARENT_TARGET_DIR}/
   '''
