@@ -194,7 +194,7 @@ EOF'''
   step([
         $class: 'S3BucketPublisher',
         entries: [[
-            sourceFile: '**/distribution-tgz/target/*tar.gz',
+            sourceFile: '**/distribution/target/*tar.gz',
             bucket: 'mrgeo-deploy',
             selectedRegion: 'us-east-1',
             noUploadOnFailure: true,
