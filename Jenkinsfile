@@ -190,29 +190,22 @@ EOF'''
   echo "MRGEO_RPM" ${MRGEO_RPM}
   echo "MRGEO_TAR" ${MRGEO_TAR}
   echo "PYMRGEO_RPM" ${PYMRGEO_RPM}
-
-  #curl -v -u ${USERNAME}:${PASSWORD} --upload-file ${MRGEO_RPM} https://nexus.devops.geointservices.io/content/repositories/DG-Releases/org/mrgeo/
-  #curl -v -u ${USERNAME}:${PASSWORD} --upload-file ${MRGEO_TAR} https://nexus.devops.geointservices.io/content/repositories/DG-Releases/org/mrgeo/
-  #curl -v -u ${USERNAME}:${PASSWORD} --upload-file ${PYMRGEO_RPM} https://nexus.devops.geointservices.io/content/repositories/DG-Releases/org/mrgeo/
   '''
-  }
-  }
-/*  stage("publish to s3") {
-    step([
+  step([
         $class: 'S3BucketPublisher',
         entries: [[
-            sourceFile: 'mybinaryFile',
-            bucket: 'GoBinaries',
-            selectedRegion: 'eu-west-1',
+            sourceFile: '**/distribution-tgz/target/*tar.gz',
+            bucket: 'mrgeo-deploy',
+            selectedRegion: 'us-east-1',
             noUploadOnFailure: true,
             managedArtifacts: true,
             flatten: true,
-            showDirectlyInBrowser: true,
-            keepForever: true,
+            showDirectlyInBrowser: false,
+            keepForever: false,
         ]],
-        profileName: 'myprofile',
+        profileName: 'MrGeo Pilot',
         dontWaitForConcurrentBuildCompletion: false, 
     ])
-*/
-//}
+  }
+  }
 }
