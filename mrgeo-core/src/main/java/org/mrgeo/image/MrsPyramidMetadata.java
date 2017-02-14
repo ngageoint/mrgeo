@@ -463,7 +463,14 @@ public void setName(final int zoomlevel, final String name)
 @JsonIgnore
 public void setTag(final String tag, final String value)
 {
-  tags.put(tag, value);
+  if ((value == null || value.length() == 0) && tags.containsKey(tag))
+  {
+    tags.remove(tag);
+  }
+  else
+  {
+    tags.put(tag, value);
+  }
 }
 
 @JsonIgnore

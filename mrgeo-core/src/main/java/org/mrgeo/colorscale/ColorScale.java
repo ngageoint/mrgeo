@@ -969,7 +969,7 @@ public static class ColorScaleException extends Exception
   public ColorScaleException(final Exception e)
   {
     this.origException = e;
-    printStackTrace();
+    // printStackTrace();
   }
 
   public ColorScaleException(final String msg)
