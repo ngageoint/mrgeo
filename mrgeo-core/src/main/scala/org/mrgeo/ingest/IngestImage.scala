@@ -38,6 +38,7 @@ import org.mrgeo.data.{DataProviderFactory, ProtectionLevelUtils, ProviderProper
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
+import org.mrgeo.mapalgebra.MapAlgebra
 import org.mrgeo.utils._
 import org.mrgeo.utils.tms.{Bounds, TMSUtils}
 

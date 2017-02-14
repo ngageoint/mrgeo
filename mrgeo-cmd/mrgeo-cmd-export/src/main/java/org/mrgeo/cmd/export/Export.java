@@ -68,7 +68,7 @@ private boolean mosaicTiles = false;
 private Bounds bounds = null;
 private boolean useBounds = false;
 private Set<Long> tileset = null;
-private ColorScale colorscale = null;
+private ColorScale colorscale = ColorScale.createDefaultGrayScale();
 private boolean useTMS;
 
 @Override
