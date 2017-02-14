@@ -240,7 +240,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
     // Check for optional zoom
     if (node.getNumChildren > 3) {
       MapOp.decodeInt(node.getChild(3), variables) match {
-        case Some(i) => zoom = Some(i)
+        case Some(i) => zoom = if (i > 0) Some(i) else None
         case _ =>
       }
     }
@@ -248,7 +248,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
     // Check for optional num tiles
     if (node.getNumChildren > 4) {
       MapOp.decodeInt(node.getChild(4), variables) match {
-        case Some(i) => numTiles = Some(i)
+        case Some(i) => numTiles = if (i > 0) Some(i) else None
         case _ =>
       }
     }
@@ -256,7 +256,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
     // Check for optional mosaic count
     if (node.getNumChildren > 5) {
       MapOp.decodeInt(node.getChild(5), variables) match {
-        case Some(i) => mosaic = Some(i)
+        case Some(i) => mosaic = if (i > 0) Some(i) else None
         case _ =>
       }
     }
@@ -289,7 +289,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
     // Check for optional color scale name string
     if (node.getNumChildren > 9) {
       MapOp.decodeString(node.getChild(9), variables) match {
-        case Some(s) => colorscale = Some(s)
+        case Some(s) => colorscale = if (s.length > 0) Some(s) else None
         case _ =>
       }
     }
@@ -305,7 +305,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
     // Check for optional format string
     if (node.getNumChildren > 11) {
       MapOp.decodeString(node.getChild(11), variables) match {
-        case Some(s) => bounds = Some(Bounds.fromCommaString(s))
+        case Some(s) => bounds = if (s.length > 0) Some(Bounds.fromCommaString(s)) else None
         case _ =>
       }
     }
@@ -334,7 +334,12 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
       override def compare(x:TileIdWritable, y:TileIdWritable):Int = x.compareTo(y)
     }
 
-    val filtered = rdd.filter(tile => tiles.contains(tile._1.get))
+    val filtered = if (tiles.isEmpty) {
+      rdd
+    }
+    else {
+      rdd.filter(tile => tiles.contains(tile._1.get))
+    }
 
     val replaced = if (overridenodata.isDefined) {
       val nodatas = meta.getDefaultValues
