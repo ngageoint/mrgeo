@@ -925,7 +925,12 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     this.maxCost = maxCost
     this.sourcePoints = Some(sourcePoints)
     this.srcVector = None
-    this.frictionZoom = Some(zoom)
+    this.frictionZoom = if (zoom > 0) {
+      Some(zoom)
+    }
+    else {
+      None
+    }
   }
 
   private[mapalgebra] def this(node:ParserNode, variables:String => Option[ParserNode]) = {
