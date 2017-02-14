@@ -27,6 +27,8 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.rules.TestName;
 import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
@@ -93,6 +95,9 @@ static String small3bandUnqualified;
 private static String imageStretch = "cost-distance";
 private static String imageStretch2 = "cost-distance-shift-2";
 private static String small3band = "small-3band";
+
+@Rule
+public TestName testname = new TestName();
 
 @BeforeClass
 public static void setUpForJUnit()
@@ -331,6 +336,13 @@ protected Application configure()
 protected void processImageResponse(final Response response, final String contentType, final String extension)
     throws IOException
 {
+  processImageResponse(response, contentType, extension, false);
+
+}
+  protected void processImageResponse(final Response response, final String contentType,
+      final String extension, boolean hasgdal2)
+    throws IOException
+  {
   try
   {
     Assert.assertEquals("Bad response code", Response.Status.OK.getStatusCode(), response.getStatus());
@@ -339,18 +351,18 @@ protected void processImageResponse(final Response response, final String conten
     if (GEN_BASELINE_DATA_ONLY)
     {
       final String outputPath =
-          baselineInput + Thread.currentThread().getStackTrace()[2].getMethodName() + "." +
+          baselineInput + testname.getMethodName() + "." +
               extension;
       log.info("Generating baseline image: " + outputPath);
-      ImageTestUtils.writeBaselineImage(response, outputPath);
+      ImageTestUtils.writeBaselineImage(response, outputPath, hasgdal2);
     }
     else
     {
       final String baselineImageFile =
-          baselineInput + Thread.currentThread().getStackTrace()[2].getMethodName() + "." +
+          baselineInput + testname.getMethodName() + "." +
               extension;
       log.info("Comparing result to baseline image " + baselineImageFile + " ...");
-      ImageTestUtils.outputImageMatchesBaseline(response, baselineImageFile);
+      ImageTestUtils.outputImageMatchesBaseline(response, baselineImageFile, hasgdal2);
     }
   }
   finally

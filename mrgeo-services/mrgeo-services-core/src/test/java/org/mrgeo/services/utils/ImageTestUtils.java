@@ -17,6 +17,7 @@
 package org.mrgeo.services.utils;
 
 import com.google.common.io.ByteStreams;
+import org.apache.hadoop.yarn.webapp.hamlet.HamletSpec;
 import org.junit.Assert;
 import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.test.TestUtils;
@@ -38,7 +39,22 @@ private static final Logger log = LoggerFactory.getLogger(ImageTestUtils.class);
 public static void outputImageMatchesBaseline(final Response response,
     final String baselineImage) throws IOException
 {
-  final File baseline = new File(baselineImage);
+  outputImageMatchesBaseline(response, baselineImage, false);
+}
+
+public static void outputImageMatchesBaseline(final Response response,
+    final String baselineImage, boolean hasgdal2) throws IOException
+{
+  final File baseline;
+
+  if (hasgdal2)
+  {
+    baseline = new File(TestUtils.makeGDALFilename(baselineImage));
+  }
+  else
+  {
+    baseline = new File(baselineImage);
+  }
 
   assertTrue(baseline.exists());
 
@@ -77,12 +93,26 @@ public static void writeBaselineImage(final InputStream stream, final String pat
   final OutputStream outputStream = new FileOutputStream(new File(path));
   ByteStreams.copy(stream, outputStream);
   outputStream.close();
-
 }
 
 public static void writeBaselineImage(final Response response, final String path)
     throws IOException
 {
-  writeBaselineImage(response.readEntity(InputStream.class), path);
+  writeBaselineImage(response, path, false);
+}
+
+public static void writeBaselineImage(final Response response, final String path, boolean hasgdal2)
+    throws IOException
+{
+  String name;
+  if (hasgdal2)
+  {
+    name = TestUtils.makeGDALFilename(path);
+  }
+  else
+  {
+    name = path;
+  }
+  writeBaselineImage(response.readEntity(InputStream.class), name);
 }
 }

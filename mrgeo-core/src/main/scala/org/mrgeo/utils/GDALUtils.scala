@@ -76,7 +76,7 @@ object GDALUtils extends Logging {
   initializeGDAL()
 
   // empty method to force static initializer
-  def register() = {}
+  def register():Unit = {}
 
   def isValidDataset(imagename:String):Boolean = {
     try {
@@ -258,7 +258,7 @@ object GDALUtils extends Logging {
   }
 
 
-  def swapBytes(bytes:Array[Byte], gdaldatatype:Int) = {
+  def swapBytes(bytes:Array[Byte], gdaldatatype:Int):Unit = {
 
     var tmp:Byte = 0
     var i:Int = 0
@@ -498,7 +498,7 @@ object GDALUtils extends Logging {
 
     val filename = output match {
       case Left(f) => f
-      case Right(stream) => File.createTempFile("tmp-file", "").getCanonicalPath
+      case Right(_) => File.createTempFile("tmp-file", "").getCanonicalPath
     }
 
 
@@ -690,12 +690,12 @@ object GDALUtils extends Logging {
     println(gdal.VersionInfo("--version"))
 
     val klass = classOf[gdal]
-    val location = klass.getResource('/' + klass.getName().replace('.', '/') + ".class");
+    val location = klass.getResource('/' + klass.getName.replace('.', '/') + ".class")
     osr.UseExceptions()
     log.info("GDAL jar location: " + location)
     println("GDAL jar location: " + location)
 
-    println("Java library path: " + System.getProperty("java.library.path"));
+    println("Java library path: " + System.getProperty("java.library.path"))
 
     if (log.isDebugEnabled) {
       log.debug("GDAL Drivers supported:")

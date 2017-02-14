@@ -21,8 +21,10 @@ import junit.framework.Assert;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TestName;
 import org.mockito.Mockito;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
@@ -55,6 +57,10 @@ public class TileMapServiceResourceIntegrationTest extends JerseyTest
 // only set this to true to generate new baseline images after correcting tests; image comparison
 // tests won't be run when is set to true
 public final static boolean GEN_BASELINE_DATA_ONLY = false;
+
+@Rule
+public TestName testname = new TestName();
+
 private static final Logger log = LoggerFactory.getLogger(TileMapServiceResourceIntegrationTest.class);
 private static final String rgbsmall_nopyramids = "rgbsmall-nopyramids";
 private static final String astersmall_nopyramids = "astersmall-nopyramids";
@@ -329,7 +335,7 @@ public void testGetTileRgbPngMercator() throws Exception
       URLEncoder.encode(raster, "UTF-8") + "/global-mercator/" + z + "/" + x + "/" + y + "." + format)
       .request().get();
 
-  processImageResponse(response, format);
+  processImageResponse(response, format, true);
 }
 
 @Test
@@ -392,7 +398,7 @@ public void testGetTileRgbTifMercator() throws Exception
       URLEncoder.encode(raster, "UTF-8") + "/global-mercator/" + z + "/" + x + "/" + y + "." + format)
       .request().get();
 
-  processImageResponse(response, format);
+  processImageResponse(response, format, true);
 }
 
 @Test
@@ -576,6 +582,12 @@ private MrsPyramid getPyramid(String pyramid) throws IOException
 private void processImageResponse(final Response response, final String extension)
     throws IOException
 {
+  processImageResponse(response, extension, false);
+}
+
+private void processImageResponse(final Response response, final String extension, boolean hasgdal2)
+    throws IOException
+{
   try
   {
     Assert.assertEquals("Bad response code", Status.OK.getStatusCode(), response.getStatus());
@@ -583,18 +595,18 @@ private void processImageResponse(final Response response, final String extensio
     if (GEN_BASELINE_DATA_ONLY)
     {
       final String outputPath =
-          baselineInput + Thread.currentThread().getStackTrace()[2].getMethodName() + "." +
+          baselineInput + testname.getMethodName() + "." +
               extension;
       log.info("Generating baseline image: " + outputPath);
-      ImageTestUtils.writeBaselineImage(response, outputPath);
+      ImageTestUtils.writeBaselineImage(response, outputPath, hasgdal2);
     }
     else
     {
       final String baselineImageFile =
-          baselineInput + Thread.currentThread().getStackTrace()[2].getMethodName() + "." +
+          baselineInput + testname.getMethodName() + "." +
               extension;
       log.info("Comparing result to baseline image " + baselineImageFile + " ...");
-      ImageTestUtils.outputImageMatchesBaseline(response, baselineImageFile);
+      ImageTestUtils.outputImageMatchesBaseline(response, baselineImageFile, hasgdal2);
     }
   }
   finally
