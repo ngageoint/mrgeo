@@ -208,9 +208,14 @@
         </dependency>
       </dependencies>
     </profile>
+    <profile>
+      <id>include-war</id>
+      <modules>
+        <module>distribution-war</module>
+      </modules>
+    </profile>
   </profiles>
   <modules>
     <module>distribution-tgz</module>
-    <module>distribution-war</module>
   </modules>
 </project>
