@@ -191,7 +191,7 @@ EOF'''
   echo "MRGEO_TAR" ${MRGEO_TAR}
   echo "PYMRGEO_RPM" ${PYMRGEO_RPM}
   '''
-  s3Upload(file:'distribution/target/pymrgeo*.rpm', bucket:'mrgeo-deploy', path:'.')
+  s3Upload(file:'distribution/target/pymrgeo-0.0.7.rpm', bucket:'mrgeo-deploy', path:'pymrgeo-0.0.7.rpm')
   }
   }
 }
