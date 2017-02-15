@@ -178,7 +178,7 @@ EOF'''
   // ---------------------------------------------
   // publish to AWS S3 bucket
   stage ('Publish to S3'){
-  withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: '	c6aeb63d-8a56-4316-b367-3a1fcaae7f3b', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME']]) {
+  withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: '2fe18ac5-f3a2-4446-864f-df3cff8d222e', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
   
   sh '''set +x
   PARENT_TARGET_DIR=${WORKSPACE}/distribution/target
@@ -191,6 +191,8 @@ EOF'''
   echo "MRGEO_TAR" ${MRGEO_TAR}
   echo "PYMRGEO_RPM" ${PYMRGEO_RPM}
   '''
+  s3Upload(file:'pymrgeo*.rpm', bucket:'mrgeo-deploy', path:'${PYMRGEO_RPM}')
+  /*
   step([
         $class: 'S3BucketPublisher',
         entries: [[
@@ -206,6 +208,7 @@ EOF'''
         profileName: 'MrGeo Pilot',
         dontWaitForConcurrentBuildCompletion: false, 
     ])
+*/
   }
   }
 }
