@@ -1,9 +1,9 @@
 node ('mrgeo-build'){
   // ---------------------------------------------
   // we want a clean workspace     
-  stage ('Clear workspace') {        
-  deleteDir()
-  }
+  //stage ('Clear workspace') {        
+  //deleteDir()
+  //}
   
   // ---------------------------------------------
   // checkout code     
