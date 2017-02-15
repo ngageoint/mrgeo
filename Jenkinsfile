@@ -191,7 +191,7 @@ EOF'''
   echo "MRGEO_TAR" ${MRGEO_TAR}
   echo "PYMRGEO_RPM" ${PYMRGEO_RPM}
   '''
-  s3Upload(file:'pymrgeo*.rpm', bucket:'mrgeo-deploy', path:'${PYMRGEO_RPM}')
+  s3Upload(file:'distribution/targetpymrgeo*.rpm', bucket:'mrgeo-deploy', path:'s3://mrgeo-deploy/')
   /*
   step([
         $class: 'S3BucketPublisher',
