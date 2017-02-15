@@ -28,7 +28,9 @@ import org.junit.rules.TestName;
 import org.mockito.Mockito;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.junit.UnitTest;
@@ -519,6 +521,34 @@ public void testGetTileColorScaleNamePng() throws Exception
       .request().get();
 
   processImageResponse(response, format);
+}
+
+@Test
+@Category(UnitTest.class)
+public void testGetTileDefaultColorScalePng() throws Exception
+{
+  MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(astersmall_nopyramids_abs,
+      DataProviderFactory.AccessMode.READ, new ProviderProperties());
+  MrsPyramidMetadata meta = dp.getMetadataReader().read();
+
+  meta.setTag(MrGeoConstants.MRGEO_DEFAULT_COLORSCALE, "elevation");
+
+  String version = "1.0.0";
+  String raster = astersmall_nopyramids_abs;
+  int x = 2846;
+  int y = 1411;
+  int z = 12;
+  String format = "png";
+
+  when(service.getMetadata(raster)).thenReturn(getMetadata(raster));
+  when(service.getPyramid(raster)).thenReturn(getPyramid(raster));
+
+  Response response = target("tms" + "/" + version + "/" +
+      URLEncoder.encode(raster, "UTF-8") + "/global-geodetic/" + z + "/" + x + "/" + y + "." + format)
+      .request().get();
+
+  meta.setTag(MrGeoConstants.MRGEO_DEFAULT_COLORSCALE, "");
+  processImageResponse(response, format, true);
 }
 
 @Test

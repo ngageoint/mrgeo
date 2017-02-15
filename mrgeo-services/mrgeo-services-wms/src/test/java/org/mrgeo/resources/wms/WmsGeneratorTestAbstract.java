@@ -147,6 +147,10 @@ protected static void copyInputData() throws IOException
   // set up the system color scale
   fileSystem.copyFromLocalFile(false, true, new Path(input, "rainbow.xml"),
       new Path(inputHdfs, "Default.xml"));
+  fileSystem.copyFromLocalFile(false, true, new Path(input, "rainbow.xml"),
+      new Path(inputHdfs, "rainbow.xml"));
+  fileSystem.copyFromLocalFile(false, true, new Path(input, "elevation.xml"),
+      new Path(inputHdfs, "elevation.xml"));
 
   // copy a custom color scale
   fileSystem.copyFromLocalFile(false, true, new Path(input, "IslandsElevation-v2"),
