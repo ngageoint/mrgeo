@@ -192,23 +192,6 @@ EOF'''
   echo "PYMRGEO_RPM" ${PYMRGEO_RPM}
   '''
   s3Upload(file:'distribution/target/pymrgeo*.rpm', bucket:'mrgeo-deploy', path:'')
-  /*
-  step([
-        $class: 'S3BucketPublisher',
-        entries: [[
-            sourceFile: '**/distribution/target/*tar.gz',
-            bucket: 'mrgeo-deploy',
-            selectedRegion: 'us-east-1',
-            noUploadOnFailure: true,
-            managedArtifacts: true,
-            flatten: true,
-            showDirectlyInBrowser: false,
-            keepForever: false,
-        ]],
-        profileName: 'MrGeo Pilot',
-        dontWaitForConcurrentBuildCompletion: false, 
-    ])
-*/
   }
   }
 }
