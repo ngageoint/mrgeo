@@ -187,13 +187,17 @@ EOF'''
   MRGEO_TAR=$(find ${PARENT_TARGET_DIR} -name "mrgeo*.tar.gz")
   PYMRGEO_RPM=$(find ${PARENT_TARGET_DIR} -name "pymrgeo*.rpm")
 
-  echo "MRGEO_RPM" ${MRGEO_RPM}
-  echo "MRGEO_TAR" ${MRGEO_TAR}
-  echo "PYMRGEO_RPM" ${PYMRGEO_RPM}
+  echo "MRGEO_RPM PATH:" ${MRGEO_RPM}
+  echo "MRGEO_TAR PATH:" ${MRGEO_TAR}
+  echo "PYMRGEO_RPM PATH: " ${PYMRGEO_RPM}
+
+  MRGEO_RPM_FILE=$(basename ${MRGEO_RPM})
+  MRGEO_TAR_FILE=$(basename ${MRGEO_TAR})
+  PYMRGEO_RPM_FILE=$(basename ${PYMRGEO_RPM})
   '''
-  s3Upload(file:'${MRGEO_RPM}', bucket:'mrgeo-deploy', path:'rpm/')
-  s3Upload(file:'${MRGEO_TAR}', bucket:'mrgeo-deploy', path:'rpm/')
-  s3Upload(file:'${PYMRGEO_RPM}', bucket:'mrgeo-deploy', path:'rpm/')
+    s3Upload(file:'**/distribution/target/${PYMRGEO_RPM}', bucket:'mrgeo-deploy', path:'rpm/')
+    s3Upload(file:'**/distribution/target/${MRGEO_TAR}', bucket:'mrgeo-deploy', path:'rpm/')
+    s3Upload(file:'**/distribution/target/${PYMRGEO_RPM}', bucket:'mrgeo-deploy', path:'rpm/')
   }
   }
 }
