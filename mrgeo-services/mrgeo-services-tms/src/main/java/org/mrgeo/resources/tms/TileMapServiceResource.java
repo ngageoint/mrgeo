@@ -213,7 +213,7 @@ public Response getTile(@PathParam("version") final String version,
       ColorScale cs = null;
       if (colorScaleName != null)
       {
-        cs = ColorScaleManager.fromName(colorScaleName, props);
+        cs = ColorScaleManager.fromName(colorScaleName);
       }
       else if (colorScale != null)
       {

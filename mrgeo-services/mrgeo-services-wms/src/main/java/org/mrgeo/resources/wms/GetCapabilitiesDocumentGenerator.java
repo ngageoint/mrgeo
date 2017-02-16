@@ -42,7 +42,7 @@ import java.util.Comparator;
 /**
  * Generates XML output for OGC WMS GetCapabilities request
  */
-public class GetCapabilitiesDocumentGenerator
+class GetCapabilitiesDocumentGenerator
 {
 private static final Logger log = LoggerFactory.getLogger(GetCapabilitiesDocumentGenerator.class);
 
@@ -82,15 +82,8 @@ private static void addHttpElement(Element parent, String requestUrl, Version ve
 /**
  * Generates an XML document for a DescribeTiles request
  *
- * @param version      WMS version
- * @param requestUrl   HTTP request url
- * @param pyramidFiles list of pyramid directories being served by MrGeo
- * @return XML document list of pyramid directories being served by MrGeo
- * @throws IOException
- * @throws InterruptedException
- * @throws ParserConfigurationException
  */
-public Document generateDoc(Version version, String requestUrl,
+Document generateDoc(Version version, String requestUrl,
     MrsImageDataProvider[] pyramidFiles) throws IOException, InterruptedException,
     ParserConfigurationException
 {
