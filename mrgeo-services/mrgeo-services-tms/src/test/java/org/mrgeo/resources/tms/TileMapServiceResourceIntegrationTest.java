@@ -510,7 +510,7 @@ public void testGetTileColorScaleNamePng() throws Exception
   int y = 1411;
   int z = 12;
   String format = "png";
-  String colorScaleName = "Default";
+  String colorScaleName = "Rainbow";
 
   when(service.getMetadata(raster)).thenReturn(getMetadata(raster));
   when(service.getPyramid(raster)).thenReturn(getPyramid(raster));
