@@ -220,6 +220,25 @@ public Response getTile(@PathParam("version") final String version,
       {
         cs = ColorScaleManager.fromJSON(colorScale);
       }
+      else {
+        MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(pyramid,
+            DataProviderFactory.AccessMode.READ, providerProperties);
+        MrsPyramidMetadata meta = dp.getMetadataReader().read();
+
+        String csname = meta.getTag(MrGeoConstants.MRGEO_DEFAULT_COLORSCALE);
+        if (csname != null)
+        {
+          cs = ColorScaleManager.fromName(csname);
+          if (cs == null)
+          {
+            throw new IOException("Can not load default style: "  + csname);
+          }
+        }
+        else
+        {
+          cs = ColorScale.createDefaultGrayScale();
+        }
+      }
 
       final double[] extrema = renderer.getExtrema();
 

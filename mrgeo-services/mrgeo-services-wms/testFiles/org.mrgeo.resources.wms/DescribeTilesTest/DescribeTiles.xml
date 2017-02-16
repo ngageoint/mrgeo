@@ -66,6 +66,8 @@
     <TiledStyles>
       <Value>default</Value>
       <Value>Default</Value>
+      <Value>elevation</Value>
+      <Value>rainbow</Value>
     </TiledStyles>
   </Layer>
   <Layer name="IslandsElevation-v2-color-scale">
@@ -133,6 +135,8 @@
     <TiledStyles>
       <Value>default</Value>
       <Value>Default</Value>
+      <Value>elevation</Value>
+      <Value>rainbow</Value>
     </TiledStyles>
   </Layer>
   <Layer name="IslandsElevation-v2-no-pyramid">
@@ -155,6 +159,8 @@
     <TiledStyles>
       <Value>default</Value>
       <Value>Default</Value>
+      <Value>elevation</Value>
+      <Value>rainbow</Value>
     </TiledStyles>
   </Layer>
   <Layer name="IslandsElevation-v2-no-pyramid-extra-metadata">
@@ -222,6 +228,8 @@
     <TiledStyles>
       <Value>default</Value>
       <Value>Default</Value>
+      <Value>elevation</Value>
+      <Value>rainbow</Value>
     </TiledStyles>
   </Layer>
   <Layer name="IslandsElevation-v2-no-stats">
@@ -289,6 +297,8 @@
     <TiledStyles>
       <Value>default</Value>
       <Value>Default</Value>
+      <Value>elevation</Value>
+      <Value>rainbow</Value>
     </TiledStyles>
   </Layer>
   <Layer name="cost-distance">
@@ -366,6 +376,8 @@
     <TiledStyles>
       <Value>default</Value>
       <Value>Default</Value>
+      <Value>elevation</Value>
+      <Value>rainbow</Value>
     </TiledStyles>
   </Layer>
   <Layer name="cost-distance-shift-2">
@@ -433,6 +445,8 @@
     <TiledStyles>
       <Value>default</Value>
       <Value>Default</Value>
+      <Value>elevation</Value>
+      <Value>rainbow</Value>
     </TiledStyles>
   </Layer>
   <Layer name="small-3band">

@@ -101,6 +101,7 @@ public static final String MRGEO_MRS_TILESIZE = "mrsimage.tilesize";
 public static final int MRGEO_MRS_TILESIZE_DEFAULT_INT = 512;
 public static final String MRGEO_MRS_TILESIZE_DEFAULT = Integer.toString(MRGEO_MRS_TILESIZE_DEFAULT_INT);
 
+public static final String MRGEO_DEFAULT_COLORSCALE = "default-colorscale";
 /*
  * Security classification keys
  */

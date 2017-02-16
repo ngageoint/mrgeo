@@ -20,11 +20,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.colorscale.applier.ColorScaleApplier;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.image.MrsPyramid;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.Version;
 import org.mrgeo.services.mrspyramid.rendering.*;
@@ -100,21 +102,8 @@ private static MrsImageDataProvider[] getPyramidFilesList(
   return providers;
 }
 
-/**
- * Calculates the scale of the requested WMS layer
- *
- * @param image source data
- * @return scale resolution
- */
-//  public static double calculateScale(final MrsImage image)
-//  {
-//    // WMS defines a pixel as .28mm
-//    final double h = TMSUtils.resolution(image.getZoomlevel(), image.getTilesize()) *
-//        LatLng.METERS_PER_DEGREE;
-//    return h / 2.8e-4;
-//  }
 private static MrGeoRaster colorRaster(String layer, String style, String imageFormat, ImageRenderer renderer,
-    MrGeoRaster result) throws WmsGeneratorException
+    MrGeoRaster result, ProviderProperties providerProperties) throws WmsGeneratorException
 {
   try
   {
@@ -133,10 +122,26 @@ private static MrGeoRaster colorRaster(String layer, String style, String imageF
       }
       else
       {
-        cs = ColorScale.createDefaultGrayScale();
+        MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(layer, DataProviderFactory.AccessMode.READ, providerProperties);
+        MrsPyramidMetadata meta = dp.getMetadataReader().read();
+
+        String csname = meta.getTag(MrGeoConstants.MRGEO_DEFAULT_COLORSCALE);
+        if (csname != null)
+        {
+          cs = ColorScaleManager.fromName(csname);
+          if (cs == null)
+          {
+            throw new IOException("Can not load default style: "  + csname);
+          }
+        }
+        else
+        {
+          cs = ColorScale.createDefaultGrayScale();
+        }
       }
       result = ((ColorScaleApplier) ImageHandlerFactory.getHandler(imageFormat,
-          ColorScaleApplier.class)).applyColorScale(result, cs, renderer.getExtrema(), renderer.getDefaultValues());
+          ColorScaleApplier.class)).applyColorScale(result, cs, renderer.getExtrema(),
+          renderer.getDefaultValues());
       log.debug("Color scale applied to image {}", layer);
     }
 
@@ -442,9 +447,7 @@ private Response getMap(MultivaluedMap<String, String> allParams, ProviderProper
 
     result = colorRaster(layerNames[0],
         (styleNames != null && styleNames.length > 0) ? styleNames[0] : null,
-        format,
-        renderer,
-        result);
+        format, renderer, result, providerProperties);
 
     Response.ResponseBuilder builder = ((ImageResponseWriter) ImageHandlerFactory
         .getHandler(format, ImageResponseWriter.class))
@@ -587,9 +590,7 @@ private Response getMosaic(MultivaluedMap<String, String> allParams, ProviderPro
     MrGeoRaster result = renderer.renderImage(layerNames[0], bounds, providerProperties, srs);
     result = colorRaster(layerNames[0],
         (styleNames != null && styleNames.length > 0) ? styleNames[0] : null,
-        format,
-        renderer,
-        result);
+        format, renderer, result, providerProperties);
 
     Response.ResponseBuilder builder = ((ImageResponseWriter) ImageHandlerFactory
         .getHandler(format, ImageResponseWriter.class))
@@ -670,7 +671,7 @@ private Response getTile(MultivaluedMap<String, String> allParams,
   {
     MrGeoRaster result = renderer.renderImage(layer, tileCol, tileRow, scale, providerProperties);
 
-    result = colorRaster(layer, style, format, renderer, result);
+    result = colorRaster(layer, style, format, renderer, result, providerProperties);
 
     Response.ResponseBuilder builder = ((ImageResponseWriter) ImageHandlerFactory
         .getHandler(format, ImageResponseWriter.class))

@@ -148,7 +148,6 @@ private static void addFormatHandlers(final Map<String, Class<?>> handlers, fina
 {
   try
   {
-
     Object cl;
     cl = clazz.newInstance();
 
@@ -168,7 +167,10 @@ private static void addFormatHandlers(final Map<String, Class<?>> handlers, fina
       }
     }
   }
-  catch (final InstantiationException | InvocationTargetException |
+  catch (final InstantiationException ignored)
+  {
+  }
+  catch (InvocationTargetException |
       IllegalArgumentException | NoSuchMethodException | SecurityException | IllegalAccessException e)
   {
     log.error("Exception thrown while processing class " + clazz.getName(), e);
@@ -275,7 +277,7 @@ private static synchronized void loadHandlers()
 
     for (final Class<? extends ImageResponseWriter> clazz : imageresponsewriters)
     {
-      log.info("Registering Image Image Response Writer: {}", clazz.getCanonicalName());
+      log.info("Registering Image Response Writer: {}", clazz.getCanonicalName());
       log.info("  Mime Types");
       addMimeHandlers(mimeHandlers, clazz);
 

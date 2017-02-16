@@ -105,6 +105,14 @@
           <Name>Default</Name>
           <Title>Default</Title>
         </Style>
+        <Style>
+          <Name>elevation</Name>
+          <Title>elevation</Title>
+        </Style>
+        <Style>
+          <Name>rainbow</Name>
+          <Title>rainbow</Title>
+        </Style>
       </Layer>
       <Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1">
         <Title>IslandsElevation-v2-color-scale</Title>
@@ -141,6 +149,14 @@
         <Style>
           <Name>Default</Name>
           <Title>Default</Title>
+        </Style>
+        <Style>
+          <Name>elevation</Name>
+          <Title>elevation</Title>
+        </Style>
+        <Style>
+          <Name>rainbow</Name>
+          <Title>rainbow</Title>
         </Style>
       </Layer>
       <Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1">
@@ -179,6 +195,14 @@
           <Name>Default</Name>
           <Title>Default</Title>
         </Style>
+        <Style>
+          <Name>elevation</Name>
+          <Title>elevation</Title>
+        </Style>
+        <Style>
+          <Name>rainbow</Name>
+          <Title>rainbow</Title>
+        </Style>
       </Layer>
       <Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1">
         <Title>IslandsElevation-v2-no-pyramid-extra-metadata</Title>
@@ -215,6 +239,14 @@
         <Style>
           <Name>Default</Name>
           <Title>Default</Title>
+        </Style>
+        <Style>
+          <Name>elevation</Name>
+          <Title>elevation</Title>
+        </Style>
+        <Style>
+          <Name>rainbow</Name>
+          <Title>rainbow</Title>
         </Style>
       </Layer>
       <Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1">
@@ -253,6 +285,14 @@
           <Name>Default</Name>
           <Title>Default</Title>
         </Style>
+        <Style>
+          <Name>elevation</Name>
+          <Title>elevation</Title>
+        </Style>
+        <Style>
+          <Name>rainbow</Name>
+          <Title>rainbow</Title>
+        </Style>
       </Layer>
       <Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1">
         <Title>cost-distance</Title>
@@ -290,6 +330,14 @@
           <Name>Default</Name>
           <Title>Default</Title>
         </Style>
+        <Style>
+          <Name>elevation</Name>
+          <Title>elevation</Title>
+        </Style>
+        <Style>
+          <Name>rainbow</Name>
+          <Title>rainbow</Title>
+        </Style>
       </Layer>
       <Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1">
         <Title>cost-distance-shift-2</Title>
@@ -326,6 +374,14 @@
         <Style>
           <Name>Default</Name>
           <Title>Default</Title>
+        </Style>
+        <Style>
+          <Name>elevation</Name>
+          <Title>elevation</Title>
+        </Style>
+        <Style>
+          <Name>rainbow</Name>
+          <Title>rainbow</Title>
         </Style>
       </Layer>
       <Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1">
