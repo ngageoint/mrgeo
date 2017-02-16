@@ -21,26 +21,26 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 @SuppressFBWarnings(value = "URF_UNREAD_FIELD", justification = "TODO:  This class needs to be expanded")
 public class JobResults
 {
-  private boolean started;
-  private boolean finished;
-  private boolean failed;
-  private String failureMessage;
+private boolean started;
+private boolean finished;
+private boolean failed;
+private String failureMessage;
 
-  public void starting()
-  {
-    this.started = true;
-  }
+public void starting()
+{
+  this.started = true;
+}
 
-  public void succeeded()
-  {
-    finished = true;
-    failed = false;
-  }
+public void succeeded()
+{
+  finished = true;
+  failed = false;
+}
 
-  public void failed(String failureMessage)
-  {
-    finished = true;
-    failed = true;
-    this.failureMessage = failureMessage;
-  }
+public void failed(String failureMessage)
+{
+  finished = true;
+  failed = true;
+  this.failureMessage = failureMessage;
+}
 }

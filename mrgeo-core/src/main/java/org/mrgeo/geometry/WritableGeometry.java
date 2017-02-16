@@ -22,21 +22,22 @@ import java.util.Map;
 
 /**
  * @author jason.surratt
- * 
  */
 public interface WritableGeometry extends Geometry
 {
-  /**
-   * Applies the point filter to every point in the geometry.
-   * 
-   * @param pf
-   */
-  public void filter(PointFilter pf);
-  
-  public void setAttribute(String key, String value);
-  public void setAttributes(Map<String, String> attrs);
+/**
+ * Applies the point filter to every point in the geometry.
+ *
+ * @param pf
+ */
+public void filter(PointFilter pf);
 
-  public void read(DataInputStream stream) throws IOException;
-  public void readAttributes(DataInputStream stream) throws IOException;
+public void setAttribute(String key, String value);
+
+public void setAttributes(Map<String, String> attrs);
+
+public void read(DataInputStream stream) throws IOException;
+
+public void readAttributes(DataInputStream stream) throws IOException;
 
 }

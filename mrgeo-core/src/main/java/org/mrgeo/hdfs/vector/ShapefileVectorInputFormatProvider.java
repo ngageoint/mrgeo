@@ -16,10 +16,13 @@
 
 package org.mrgeo.hdfs.vector;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.mrgeo.core.MrGeoConstants;
+import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.vector.FeatureIdWritable;
@@ -31,32 +34,35 @@ import java.io.IOException;
 
 public class ShapefileVectorInputFormatProvider extends VectorInputFormatProvider
 {
-  public ShapefileVectorInputFormatProvider(VectorInputFormatContext context)
-  {
-    super(context);
-  }
+public ShapefileVectorInputFormatProvider(VectorInputFormatContext context)
+{
+  super(context);
+}
 
-  @Override
-  public InputFormat<FeatureIdWritable, Geometry> getInputFormat(String input)
-  {
-    return new ShpInputFormat();
-  }
+@Override
+public InputFormat<FeatureIdWritable, Geometry> getInputFormat(String input)
+{
+  return new ShpInputFormat();
+}
 
-  @Override
-  public void setupJob(Job job, ProviderProperties providerProperties) throws DataProviderException
+@Override
+public void setupJob(Job job, ProviderProperties providerProperties) throws DataProviderException
+{
+  super.setupJob(job, providerProperties);
+  Configuration conf = job.getConfiguration();
+  String strBasePath = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_VECTOR, "/mrgeo/vectors");
+  conf.set("hdfs." + MrGeoConstants.MRGEO_HDFS_VECTOR, strBasePath);
+  for (String input : getContext().getInputs())
   {
-    super.setupJob(job, providerProperties);
-    for (String input: getContext().getInputs())
+    try
     {
-      try
-      {
-        // Set up native input format
-        TextInputFormat.addInputPath(job, new Path(input));
-      }
-      catch (IOException e)
-      {
-        throw new DataProviderException(e);
-      }
+      // Set up native input format
+      TextInputFormat.addInputPath(job, new Path(strBasePath, input));
+    }
+    catch (IOException e)
+    {
+      throw new DataProviderException(e);
     }
   }
+}
 }

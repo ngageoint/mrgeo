@@ -16,10 +16,13 @@
 
 package org.mrgeo.hdfs.vector;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.mrgeo.core.MrGeoConstants;
+import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
@@ -34,53 +37,56 @@ import java.io.IOException;
 
 public class DelimitedVectorInputFormatProvider extends VectorInputFormatProvider
 {
-  public DelimitedVectorInputFormatProvider(VectorInputFormatContext context)
-  {
-    super(context);
-  }
+public DelimitedVectorInputFormatProvider(VectorInputFormatContext context)
+{
+  super(context);
+}
 
-  @Override
-  public InputFormat<FeatureIdWritable, Geometry> getInputFormat(String input)
-  {
-    return new DelimitedVectorInputFormat();
-  }
+@Override
+public InputFormat<FeatureIdWritable, Geometry> getInputFormat(String input)
+{
+  return new DelimitedVectorInputFormat();
+}
 
-  @Override
-  public void setupJob(Job job, ProviderProperties providerProperties) throws DataProviderException
+@Override
+public void setupJob(Job job, ProviderProperties providerProperties) throws DataProviderException
+{
+  super.setupJob(job, providerProperties);
+  Configuration conf = job.getConfiguration();
+  String strBasePath = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_VECTOR, "/mrgeo/vectors");
+  conf.set("hdfs." + MrGeoConstants.MRGEO_HDFS_VECTOR, strBasePath);
+  long featureCount = getContext().getFeatureCount();
+  int minFeaturesPerSplit = getContext().getMinFeaturesPerSplit();
+  boolean calcFeatureCount = (minFeaturesPerSplit > 0 && featureCount < 0);
+  if (calcFeatureCount)
   {
-    super.setupJob(job, providerProperties);
-    long featureCount = getContext().getFeatureCount();
-    int minFeaturesPerSplit = getContext().getMinFeaturesPerSplit();
-    boolean calcFeatureCount = (minFeaturesPerSplit > 0 && featureCount < 0);
-    if (calcFeatureCount)
+    featureCount = 0L;
+  }
+  for (String input : getContext().getInputs())
+  {
+    try
     {
-      featureCount = 0L;
-    }
-    for (String input: getContext().getInputs())
-    {
-      try
+      // Set up native input format
+      TextInputFormat.addInputPath(job, new Path(strBasePath, input));
+
+      // Compute the number of features across all inputs if we don't already
+      // have it in the context.
+      if (calcFeatureCount)
       {
-        // Set up native input format
-        TextInputFormat.addInputPath(job, new Path(input));
-
-        // Compute the number of features across all inputs if we don't already
-        // have it in the context.
-        if (calcFeatureCount)
+        VectorDataProvider dp = DataProviderFactory.getVectorDataProvider(input,
+            AccessMode.READ, providerProperties);
+        if (dp != null)
         {
-          VectorDataProvider dp = DataProviderFactory.getVectorDataProvider(input,
-              AccessMode.READ, providerProperties);
-          if (dp != null)
-          {
-            featureCount += dp.getVectorReader().count();
-          }
+          featureCount += dp.getVectorReader().count();
         }
       }
-      catch (IOException e)
-      {
-        throw new DataProviderException(e);
-      }
     }
-    DelimitedVectorInputFormat.setupJob(job, getContext().getMinFeaturesPerSplit(),
-                                        featureCount);
+    catch (IOException e)
+    {
+      throw new DataProviderException(e);
+    }
   }
+  DelimitedVectorInputFormat.setupJob(job, getContext().getMinFeaturesPerSplit(),
+      featureCount);
+}
 }

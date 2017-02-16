@@ -20,19 +20,90 @@ import java.awt.image.DataBuffer
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser._
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.utils.MrGeoImplicits._
 import org.mrgeo.utils.SparkUtils
 
 abstract class RawUnaryMathMapOp extends RasterMapOp with Externalizable {
   var input:Option[RasterMapOp] = None
   var rasterRDD:Option[RasterRDD] = None
 
-  private[unarymath] def initialize(node:ParserNode, variables: String => Option[ParserNode]) = {
+  override def setup(job:JobArguments, conf:SparkConf):Boolean = true
+
+  override def teardown(job:JobArguments, conf:SparkConf):Boolean = true
+
+  override def execute(context:SparkContext):Boolean = {
+
+    // our metadata is the same as the raster
+    val meta = input.get.metadata().get
+
+    val rdd = input.get.rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + input.getClass.getName))
+
+    val r = RasterWritable.toMrGeoRaster(rdd.first()._2)
+    val convert = datatype() != DataBuffer.TYPE_UNDEFINED && r.datatype() != datatype()
+
+    // copy this here to avoid serializing the whole mapop
+    val nodatas = meta.getDefaultValues
+
+    val outputnodata = if (convert) {
+      Array.fill[Double](meta.getBands)(nodata())
+    }
+    else {
+      nodatas
+    }
+    val outputdatatype = if (convert) {
+      datatype()
+    }
+    else {
+      r.datatype()
+    }
+
+    rasterRDD = Some(RasterRDD(rdd.map(tile => {
+      val raster = RasterWritable.toMrGeoRaster(tile._2)
+
+      val output = MrGeoRaster.createEmptyRaster(raster.width(), raster.height(), raster.bands(), outputdatatype)
+
+      val width = raster.width()
+      var b:Int = 0
+      while (b < raster.bands()) {
+        var y:Int = 0
+        while (y < raster.height()) {
+          var x:Int = 0
+          while (x < width) {
+            val v = raster.getPixelDouble(x, y, b)
+            if (RasterMapOp.isNotNodata(v, nodatas(b))) {
+              output.setPixel(x, y, b, function(v))
+            }
+            else {
+              output.setPixel(x, y, b, outputnodata(b))
+            }
+            x += 1
+          }
+          y += 1
+        }
+        b += 1
+      }
+      (tile._1, RasterWritable.toWritable(output))
+    })))
+
+    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, outputnodata,
+      bounds = meta.getBounds, calcStats = false))
+
+    true
+  }
+
+  override def readExternal(in:ObjectInput):Unit = {}
+
+  override def writeExternal(out:ObjectOutput):Unit = {}
+
+  override def rdd():Option[RasterRDD] = {
+    rasterRDD
+  }
+
+  private[unarymath] def initialize(node:ParserNode, variables:String => Option[ParserNode]) = {
 
     if (node.getNumChildren < 1) {
       throw new ParserException(node.getName + " requires one argument")
@@ -54,72 +125,15 @@ abstract class RawUnaryMathMapOp extends RasterMapOp with Externalizable {
     }
   }
 
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = true
-  override def teardown(job: JobArguments, conf: SparkConf): Boolean = true
-
-  override def execute(context: SparkContext): Boolean = {
-
-    // our metadata is the same as the raster
-    val meta = input.get.metadata().get
-
-    val rdd = input.get.rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + input.getClass.getName))
-
-    val r = RasterWritable.toRaster(rdd.first()._2)
-    val convert = datatype() != DataBuffer.TYPE_UNDEFINED && r.getSampleModel.getDataType != datatype()
-
-    // copy this here to avoid serializing the whole mapop
-    val nodatas = meta.getDefaultValues
-
-    val outputnodata = if (convert)  Array.fill[Double](meta.getBands)(nodata()) else nodatas
-    val outputdatatype = if (convert) datatype() else r.getSampleModel.getDataType
-
-    rasterRDD = Some(RasterRDD(rdd.map(tile => {
-      val raster = RasterWritable.toRaster(tile._2)
-
-      val output = RasterUtils.createEmptyRaster(raster.getWidth, raster.getHeight, raster.getNumBands, outputdatatype)
-
-      val width = raster.getWidth
-      var b: Int = 0
-      while (b < raster.getNumBands) {
-        val pixels = raster.getSamples(0, 0, width, raster.getHeight, b, null.asInstanceOf[Array[Double]])
-        var y: Int = 0
-        while (y < raster.getHeight) {
-          var x: Int = 0
-          while (x < width) {
-            val v = pixels(y * width + x)
-            if (RasterMapOp.isNotNodata(v, nodatas(b))) {
-              output.setSample(x, y, b, function(v))
-            }
-            else {
-              output.setSample(x, y, b, outputnodata(b))
-            }
-            x += 1
-          }
-          y += 1
-        }
-        b += 1
-      }
-      (tile._1, RasterWritable.toWritable(output))
-    })))
-
-    metadata(SparkUtils.calculateMetadata(rasterRDD.get, meta.getMaxZoomLevel, outputnodata,
-      bounds = meta.getBounds, calcStats = false))
-
-    true
-  }
-
   private[unarymath] def function(a:Double):Double
 
-  override def readExternal(in: ObjectInput): Unit = {}
-
-  override def writeExternal(out: ObjectOutput): Unit = {}
-
-  override def rdd():Option[RasterRDD] = {
-    rasterRDD
+  private[unarymath] def datatype():Int = {
+    DataBuffer.TYPE_UNDEFINED
   }
 
-  private[unarymath] def datatype():Int = { DataBuffer.TYPE_UNDEFINED }
-  private[unarymath] def nodata():Double = { Float.NaN }
+  private[unarymath] def nodata():Double = {
+    Float.NaN
+  }
 
 
 }

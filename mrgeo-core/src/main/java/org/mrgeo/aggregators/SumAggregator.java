@@ -15,11 +15,12 @@
  */
 
 /**
- * 
+ *
  */
 package org.mrgeo.aggregators;
 
 import org.apache.commons.lang3.NotImplementedException;
+import org.mrgeo.utils.FloatUtils;
 
 /**
  * Uses the sum of pixel values for the resampled pixel.
@@ -28,70 +29,114 @@ import org.apache.commons.lang3.NotImplementedException;
 public class SumAggregator implements Aggregator
 {
 
-  @Override
-  public double aggregate(double[] values, double nodata)
+@Override
+public double aggregate(double[] values, double nodata)
+{
+  double sum = 0;
+  int count = 0;
+  for (int i = 0; i < values.length; i++)
   {
-    double sum = 0;
-    int count = 0;
-    for (int i=0; i<values.length; i++)
+    if (FloatUtils.isNotNodata(values[i], nodata))
     {
-      if (Double.compare(values[i], nodata) != 0)
-      {
-        sum += values[i];
-        count++;
-      }
+      sum += values[i];
+      count++;
     }
-    return (count == 0) ? nodata : sum;
   }
+  return (count == 0) ? nodata : sum;
+}
 
-  @Override
-  public float aggregate(float[] values, float nodata)
+@Override
+public float aggregate(float[] values, float nodata)
+{
+  float sum = 0;
+  int count = 0;
+  for (int i = 0; i < values.length; i++)
   {
-    float sum = 0;
-    int count = 0;
-    for (int i=0; i<values.length; i++)
+    if (FloatUtils.isNotNodata(values[i], nodata))
     {
-      if (Float.compare(values[i], nodata) != 0)
-      {
-        sum += values[i];
-        count++;
-      }
+      sum += values[i];
+      count++;
     }
-    return (count == 0) ? nodata : sum;
   }
+  return (count == 0) ? nodata : sum;
+}
 
-  @Override
-  public int aggregate(int[] values, int nodata)
+@Override
+public byte aggregate(byte[] values, byte nodata)
+{
+  int sum = 0;
+  int count = 0;
+  for (int i = 0; i < values.length; i++)
   {
-    int sum = 0;
-    int count = 0;
-    for (int i=0; i<values.length; i++)
+    if (values[i] != nodata)
     {
-      if (values[i] != nodata)
-      {
-        sum += values[i];
-        count++;
-      }
+      sum += values[i];
+      count++;
     }
-    return (count == 0) ? nodata : sum;
   }
+  return (count == 0) ? nodata : (byte) sum;
+}
 
-  @Override
-  public double aggregate(double[][]values, double weightx, double weighty, double nodata)
+@Override
+public short aggregate(short[] values, short nodata)
+{
+  int sum = 0;
+  int count = 0;
+  for (int i = 0; i < values.length; i++)
   {
-    throw new NotImplementedException("Not yet implemented");
+    if (values[i] != nodata)
+    {
+      sum += values[i];
+      count++;
+    }
   }
-  
-  @Override
-  public float aggregate(float[][]values, double weightx, double weighty, float nodata)
-  {
-    throw new NotImplementedException("Not yet implemented");
-  }
+  return (count == 0) ? nodata : (short) sum;
+}
 
-  @Override
-  public int aggregate(final int[][] values, final double weightx, final double weighty, final int nodata)
+@Override
+public int aggregate(int[] values, int nodata)
+{
+  int sum = 0;
+  int count = 0;
+  for (int i = 0; i < values.length; i++)
   {
-    throw new NotImplementedException("Not yet implemented");
+    if (values[i] != nodata)
+    {
+      sum += values[i];
+      count++;
+    }
   }
+  return (count == 0) ? nodata : sum;
+}
+
+@Override
+public double aggregate(double[][] values, double weightx, double weighty, double nodata)
+{
+  throw new NotImplementedException("Not yet implemented");
+}
+
+@Override
+public float aggregate(float[][] values, double weightx, double weighty, float nodata)
+{
+  throw new NotImplementedException("Not yet implemented");
+}
+
+@Override
+public byte aggregate(byte[][] values, double weightx, double weighty, byte nodata)
+{
+  throw new NotImplementedException("Not yet implemented");
+}
+
+@Override
+public short aggregate(short[][] values, double weightx, double weighty, short nodata)
+{
+  throw new NotImplementedException("Not yet implemented");
+}
+
+@Override
+public int aggregate(final int[][] values, final double weightx, final double weighty, final int nodata)
+{
+  throw new NotImplementedException("Not yet implemented");
+}
 
 }

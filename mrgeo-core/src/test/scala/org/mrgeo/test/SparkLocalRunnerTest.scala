@@ -19,19 +19,23 @@ package org.mrgeo.test
 import org.apache.spark.{SparkConf, SparkContext}
 import org.junit.{After, Before}
 
-class SparkLocalRunnerTest
-{
-  var sparkConf: SparkConf = null
-  var sparkContext: SparkContext = null
+@SuppressWarnings(Array("all")) // test code, not included in production
+class SparkLocalRunnerTest {
+  var sparkConf:SparkConf = _
+  var sparkContext:SparkContext = _
 
   @Before
-  def initLocalRunner(): Unit = {
+  def initLocalRunner():Unit = {
     sparkConf = new SparkConf()
-    sparkContext = new SparkContext("local", "Test App", sparkConf)
+
+    sparkConf.setMaster("local")
+    sparkConf.setAppName("Test App")
+
+    sparkContext = SparkContext.getOrCreate(sparkConf)
   }
 
   @After
-  def teardown(): Unit = {
+  def teardown():Unit = {
     if (sparkContext != null) {
       sparkContext.stop()
     }

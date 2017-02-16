@@ -13,24 +13,28 @@ import static org.mockito.Mockito.when;
 /**
  * Created by ericwood on 6/10/16.
  */
-public class PathBuilder {
+public class PathBuilder
+{
 
-    private Path path;
-    private FileSystem fileSystem;
+private Path path;
+private FileSystem fileSystem;
 
-    public PathBuilder() {
-        this.path = mock(Path.class);
-    }
+public PathBuilder()
+{
+  this.path = mock(Path.class);
+}
 
-    public PathBuilder fileSystem(FileSystem fileSystem) {
-        this.fileSystem = fileSystem;
+public PathBuilder fileSystem(FileSystem fileSystem)
+{
+  this.fileSystem = fileSystem;
 
-        return this;
-    }
+  return this;
+}
 
-    public Path build() throws IOException {
-        when(path.getFileSystem(any(Configuration.class))).thenReturn(fileSystem);
+public Path build() throws IOException
+{
+  when(path.getFileSystem(any(Configuration.class))).thenReturn(fileSystem);
 
-        return path;
-    }
+  return path;
+}
 }

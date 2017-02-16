@@ -24,10 +24,10 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
-import org.mrgeo.mapalgebra.MapAlgebra;
-import org.mrgeo.mapalgebra.parser.ParserException;
 import org.mrgeo.job.JobCancelledException;
 import org.mrgeo.job.JobFailedException;
+import org.mrgeo.mapalgebra.MapAlgebra;
+import org.mrgeo.mapalgebra.parser.ParserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +35,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("all") // test code, not included in production
 public class MapOpTestVectorUtils extends TestUtils
 {
 private static final Logger log = LoggerFactory.getLogger(MapOpTestVectorUtils.class);
@@ -60,7 +61,6 @@ public void generateBaselineVector(final Configuration conf, final String testNa
     fs.copyToLocalFile(src, dst);
   }
 }
-
 
 
 //public void runVectorExpression(final Configuration conf, final String testName, final String ex)
@@ -228,17 +228,17 @@ public void compareVectors(Configuration conf, String testName) throws IOExcepti
     srcFiles = new Path[files.length];
 
     int cnt = 0;
-    for (FileStatus file: files)
+    for (FileStatus file : files)
     {
       srcFiles[cnt++] = file.getPath();
     }
   }
   else
   {
-    srcFiles = new Path[] {output} ;
+    srcFiles = new Path[]{output};
   }
 
-  for (Path file: srcFiles)
+  for (Path file : srcFiles)
   {
     // read in the output file
     final long l = fs.getFileStatus(file).getLen();

@@ -21,17 +21,16 @@ import org.mrgeo.hdfs.utils.HadoopFileUtils;
 
 /**
  * @author jason.surratt
- * 
  */
 public class Defs
 {
-  public final static String CWD = "file://" + System.getProperty("user.dir");
-  
-  public final static String OUTPUT = "testFiles/output/";
-  public final static String OUTPUT_HDFS = new Path("/mrgeo/test-files/output/").
-      makeQualified(HadoopFileUtils.getFileSystem()).toString();
-  
-  public final static String INPUT = "testFiles/";
-  public final static String INPUT_HDFS = new Path("/mrgeo/test-files/").
-      makeQualified(HadoopFileUtils.getFileSystem()).toString();
+public final static String CWD = "file://" + System.getProperty("user.dir");
+
+public final static String OUTPUT = "testFiles/output/";
+public final static String OUTPUT_HDFS = new Path("/mrgeo/test-files/output/").
+    makeQualified(HadoopFileUtils.getFileSystem()).toString();
+
+public final static String INPUT = "testFiles/";
+public final static String INPUT_HDFS = new Path("/mrgeo/test-files/").
+    makeQualified(HadoopFileUtils.getFileSystem()).toString();
 }

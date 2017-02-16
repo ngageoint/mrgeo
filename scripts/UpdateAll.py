@@ -1,9 +1,8 @@
 #!/usr/bin/python
 
-import os
-import re
-import sys
 import getpass
+import os
+
 from UpdateWikiDocuments import *
 
 noPassword = 0;
@@ -18,10 +17,12 @@ else:
     password = getpass.getpass()
 
 print "Beginning retrieval of Admin Documentation"
-updateWiki(username, password, "https://107.23.31.196/redmine/projects/mrgeo/", "AdminDocumentation", os.environ["MRGEO_HOME"] + "/docs/AdminDocumentation.html")
+updateWiki(username, password, "https://107.23.31.196/redmine/projects/mrgeo/", "AdminDocumentation",
+           os.environ["MRGEO_HOME"] + "/docs/AdminDocumentation.html")
 print "Completed retrieval of Admin Documentation"
 print "Beginning retrieval of User Documentation"
-updateWiki(username, password, "https://107.23.31.196/redmine/projects/mrgeo/", "UserDocumentation", os.environ["MRGEO_HOME"] + "/docs/UserDocumentation.html")
+updateWiki(username, password, "https://107.23.31.196/redmine/projects/mrgeo/", "UserDocumentation",
+           os.environ["MRGEO_HOME"] + "/docs/UserDocumentation.html")
 print "Completed retrieval of User Documentation"
-#updateWiki(username, password, "https://107.23.31.196/redmine/projects/mrgeo/", "DeveloperDocumentation", os.environ["MRGEO_HOME"] + "/docs/DeveloperDocumentation.html")
-#updateWiki(username, password, "https://107.23.31.196/redmine/projects/mrgeo/", "IntelUserDocumentation", os.environ["MRGEO_HOME"] + "/docs/IntelUserDocumentation.html")
+# updateWiki(username, password, "https://107.23.31.196/redmine/projects/mrgeo/", "DeveloperDocumentation", os.environ["MRGEO_HOME"] + "/docs/DeveloperDocumentation.html")
+# updateWiki(username, password, "https://107.23.31.196/redmine/projects/mrgeo/", "IntelUserDocumentation", os.environ["MRGEO_HOME"] + "/docs/IntelUserDocumentation.html")

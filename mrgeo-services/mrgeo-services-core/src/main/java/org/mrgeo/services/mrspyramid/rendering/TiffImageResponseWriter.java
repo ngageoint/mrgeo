@@ -16,11 +16,11 @@
 
 package org.mrgeo.services.mrspyramid.rendering;
 
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.utils.GDALJavaUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.image.Raster;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
@@ -29,38 +29,37 @@ import java.io.IOException;
  */
 public class TiffImageResponseWriter extends ImageResponseWriterAbstract
 {
-  @SuppressWarnings("unused")
-  private static final Logger log = LoggerFactory.getLogger(TiffImageResponseWriter.class);
+@SuppressWarnings("unused")
+private static final Logger log = LoggerFactory.getLogger(TiffImageResponseWriter.class);
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.mrgeo.services.wms.ImageResponseWriter#getMimeType()
-   */
-  @Override
-  public String[] getMimeTypes()
-  {
-    return new String[] { "image/tiff", "image/tif" };
-  }
+/*
+ * (non-Javadoc)
+ *
+ * @see org.mrgeo.services.wms.ImageResponseWriter#getMimeType()
+ */
+@Override
+public String[] getMimeTypes()
+{
+  return new String[]{"image/tiff", "image/tif"};
+}
 
-  @Override
-  public String getResponseMimeType()
-  {
-    return "image/tiff";
-  }
+@Override
+public String getResponseMimeType()
+{
+  return "image/tiff";
+}
 
-  @Override
-  public String[] getWmsFormats()
-  {
-    return new String[] { "tiff", "tif" };
-  }
+@Override
+public String[] getWmsFormats()
+{
+  return new String[]{"tiff", "tif"};
+}
 
 
-  @Override
-  public void writeToStream(Raster raster, double[] defaults, ByteArrayOutputStream byteStream) throws IOException
-  {
-    GDALJavaUtils.saveRaster(raster, byteStream, "Tiff");
-    //ImageIO.write(RasterUtils.makeBufferedImage(raster), "TIFF", byteStream);
-    byteStream.close();
-  }
+@Override
+public void writeToStream(MrGeoRaster raster, double[] defaults, ByteArrayOutputStream byteStream) throws IOException
+{
+  GDALJavaUtils.saveRaster(raster.toDataset(null, defaults), byteStream, "Tiff");
+  byteStream.close();
+}
 }

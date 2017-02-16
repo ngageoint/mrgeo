@@ -21,7 +21,7 @@ import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.image.MrsPyramidMetadata
@@ -29,22 +29,21 @@ import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.spark.FocalBuilder
 import org.mrgeo.utils.SparkUtils
-import org.mrgeo.utils.tms.TMSUtils
 
 abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
 
-  protected var inputMapOp: Option[RasterMapOp] = None
+  protected var inputMapOp:Option[RasterMapOp] = None
   private var rasterRDD:Option[RasterRDD] = None
-  private var outputNoDatas: Option[Array[Number]] = None
+  private var outputNoDatas:Option[Array[Double]] = None
 
-  override def rdd(): Option[RasterRDD] = rasterRDD
+  override def rdd():Option[RasterRDD] = rasterRDD
 
-  override def execute(context: SparkContext): Boolean =
-  {
-    val input:RasterMapOp = inputMapOp getOrElse(throw new IOException("Input MapOp not valid!"))
+  override def execute(context:SparkContext):Boolean = {
+    val input:RasterMapOp = inputMapOp getOrElse (throw new IOException("Input MapOp not valid!"))
 
-    val meta = input.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
-    val rdd = input.rdd() getOrElse(throw new IOException("Can't load RDD! Ouch! " + inputMapOp.getClass.getName))
+    val meta = input.metadata() getOrElse
+               (throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
+    val rdd = input.rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + inputMapOp.getClass.getName))
 
     beforeExecute(meta)
     val zoom = meta.getMaxZoomLevel
@@ -61,12 +60,27 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
     val tiles = FocalBuilder.create(rdd, bufferX, bufferY, meta.getBounds, zoom, nodatas, context)
 
     rasterRDD =
-      Some(RasterRDD(calculate(tiles, bufferX, bufferY, neighborhoodWidth, neighborhoodHeight, nodatas, zoom, tilesize)))
+        Some(
+          RasterRDD(calculate(tiles, bufferX, bufferY, neighborhoodWidth, neighborhoodHeight, nodatas, zoom, tilesize)))
 
     metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, getOutputNoData,
       bounds = meta.getBounds, calcStats = false))
 
     true
+  }
+
+  override def setup(job:JobArguments, conf:SparkConf):Boolean = {
+    true
+  }
+
+  override def teardown(job:JobArguments, conf:SparkConf):Boolean = {
+    true
+  }
+
+  override def readExternal(in:ObjectInput):Unit = {
+  }
+
+  override def writeExternal(out:ObjectOutput):Unit = {
   }
 
   /**
@@ -80,26 +94,26 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
     * be in the middle of the neighborhood. If the neighborhoodWidth is 4, it will be the second pixel
     * from the left (e.g. xLeftOffset will be 1).
     *
-    * @param rasterValues An array of the source raster including the neighborhood buffer.
-    * @param notnodata An array of booleans indicating whether each pixel value in
-    *                  the source raster is nodata or not. Using this array improves
-    *                  performance during neighborhood calculations because the "is nodata"
-    *                  checks are expensive when repeatedly run for the same pixel.
-    * @param processX The x pixel coordinate in the source raster of the pixel to process
-    * @param processY The y pixel coordinate in the source raster of the pixel to process
-    * @param xLeftOffset Defines the left boundary of the neighborhood. This is the number of pixels
-    *                    to the left of the pixel being processed.
-    * @param neighborhoodWidth The width of the neighborhood in pixels.
-    * @param yAboveOffset Defines the top boundary of the neighborhood. This is the number of pixels
-    *                     above the pixel being processed.
+    * @param raster
+    * @param notnodata          An raster of booleans indicating whether each pixel value in
+    *                           the source raster is nodata or not. Using this array improves
+    *                           performance during neighborhood calculations because the "is nodata"
+    *                           checks are expensive when repeatedly run for the same pixel.
+    * @param processX           The x pixel coordinate in the source raster of the pixel to process
+    * @param processY           The y pixel coordinate in the source raster of the pixel to process
+    * @param xLeftOffset        Defines the left boundary of the neighborhood. This is the number of pixels
+    *                           to the left of the pixel being processed.
+    * @param neighborhoodWidth  The width of the neighborhood in pixels.
+    * @param yAboveOffset       Defines the top boundary of the neighborhood. This is the number of pixels
+    *                           above the pixel being processed.
     * @param neighborhoodHeight The height of the neighborhood in pixels.
     * @return
     */
-  protected def computePixelValue(rasterValues: Array[Double], notnodata: Array[Boolean],
-                                  outNoData: Double, rasterWidth: Int,
-                                  processX: Int, processY: Int,
-                                  xLeftOffset: Int, neighborhoodWidth: Int,
-                                  yAboveOffset: Int, neighborhoodHeight: Int, tileId: Long): Double
+  protected def computePixelValue(raster:MrGeoRaster, notnodata:MrGeoRaster,
+                                  outNoData:Double, rasterWidth:Int,
+                                  processX:Int, processY:Int, processBand:Int,
+                                  xLeftOffset:Int, neighborhoodWidth:Int,
+                                  yAboveOffset:Int, neighborhoodHeight:Int, tileId:Long):Double
 
   /**
     * This method is called at the start of the "execute" method, giving sub-classes an
@@ -108,18 +122,8 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
     *
     * @param meta
     */
-  protected def beforeExecute(meta: MrsPyramidMetadata): Unit = {
-    outputNoDatas = Some(Array.fill[Number](meta.getBands)(Double.NaN))
-  }
-
-  private def isNoData(value: Double, nodata: Double): Boolean =
-  {
-    if (nodata.isNaN) {
-      value.isNaN
-    }
-    else {
-      (value == nodata)
-    }
+  protected def beforeExecute(meta:MrsPyramidMetadata):Unit = {
+    outputNoDatas = Some(Array.fill[Double](meta.getBands)(Double.NaN))
   }
 
   /**
@@ -129,34 +133,37 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
     *
     * @return
     */
-  protected def getNeighborhoodInfo: (Int, Int)
+  protected def getNeighborhoodInfo:(Int, Int)
 
-  protected def getOutputTileType: Int = {
+  protected def getOutputTileType:Int = {
     DataBuffer.TYPE_FLOAT
   }
 
-  protected def getOutputNoData: Array[Number] = {
+  protected def getOutputNoData:Array[Double] = {
     outputNoDatas match {
       case Some(nodatas) => nodatas
       case None => throw new IllegalStateException("The output nodata values have not been set")
     }
   }
 
-  protected def calculateRasterIndex(rasterWidth: Int, x: Int, y:Int): Int =
-  {
-    y * rasterWidth + x
+  private def isNoData(value:Double, nodata:Double):Boolean = {
+    if (nodata.isNaN) {
+      value.isNaN
+    }
+    else {
+      (value == nodata)
+    }
   }
 
   private def calculate(tiles:RDD[(TileIdWritable, RasterWritable)],
-                        bufferX: Int, bufferY: Int,
-                        neighborhoodWidth: Int, neighborhoodHeight: Int,
-                        nodatas:Array[Number], zoom:Int, tilesize:Int) =
-  {
+                        bufferX:Int, bufferY:Int,
+                        neighborhoodWidth:Int, neighborhoodHeight:Int,
+                        nodatas:Array[Double], zoom:Int, tilesize:Int) = {
     val outputNoData = getOutputNoData
     tiles.map(tile => {
 
-      val raster = RasterWritable.toRaster(tile._2)
-      val answer = RasterUtils.createEmptyRaster(tilesize, tilesize, raster.getNumBands,
+      val raster = RasterWritable.toMrGeoRaster(tile._2)
+      val answer = MrGeoRaster.createEmptyRaster(tilesize, tilesize, raster.bands(),
         getOutputTileType) // , Float.NaN)
 
       // If neighborhoodWidth is an odd value, then the neighborhood has the same number of pixels to the left
@@ -176,77 +183,54 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
       else {
         (neighborhoodHeight / 2).toInt
       }
-      val rasterWidth = raster.getWidth
-      val rasterHeight = raster.getHeight
-      var band: Int = 0
-      while (band < raster.getNumBands) {
+      // For performance, construct an array of booleans indicating whether or not each
+      // pixel value in the source raster is nodata or not
+      val rasterWidth = raster.width()
+      val rasterHeight = raster.height()
+      var band:Int = 0
+      val notnodata = MrGeoRaster.createEmptyRaster(rasterWidth, rasterHeight, 1, DataBuffer.TYPE_BYTE)
+      while (band < raster.bands()) {
         val outputNoDataForBand = outputNoData(band).doubleValue()
-        val rasterValues = raster.getSamples(raster.getMinX, raster.getMinY, raster.getMinX + rasterWidth,
-          rasterHeight, band, null.asInstanceOf[Array[Double]])
-        // For performance, construct an array of booleans indicating whether or not each
-        // pixel value in the source raster is nodata or not
-        val notnodata = new Array[Boolean](rasterWidth * rasterHeight)
-        var i: Int = 0
-        while (i < rasterValues.length) {
-          notnodata(i) = !isNoData(rasterValues(i), nodatas(band).doubleValue())
-          i += 1
-        }
         var py = 0
         var px = 0
         while (py < rasterHeight) {
           px = 0
           while (px < rasterWidth) {
-            val index = calculateRasterIndex(rasterWidth, px, py)
-            val v = raster.getSampleDouble(px, py, band)
-            rasterValues(index) = v
-            if (!isNoData(v, nodatas(band).doubleValue())) {
-              notnodata(index) = true
+            val v = raster.getPixelDouble(px, py, band)
+            if (!isNoData(v, nodatas(band))) {
+              notnodata.setPixel(px, py, 0, 1.toByte)
             }
             else {
-              notnodata(index) = false
+              notnodata.setPixel(px, py, 0, 0.toByte)
             }
             px += 1
           }
           py += 1
         }
-        var y: Int = 0
-        var x: Int = 0
-        while (y < tilesize) {
-          x = 0
-          while (x < tilesize) {
-            val srcX = x + bufferX
-            val srcY = y + bufferY
+        py = 0
+        px = 0
+        while (py < tilesize) {
+          px = 0
+          while (px < tilesize) {
+            val srcX = px + bufferX
+            val srcY = py + bufferY
             // If the source pixel is nodata, skip it
-            if (notnodata(calculateRasterIndex(rasterWidth, srcX, srcY))) {
-              answer.setSample(x, y, band,
-                computePixelValue(rasterValues, notnodata, outputNoDataForBand,
-                  rasterWidth, srcX, srcY, xLeftOffset, neighborhoodWidth,
+            if (notnodata.getPixelByte(srcX, srcY, band) == 1) {
+              answer.setPixel(px, py, band,
+                computePixelValue(raster, notnodata, outputNoDataForBand,
+                  rasterWidth, srcX, srcY, band, xLeftOffset, neighborhoodWidth,
                   yAboveOffset, neighborhoodHeight, tile._1.get()))
             }
             else {
-              answer.setSample(x, y, band, outputNoDataForBand)
+              answer.setPixel(px, py, band, outputNoDataForBand)
             }
-            x += 1
+            px += 1
           }
-          y += 1
+          py += 1
         }
         band += 1
       }
       (new TileIdWritable(tile._1), RasterWritable.toWritable(answer))
     })
-  }
-
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = {
-    true
-  }
-
-  override def teardown(job: JobArguments, conf: SparkConf): Boolean = {
-    true
-  }
-
-  override def readExternal(in: ObjectInput): Unit = {
-  }
-
-  override def writeExternal(out: ObjectOutput): Unit = {
   }
 }

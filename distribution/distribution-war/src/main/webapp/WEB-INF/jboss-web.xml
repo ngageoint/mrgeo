@@ -16,5 +16,5 @@
   -->
 
 <jboss-web>
-    <context-root>mrgeo</context-root>
+  <context-root>mrgeo</context-root>
 </jboss-web>

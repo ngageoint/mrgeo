@@ -18,53 +18,20 @@ package org.mrgeo.hdfs.tile;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.mrgeo.hdfs.partitioners.SplitGenerator;
-import org.mrgeo.hdfs.utils.HadoopFileUtils;
 
-import java.io.*;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectOutput;
 
 public abstract class Splits implements Externalizable
 {
 @SuppressFBWarnings(value = "UWF_NULL_FIELD", justification = "Set in child classes")
 SplitInfo[] splits = null;
 
-public static class SplitException extends IOException
-{
-  static final long serialVersionUID = 7818375828146090155L;
-
-  public SplitException() {
-    super();
-  }
-  public SplitException(String message) {
-    super(message);
-  }
-  public SplitException(String message, Throwable cause) {
-    super(message, cause);
-  }
-  public SplitException(Throwable cause) {
-    super(cause);
-  }
-}
-
-public static class SplitNotFoundException extends IOException
-{
-  public SplitNotFoundException() {
-    super();
-  }
-  public SplitNotFoundException(String message) {
-    super(message);
-  }
-  public SplitNotFoundException(String message, Throwable cause) {
-    super(message, cause);
-  }
-  public SplitNotFoundException(Throwable cause) {
-    super(cause);
-  }
-}
-
 public abstract String findSplitFile(Path parent) throws IOException;
+
 public abstract void generateSplits(SplitGenerator generator);
 
 public SplitInfo[] getSplits()
@@ -91,7 +58,7 @@ final public SplitInfo getSplitByPartitionIndex(int partitionIndex) throws Split
   else if (partitionIndex < 0 || partitionIndex >= splits.length)
   {
     throw new SplitException("Partition " + partitionIndex +
-        " out of bounds. range 0 - " + (splits.length -1));
+        " out of bounds. range 0 - " + (splits.length - 1));
   }
   return splits[partitionIndex];
 }
@@ -109,7 +76,7 @@ final public SplitInfo getSplit(long tileId) throws SplitException
     return splits[findSplitIndex(tileId)];
   }
   // few splits, brute force search
-  for (SplitInfo split: splits)
+  for (SplitInfo split : splits)
   {
     if (split.compareLE(tileId))
     {
@@ -136,7 +103,7 @@ final public int getSplitIndex(long tileId) throws SplitException
   }
   // If a tile after the end of the last tile is requested,
   // return the last split.
-  if (splits[splits.length-1].compareGT(tileId))
+  if (splits[splits.length - 1].compareGT(tileId))
   {
     return splits.length - 1;
   }
@@ -147,7 +114,7 @@ final public int getSplitIndex(long tileId) throws SplitException
     return findSplitIndex(tileId);
   }
   // few splits, brute force search
-  for (int i=0; i < splits.length; i++)
+  for (int i = 0; i < splits.length; i++)
   {
     if (splits[i].compareLE(tileId))
     {
@@ -157,6 +124,16 @@ final public int getSplitIndex(long tileId) throws SplitException
   return splits.length - 1;
 //    throw new SplitException("TileId out of range.  tile id: " + tileId +
 //                             ".  splits: min: " + splits[0].getTileId() + ", max: " + splits[splits.length - 1].getTileId());
+}
+
+@Override
+final public void writeExternal(ObjectOutput out) throws IOException
+{
+  out.writeInt(splits.length);
+  for (SplitInfo split : splits)
+  {
+    split.writeExternal(out);
+  }
 }
 
 private int findSplitIndex(long tileId) throws SplitException
@@ -189,39 +166,79 @@ private int binarySearch(long target, int start, int end)
   {
     return binarySearch(target, start, mid - 1);
   }
-  else {
+  else
+  {
     return binarySearch(target, mid, end);
   }
 }
 
-public abstract void readSplits(InputStream stream) throws SplitException;
-public void readSplits(Path parent) throws IOException
+public static class SplitException extends IOException
 {
-  FileSystem fs = HadoopFileUtils.getFileSystem(parent);
-  try (InputStream stream = fs.open(parent))
+  static final long serialVersionUID = 7818375828146090155L;
+
+  public SplitException()
   {
-    readSplits(stream);
+    super();
+  }
+
+  public SplitException(String message)
+  {
+    super(message);
+  }
+
+  public SplitException(String message, Throwable cause)
+  {
+    super(message, cause);
+  }
+
+  public SplitException(Throwable cause)
+  {
+    super(cause);
   }
 }
 
+// Put all of the file reading and writing in the file specific subclasses
+//public abstract void readSplits(InputStream stream) throws SplitException;
+//public void readSplits(Path parent) throws IOException
+//{
+//  FileSystem fs = HadoopFileUtils.getFileSystem(parent);
+//  try (InputStream stream = fs.open(parent))
+//  {
+//    readSplits(stream);
+//  }
+//}
+//
+//
+//public abstract void writeSplits(OutputStream stream) throws SplitException;
+//public void writeSplits(Path parent) throws IOException
+//{
+//  FileSystem fs = HadoopFileUtils.getFileSystem(parent);
+//  try (OutputStream stream =  fs.create(parent, true))
+//  {
+//    writeSplits(stream);
+//  }
+//}
 
-public abstract void writeSplits(OutputStream stream) throws SplitException;
-public void writeSplits(Path parent) throws IOException
+public static class SplitNotFoundException extends IOException
 {
-  FileSystem fs = HadoopFileUtils.getFileSystem(parent);
-  try (OutputStream stream =  fs.create(parent, true))
+  public SplitNotFoundException()
   {
-    writeSplits(stream);
+    super();
   }
-}
 
-@Override
-final public void writeExternal(ObjectOutput out) throws IOException
-{
-  out.writeInt(splits.length);
-  for (SplitInfo split: splits)
+  public SplitNotFoundException(String message)
   {
-    split.writeExternal(out);
+    super(message);
+  }
+
+  public SplitNotFoundException(String message, Throwable cause)
+  {
+    super(message, cause);
+  }
+
+  public SplitNotFoundException(Throwable cause)
+  {
+    super(cause);
   }
 }
 

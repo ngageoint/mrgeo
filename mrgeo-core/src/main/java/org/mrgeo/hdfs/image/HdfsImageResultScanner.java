@@ -18,6 +18,7 @@ package org.mrgeo.hdfs.image;
 
 import org.apache.hadoop.io.MapFile;
 import org.mrgeo.data.CloseableKVIterator;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.tile.Splits;
@@ -28,7 +29,6 @@ import org.mrgeo.utils.tms.Tile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.image.Raster;
 import java.io.IOException;
 import java.util.NoSuchElementException;
 
@@ -36,55 +36,32 @@ import java.util.NoSuchElementException;
  * HdfsResultScanner is for pulling items from the data store / MapFiles in HDFS in a Iterator
  * format.
  */
-public class HdfsImageResultScanner implements CloseableKVIterator<TileIdWritable, Raster>
+class HdfsImageResultScanner implements CloseableKVIterator<TileIdWritable, MrGeoRaster>
 {
 private static final Logger log = LoggerFactory.getLogger(HdfsImageResultScanner.class);
 
 // reader used for pulling items
 private final HdfsMrsImageReader reader;
-
-// hdfs specific reader
-private MapFile.Reader mapfile;
-
-// keep track of where the reader is
-private int curPartitionIndex;
-
-// return item
-private RasterWritable currentValue;
-
-// keep track of where things are
-private TileIdWritable currentKey;
-
-// stop condition
-private TileIdWritable endKey;
-
 private final long rowStart;
 private final long rowEnd;
 private final int zoom;
+// hdfs specific reader
+private MapFile.Reader mapfile;
+// keep track of where the reader is
+private int curPartitionIndex;
+// return item
+private RasterWritable currentValue;
+// keep track of where things are
+private TileIdWritable currentKey;
+// stop condition
+private TileIdWritable endKey;
 
 // private final TileIdPartitioner partitioner;
-
 // workaround for MapFile.Reader.seek behavior
 private boolean readFirstKey;
 
-@Override
-public void close() throws IOException
-{
-  if (mapfile != null)
-  {
-    mapfile.close();
-    mapfile = null;
-  }
-}
-
-// For image: return RasterWritable.toRaster(currentValue)
-protected Raster toNonWritable(RasterWritable val) throws IOException
-{
-  return RasterWritable.toRaster(val);
-}
-
-public HdfsImageResultScanner(final LongRectangle bounds,
-                              final HdfsMrsImageReader reader)
+HdfsImageResultScanner(final LongRectangle bounds,
+    final HdfsMrsImageReader reader)
 {
   this.reader = reader;
 
@@ -99,15 +76,12 @@ public HdfsImageResultScanner(final LongRectangle bounds,
 /**
  * Constructor will initialize the conditions for pulling tiles
  *
- * @param startKey
- *          start of the list of tiles to pull
- * @param endKey
- *          end (inclusive) of tile to pull
- * @param reader
- *          the reader being used
+ * @param startKey start of the list of tiles to pull
+ * @param endKey   end (inclusive) of tile to pull
+ * @param reader   the reader being used
  */
-public HdfsImageResultScanner(final TileIdWritable startKey, final TileIdWritable endKey,
-                              final HdfsMrsImageReader reader)
+HdfsImageResultScanner(final TileIdWritable startKey, final TileIdWritable endKey,
+    final HdfsMrsImageReader reader)
 {
   // this.partitions = partitions;
   this.reader = reader;
@@ -125,19 +99,29 @@ public HdfsImageResultScanner(final TileIdWritable startKey, final TileIdWritabl
 }
 
 @Override
+public void close() throws IOException
+{
+  if (mapfile != null)
+  {
+    mapfile.close();
+    mapfile = null;
+  }
+}
+
+@Override
 public TileIdWritable currentKey()
 {
-  // TODO eaw Need null check, especially because key will be null if the tile was not found
+  // TODO eaw Should probably have a null check, especially because key will be null if the tile was not found
   // don't reuse the tileidwritable, spark persist() doesn't like it...
   return new TileIdWritable(currentKey);
 }
 
 @Override
-public Raster currentValue()
+public MrGeoRaster currentValue()
 {
   try
   {
-    return toNonWritable(currentValue);
+    return RasterWritable.toMrGeoRaster(currentValue);
   }
   catch (final IOException e)
   {
@@ -233,7 +217,7 @@ public boolean hasNext()
  * Get the value from the MapFile and prepares the Raster output.
  */
 @Override
-public Raster next()
+public MrGeoRaster next()
 {
   if (currentKey == null)
   {
@@ -242,7 +226,7 @@ public Raster next()
 
   try
   {
-    return toNonWritable(currentValue);
+    return RasterWritable.toMrGeoRaster(currentValue);
   }
   catch (final IOException e)
   {
@@ -282,7 +266,7 @@ private boolean inRange(TileIdWritable key)
   return false;
 }
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "squid:S1166"}) // Splits.SplitException is caught and handled
 private void primeScanner(final long startTileId, final long endTileId)
 {
     /*
@@ -320,20 +304,19 @@ private void primeScanner(final long startTileId, final long endTileId)
         // need to do it once.
         if (startKey == null)
         {
-          startKey = (TileIdWritable)mapfile.getKeyClass().newInstance();
+          startKey = (TileIdWritable) mapfile.getKeyClass().newInstance();
           startKey.set(startTileId);
-          endKey = (TileIdWritable)mapfile.getKeyClass().newInstance();
+          endKey = (TileIdWritable) mapfile.getKeyClass().newInstance();
           endKey.set(endTileId);
           // Because package names for some of our Writable value classes changed,
           // we need to create the
-          currentValue = (RasterWritable)mapfile.getValueClass().newInstance();
+          currentValue = (RasterWritable) mapfile.getValueClass().newInstance();
         }
       }
       catch (InstantiationException | IllegalAccessException e)
       {
         throw new MrsImageException(e);
       }
-      // TODO eaw - need null check before casting value
       currentKey = (TileIdWritable) mapfile.getClosest(startKey, currentValue);
       if (currentKey != null)
       {

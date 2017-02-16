@@ -32,22 +32,20 @@ import org.mrgeo.mapalgebra.vector.VectorMapOp
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 
-object InlineCsvMapOp extends MapOpRegistrar
-{
-  override def register: Array[String] = {
+object InlineCsvMapOp extends MapOpRegistrar {
+  override def register:Array[String] = {
     Array[String]("InlineCsv", "csv")
   }
 
-  def create(columns:String, values:String):MapOp = {
-    new InlineCsvMapOp(columns, values)
-  }
+  //  def create(columns:String, values:String):MapOp = {
+  //    new InlineCsvMapOp(columns, values)
+  //  }
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp = {
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp = {
     new InlineCsvMapOp(node, variables)
   }
 
-  def parseColumns(columns: String, delim: Char): ColumnDefinitionFile =
-  {
+  def parseColumns(columns:String, delim:Char):ColumnDefinitionFile = {
     val cdf = new ColumnDefinitionFile()
     var columnList = new ListBuffer[Column]()
     val columnArray = columns.split(Character.toString(delim))
@@ -64,14 +62,13 @@ object InlineCsvMapOp extends MapOpRegistrar
 
 
 @SuppressFBWarnings(value = Array("NP_LOAD_OF_KNOWN_NULL_VALUE"), justification = "Scala generated code")
-class InlineCsvMapOp extends VectorMapOp with Externalizable
-{
+class InlineCsvMapOp extends VectorMapOp with Externalizable {
   private val recordSeparator = ';'
   private val encapsulator = '\''
   private val fieldSeparator = ','
-  private var records: Array[String] = null
-  private var delimitedParser: DelimitedParser = null
-  private var vectorrdd: Option[VectorRDD] = None
+  private var records:Array[String] = null
+  private var delimitedParser:DelimitedParser = null
+  private var vectorrdd:Option[VectorRDD] = None
 
   def this(columns:String, values:String) = {
     this()
@@ -93,27 +90,22 @@ class InlineCsvMapOp extends VectorMapOp with Externalizable
 
     val attributes = new ListBuffer[String]()
 
-    var xCol: Int = -1
-    var yCol: Int = -1
-    var geometryCol: Int = -1
+    var xCol:Int = -1
+    var yCol:Int = -1
+    var geometryCol:Int = -1
     for ((col, i) <- cdf.getColumns.view.zipWithIndex) {
       val c = col.getName
 
-      if (col.getType == Column.FactorType.Numeric)
-      {
-        if (c.equals("x"))
-        {
+      if (col.getType == Column.FactorType.Numeric) {
+        if (c.equals("x")) {
           xCol = i
         }
-        else if (c.equals("y"))
-        {
+        else if (c.equals("y")) {
           yCol = i
         }
       }
-      else
-      {
-        if (c.toLowerCase().equals("geometry"))
-        {
+      else {
+        if (c.toLowerCase().equals("geometry")) {
           geometryCol = i
         }
       }
@@ -124,17 +116,17 @@ class InlineCsvMapOp extends VectorMapOp with Externalizable
       recordSeparator, encapsulator, cdf.isFirstLineHeader)
   }
 
-  def this(node:ParserNode, variables: String => Option[ParserNode]) = {
+  def this(node:ParserNode, variables:String => Option[ParserNode]) = {
     this()
 
     initialize(node, variables)
   }
 
-  override def rdd(): Option[VectorRDD] = {
+  override def rdd():Option[VectorRDD] = {
     vectorrdd
   }
 
-  override def execute(context: SparkContext): Boolean = {
+  override def execute(context:SparkContext):Boolean = {
     var recordData = new ListBuffer[(FeatureIdWritable, Geometry)]()
     if (records != null) {
       for ((record, i) <- records.view.zipWithIndex) {
@@ -146,18 +138,17 @@ class InlineCsvMapOp extends VectorMapOp with Externalizable
     true
   }
 
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = {
+  override def setup(job:JobArguments, conf:SparkConf):Boolean = {
     true
   }
 
-  override def teardown(job: JobArguments, conf: SparkConf): Boolean = {
+  override def teardown(job:JobArguments, conf:SparkConf):Boolean = {
     true
   }
 
   @SuppressFBWarnings(value = Array("NP_LOAD_OF_KNOWN_NULL_VALUE"), justification = "Scala generated code")
-  def initialize(node:ParserNode, variables: String => Option[ParserNode]): Unit = {
-    if (node.getNumChildren != 2)
-    {
+  def initialize(node:ParserNode, variables:String => Option[ParserNode]):Unit = {
+    if (node.getNumChildren != 2) {
       throw new ParserException("Inline CSV takes two arguments. (columns and values)")
     }
 
@@ -179,27 +170,22 @@ class InlineCsvMapOp extends VectorMapOp with Externalizable
 
     val attributes = new ListBuffer[String]()
 
-    var xCol: Int = -1
-    var yCol: Int = -1
-    var geometryCol: Int = -1
+    var xCol:Int = -1
+    var yCol:Int = -1
+    var geometryCol:Int = -1
     for ((col, i) <- cdf.getColumns.view.zipWithIndex) {
       val c = col.getName
 
-      if (col.getType == Column.FactorType.Numeric)
-      {
-        if (c.equals("x"))
-        {
+      if (col.getType == Column.FactorType.Numeric) {
+        if (c.equals("x")) {
           xCol = i
         }
-        else if (c.equals("y"))
-        {
+        else if (c.equals("y")) {
           yCol = i
         }
       }
-      else
-      {
-        if (c.toLowerCase().equals("geometry"))
-        {
+      else {
+        if (c.toLowerCase().equals("geometry")) {
           geometryCol = i
         }
       }
@@ -210,12 +196,12 @@ class InlineCsvMapOp extends VectorMapOp with Externalizable
       recordSeparator, encapsulator, cdf.isFirstLineHeader)
   }
 
-  override def readExternal(in: ObjectInput): Unit = {
+  override def readExternal(in:ObjectInput):Unit = {
     delimitedParser = new DelimitedParser()
     delimitedParser.readExternal(in)
   }
 
-  override def writeExternal(out: ObjectOutput): Unit = {
+  override def writeExternal(out:ObjectOutput):Unit = {
     delimitedParser.writeExternal(out)
   }
 }

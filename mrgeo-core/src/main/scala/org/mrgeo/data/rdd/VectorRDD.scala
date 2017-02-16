@@ -24,22 +24,23 @@ import org.mrgeo.geometry.Geometry
 
 @SerialVersionUID(1L)
 object VectorRDD {
-  def apply(parent: VectorRDD): VectorRDD = {
+  def apply(parent:VectorRDD):VectorRDD = {
     new VectorRDD(parent)
   }
-  def apply(parent: RDD[(FeatureIdWritable, Geometry)]): VectorRDD = {
+
+  def apply(parent:RDD[(FeatureIdWritable, Geometry)]):VectorRDD = {
     new VectorRDD(parent)
   }
 }
 
 @SerialVersionUID(1L)
-class VectorRDD(parent: RDD[(FeatureIdWritable, Geometry)]) extends RDD[(FeatureIdWritable, Geometry)](parent) {
+class VectorRDD(parent:RDD[(FeatureIdWritable, Geometry)]) extends RDD[(FeatureIdWritable, Geometry)](parent) {
   @DeveloperApi
-  override def compute(split: Partition, context: TaskContext): Iterator[(FeatureIdWritable, Geometry)] = {
+  override def compute(split:Partition, context:TaskContext):Iterator[(FeatureIdWritable, Geometry)] = {
     firstParent[(FeatureIdWritable, Geometry)].iterator(split, context)
   }
 
-  override protected def getPartitions: Array[Partition] = {
+  override protected def getPartitions:Array[Partition] = {
     firstParent[(FeatureIdWritable, Geometry)].partitions
   }
 }

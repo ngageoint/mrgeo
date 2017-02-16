@@ -1,18 +1,17 @@
+import os
+import shutil
+import sys
+from osgeo import gdal
+from unittest import TestCase
+
+from py4j.java_gateway import java_import
 
 import gdaltest
-
-import os
-from osgeo import gdal
-from py4j.java_gateway import java_import
-import shutil
-from unittest import TestSuite, TestCase, defaultTestLoader, main
-
 from pymrgeo.instance import is_instance_of
 from pymrgeo.mrgeo import MrGeo
 
 
 class MrGeoTests(TestCase):
-
     GENERATE_BASELINE_DATA = False
 
     classname = None
@@ -32,15 +31,15 @@ class MrGeoTests(TestCase):
     outputdir = None
     outputhdfs = None
 
-    def compareraster(self, raster, testname):
+    def compareraster(self, raster, testname, nodata=-9999):
         if self.GENERATE_BASELINE_DATA:
-            self.saveraster(raster, testname)
+            self.saveraster(raster, testname, nodata)
         else:
             # jvm = self.gateway.jvm
             # test = raster.mapop.toDataset(False)
 
             testimage = self.outputdir + testname
-            raster.export(testimage, singleFile=True, format="tiff", overridenodata=-9999)
+            raster.export(testimage, singleFile=True, format="tiff", overridenodata=nodata)
             testimage += ".tif"
             test = gdal.Open(testimage)
 
@@ -59,9 +58,9 @@ class MrGeoTests(TestCase):
             # compare as GDAL Datasets.
             gdaltest.compare_db(self, golden, test)
 
-    def saveraster(self, raster, testname):
+    def saveraster(self, raster, testname, nodata=-9999):
         name = self.inputdir + testname
-        raster.export(name, singleFile=True, format="tiff", overridenodata=-9999)
+        raster.export(name, singleFile=True, format="tiff", overridenodata=nodata)
 
     def savevector(self, vector, testname):
         name = self.inputdir + testname + ".tsv"
@@ -71,8 +70,9 @@ class MrGeoTests(TestCase):
         if self.GENERATE_BASELINE_DATA:
             self.savevector(vector, str(testname))
         else:
-            jvm = self.gateway.jvm
+            jvm = self.mrgeo._get_jvm()
             # test = raster.mapop.toDataset(False)
+            java_import(jvm, "org.mrgeo.hdfs.vector.DelimitedVectorReader")
 
             testvector = str(self.outputhdfs + testname + ".tsv")
             vector.ssave(testvector)
@@ -117,7 +117,7 @@ class MrGeoTests(TestCase):
 
     @classmethod
     def copy(cls, srcfile, srcpath=None, dstpath=None, dstfile=None):
-        jvm = cls.gateway.jvm
+        jvm = cls.mrgeo._get_jvm()
         java_import(jvm, "org.mrgeo.hdfs.utils.HadoopFileUtils")
         java_import(jvm, "org.apache.hadoop.fs.Path")
 
@@ -173,17 +173,10 @@ class MrGeoTests(TestCase):
         # print(cls.classname + " setup")
 
         cls.mrgeo = MrGeo()
-        cls.gateway = cls.mrgeo.gateway
 
-
-        jvm = cls.gateway.jvm
-        java_import(jvm, "org.mrgeo.core.MrGeoConstants")
-        java_import(jvm, "org.mrgeo.core.MrGeoProperties")
-        java_import(jvm, "org.mrgeo.hdfs.utils.HadoopFileUtils")
-        java_import(jvm, "org.mrgeo.utils.HadoopUtils")
+        jvm = cls.mrgeo._get_jvm()
         java_import(jvm, "org.apache.hadoop.conf.Configuration")
         java_import(jvm, "org.apache.hadoop.fs.Path")
-        java_import(jvm, "org.mrgeo.utils.logging.LoggingUtils")
         java_import(jvm, "org.mrgeo.data.DataProviderFactory")
         java_import(jvm, "org.mrgeo.data.vector.VectorDataProvider")
         java_import(jvm, "org.mrgeo.data.vector.VectorReader")
@@ -236,6 +229,10 @@ class MrGeoTests(TestCase):
 
         jvm.LoggingUtils.setDefaultLogLevel(jvm.LoggingUtils.ERROR)
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.mrgeo.disconnect()
+
     def setUp(self):
         self.name = self._testMethodName
 
@@ -243,28 +240,36 @@ class MrGeoTests(TestCase):
         self.mrgeo.usedebug()
         self.mrgeo.start()
 
+        jvm = self.mrgeo._get_jvm()
+
+        jvm.MrGeoProperties.getInstance().setProperty(jvm.MrGeoConstants.MRGEO_HDFS_IMAGE, self.inputhdfs)
+        jvm.MrGeoProperties.getInstance().setProperty(jvm.MrGeoConstants.MRGEO_HDFS_VECTOR, self.inputhdfs)
+
     def tearDown(self):
         self.mrgeo.stop()
         self._doublebox("Test Finished", self.classname + ":" + self.name)
 
     def debug_logging(self):
-        jvm = self.gateway.jvm
+        jvm = self.mrgeo._get_jvm()
         jvm.LoggingUtils.setDefaultLogLevel(jvm.LoggingUtils.DEBUG)
 
     def info_logging(self):
-        jvm = self.gateway.jvm
+        jvm = self.mrgeo._get_jvm()
         jvm.LoggingUtils.setDefaultLogLevel(jvm.LoggingUtils.INFO)
 
     def warn_logging(self):
-        jvm = self.gateway.jvm
+        jvm = self.mrgeo._get_jvm()
         jvm.LoggingUtils.setDefaultLogLevel(jvm.LoggingUtils.WARN)
 
     def error_logging(self):
-        jvm = self.gateway.jvm
+        jvm = self.mrgeo._get_jvm()
         jvm.LoggingUtils.setDefaultLogLevel(jvm.LoggingUtils.ERROR)
 
     @staticmethod
     def _doublebox(text, name):
+
+        sys.stdout.flush()
+
         width = len(name)
         if width < len(text):
             width = len(text)
@@ -285,6 +290,9 @@ class MrGeoTests(TestCase):
         print(fmt.format(""))
         print("")
 
+        sys.stdout.flush()
+
+
 class VectorTestExpectation:
     def __init__(self, cost, distance, minSpeed, maxSpeed, avgSpeed):
         self.cost = cost
@@ -292,17 +300,3 @@ class VectorTestExpectation:
         self.minSpeed = minSpeed
         self.maxSpeed = maxSpeed
         self.avgSpeed = avgSpeed
-
-
-def load_tests(loader, tests, pattern):
-    suite = TestSuite()
-    for all_test_suite in defaultTestLoader.discover('.', pattern='*tests.py'):
-        for test_suite in all_test_suite:
-            suite.addTests(test_suite)
-    return suite
-
-if __name__ == '__main__':
-    print('running tests')
-    main()
-
-

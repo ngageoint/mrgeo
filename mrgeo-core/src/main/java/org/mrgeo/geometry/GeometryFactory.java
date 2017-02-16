@@ -85,8 +85,15 @@ public static WritableGeometry createGeometry(final String className)
   return null;
 }
 
-public static WritableGeometry createEmptyGeometry() { return createPoint(); }
-public static WritableGeometry createEmptyGeometry(final Map<String, String> attributes) { return createPoint(attributes); }
+public static WritableGeometry createEmptyGeometry()
+{
+  return createPoint();
+}
+
+public static WritableGeometry createEmptyGeometry(final Map<String, String> attributes)
+{
+  return createPoint(attributes);
+}
 
 public static WritableGeometryCollection createGeometryCollection()
 {
@@ -145,6 +152,7 @@ public static WritablePoint createPoint(final double x, final double y, final Ma
 {
   return new PointImpl(x, y, attributes);
 }
+
 public static WritablePoint createPoint(final double x, final double y)
 {
   return new PointImpl(x, y);
@@ -191,7 +199,8 @@ public static WritableGeometry fromJTS(final com.vividsolutions.jts.geom.Geometr
   return fromJTS(jtsGeometry, null);
 }
 
-public static WritableGeometry fromJTS(final com.vividsolutions.jts.geom.Geometry jtsGeometry, final Map<String, String> attributes)
+public static WritableGeometry fromJTS(final com.vividsolutions.jts.geom.Geometry jtsGeometry,
+    final Map<String, String> attributes)
 {
   if (jtsGeometry instanceof com.vividsolutions.jts.geom.Point)
   {

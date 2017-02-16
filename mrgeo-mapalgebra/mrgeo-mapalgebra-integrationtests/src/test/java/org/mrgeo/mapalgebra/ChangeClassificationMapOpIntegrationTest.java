@@ -25,9 +25,9 @@ import org.mrgeo.core.Defs;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsPyramid;
-import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.image.MrsPyramidMetadata.Classification;
+import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.test.LocalRunnerTest;
 import org.mrgeo.test.MapOpTestUtils;
 import org.slf4j.Logger;
@@ -35,69 +35,71 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
+@SuppressWarnings("all") // Test code, not included in production
 public class ChangeClassificationMapOpIntegrationTest extends LocalRunnerTest
 {
-  @SuppressWarnings("unused")
-  private static final Logger log = LoggerFactory.getLogger(ChangeClassificationMapOpIntegrationTest.class);
+@SuppressWarnings("unused")
+private static final Logger log = LoggerFactory.getLogger(ChangeClassificationMapOpIntegrationTest.class);
 
 
-  private static MapOpTestUtils testUtils;
+private static MapOpTestUtils testUtils;
 
-  private static String smallElevation = "small-elevation";
-  private static Path smallElevationPath;
-  private static String smallElevationCategorical = "small-elevation-categorical";
-  private static Path smallElevationCategoricalPath;
-  private static String smallElevationNoPyramids = "small-elevation-nopyramids";
-  private static Path[] smallElevationNoPyramidsPath = new Path[7];
+private static String smallElevation = "small-elevation";
+private static Path smallElevationPath;
+private static String smallElevationCategorical = "small-elevation-categorical";
+private static Path smallElevationCategoricalPath;
+private static String smallElevationNoPyramids = "small-elevation-nopyramids";
+private static Path[] smallElevationNoPyramidsPath = new Path[7];
 
-  @BeforeClass
-  public static void init() throws IOException
+@BeforeClass
+public static void init() throws IOException
+{
+  testUtils = new MapOpTestUtils(ChangeClassificationMapOpIntegrationTest.class);
+
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), smallElevation, true);
+  smallElevationPath = HadoopFileUtils.unqualifyPath(new Path(testUtils.getInputHdfs(), smallElevation));
+
+  HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), smallElevationCategorical, true);
+  smallElevationCategoricalPath =
+      HadoopFileUtils.unqualifyPath(new Path(testUtils.getInputHdfs(), smallElevationCategorical));
+
+
+  for (int i = 0; i < smallElevationNoPyramidsPath.length; i++)
   {
-    testUtils = new MapOpTestUtils(ChangeClassificationMapOpIntegrationTest.class);
-
-    HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), smallElevation, true);
-    smallElevationPath = HadoopFileUtils.unqualifyPath(new Path(testUtils.getInputHdfs(), smallElevation));
-
-    HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), smallElevationCategorical, true);
-    smallElevationCategoricalPath = HadoopFileUtils.unqualifyPath(new Path(testUtils.getInputHdfs(), smallElevationCategorical));
-
-
-    for (int i = 0; i < smallElevationNoPyramidsPath.length; i++)
-    {
-      Path p = new Path(testUtils.getInputHdfs(), Integer.toString(i));
-      HadoopFileUtils.copyToHdfs(Defs.INPUT, p, smallElevationNoPyramids, true);
-      smallElevationNoPyramidsPath[i] = 
-          HadoopFileUtils.unqualifyPath(new Path(p, smallElevationNoPyramids));
-    }
-
+    Path p = new Path(testUtils.getInputHdfs(), Integer.toString(i));
+    HadoopFileUtils.copyToHdfs(Defs.INPUT, p, smallElevationNoPyramids, true);
+    smallElevationNoPyramidsPath[i] =
+        HadoopFileUtils.unqualifyPath(new Path(p, smallElevationNoPyramids));
   }
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void changeToCategorical() throws Exception
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void changeToCategorical() throws Exception
+{
+  String exp = String.format("changeClassification([%s], \"categorical\")", smallElevationPath);
+
+  testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
+
+  // check the in-place pyramid
+  MrsPyramid pyramid = MrsPyramid.open(smallElevationPath.toString(),
+      getProviderProperties());
+  Assert.assertNotNull("Can't load pyramid", pyramid);
+
+  MrsPyramidMetadata metadata = pyramid.getMetadata();
+  Assert.assertNotNull("Can't load metadata", metadata);
+
+  Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
+  Assert.assertEquals("Bad resampling method", "MEAN", metadata.getResamplingMethod());
+
+  for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
   {
-    String exp = String.format("changeClassification([%s], \"categorical\")", smallElevationPath);
-
-    testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
-
-    // check the in-place pyramid
-    MrsPyramid pyramid = MrsPyramid.open(smallElevationPath.toString(),
-                                         getProviderProperties());
-    Assert.assertNotNull("Can't load pyramid", pyramid);
-
-    MrsPyramidMetadata metadata = pyramid.getMetadata();
-    Assert.assertNotNull("Can't load metadata", metadata);
-
-    Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
-    Assert.assertEquals("Bad resampling method", "MEAN", metadata.getResamplingMethod());
-
-    for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
-    {
-      MrsImage image = pyramid.getImage(level);
-      Assert.assertNotNull("MrsImage image missing for level " + level, image);
-      image.close();
-    }
+    MrsImage image = pyramid.getImage(level);
+    Assert.assertNotNull("MrsImage image missing for level " + level, image);
+    image.close();
   }
+}
 
 @Test
 @Category(IntegrationTest.class)
@@ -109,7 +111,7 @@ public void changeToContinuous() throws Exception
 
   // check the in-place pyramid
   MrsPyramid pyramid = MrsPyramid.open(smallElevationCategoricalPath.toString(),
-                                       getProviderProperties());
+      getProviderProperties());
   Assert.assertNotNull("Can't load pyramid", pyramid);
 
   MrsPyramidMetadata metadata = pyramid.getMetadata();
@@ -137,7 +139,7 @@ public void changeToContinuousMean() throws Exception
 
   // check the in-place pyramid
   MrsPyramid pyramid = MrsPyramid.open(smallElevationCategoricalPath.toString(),
-                                       getProviderProperties());
+      getProviderProperties());
   Assert.assertNotNull("Can't load pyramid", pyramid);
 
   MrsPyramidMetadata metadata = pyramid.getMetadata();
@@ -155,164 +157,166 @@ public void changeToContinuousMean() throws Exception
   }
 }
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void changeToCategoricalNoPyramids() throws Exception
+@Test
+@Category(IntegrationTest.class)
+public void changeToCategoricalNoPyramids() throws Exception
+{
+  String exp = String.format("changeClassification([%s], \"categorical\")", smallElevationNoPyramidsPath[0]);
+
+  testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
+
+  // check the in-place pyramid
+  MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath[0].toString(),
+      getProviderProperties());
+  Assert.assertNotNull("Can't load pyramid", pyramid);
+
+  MrsPyramidMetadata metadata = pyramid.getMetadata();
+  Assert.assertNotNull("Can't load metadata", metadata);
+
+  Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
+  Assert.assertEquals("Bad resampling method", "MEAN", metadata.getResamplingMethod());
+  for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
   {
-    String exp = String.format("changeClassification([%s], \"categorical\")", smallElevationNoPyramidsPath[0]);
-
-    testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
-
-    // check the in-place pyramid
-    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath[0].toString(),
-                                         getProviderProperties());
-    Assert.assertNotNull("Can't load pyramid", pyramid);
-
-    MrsPyramidMetadata metadata = pyramid.getMetadata();
-    Assert.assertNotNull("Can't load metadata", metadata);
-
-    Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
-    Assert.assertEquals("Bad resampling method", "MEAN", metadata.getResamplingMethod());
-    for (int level = metadata.getMaxZoomLevel(); level >= 1; level--)
+    MrsImage image = pyramid.getImage(level);
+    if (level == metadata.getMaxZoomLevel())
     {
-      MrsImage image = pyramid.getImage(level);
-      if (level == metadata.getMaxZoomLevel())
-      {
-        Assert.assertNotNull("MrsImage image missing for level " + level, image);
-        image.close();
-      }
-      else
-      {
-        Assert.assertNull("MrsImage image found for level " + level, image);
-      }
+      Assert.assertNotNull("MrsImage image missing for level " + level, image);
+      image.close();
     }
-
+    else
+    {
+      Assert.assertNull("MrsImage image found for level " + level, image);
+    }
   }
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void changeToCategoricalMode() throws Exception
-  {
-    String exp = String.format("changeClassification([%s], \"categorical\", \"mode\")", smallElevationNoPyramidsPath[1]);
+}
 
-    testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
+@Test
+@Category(IntegrationTest.class)
+public void changeToCategoricalMode() throws Exception
+{
+  String exp = String.format("changeClassification([%s], \"categorical\", \"mode\")", smallElevationNoPyramidsPath[1]);
 
-    // check the in-place pyramid
-    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath[1].toString(),
-                                         getProviderProperties());
-    Assert.assertNotNull("Can't load pyramid", pyramid);
+  testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
-    MrsPyramidMetadata metadata = pyramid.getMetadata();
-    Assert.assertNotNull("Can't load metadata", metadata);
+  // check the in-place pyramid
+  MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath[1].toString(),
+      getProviderProperties());
+  Assert.assertNotNull("Can't load pyramid", pyramid);
 
-    Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
-    Assert.assertEquals("Bad resampling method", "MODE", metadata.getResamplingMethod());
+  MrsPyramidMetadata metadata = pyramid.getMetadata();
+  Assert.assertNotNull("Can't load metadata", metadata);
 
-  }
-  
-  @Test
-  @Category(IntegrationTest.class)
-  public void changeToCategoricalSum() throws Exception
-  {
-    String exp = String.format("changeClassification([%s], \"categorical\", \"sum\")", smallElevationNoPyramidsPath[2]);
+  Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
+  Assert.assertEquals("Bad resampling method", "MODE", metadata.getResamplingMethod());
 
-    testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
+}
 
-    // check the in-place pyramid
-    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath[2].toString(),
-                                         getProviderProperties());
-    Assert.assertNotNull("Can't load pyramid", pyramid);
+@Test
+@Category(IntegrationTest.class)
+public void changeToCategoricalSum() throws Exception
+{
+  String exp = String.format("changeClassification([%s], \"categorical\", \"sum\")", smallElevationNoPyramidsPath[2]);
 
-    MrsPyramidMetadata metadata = pyramid.getMetadata();
-    Assert.assertNotNull("Can't load metadata", metadata);
+  testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
-    Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
-    Assert.assertEquals("Bad resampling method", "SUM", metadata.getResamplingMethod());
+  // check the in-place pyramid
+  MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath[2].toString(),
+      getProviderProperties());
+  Assert.assertNotNull("Can't load pyramid", pyramid);
 
-  }
+  MrsPyramidMetadata metadata = pyramid.getMetadata();
+  Assert.assertNotNull("Can't load metadata", metadata);
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void changeToCategoricalNearest() throws Exception
-  {
-    String exp = String.format("changeClassification([%s], \"categorical\", \"nearest\")", smallElevationNoPyramidsPath[3]);
+  Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
+  Assert.assertEquals("Bad resampling method", "SUM", metadata.getResamplingMethod());
 
-    testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
+}
 
-    // check the in-place pyramid
-    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath[3].toString(),
-                                         getProviderProperties());
-    Assert.assertNotNull("Can't load pyramid", pyramid);
+@Test
+@Category(IntegrationTest.class)
+public void changeToCategoricalNearest() throws Exception
+{
+  String exp =
+      String.format("changeClassification([%s], \"categorical\", \"nearest\")", smallElevationNoPyramidsPath[3]);
 
-    MrsPyramidMetadata metadata = pyramid.getMetadata();
-    Assert.assertNotNull("Can't load metadata", metadata);
+  testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
-    Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
-    Assert.assertEquals("Bad resampling method", "NEAREST", metadata.getResamplingMethod());
+  // check the in-place pyramid
+  MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath[3].toString(),
+      getProviderProperties());
+  Assert.assertNotNull("Can't load pyramid", pyramid);
 
-  }
+  MrsPyramidMetadata metadata = pyramid.getMetadata();
+  Assert.assertNotNull("Can't load metadata", metadata);
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void changeToCategoricalMin() throws Exception
-  {
-    String exp = String.format("changeClassification([%s], \"categorical\", \"min\")", smallElevationNoPyramidsPath[4]);
+  Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
+  Assert.assertEquals("Bad resampling method", "NEAREST", metadata.getResamplingMethod());
 
-    testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
+}
 
-    // check the in-place pyramid
-    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath[4].toString(),
-                                         getProviderProperties());
-    Assert.assertNotNull("Can't load pyramid", pyramid);
+@Test
+@Category(IntegrationTest.class)
+public void changeToCategoricalMin() throws Exception
+{
+  String exp = String.format("changeClassification([%s], \"categorical\", \"min\")", smallElevationNoPyramidsPath[4]);
 
-    MrsPyramidMetadata metadata = pyramid.getMetadata();
-    Assert.assertNotNull("Can't load metadata", metadata);
+  testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
-    Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
-    Assert.assertEquals("Bad resampling method", "MIN", metadata.getResamplingMethod());
+  // check the in-place pyramid
+  MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath[4].toString(),
+      getProviderProperties());
+  Assert.assertNotNull("Can't load pyramid", pyramid);
 
-  }
+  MrsPyramidMetadata metadata = pyramid.getMetadata();
+  Assert.assertNotNull("Can't load metadata", metadata);
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void changeToCategoricalMax() throws Exception
-  {
-    String exp = String.format("changeClassification([%s], \"categorical\", \"max\")", smallElevationNoPyramidsPath[5]);
+  Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
+  Assert.assertEquals("Bad resampling method", "MIN", metadata.getResamplingMethod());
 
-    testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
+}
 
-    // check the in-place pyramid
-    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath[5].toString(),
-                                         getProviderProperties());
-    Assert.assertNotNull("Can't load pyramid", pyramid);
+@Test
+@Category(IntegrationTest.class)
+public void changeToCategoricalMax() throws Exception
+{
+  String exp = String.format("changeClassification([%s], \"categorical\", \"max\")", smallElevationNoPyramidsPath[5]);
 
-    MrsPyramidMetadata metadata = pyramid.getMetadata();
-    Assert.assertNotNull("Can't load metadata", metadata);
+  testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
-    Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
-    Assert.assertEquals("Bad resampling method", "MAX", metadata.getResamplingMethod());
+  // check the in-place pyramid
+  MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath[5].toString(),
+      getProviderProperties());
+  Assert.assertNotNull("Can't load pyramid", pyramid);
 
-  }
+  MrsPyramidMetadata metadata = pyramid.getMetadata();
+  Assert.assertNotNull("Can't load metadata", metadata);
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void changeToCategoricalMinAvgPair() throws Exception
-  {
-    String exp = String.format("changeClassification([%s], \"categorical\", \"minavgpair\")", smallElevationNoPyramidsPath[6]);
+  Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
+  Assert.assertEquals("Bad resampling method", "MAX", metadata.getResamplingMethod());
 
-    testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
+}
 
-    // check the in-place pyramid
-    MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath[6].toString(),
-                                         getProviderProperties());
-    Assert.assertNotNull("Can't load pyramid", pyramid);
+@Test
+@Category(IntegrationTest.class)
+public void changeToCategoricalMinAvgPair() throws Exception
+{
+  String exp =
+      String.format("changeClassification([%s], \"categorical\", \"minavgpair\")", smallElevationNoPyramidsPath[6]);
 
-    MrsPyramidMetadata metadata = pyramid.getMetadata();
-    Assert.assertNotNull("Can't load metadata", metadata);
+  testUtils.runMapAlgebraExpression(conf, testname.getMethodName(), exp);
 
-    Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
-    Assert.assertEquals("Bad resampling method", "MINAVGPAIR", metadata.getResamplingMethod());
+  // check the in-place pyramid
+  MrsPyramid pyramid = MrsPyramid.open(smallElevationNoPyramidsPath[6].toString(),
+      getProviderProperties());
+  Assert.assertNotNull("Can't load pyramid", pyramid);
 
-  }
+  MrsPyramidMetadata metadata = pyramid.getMetadata();
+  Assert.assertNotNull("Can't load metadata", metadata);
+
+  Assert.assertEquals("Bad classification", Classification.Categorical, metadata.getClassification());
+  Assert.assertEquals("Bad resampling method", "MINAVGPAIR", metadata.getResamplingMethod());
+
+}
 
 }

@@ -21,16 +21,16 @@ import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.utils.tms.Bounds
 
 object RasterizePointsExactMapOp extends MapOpRegistrar {
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("rasterizepointsexact")
   }
 
-  def create(vector: VectorMapOp, aggregator:String, cellsize:String, w:Double, s:Double, e:Double, n:Double, column:String = null) =
-  {
+  def create(vector:VectorMapOp, aggregator:String, cellsize:String, w:Double, s:Double, e:Double, n:Double,
+             column:String = null) = {
     new RasterizePointsMapOp(Some(vector), aggregator, cellsize, column, new Bounds(w, n, e, s).toCommaString)
   }
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new RasterizePointsMapOp(node, variables)
 }
 

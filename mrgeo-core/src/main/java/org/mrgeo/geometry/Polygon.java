@@ -18,15 +18,15 @@ package org.mrgeo.geometry;
 
 /**
  * @author jason.surratt
- * 
  */
 public interface Polygon extends Geometry
 {
-  public LinearRing getExteriorRing();
+public LinearRing getExteriorRing();
 
-  public LinearRing getInteriorRing(int i);
-  public int getNumInteriorRings();
-  
-  @Override
-  public com.vividsolutions.jts.geom.Polygon toJTS();
+public LinearRing getInteriorRing(int i);
+
+public int getNumInteriorRings();
+
+@Override
+public com.vividsolutions.jts.geom.Polygon toJTS();
 }

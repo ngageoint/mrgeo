@@ -15,7 +15,7 @@
  */
 
 /**
- * 
+ *
  */
 package org.mrgeo.aggregators;
 
@@ -30,15 +30,15 @@ import com.google.common.collect.ImmutableBiMap;
  */
 public class AggregatorRegistry
 {
-  static public final ImmutableBiMap<String, Class<? extends Aggregator>> aggregatorRegistry =
-      new ImmutableBiMap.Builder<String, Class<? extends Aggregator>>()
-          .put("MEAN", MeanAggregator.class)
-          .put("SUM", SumAggregator.class)
-          .put("MODE", ModeAggregator.class)
-          .put("NEAREST", NearestAggregator.class)
-          .put("MIN", MinAggregator.class)
-          .put("MAX", MaxAggregator.class)
-          .put("MINAVGPAIR", MinAvgPairAggregator.class)
-          .build();
+static public final ImmutableBiMap<String, Class<? extends Aggregator>> aggregatorRegistry =
+    new ImmutableBiMap.Builder<String, Class<? extends Aggregator>>()
+        .put("MEAN", MeanAggregator.class)
+        .put("SUM", SumAggregator.class)
+        .put("MODE", ModeAggregator.class)
+        .put("NEAREST", NearestAggregator.class)
+        .put("MIN", MinAggregator.class)
+        .put("MAX", MaxAggregator.class)
+        .put("MINAVGPAIR", MinAvgPairAggregator.class)
+        .build();
 
 }

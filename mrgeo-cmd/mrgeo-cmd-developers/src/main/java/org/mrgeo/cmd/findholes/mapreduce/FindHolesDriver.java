@@ -25,153 +25,178 @@ import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
+import org.mrgeo.data.image.ImageInputFormatContext;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageInputFormatProvider;
-import org.mrgeo.data.image.ImageInputFormatContext;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LongRectangle;
 
 import java.io.*;
 
-public class FindHolesDriver {
+public class FindHolesDriver
+{
 
-	//private Configuration conf = null;
+//private Configuration conf = null;
 
-	public FindHolesDriver(){} // end constructor
-
+public FindHolesDriver()
+{
+} // end constructor
 
 
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File() - name is generated in code")
-public boolean runJob(String input, String output, int zoom, ProviderProperties props, Configuration conf) throws Exception{
+public boolean runJob(String input, String output, int zoom, ProviderProperties props, Configuration conf)
+    throws IOException
+{
 
-	    System.out.println("Input:     " + input);
-	    System.out.println("Output:    " + output);
-	    System.out.println("ZoomLevel: " + zoom);
-		
-		conf.set("zoom", Integer.toString(zoom));
-		DataProviderFactory.saveProviderPropertiesToConfig(props, conf);
+  System.out.println("Input:     " + input);
+  System.out.println("Output:    " + output);
+  System.out.println("ZoomLevel: " + zoom);
 
-		MrsImageDataProvider midp = DataProviderFactory.getMrsImageDataProvider(input, AccessMode.READ, conf); 
-		MrsPyramidMetadata mipm = midp.getMetadataReader().read();
+  conf.set("zoom", Integer.toString(zoom));
+  DataProviderFactory.saveProviderPropertiesToConfig(props, conf);
 
-		System.out.println("DP = " + midp.getClass().getCanonicalName());
-		System.out.println("DP resource = " + midp.getResourceName());
-		
-		LongRectangle lr = mipm.getTileBounds(zoom);
-		conf.set("bounds", lr.toDelimitedString());
-		
-		AdHocDataProvider ahdp = DataProviderFactory.createAdHocDataProvider(conf);
-		conf.set("adhoc.provider", ahdp.getResourceName());		
-		
-		Job job = new Job(conf, "Find holes for " + input + " at zoom level " + zoom);
-		conf = job.getConfiguration();
+  MrsImageDataProvider midp = DataProviderFactory.getMrsImageDataProvider(input, AccessMode.READ, conf);
+  MrsPyramidMetadata mipm = midp.getMetadataReader().read();
 
-		// how to fake out loading core dependencies
-		HadoopUtils.setJar(job, FindHolesDriver.class);
-		
-		job.setMapperClass(FindHolesMapper.class);
-		job.setReducerClass(FindHolesReducer.class);
+  System.out.println("DP = " + midp.getClass().getCanonicalName());
+  System.out.println("DP resource = " + midp.getResourceName());
 
-		job.setMapOutputKeyClass(LongWritable.class);
-		job.setMapOutputValueClass(LongWritable.class);
-		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(Text.class);
+  LongRectangle lr = mipm.getTileBounds(zoom);
+  conf.set("bounds", lr.toDelimitedString());
 
-		//Properties props = new Properties();
+  AdHocDataProvider ahdp = DataProviderFactory.createAdHocDataProvider(conf);
+  conf.set("adhoc.provider", ahdp.getResourceName());
 
-		ImageInputFormatContext tifc = new ImageInputFormatContext(zoom, mipm.getTilesize(), input, props);
-		MrsImageInputFormatProvider miifp = midp.getImageInputFormatProvider(tifc);
+  Job job = new Job(conf, "Find holes for " + input + " at zoom level " + zoom);
+  conf = job.getConfiguration();
 
-		// this is key for setting up the input
-		job.setInputFormatClass(miifp.getInputFormat(input).getClass());
+  // how to fake out loading core dependencies
+  HadoopUtils.setJar(job, FindHolesDriver.class);
 
-		miifp.setupJob(job, null);
-		
-		ahdp.setupJob(job);
-		
-		// now set output
-		AdHocDataProvider dummy = DataProviderFactory.createAdHocDataProvider(conf);
+  job.setMapperClass(FindHolesMapper.class);
+  job.setReducerClass(FindHolesReducer.class);
 
-	    // mimic FileOutputFormat.setOutputPath(job, path);
-	    conf.set("mapred.output.dir", dummy.getResourceName());
-		
-	    job.submit();
-	    	    
-	    boolean success = job.waitForCompletion(true);
+  job.setMapOutputKeyClass(LongWritable.class);
+  job.setMapOutputValueClass(LongWritable.class);
+  job.setOutputKeyClass(Text.class);
+  job.setOutputValueClass(Text.class);
 
-	    dummy.delete();
-	    
-	    if(success){
-	    	miifp.teardown(job);
-	    	
-	    	boolean[][] valid = new boolean[(int)lr.getHeight()][(int)lr.getWidth()];
-	    	for(int y = 0; y < (int)lr.getHeight(); y++){
-	    		for(int x = 0; x < (int)lr.getWidth(); x++){
-	    			valid[y][x] = false;
-	    		}
-	    	}
-	    	
-	    	final int size = ahdp.size();
-	        for (int i = 0; i < size; i++)
-	        {
-	          final InputStream stream = ahdp.get(i);
-	          try (BufferedReader br = new BufferedReader(new InputStreamReader(stream)))
+  //Properties props = new Properties();
+
+  ImageInputFormatContext tifc = new ImageInputFormatContext(zoom, mipm.getTilesize(), input, props);
+  MrsImageInputFormatProvider miifp = midp.getImageInputFormatProvider(tifc);
+
+  // this is key for setting up the input
+  job.setInputFormatClass(miifp.getInputFormat(input).getClass());
+
+  miifp.setupJob(job, null);
+
+  ahdp.setupJob(job);
+
+  // now set output
+  AdHocDataProvider dummy = DataProviderFactory.createAdHocDataProvider(conf);
+
+  // mimic FileOutputFormat.setOutputPath(job, path);
+  conf.set("mapred.output.dir", dummy.getResourceName());
+
+  try
+  {
+    job.submit();
+
+    boolean success = job.waitForCompletion(true);
+
+    dummy.delete();
+
+    if (success)
+    {
+      miifp.teardown(job);
+
+      boolean[][] valid = new boolean[(int) lr.getHeight()][(int) lr.getWidth()];
+      for (int y = 0; y < (int) lr.getHeight(); y++)
+      {
+        for (int x = 0; x < (int) lr.getWidth(); x++)
+        {
+          valid[y][x] = false;
+        }
+      }
+
+      final int size = ahdp.size();
+      for (int i = 0; i < size; i++)
+      {
+        final InputStream stream = ahdp.get(i);
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(stream)))
+        {
+          // read values out of stream
+          String line;
+          while ((line = br.readLine()) != null)
+          {
+
+            // format is "y: x x x x"
+            String[] vals = line.split(":");
+            int y = Integer.parseInt(vals[0]);
+
+            if (vals.length == 1)
             {
-              // read values out of stream
-              String line;
-              while ((line = br.readLine()) != null)
-              {
-
-                // format is "y: x x x x"
-                String[] vals = line.split(":");
-                int y = Integer.parseInt(vals[0]);
-
-                if (vals.length == 1)
-                {
-                  continue;
-                }
-                vals = vals[1].trim().split(" ");
-                for (String v : vals)
-                {
-                  valid[y - (int) lr.getMinY()][Integer.parseInt(v) - (int) lr.getMinX()] = true;
-                }
-              }
+              continue;
             }
-	          stream.close();
-	        }
-	        ahdp.delete();
-	        File outFile = new File(output);
-	        PrintWriter pw = new PrintWriter(outFile);
-	        StringBuffer sbMissing = new StringBuffer();
-	        for(int y = 0; y < lr.getHeight(); y++){
-	        	// y + lr.getMinY()
-	        	boolean m = false;
-	        	for(int x = 0; x < lr.getWidth(); x++){
-	        		// x + lr.getMinX()
-	        		if(valid[y][x]){
-	        			pw.write("+");
-	        		} else {
-	        			m = true;
-	        			sbMissing.append("(" + (x+lr.getMinX()) + "," + (y+lr.getMinY()) + ") ");
-	        			pw.write("-");
-	        		}
-	        		
-	        	}
-	        	pw.write("\n");
-	        	if(m){
-	        		sbMissing.append("\n");
-	        	}
-	        }
-	        if(sbMissing.length() > 0){
-	        	pw.write("\n\n");
-	        	pw.write(sbMissing.toString() + "\n");
-	        }
-	        pw.close();
-	        return true;
-	    }
-	    
-		return false;
-	} // end runJob
-	
+            vals = vals[1].trim().split(" ");
+            for (String v : vals)
+            {
+              valid[y - (int) lr.getMinY()][Integer.parseInt(v) - (int) lr.getMinX()] = true;
+            }
+          }
+        }
+        stream.close();
+      }
+      ahdp.delete();
+      File outFile = new File(output);
+      PrintWriter pw = new PrintWriter(outFile);
+      StringBuilder sbMissing = new StringBuilder();
+      for (int y = 0; y < lr.getHeight(); y++)
+      {
+        // y + lr.getMinY()
+        boolean m = false;
+        for (int x = 0; x < lr.getWidth(); x++)
+        {
+          // x + lr.getMinX()
+          if (valid[y][x])
+          {
+            pw.write("+");
+          }
+          else
+          {
+            m = true;
+            sbMissing.append("(")
+                .append(x + lr.getMinX())
+                .append(",")
+                .append(y + lr.getMinY())
+                .append(") ");
+            pw.write("-");
+          }
+
+        }
+        pw.write("\n");
+        if (m)
+        {
+          sbMissing.append("\n");
+        }
+      }
+      if (sbMissing.length() > 0)
+      {
+        pw.write("\n\n");
+        pw.write(sbMissing.toString() + "\n");
+      }
+      pw.close();
+      return true;
+    }
+  }
+  catch (InterruptedException | ClassNotFoundException e)
+  {
+    throw new IOException(e);
+  }
+
+  return false;
+} // end runJob
+
 } // end FindHolesDriver

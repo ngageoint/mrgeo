@@ -22,44 +22,51 @@ import org.junit.experimental.categories.Category;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.utils.tms.Bounds;
 
-public class RequestUtilsTest {
+@SuppressWarnings("all") // Test code, not included in production
+public class RequestUtilsTest
+{
 
-    @Test
-    @Category(UnitTest.class)
-    public void testBoundsFromParamGood() {
-        String param = "66.047475576957,33.021709619141,68.594930410941,34.068157373047";
-        Bounds bounds = RequestUtils.boundsFromParam(param);
-        Assert.assertEquals("Bounds are bad", bounds, new Bounds(66.047475576957,33.021709619141,68.594930410941,34.068157373047));
-    }
+@Test
+@Category(UnitTest.class)
+public void testBoundsFromParamGood()
+{
+  String param = "66.047475576957,33.021709619141,68.594930410941,34.068157373047";
+  Bounds bounds = RequestUtils.boundsFromParam(param);
+  Assert.assertEquals("Bounds are bad", bounds,
+      new Bounds(66.047475576957, 33.021709619141, 68.594930410941, 34.068157373047));
+}
 
-    @Test(expected = IllegalArgumentException.class)
-    @Category(UnitTest.class)
-    public void testBoundsFromParamBad() {
-        String param = "66.047475576957,33.021709619141,68.594930410941";
-        RequestUtils.boundsFromParam(param);
-    }
+@Test(expected = IllegalArgumentException.class)
+@Category(UnitTest.class)
+public void testBoundsFromParamBad()
+{
+  String param = "66.047475576957,33.021709619141,68.594930410941";
+  RequestUtils.boundsFromParam(param);
+}
 
-    @Test
-    @Category(UnitTest.class)
-    public void testReprojectBounds4326()  {
-        String epsg = "EPSG:4326";
-        Bounds bounds = new Bounds(66.047475576957,33.021709619141,68.594930410941,34.068157373047);
-        Bounds prjBounds = RequestUtils.reprojectBounds(bounds, epsg);
-        // no reprojection, should be the same as input
-        Assert.assertEquals("Bounds are bad", bounds, prjBounds);
-    }
+@Test
+@Category(UnitTest.class)
+public void testReprojectBounds4326()
+{
+  String epsg = "EPSG:4326";
+  Bounds bounds = new Bounds(66.047475576957, 33.021709619141, 68.594930410941, 34.068157373047);
+  Bounds prjBounds = RequestUtils.reprojectBounds(bounds, epsg);
+  // no reprojection, should be the same as input
+  Assert.assertEquals("Bounds are bad", bounds, prjBounds);
+}
 
-    @Test
-    @Category(UnitTest.class)
-    public void testReprojectBounds3857()  {
-        String epsg = "EPSG:3857";
-        Bounds bounds = new Bounds(66.047475576957,33.021709619141,68.594930410941,34.068157373047);
-        Bounds prjBounds = RequestUtils.reprojectBounds(bounds, epsg);
+@Test
+@Category(UnitTest.class)
+public void testReprojectBounds3857()
+{
+  String epsg = "EPSG:3857";
+  Bounds bounds = new Bounds(66.047475576957, 33.021709619141, 68.594930410941, 34.068157373047);
+  Bounds prjBounds = RequestUtils.reprojectBounds(bounds, epsg);
 
-        Assert.assertEquals("Bad bounds west", 7352371, prjBounds.w, 1.0);
-        Assert.assertEquals("Bad bounds south", 3898185, prjBounds.s, 1.0);
-        Assert.assertEquals("Bad bounds east", 7635952, prjBounds.e, 1.0);
-        Assert.assertEquals("Bad bounds north", 4037957, prjBounds.n, 1.0);
-    }
+  Assert.assertEquals("Bad bounds west", 7352371, prjBounds.w, 1.0);
+  Assert.assertEquals("Bad bounds south", 3898185, prjBounds.s, 1.0);
+  Assert.assertEquals("Bad bounds east", 7635952, prjBounds.e, 1.0);
+  Assert.assertEquals("Bad bounds north", 4037957, prjBounds.n, 1.0);
+}
 
 }

@@ -18,15 +18,15 @@
 <jboss-deployment-structure xmlns="urn:jboss:deployment-structure:1.1">
   <deployment>
     <dependencies>
-        <module name="org.jboss.netty"/>
-        <module name="mrgeo"/>
-        <module name="mrgeo-hadoop"/>
-        <system>
-            <paths>
-                <path name="com/sun/imageio/spi"/>
-                <path name="com/sun/imageio/plugins/common"/>
-            </paths>
-        </system>
+      <module name="org.jboss.netty"/>
+      <module name="mrgeo"/>
+      <module name="mrgeo-hadoop"/>
+      <system>
+        <paths>
+          <path name="com/sun/imageio/spi"/>
+          <path name="com/sun/imageio/plugins/common"/>
+        </paths>
+      </system>
     </dependencies>
   </deployment>
 </jboss-deployment-structure>

@@ -19,40 +19,12 @@ package org.mrgeo.hdfs.vector.shp.esri.geom;
 public final class JExtent implements Cloneable, java.io.Serializable
 {
 static final long serialVersionUID = 1L;
-
-public static void intersection(JExtent e1, JExtent e2, JExtent result)
-{
-  if ((e1 != null) && (e2 != null))
-    if (e2.min.x < e1.max.x && e2.max.x > e1.min.x && e2.min.y < e1.max.y && e2.max.y > e1.min.y)
-    {
-      if (result != null)
-      result.setExtent(Math.max(e1.min.x, e2.min.x), Math.max(e1.min.y, e2.min.y), Math.min(
-          e1.max.x, e2.max.x), Math.min(e1.max.y, e2.max.y));
-    }
-}
-
-public static boolean intersects(JExtent e1, JExtent e2)
-{
-  if ((e1 != null) && (e2 != null))
-    if (e2.min.x < e1.max.x && e2.max.x > e1.min.x && e2.min.y < e1.max.y && e2.max.y > e1.min.y)
-      return true;
-  return false;
-}
-
-public static void union(JExtent e1, JExtent e2, JExtent result)
-{
-  if ((e1 != null) && (e2 != null))
-  {
-    if (result != null)
-    result.setExtent(Math.min(e1.min.x, e2.min.x), Math.min(e1.min.y, e2.min.y), Math.max(
-        e1.max.x, e2.max.x), Math.max(e1.max.y, e2.max.y));
-  }
-}
-
 Coord max;
 Coord min;
 
-/** Creates new JExtent */
+/**
+ * Creates new JExtent
+ */
 public JExtent()
 {
   this(0, 0, 0, 0);
@@ -64,7 +36,47 @@ public JExtent(double minx, double miny, double maxx, double maxy)
   max = new Coord(maxx, maxy);
 }
 
+public static void intersection(JExtent e1, JExtent e2, JExtent result)
+{
+  if ((e1 != null) && (e2 != null))
+  {
+    if (e2.min.x < e1.max.x && e2.max.x > e1.min.x && e2.min.y < e1.max.y && e2.max.y > e1.min.y)
+    {
+      if (result != null)
+      {
+        result.setExtent(Math.max(e1.min.x, e2.min.x), Math.max(e1.min.y, e2.min.y), Math.min(
+            e1.max.x, e2.max.x), Math.min(e1.max.y, e2.max.y));
+      }
+    }
+  }
+}
+
+public static boolean intersects(JExtent e1, JExtent e2)
+{
+  if ((e1 != null) && (e2 != null))
+  {
+    if (e2.min.x < e1.max.x && e2.max.x > e1.min.x && e2.min.y < e1.max.y && e2.max.y > e1.min.y)
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
+public static void union(JExtent e1, JExtent e2, JExtent result)
+{
+  if ((e1 != null) && (e2 != null))
+  {
+    if (result != null)
+    {
+      result.setExtent(Math.min(e1.min.x, e2.min.x), Math.min(e1.min.y, e2.min.y), Math.max(
+          e1.max.x, e2.max.x), Math.max(e1.max.y, e2.max.y));
+    }
+  }
+}
+
 @Override
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 public Object clone()
 {
   try

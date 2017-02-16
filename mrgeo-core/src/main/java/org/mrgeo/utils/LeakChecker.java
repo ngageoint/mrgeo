@@ -22,44 +22,44 @@ import java.util.Map;
 
 public class LeakChecker
 {
-  private static LeakChecker checker = null;
-  
-  private final Map<Integer, String> leaks = Collections
-      .synchronizedMap(new HashMap<Integer, String>());
-  
-  public synchronized static LeakChecker instance()
+private static LeakChecker checker = null;
+
+private final Map<Integer, String> leaks = Collections
+    .synchronizedMap(new HashMap<Integer, String>());
+
+public synchronized static LeakChecker instance()
+{
+  if (checker == null)
   {
-    if (checker == null)
-    {
-      checker = new LeakChecker();
-    }
-    return checker;
+    checker = new LeakChecker();
   }
-  
-  public void add(final Object obj, final String stack)
+  return checker;
+}
+
+public void add(final Object obj, final String stack)
+{
+  int id = System.identityHashCode(obj);
+  if (!leaks.containsKey(id))
   {
-    int id = System.identityHashCode(obj);
-    if (!leaks.containsKey(id))
-    {
 //      System.err.println("adding: " + Integer.toHexString(id));
-      leaks.put(id, stack);
-    }
+    leaks.put(id, stack);
   }
-  
-  public void remove(final Object obj)
+}
+
+public void remove(final Object obj)
+{
+  int id = System.identityHashCode(obj);
+  if (leaks.containsKey(id))
   {
-    int id = System.identityHashCode(obj);
-    if (leaks.containsKey(id))
-    {
 //      System.err.println("removing:" +  Integer.toHexString(id));
-      
-      leaks.remove(id);
-    }
+
+    leaks.remove(id);
   }
-  
-  public Map<Integer, String> getAll()
-  {
-    return leaks;
-  }
+}
+
+public Map<Integer, String> getAll()
+{
+  return leaks;
+}
 
 }

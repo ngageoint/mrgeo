@@ -26,119 +26,118 @@ import java.awt.image.WritableRaster;
 public class MaxCompositeDouble extends WeightedComposite
 {
 
-  public MaxCompositeDouble()
+public MaxCompositeDouble()
+{
+  super();
+}
+
+public MaxCompositeDouble(double weight)
+{
+  super(weight);
+}
+
+public MaxCompositeDouble(double weight, double nodata)
+{
+  super(weight, nodata);
+}
+
+/*
+ * (non-Javadoc)
+ *
+ * @see java.awt.Composite#createContext(java.awt.image.ColorModel,
+ * java.awt.image.ColorModel, java.awt.RenderingHints)
+ */
+@Override
+public CompositeContext createContext(ColorModel srcColorModel, ColorModel dstColorModel,
+    RenderingHints hints)
+{
+  return new MaxCompositeDoubleContext();
+}
+
+private class MaxCompositeDoubleContext implements CompositeContext
+{
+  public MaxCompositeDoubleContext()
   {
-    super();
   }
 
-  public MaxCompositeDouble(double weight)
+  /*
+   * (non-Javadoc)
+   *
+   * @see java.awt.CompositeContext#compose(java.awt.image.Raster,
+   * java.awt.image.Raster, java.awt.image.WritableRaster)
+   */
+  @Override
+  public void compose(Raster src, Raster dstIn, WritableRaster dstOut)
   {
-    super(weight);
-  }
+    int minX = dstOut.getMinX();
+    int minY = dstOut.getMinY();
+    int maxX = minX + dstOut.getWidth();
+    int maxY = minY + dstOut.getHeight();
 
-  public MaxCompositeDouble(double weight, double nodata)
-  {
-    super(weight, nodata);
-  }
-
-
-  private class MaxCompositeDoubleContext implements CompositeContext
-  {
-    public MaxCompositeDoubleContext()
+    //log.debug("minX,minY,maxX,maxY: " + minX + "," + minY + "," + maxX + "," + maxY);
+    for (int y = minY; y < maxY; y++)
     {
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.awt.CompositeContext#compose(java.awt.image.Raster,
-     * java.awt.image.Raster, java.awt.image.WritableRaster)
-     */
-    @Override
-    public void compose(Raster src, Raster dstIn, WritableRaster dstOut)
-    {
-      int minX = dstOut.getMinX();
-      int minY = dstOut.getMinY();
-      int maxX = minX + dstOut.getWidth();
-      int maxY = minY + dstOut.getHeight();
-
-      //log.debug("minX,minY,maxX,maxY: " + minX + "," + minY + "," + maxX + "," + maxY);
-      for (int y = minY; y < maxY; y++)
+      for (int x = minX; x < maxX; x++)
       {
-        for (int x = minX; x < maxX; x++)
+        double d = dstIn.getSampleDouble(x, y, 0);
+        double s = src.getSampleDouble(x, y, 0) * weight;
+
+        double sample;
+
+        if (isNodataNaN)
         {
-          double d = dstIn.getSampleDouble(x, y, 0);
-          double s = src.getSampleDouble(x, y, 0) * weight;
-
-          double sample;
-
-          if (isNodataNaN)
+          if (Double.isNaN(d))
           {
-            if (Double.isNaN(d))
-            {
-              sample = s;            
-            }
-            else if (Double.isNaN(s))
-            {
-              sample = d;
-            }
-            else if (s > d)
-            {
-              sample = s;
-            }
-            else
-            {
-              sample = d;
-            }
+            sample = s;
+          }
+          else if (Double.isNaN(s))
+          {
+            sample = d;
+          }
+          else if (s > d)
+          {
+            sample = s;
           }
           else
           {
-            if (FloatUtils.isEqual(d, nodata))
-            {
-              sample = s;           
-            }
-            else if (FloatUtils.isEqual(s, nodata))
-            {
-              sample = d;
-            }
-            else if (s > d)
-            {
-              sample = s;
-            }
-            else
-            {
-              sample = d;
-            }
+            sample = d;
           }
-
-          dstOut.setSample(x, y, 0, sample);
         }
+        else
+        {
+          if (FloatUtils.isEqual(d, nodata))
+          {
+            sample = s;
+          }
+          else if (FloatUtils.isEqual(s, nodata))
+          {
+            sample = d;
+          }
+          else if (s > d)
+          {
+            sample = s;
+          }
+          else
+          {
+            sample = d;
+          }
+        }
+
+        dstOut.setSample(x, y, 0, sample);
       }
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.awt.CompositeContext#dispose()
-     */
-    @Override
-    public void dispose()
-    {
-
     }
   }
 
   /*
    * (non-Javadoc)
-   * 
-   * @see java.awt.Composite#createContext(java.awt.image.ColorModel,
-   * java.awt.image.ColorModel, java.awt.RenderingHints)
+   *
+   * @see java.awt.CompositeContext#dispose()
    */
   @Override
-  public CompositeContext createContext(ColorModel srcColorModel, ColorModel dstColorModel,
-      RenderingHints hints)
+  public void dispose()
   {
-    return new MaxCompositeDoubleContext();
+
   }
+}
 
 }

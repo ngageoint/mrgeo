@@ -20,50 +20,62 @@ import org.apache.spark.annotation.DeveloperApi
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{Partition, TaskContext}
+import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 
 import scala.reflect.ClassTag
 
 @SerialVersionUID(1L)
-class MrGeoRDD[K:ClassTag, V:ClassTag](parent: RDD[(K, V)])  extends RDD[(K, V)](parent) {
+class MrGeoRDD[K:ClassTag, V:ClassTag](parent:RDD[(K, V)]) extends RDD[(K, V)](parent) {
+  if (MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_AUTOPERSISTANCE, "true") == "true") {
+    AutoPersister.incrementRef(this)
+    walkTree(this)
 
-  AutoPersister.incrementRef(this)
-  walkTree(this)
-
-  if (log.isDebugEnabled()) {
-    logDebug("***************==")
-    //    Thread.currentThread().getStackTrace.foreach(st => {
-    //      logDebug(st.toString)
-    //    })
-    printDependencies(this)
-    ///logDebug(this.toDebugString)
-    logDebug("***************--")
+    if (log.isDebugEnabled()) {
+      logDebug("***************==")
+      //    Thread.currentThread().getStackTrace.foreach(st => {
+      //      logDebug(st.toString)
+      //    })
+      printDependencies(this)
+      ///logDebug(this.toDebugString)
+      logDebug("***************--")
+    }
   }
 
-  private def walkTree(rdd: RDD[_], increment:Boolean = true): Boolean = {
+  @DeveloperApi
+  override def compute(split:Partition, context:TaskContext):Iterator[(K, V)] = {
+    firstParent[(K, V)].iterator(split, context)
+  }
+
+  //  override def finalize(): Unit = {
+  //    AutoPersister.decrementRef(this)
+  //  }
+
+  override protected def getPartitions:Array[Partition] = {
+    firstParent[(K, V)].partitions
+  }
+
+  private def walkTree(rdd:RDD[_], increment:Boolean = true):Boolean = {
     var lclinc = increment
     rdd.dependencies.foreach(dep => {
       dep.rdd match {
-      case mrgeo:MrGeoRDD[_,_] =>
-        if (increment) {
-          AutoPersister.incrementRef(mrgeo)
-          lclinc = false
-        }
-        else {
-          AutoPersister.decrementRef(mrgeo)
-        }
-      case _ =>
-      }})
+        case mrgeo:MrGeoRDD[_, _] =>
+          if (increment) {
+            AutoPersister.incrementRef(mrgeo)
+            lclinc = false
+          }
+          else {
+            AutoPersister.decrementRef(mrgeo)
+          }
+        case _ =>
+      }
+    })
 
-      rdd.dependencies.foreach(dep => {
-        walkTree(dep.rdd, lclinc)
-      })
+    rdd.dependencies.foreach(dep => {
+      walkTree(dep.rdd, lclinc)
+    })
 
     lclinc
   }
-
-//  override def finalize(): Unit = {
-//    AutoPersister.decrementRef(this)
-//  }
 
   private def printDependencies(rdd:RDD[_], level:Int = 0) {
 
@@ -73,11 +85,16 @@ class MrGeoRDD[K:ClassTag, V:ClassTag](parent: RDD[(K, V)])  extends RDD[(K, V)]
     }
     sb ++= rdd.id + " (" + rdd.getClass.getSimpleName + ")"
 
-    sb ++= "  " + (if (rdd.getStorageLevel != StorageLevel.NONE) rdd.getStorageLevel.description else "")
+    sb ++= "  " + (if (rdd.getStorageLevel != StorageLevel.NONE) {
+      rdd.getStorageLevel.description
+    }
+    else {
+      ""
+    })
     rdd match {
-    case mrgeo:MrGeoRDD[_,_] =>
-      sb ++= " --- MrGeoRDD ref: " + AutoPersister.getRef(mrgeo)
-    case _ =>
+      case mrgeo:MrGeoRDD[_, _] =>
+        sb ++= " --- MrGeoRDD ref: " + AutoPersister.getRef(mrgeo)
+      case _ =>
     }
 
     logDebug(sb.toString())
@@ -85,15 +102,6 @@ class MrGeoRDD[K:ClassTag, V:ClassTag](parent: RDD[(K, V)])  extends RDD[(K, V)]
     rdd.dependencies.foreach(dep => {
       printDependencies(dep.rdd, level + 1)
     })
-  }
-
-  @DeveloperApi
-  override def compute(split: Partition, context: TaskContext): Iterator[(K, V)] = {
-    firstParent[(K, V)].iterator(split, context)
-  }
-
-  override protected def getPartitions: Array[Partition] = {
-    firstParent[(K, V)].partitions
   }
 
 

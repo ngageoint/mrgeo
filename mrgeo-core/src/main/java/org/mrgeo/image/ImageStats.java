@@ -16,40 +16,33 @@
 
 package org.mrgeo.image;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.util.DefaultPrettyPrinter;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.raster.RasterWritable.RasterWritableException;
 import org.mrgeo.utils.FloatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.image.DataBuffer;
-import java.awt.image.Raster;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.List;
 
 public class ImageStats implements Cloneable, Serializable
 {
-private static final long serialVersionUID = 1L;
-
-public double min, max, mean, sum;
-public long count;
-
-@SuppressWarnings("unused")
-private static Logger log = LoggerFactory.getLogger(ImageStats.class);
-
 // tile id that is not valid for TMS and represents stats output from an OpChain mapper
 public static final long STATS_TILE_ID = -13;
-
 // count of image statistics measures, currently min, max, sum & count
 public static final int STATS_COUNT = 4;
+private static final long serialVersionUID = 1L;
+@SuppressWarnings("unused")
+private static Logger log = LoggerFactory.getLogger(ImageStats.class);
+public double min, max, mean, sum;
+public long count;
 
 // TODO: Add minx, maxx, miny, maxy
 public ImageStats()
@@ -74,8 +67,7 @@ public ImageStats(final double min, final double max, final double sum, final lo
 /**
  * Aggregates statistics output from multiple tasks
  *
- * @param listOfStats
- *          the stats arrays to aggregate
+ * @param listOfStats the stats arrays to aggregate
  * @return an array of ImageStats objects
  */
 static public ImageStats[] aggregateStats(final List<ImageStats[]> listOfStats)
@@ -114,42 +106,30 @@ static public ImageStats[] aggregateStats(final List<ImageStats[]> listOfStats)
  * Computes pixel value statistics: min, max, sum, count, & mean for a Raster and returns an array
  * of ImageStats objects, one for each band in the image.
  *
- * @param raster
- *          the raster to compute stats for
- * @param nodata
- *          the value to ignore
- * @return an array of ImageStats objects
+ * @param raster the raster to compute stats for
+ * @param nodata the value to ignore
  */
-static public void computeAndUpdateStats(final ImageStats[] tileStats, final Raster raster,
-    final double[] nodata) throws RasterWritableException
+static public void computeAndUpdateStats(final ImageStats[] tileStats, final MrGeoRaster raster,
+    final double[] nodata)
 {
-  final int type = raster.getTransferType();
-  Number sample;
-  for (int y = 0; y < raster.getHeight(); y++)
+  double sample;
+  for (int y = 0; y < raster.height(); y++)
   {
-    for (int x = 0; x < raster.getWidth(); x++)
+    for (int x = 0; x < raster.width(); x++)
     {
-      for (int b = 0; b < raster.getNumBands(); b++)
+      for (int b = 0; b < raster.bands(); b++)
       {
-        switch (type)
+        sample = raster.getPixelDouble(x, y, b);
+
+        // throw out NaN samples
+        if (FloatUtils.isNotNodata(sample, nodata[b]))
         {
-        case DataBuffer.TYPE_BYTE:
-        case DataBuffer.TYPE_INT:
-        case DataBuffer.TYPE_SHORT:
-        case DataBuffer.TYPE_USHORT:
-          sample = raster.getSample(x, y, b);
-          break;
-        case DataBuffer.TYPE_FLOAT:
-          sample = raster.getSampleFloat(x, y, b);
-          break;
-        case DataBuffer.TYPE_DOUBLE:
-          sample = raster.getSampleDouble(x, y, b);
-          break;
-        default:
-          throw new RasterWritableException(
-              "Error computing tile statistics. Unsupported raster data type");
+          tileStats[b].min = Math.min(sample, tileStats[b].min);
+          tileStats[b].max = Math.max(sample, tileStats[b].max);
+          tileStats[b].sum += sample;
+          tileStats[b].count++;
+          tileStats[b].mean = tileStats[b].sum / tileStats[b].count;
         }
-        updateStats(tileStats[b], sample, nodata[b]);
       }
     }
   }
@@ -160,16 +140,14 @@ static public void computeAndUpdateStats(final ImageStats[] tileStats, final Ras
  * Computes pixel value statistics: min, max, sum, count, & mean for a Raster and returns an array
  * of ImageStats objects, one for each band in the image.
  *
- * @param raster
- *          the raster to compute stats for
- * @param nodata
- *          the value to ignore
+ * @param raster the raster to compute stats for
+ * @param nodata the value to ignore
  * @return an array of ImageStats objects
  */
-static public ImageStats[] computeStats(final Raster raster, final double[] nodata)
+static public ImageStats[] computeStats(final MrGeoRaster raster, final double[] nodata)
     throws RasterWritableException
 {
-  final ImageStats[] tileStats = initializeStatsArray(raster.getNumBands());
+  final ImageStats[] tileStats = initializeStatsArray(raster.bands());
   computeAndUpdateStats(tileStats, raster, nodata);
   return tileStats;
 }
@@ -178,8 +156,7 @@ static public ImageStats[] computeStats(final Raster raster, final double[] noda
  * Initializes an array of ImageStats objects, one for each band in the image, and initializes the
  * properties min, max, sum, count & mean to appropriate values.
  *
- * @param bands
- *          the number of bands in the image
+ * @param bands the number of bands in the image
  * @return an array of ImageStats objects
  */
 static public ImageStats[] initializeStatsArray(final int bands)
@@ -195,110 +172,8 @@ static public ImageStats[] initializeStatsArray(final int bands)
   return stats;
 }
 
-@SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS", justification = "api")
-static public ImageStats[] mergeStats(final ImageStats[] statsA, final ImageStats[] statsB)
-{
-  if (statsA == null && statsB == null)
-  {
-    return null;
-  }
-  else if (statsA == null)
-  {
-    return statsB.clone();
-  }
-  else if (statsB == null)
-  {
-    return statsA.clone();
-  }
 
-  final int bands = statsA.length;
-
-  final ImageStats[] stats = new ImageStats[bands];
-
-  for (int i = 0; i < bands; i++)
-  {
-    stats[i] = new ImageStats(
-        Math.min(statsA[i].min, statsB[i].min),
-        Math.max(statsA[i].max,
-            statsB[i].max), statsA[i].sum + statsB[i].sum,
-        statsA[i].count + statsB[i].count);
-  }
-
-  // update metadata
-  for (int i = 0; i < bands; i++)
-  {
-    stats[i].mean = stats[i].sum / stats[i].count;
-  }
-
-  return stats;
-}
-
-/**
- * Deserialize a Raster into an array of ImageStats objects. Used to reduce tile stats emitted by
- * a mapper.
- *
- * @param raster
- *          the raster containing stats measures as pixel values
- * @return an array of ImageStats objects
- */
-static public ImageStats[] rasterToStats(final Raster raster)
-{
-  final int bands = raster.getHeight();
-  final ImageStats[] stats = initializeStatsArray(bands);
-  for (int i = 0; i < bands; i++)
-  {
-    stats[i].min = raster.getSampleDouble(0, i, 0);
-    stats[i].max = raster.getSampleDouble(1, i, 0);
-    stats[i].sum = raster.getSampleDouble(2, i, 0);
-    stats[i].count = raster.getSample(3, i, 0);
-  }
-  return stats;
-}
-
-static public ImageStats[] readStats(final AdHocDataProvider provider) throws IOException
-{
-
-  final ObjectMapper mapper = new ObjectMapper();
-  ImageStats[] stats = null;
-
-  final int size = provider.size();
-  for (int i = 0; i < size; i++)
-  {
-    final InputStream stream = provider.get(i);
-
-    final ImageStats[] s = mapper.readValue(stream, ImageStats[].class);
-
-    stats = ImageStats.mergeStats(stats, s);
-
-    stream.close();
-  }
-
-  return stats;
-}
-
-
-/**
- * Updates statistics to include the supplied sample value.
- *
- * @param stats
- *          the ImageStats object to be updated
- * @param nodata
- *          the value to ignore
- */
-static public void updateStats(final ImageStats stats, final Number sample, final double nodata)
-{
-  final double d = sample.doubleValue();
-  // throw out NaN samples
-  if (FloatUtils.isNotNodata(d, nodata))
-  {
-    stats.min = Math.min(d, stats.min);
-    stats.max = Math.max(d, stats.max);
-    stats.sum += d;
-    stats.count++;
-    stats.mean = stats.sum / stats.count;
-  }
-}
-
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 static public void writeStats(final AdHocDataProvider provider, final ImageStats[] stats)
     throws IOException
 {
@@ -311,10 +186,7 @@ static public void writeStats(final AdHocDataProvider provider, final ImageStats
     final ObjectMapper mapper = new ObjectMapper();
     try
     {
-      DefaultPrettyPrinter pp = new DefaultPrettyPrinter();
-      pp.indentArraysWith(new DefaultPrettyPrinter.Lf2SpacesIndenter());
-
-      mapper.prettyPrintingWriter(pp).writeValue(stream, stats);
+      mapper.writerWithDefaultPrettyPrinter().writeValue(stream, stats);
     }
     catch (final NoSuchMethodError e)
     {
@@ -331,26 +203,6 @@ static public void writeStats(final AdHocDataProvider provider, final ImageStats
   }
 }
 
-public void calculateStats(final Raster r)
-{
-  count = 0;
-  sum = 0;
-  for (int py = r.getMinY(); py < r.getMinY() + r.getHeight(); py++)
-  {
-    for (int px = r.getMinX(); px < r.getMinX() + r.getWidth(); px++)
-    {
-      final double v = r.getSampleDouble(px, py, 0);
-      min = Math.min(min, v);
-      max = Math.max(max, v);
-      if (!Double.isNaN(v))
-      {
-        sum += v;
-        count++;
-      }
-    }
-  }
-  mean = sum / count;
-}
 
 @Override
 @SuppressFBWarnings(value = "CN_IDIOM_NO_SUPER_CALL", justification = "No super.clone() to call")

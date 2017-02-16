@@ -18,13 +18,14 @@ package org.mrgeo.geometry;
 
 /**
  * @author jason.surratt
- * 
  */
 public interface WritablePoint extends Point, WritableGeometry
 {
-  void fromJTS(com.vividsolutions.jts.geom.Point jtsPoint);
+void fromJTS(com.vividsolutions.jts.geom.Point jtsPoint);
 
-  void setX(double x);
-  void setY(double y);
-  void setZ(double z);
+void setX(double x);
+
+void setY(double y);
+
+void setZ(double z);
 }

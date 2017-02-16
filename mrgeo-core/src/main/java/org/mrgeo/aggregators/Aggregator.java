@@ -26,13 +26,23 @@ package org.mrgeo.aggregators;
  */
 public interface Aggregator
 {
-  public double aggregate(double[] values, double nodata);
+double aggregate(double[] values, double nodata);
 
-  public float aggregate(float[] values, float nodata);
+float aggregate(float[] values, float nodata);
 
-  public int aggregate(int[] values, int nodata);
-  
-  public double aggregate(double[][]values, double weightx, double weighty, double nodata);
-  public float aggregate(float[][]values, double weightx, double weighty, float nodata);
-  public int aggregate(final int[][] values, final double weightx, final double weighty, final int nodata);
+int aggregate(int[] values, int nodata);
+
+short aggregate(short[] values, short nodata);
+
+byte aggregate(byte[] values, byte nodata);
+
+double aggregate(double[][] values, double weightx, double weighty, double nodata);
+
+float aggregate(float[][] values, double weightx, double weighty, float nodata);
+
+byte aggregate(final byte[][] values, final double weightx, final double weighty, final byte nodata);
+
+short aggregate(final short[][] values, final double weightx, final double weighty, final short nodata);
+
+int aggregate(final int[][] values, final double weightx, final double weighty, final int nodata);
 }

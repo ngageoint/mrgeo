@@ -16,9 +16,6 @@
 
 package org.mrgeo.resources.wms;
 
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-import junit.framework.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -28,168 +25,166 @@ import org.mrgeo.test.TestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // Test code, not included in production
 public class MissingParamsTest extends WmsGeneratorTestAbstract
 {
-  @SuppressWarnings("unused")
-  private static final Logger log =
-          LoggerFactory.getLogger(MissingParamsTest.class);
+@SuppressWarnings("unused")
+private static final Logger log =
+    LoggerFactory.getLogger(MissingParamsTest.class);
 
-  @BeforeClass
-  public static void setUpForJUnit()
+@BeforeClass
+public static void setUpForJUnit()
+{
+  try
   {
-    try
-    {
-      baselineInput = TestUtils.composeInputDir(MissingParamsTest.class);
-      WmsGeneratorTestAbstract.setUpForJUnit();
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-    }
+    baselineInput = TestUtils.composeInputDir(MissingParamsTest.class);
+    WmsGeneratorTestAbstract.setUpForJUnit();
+  }
+  catch (Exception e)
+  {
+    e.printStackTrace();
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void testGetMapMissingParams() throws Exception
+{
+  String[] paramNames =
+      new String[]
+          {
+              "FORMAT",
+              "BBOX",
+              "LAYERS",
+              "WIDTH",
+              "HEIGHT"
+          };
+  for (int i = 0; i < paramNames.length; i++)
+  {
+    testGetMapMissingParam(paramNames[i]);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void testGetMosaicMissingParams() throws Exception
+{
+  String[] paramNames =
+      new String[]
+          {
+              "FORMAT",
+              "BBOX",
+              "LAYERS"
+          };
+  for (int i = 0; i < paramNames.length; i++)
+  {
+    testGetMosaicMissingParam(paramNames[i]);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void testGetTileMissingParams() throws Exception
+{
+  String[] paramNames =
+      new String[]
+          {
+              "FORMAT",
+              "LAYER",
+              "TILEROW",
+              "TILECOL",
+              "SCALE"
+          };
+  for (int i = 0; i < paramNames.length; i++)
+  {
+    testGetTileMissingParam(paramNames[i]);
+  }
+}
+
+private void testGetMapMissingParam(String paramName) throws Exception
+{
+  WebTarget webResource = target().path("/wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmap");
+  if (!paramName.equals("LAYERS"))
+  {
+    webResource = webResource.queryParam("LAYERS", "IslandsElevation-v2");
+  }
+  if (!paramName.equals("FORMAT"))
+  {
+    webResource = webResource.queryParam("FORMAT", "image/png");
+  }
+  if (!paramName.equals("BBOX"))
+  {
+    webResource = webResource.queryParam("BBOX", "160.312500,-11.250000,161.718750,-9.843750");
+  }
+  if (!paramName.equals("WIDTH"))
+  {
+    webResource = webResource.queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT);
+  }
+  if (!paramName.equals("HEIGHT"))
+  {
+    webResource = webResource.queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT);
   }
 
-  private void testGetMapMissingParam(String paramName) throws Exception
-  {
-    WebResource webResource = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmap");
-    if (!paramName.equals("LAYERS"))
-    {
-      webResource = webResource.queryParam("LAYERS", "IslandsElevation-v2");
-    }
-    if (!paramName.equals("FORMAT"))
-    {
-      webResource = webResource.queryParam("FORMAT", "image/png");
-    }
-    if (!paramName.equals("BBOX"))
-    {
-      webResource = webResource.queryParam("BBOX", "160.312500,-11.250000,161.718750,-9.843750");
-    }
-    if (!paramName.equals("WIDTH"))
-    {
-      webResource = webResource.queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT);
-    }
-    if (!paramName.equals("HEIGHT"))
-    {
-      webResource = webResource.queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT);
-    }
+  Response response = webResource.request().get();
+  processXMLResponse(response, "testGetMapMissingParam" + paramName + ".xml", Response.Status.BAD_REQUEST);
+}
 
-    ClientResponse response = webResource.get(ClientResponse.class);
-    processXMLResponse(response, "testGetMapMissingParam" + paramName + ".xml", Response.Status.BAD_REQUEST);
+private void testGetMosaicMissingParam(String paramName) throws Exception
+{
+  WebTarget webResource = target().path("/wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmosaic");
+  if (!paramName.equals("LAYERS"))
+  {
+    webResource = webResource.queryParam("LAYERS", "IslandsElevation-v2");
+  }
+  if (!paramName.equals("FORMAT"))
+  {
+    webResource = webResource.queryParam("FORMAT", "image/png");
+  }
+  if (!paramName.equals("BBOX"))
+  {
+    webResource = webResource.queryParam("BBOX", "160.312500,-11.250000,161.718750,-9.843750");
   }
 
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMapMissingParams() throws Exception
+  Response response = webResource.request().get();
+
+  processXMLResponse(response, "testGetMosaicMissingParam" + paramName + ".xml", Response.Status.BAD_REQUEST);
+}
+
+private void testGetTileMissingParam(String paramName) throws Exception
+{
+  WebTarget webResource = target().path("/wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "gettile");
+  if (!paramName.equals("LAYER"))
   {
-    String[] paramNames =
-            new String[]
-                    {
-                            "FORMAT",
-                            "BBOX",
-                            "LAYERS",
-                            "WIDTH",
-                            "HEIGHT"
-                    };
-    for (int i = 0; i < paramNames.length; i++)
-    {
-      testGetMapMissingParam(paramNames[i]);
-    }
+    webResource = webResource.queryParam("LAYER", "IslandsElevation-v2");
+  }
+  if (!paramName.equals("FORMAT"))
+  {
+    webResource = webResource.queryParam("FORMAT", "image/tif");
+  }
+  if (!paramName.equals("TILEROW"))
+  {
+    webResource = webResource.queryParam("TILEROW", "224");
+  }
+  if (!paramName.equals("TILECOL"))
+  {
+    webResource = webResource.queryParam("TILECOL", "970");
+  }
+  if (!paramName.equals("SCALE"))
+  {
+    webResource = webResource.queryParam("SCALE", "272989.38673277234");
   }
 
-  private void testGetMosaicMissingParam(String paramName) throws Exception
-  {
-    WebResource webResource = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "getmosaic");
-    if (!paramName.equals("LAYERS"))
-    {
-      webResource = webResource.queryParam("LAYERS", "IslandsElevation-v2");
-    }
-    if (!paramName.equals("FORMAT"))
-    {
-      webResource = webResource.queryParam("FORMAT", "image/png");
-    }
-    if (!paramName.equals("BBOX"))
-    {
-      webResource = webResource.queryParam("BBOX", "160.312500,-11.250000,161.718750,-9.843750");
-    }
+  Response response = webResource.request().get();
 
-    ClientResponse response = webResource.get(ClientResponse.class);
-
-    processXMLResponse(response, "testGetMosaicMissingParam" + paramName + ".xml", Response.Status.BAD_REQUEST);
-  }
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetMosaicMissingParams() throws Exception
-  {
-    String[] paramNames =
-            new String[]
-                    {
-                            "FORMAT",
-                            "BBOX",
-                            "LAYERS"
-                    };
-    for (int i = 0; i < paramNames.length; i++)
-    {
-      testGetMosaicMissingParam(paramNames[i]);
-    }
-  }
-
-  private void testGetTileMissingParam(String paramName) throws Exception
-  {
-    WebResource webResource = resource().path("/wms")
-            .queryParam("SERVICE", "WMS")
-            .queryParam("REQUEST", "gettile");
-    if (!paramName.equals("LAYER"))
-    {
-      webResource = webResource.queryParam("LAYER", "IslandsElevation-v2");
-    }
-    if (!paramName.equals("FORMAT"))
-    {
-      webResource = webResource.queryParam("FORMAT", "image/tif");
-    }
-    if (!paramName.equals("TILEROW"))
-    {
-      webResource = webResource.queryParam("TILEROW", "224");
-    }
-    if (!paramName.equals("TILECOL"))
-    {
-      webResource = webResource.queryParam("TILECOL", "970");
-    }
-    if (!paramName.equals("SCALE"))
-    {
-      webResource = webResource.queryParam("SCALE", "272989.38673277234");
-    }
-
-    ClientResponse response = webResource.get(ClientResponse.class);
-
-    processXMLResponse(response, "testGetTileMissingParam" + paramName + ".xml", Response.Status.BAD_REQUEST);
-  }
-
-  @Test
-  @Category(IntegrationTest.class)
-  public void testGetTileMissingParams() throws Exception
-  {
-    String[] paramNames =
-            new String[]
-                    {
-                            "FORMAT",
-                            "LAYER",
-                            "TILEROW",
-                            "TILECOL",
-                            "SCALE"
-                    };
-    for (int i = 0; i < paramNames.length; i++)
-    {
-      testGetTileMissingParam(paramNames[i]);
-    }
-  }
+  processXMLResponse(response, "testGetTileMissingParam" + paramName + ".xml", Response.Status.BAD_REQUEST);
+}
 }

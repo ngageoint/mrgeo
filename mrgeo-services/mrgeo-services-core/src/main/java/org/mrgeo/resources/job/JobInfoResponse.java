@@ -22,54 +22,72 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class JobInfoResponse
 {
-  private JobStateResponse _state = null;
-  private TaskStateResponse _buildPyramid = null;
-  
-  long _jobId;
-  String _name;
-  String _type;
-  String _statusUrl;
-  public long getJobId() {
-    return _jobId;
-  }  
-  public void setJobId(long jobId) {
-    _jobId = jobId;
-  }
+long _jobId;
+String _name;
+String _type;
+String _statusUrl;
+private JobStateResponse _state = null;
+private TaskStateResponse _buildPyramid = null;
 
-  public String getName() {
-    return _name;
-  }
-  public void setName(String name) {
-    _name = name;
-  }
-  
-  public String getStatusUrl() {
-    return _statusUrl;
-  }
-  public void setStatusUrl(String url) {
-    _statusUrl = url;
-  }
-  
-  public String getType() {
-    return _type;
-  }
-  public void setType(String type) {
-    _type = type;
-  }
-  
-  public JobStateResponse getJobState() {
-    return _state;
-  }
-  public void setJobState(JobStateResponse state) {
-    _state = state;
-  }    
-  
-  @XmlElement(name="buildPyramid")
-  public TaskStateResponse getBuildPyramidTaskState() {
-    return _buildPyramid;
-  }
-  public void setBuildPyramidTaskState(TaskStateResponse state) {
-    _buildPyramid = state;
-  }    
+public long getJobId()
+{
+  return _jobId;
+}
+
+public void setJobId(long jobId)
+{
+  _jobId = jobId;
+}
+
+public String getName()
+{
+  return _name;
+}
+
+public void setName(String name)
+{
+  _name = name;
+}
+
+public String getStatusUrl()
+{
+  return _statusUrl;
+}
+
+public void setStatusUrl(String url)
+{
+  _statusUrl = url;
+}
+
+public String getType()
+{
+  return _type;
+}
+
+public void setType(String type)
+{
+  _type = type;
+}
+
+public JobStateResponse getJobState()
+{
+  return _state;
+}
+
+public void setJobState(JobStateResponse state)
+{
+  _state = state;
+}
+
+@XmlElement(name = "buildPyramid")
+public TaskStateResponse getBuildPyramidTaskState()
+{
+  return _buildPyramid;
+}
+
+public void setBuildPyramidTaskState(TaskStateResponse state)
+{
+  _buildPyramid = state;
+}
 }
 

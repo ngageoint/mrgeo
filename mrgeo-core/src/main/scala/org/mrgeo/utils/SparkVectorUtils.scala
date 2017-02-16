@@ -27,17 +27,16 @@ import org.mrgeo.utils.tms.Bounds
 
 import scala.collection.JavaConversions._
 
-object SparkVectorUtils
-{
-  def loadVectorRDD(input: String, providerProperties: ProviderProperties,
-      context: SparkContext): VectorRDD = {
-    val dp: VectorDataProvider = DataProviderFactory.getVectorDataProvider(input,
+object SparkVectorUtils {
+  def loadVectorRDD(input:String, providerProperties:ProviderProperties,
+                    context:SparkContext):VectorRDD = {
+    val dp:VectorDataProvider = DataProviderFactory.getVectorDataProvider(input,
       DataProviderFactory.AccessMode.READ, providerProperties)
 
     loadVectorRDD(dp, context)
   }
 
-  def loadVectorRDD(provider:VectorDataProvider, context: SparkContext): VectorRDD = {
+  def loadVectorRDD(provider:VectorDataProvider, context:SparkContext):VectorRDD = {
     //    val conf1 = provider.setupOutput(context.hadoopConfiguration)
     val inputs = Set(provider.getPrefixedResourceName)
     val vifc = new VectorInputFormatContext(inputs, provider.getProviderProperties)
@@ -50,7 +49,7 @@ object SparkVectorUtils
       classOf[Geometry]))
   }
 
-  def calculateBounds(rdd: VectorRDD): Bounds = {
+  def calculateBounds(rdd:VectorRDD):Bounds = {
 
     val bounds = rdd.aggregate(null.asInstanceOf[Bounds])((bounds:Bounds, geom) => {
       if (bounds == null) {
@@ -72,8 +71,8 @@ object SparkVectorUtils
     bounds
   }
 
-  def save(features: VectorRDD, outputProvider: VectorDataProvider, context: SparkContext,
-      providerproperties:ProviderProperties): Unit = {
+  def save(features:VectorRDD, outputProvider:VectorDataProvider, context:SparkContext,
+           providerproperties:ProviderProperties):Unit = {
 
     features.persist(StorageLevel.MEMORY_AND_DISK_SER)
 
@@ -94,7 +93,8 @@ object SparkVectorUtils
       features.collect.foreach(U => {
         writer.append(U._1, U._2)
       })
-    } finally {
+    }
+    finally {
       writer.close()
     }
     features.unpersist()

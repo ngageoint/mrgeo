@@ -22,105 +22,105 @@ import org.mrgeo.junit.UnitTest;
 
 import static org.junit.Assert.assertEquals;
 
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // test code, not included in production
 public class MaxAggregatorTest
 {
-  private static double epsilon = 0.0000001;
+private static double epsilon = 0.0000001;
 
-  @Test
-  @Category(UnitTest.class)
-  public void testDouble()
-  {
-    double[] values = {0.21, 0.32, 0.43, 0.54};
-    double nodata = Double.NaN;
-    double result;
-    Aggregator agg = new MaxAggregator();
+@Test
+@Category(UnitTest.class)
+public void testDouble()
+{
+  double[] values = {0.21, 0.32, 0.43, 0.54};
+  double nodata = Double.NaN;
+  double result;
+  Aggregator agg = new MaxAggregator();
 
-    //Test normal case
-    result = agg.aggregate(values, nodata);
-    assertEquals(0.54, result, epsilon);
+  //Test normal case
+  result = agg.aggregate(values, nodata);
+  assertEquals(0.54, result, epsilon);
 
-    //Test nodata cases
-    values[0] = nodata;
-    result = agg.aggregate(values, nodata);
-    assertEquals(0.54, result, epsilon);
- 
-    values[1] = nodata;
-    result = agg.aggregate(values, nodata);
-    assertEquals(0.54, result, epsilon);
- 
-    values[2] = nodata;
-    result = agg.aggregate(values, nodata);
-    assertEquals(0.54, result, epsilon);
- 
-    values[3] = nodata;
-    result = agg.aggregate(values, nodata);
-    assertEquals(nodata, result, epsilon);
- 
-  }
+  //Test nodata cases
+  values[0] = nodata;
+  result = agg.aggregate(values, nodata);
+  assertEquals(0.54, result, epsilon);
 
-  @Test
-  @Category(UnitTest.class)
-  public void testFloat()
-  {
-    float[] values = {0.21f, 0.32f, 0.43f, 0.54f};
-    float nodata = -9999.0f;
-    float result;
-    Aggregator agg = new MaxAggregator();
+  values[1] = nodata;
+  result = agg.aggregate(values, nodata);
+  assertEquals(0.54, result, epsilon);
 
-    //Test normal case
-    result = agg.aggregate(values, nodata);
-    assertEquals(0.54, result, epsilon);
+  values[2] = nodata;
+  result = agg.aggregate(values, nodata);
+  assertEquals(0.54, result, epsilon);
 
-    //Test nodata cases
-    values[0] = nodata;
-    result = agg.aggregate(values, nodata);
-    assertEquals(0.54, result, epsilon);
- 
-    values[1] = nodata;
-    result = agg.aggregate(values, nodata);
-    assertEquals(0.54, result, epsilon);
- 
-    values[2] = nodata;
-    result = agg.aggregate(values, nodata);
-    assertEquals(0.54, result, epsilon);
- 
-    values[3] = nodata;
-    result = agg.aggregate(values, nodata);
-    assertEquals(nodata, result, epsilon);
- 
-  }
+  values[3] = nodata;
+  result = agg.aggregate(values, nodata);
+  assertEquals(nodata, result, epsilon);
 
-  @Test
-  @Category(UnitTest.class)
-  public void testInt()
-  {
-    int[] values = {1, 2, 3, 4};
-    int nodata = -9999;
-    int result;
-    Aggregator agg = new MaxAggregator();
+}
 
-    //Test normal case
-    result = agg.aggregate(values, nodata);
-    assertEquals(4, result);
+@Test
+@Category(UnitTest.class)
+public void testFloat()
+{
+  float[] values = {0.21f, 0.32f, 0.43f, 0.54f};
+  float nodata = -9999.0f;
+  float result;
+  Aggregator agg = new MaxAggregator();
 
-    //Test nodata cases
-    values[0] = nodata;
-    result = agg.aggregate(values, nodata);
-    assertEquals(4, result);
- 
-    values[1] = nodata;
-    result = agg.aggregate(values, nodata);
-    assertEquals(4, result);
- 
-    values[2] = nodata;
-    result = agg.aggregate(values, nodata);
-    assertEquals(4, result);
- 
-    values[3] = nodata;
-    result = agg.aggregate(values, nodata);
-    assertEquals(nodata, result);
- 
-  }
+  //Test normal case
+  result = agg.aggregate(values, nodata);
+  assertEquals(0.54, result, epsilon);
+
+  //Test nodata cases
+  values[0] = nodata;
+  result = agg.aggregate(values, nodata);
+  assertEquals(0.54, result, epsilon);
+
+  values[1] = nodata;
+  result = agg.aggregate(values, nodata);
+  assertEquals(0.54, result, epsilon);
+
+  values[2] = nodata;
+  result = agg.aggregate(values, nodata);
+  assertEquals(0.54, result, epsilon);
+
+  values[3] = nodata;
+  result = agg.aggregate(values, nodata);
+  assertEquals(nodata, result, epsilon);
+
+}
+
+@Test
+@Category(UnitTest.class)
+public void testInt()
+{
+  int[] values = {1, 2, 3, 4};
+  int nodata = -9999;
+  int result;
+  Aggregator agg = new MaxAggregator();
+
+  //Test normal case
+  result = agg.aggregate(values, nodata);
+  assertEquals(4, result);
+
+  //Test nodata cases
+  values[0] = nodata;
+  result = agg.aggregate(values, nodata);
+  assertEquals(4, result);
+
+  values[1] = nodata;
+  result = agg.aggregate(values, nodata);
+  assertEquals(4, result);
+
+  values[2] = nodata;
+  result = agg.aggregate(values, nodata);
+  assertEquals(4, result);
+
+  values[3] = nodata;
+  result = agg.aggregate(values, nodata);
+  assertEquals(nodata, result);
+
+}
 
 }

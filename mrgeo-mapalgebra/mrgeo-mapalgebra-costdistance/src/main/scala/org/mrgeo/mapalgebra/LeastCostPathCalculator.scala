@@ -16,34 +16,30 @@
 
 package org.mrgeo.mapalgebra
 
-import java.awt.image.Raster
 import java.io._
 import java.text.DecimalFormat
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
-import org.apache.spark.{Logging, SparkContext}
+import org.apache.spark.SparkContext
 import org.apache.spark.storage.StorageLevel
-import org.mrgeo.data.raster.RasterWritable
+import org.mrgeo.data.raster.{MrGeoRaster, RasterWritable}
 import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
-import org.mrgeo.data.vector.FeatureIdWritable
-import org.mrgeo.geometry.{Geometry, GeometryFactory, Point, WritableLineString}
+import org.mrgeo.geometry.{Geometry, GeometryFactory, Point}
 import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.mapalgebra.raster.RasterMapOp
-import org.mrgeo.utils.tms.{Bounds, Pixel, TMSUtils, Tile}
-import org.mrgeo.utils.LatLng
-import org.slf4j.{Logger, LoggerFactory}
+import org.mrgeo.utils.tms.{Pixel, TMSUtils, Tile}
+import org.mrgeo.utils.{LatLng, Logging}
 
 import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
 
 @SuppressFBWarnings(value = Array("NP_LOAD_OF_KNOWN_NULL_VALUE"), justification = "Scala generated code")
 object LeastCostPathCalculator extends Logging {
 
   @throws(classOf[IOException])
-  def run(costDist:RasterMapOp, destination:VectorRDD, context:SparkContext, zoom:Int = -1): VectorRDD = {
+  def run(costDist:RasterMapOp, destination:VectorRDD, context:SparkContext, zoom:Int = -1):VectorRDD = {
 
     val meta = costDist.metadata() getOrElse
-        (throw new IOException("Can't load metadata! Ouch! " + costDist.getClass.getName))
+               (throw new IOException("Can't load metadata! Ouch! " + costDist.getClass.getName))
     val rdd = costDist.rdd() getOrElse (throw new IOException("Can't load RDD! Ouch! " + costDist.getClass.getName))
 
     val localPersist = rdd.getStorageLevel == StorageLevel.NONE
@@ -56,34 +52,34 @@ object LeastCostPathCalculator extends Logging {
       val lcp = GeometryFactory.createLineString()
 
       feature._2 match {
-      case pt:Point =>
-        val calculator = new LeastCostPathCalculator (pt, rdd, meta)
+        case pt:Point =>
+          val calculator = new LeastCostPathCalculator(pt, rdd, meta)
 
-        while (calculator.hasnext) {
-          lcp.addPoint (calculator.point)
-        }
+          while (calculator.hasnext) {
+            lcp.addPoint(calculator.point)
+          }
 
-        val df: DecimalFormat = new DecimalFormat ("###.###")
+          val df:DecimalFormat = new DecimalFormat("###.###")
 
-        if (lcp.getNumPoints == 0) {
-          lcp.addPoint(pt)
-          lcp.setAttribute ("COST_S", df.format (0.0) )
-          lcp.setAttribute ("DISTANCE_M", df.format (0.0) )
-          lcp.setAttribute ("MINSPEED_MPS", df.format (0.0) )
-          lcp.setAttribute ("MAXSPEED_MPS", df.format (0.0) )
-          lcp.setAttribute ("AVGSPEED_MPS", df.format (0.0) )
-        }
-        else {
-          lcp.setAttribute ("COST_S", df.format (calculator.totalcost) )
-          lcp.setAttribute ("DISTANCE_M", df.format (calculator.totaldist) )
-          lcp.setAttribute ("MINSPEED_MPS", df.format (calculator.minspeed) )
-          lcp.setAttribute ("MAXSPEED_MPS", df.format (calculator.maxspeed) )
-          lcp.setAttribute ("AVGSPEED_MPS", df.format (calculator.totaldist / calculator.totalcost) )
-        }
+          if (lcp.getNumPoints == 0) {
+            lcp.addPoint(pt)
+            lcp.setAttribute("COST_S", df.format(0.0))
+            lcp.setAttribute("DISTANCE_M", df.format(0.0))
+            lcp.setAttribute("MINSPEED_MPS", df.format(0.0))
+            lcp.setAttribute("MAXSPEED_MPS", df.format(0.0))
+            lcp.setAttribute("AVGSPEED_MPS", df.format(0.0))
+          }
+          else {
+            lcp.setAttribute("COST_S", df.format(calculator.totalcost))
+            lcp.setAttribute("DISTANCE_M", df.format(calculator.totaldist))
+            lcp.setAttribute("MINSPEED_MPS", df.format(calculator.minspeed))
+            lcp.setAttribute("MAXSPEED_MPS", df.format(calculator.maxspeed))
+            lcp.setAttribute("AVGSPEED_MPS", df.format(calculator.totaldist / calculator.totalcost))
+          }
 
-        (feature._1, lcp.asInstanceOf[Geometry] )
-      case g:Geometry =>
-        throw new IOException("Expected a point to be passed to LeastCostPath, but instead got " + g)
+          (feature._1, lcp.asInstanceOf[Geometry])
+        case g:Geometry =>
+          throw new IOException("Expected a point to be passed to LeastCostPath, but instead got " + g)
       }
     })
 
@@ -96,37 +92,29 @@ object LeastCostPathCalculator extends Logging {
 
 }
 
-@SuppressFBWarnings(value = Array("NM_FIELD_NAMING_CONVENTION", "FE_FLOATING_POINT_EQUALITY", "RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"),
+@SuppressFBWarnings(
+  value = Array("NM_FIELD_NAMING_CONVENTION", "FE_FLOATING_POINT_EQUALITY", "RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"),
   justification = "1) false positive - case class NeighborData correctly named, 2 & 3) Scala generated code")
 private class LeastCostPathCalculator(start:Point, rdd:RasterRDD, meta:MrsPyramidMetadata) extends Logging {
   val zoom = meta.getMaxZoomLevel
   val tilesize = meta.getTilesize
-
   private val pixelsize = (TMSUtils.resolution(zoom, tilesize) * LatLng.METERS_PER_DEGREE).toFloat
   private val pixelsizediag = Math.sqrt(2.0 * pixelsize * pixelsize).toFloat
-
-  private val CACHE_HALFWIDTH = 3
-
-  case class NeighborData(dx: Int, dy: Int, dist: Float)
   val neighborData = Array[NeighborData](
-    new NeighborData(-1, -1, pixelsizediag), // UP_LEFT),
-    new NeighborData(0, -1, pixelsize),      // UP),
-    new NeighborData(1, -1, pixelsizediag),  // UP_RIGHT),
-    new NeighborData(-1, 0, pixelsize),      // LEFT),
-    new NeighborData(1, 0, pixelsize),       // RIGHT),
-    new NeighborData(-1, 1, pixelsizediag),  // DOWN_LEFT),
-    new NeighborData(0, 1, pixelsize),       // DOWN),
-    new NeighborData (1, 1, pixelsizediag)   // DOWN_RIGHT)
+    NeighborData(-1, -1, pixelsizediag), // UP_LEFT),
+    NeighborData(0, -1, pixelsize), // UP),
+    NeighborData(1, -1, pixelsizediag), // UP_RIGHT),
+    NeighborData(-1, 0, pixelsize), // LEFT),
+    NeighborData(1, 0, pixelsize), // RIGHT),
+    NeighborData(-1, 1, pixelsizediag), // DOWN_LEFT),
+    NeighborData(0, 1, pixelsize), // DOWN),
+    NeighborData(1, 1, pixelsizediag) // DOWN_RIGHT)
   )
-
-  var cache = mutable.HashMap.empty[Long, Raster]
-
-
   val maxPx = tilesize - 1
-
+  private val CACHE_HALFWIDTH = 3
+  var cache = mutable.HashMap.empty[Long, MrGeoRaster]
   var tile = TMSUtils.latLonToTile(start.getY, start.getX, zoom, tilesize)
   var pt = TMSUtils.latLonToTilePixelUL(start.getY, start.getX, tile.tx, tile.ty, zoom, tilesize)
-
   var totalcost:Float = getcost(0, 0)
   var totaldist:Float = 0.0f
   var minspeed:Float = Float.MaxValue
@@ -139,7 +127,7 @@ private class LeastCostPathCalculator(start:Point, rdd:RasterRDD, meta:MrsPyrami
 
     if (log.isDebugEnabled) {
       logDebug("current point = " + pt + " with cost: " + curcost + " and dist: " + totaldist +
-          " minspeed: " + minspeed + " maxspeed: " + maxspeed)
+               " minspeed: " + minspeed + " maxspeed: " + maxspeed)
     }
 
 
@@ -190,7 +178,7 @@ private class LeastCostPathCalculator(start:Point, rdd:RasterRDD, meta:MrsPyrami
     val x = (pt.px + dx).toInt
     val y = (pt.py + dy).toInt
 
-    val (px, t) = if ( x < 0) {
+    val (px, t) = if (x < 0) {
       (tilesize + x, new Tile(tile.tx - 1, tile.ty))
     }
     else if (x > maxPx) {
@@ -200,7 +188,7 @@ private class LeastCostPathCalculator(start:Point, rdd:RasterRDD, meta:MrsPyrami
       (x, tile)
     }
 
-    val (py, newtile) = if ( y < 0) {
+    val (py, newtile) = if (y < 0) {
       (tilesize + y, new Tile(t.tx, t.ty + 1))
     }
     else if (y > maxPx) {
@@ -222,24 +210,23 @@ private class LeastCostPathCalculator(start:Point, rdd:RasterRDD, meta:MrsPyrami
       Float.MaxValue
     }
     else {
-      raster.getSampleFloat(newx, newy, 0)
+      raster.getPixelFloat(newx, newy, 0)
     }
   }
 
-
-  def gettile(t:Tile):Raster = {
+  def gettile(t:Tile):MrGeoRaster = {
     val id = TMSUtils.tileid(t.tx, t.ty, zoom)
 
     cache.get(id) match {
-    case Some(raster) => raster
-    case _ =>
-      updatecache(t)
-      cache.getOrElse(id, null)
+      case Some(raster) => raster
+      case _ =>
+        updatecache(t)
+        cache.getOrElse(id, null)
     }
   }
 
   def updatecache(t:Tile) = {
-    val newcache = mutable.HashMap.empty[Long, Raster]
+    val newcache = mutable.HashMap.empty[Long, MrGeoRaster]
 
     val tilebuilder = Array.newBuilder[Long]
 
@@ -268,9 +255,12 @@ private class LeastCostPathCalculator(start:Point, rdd:RasterRDD, meta:MrsPyrami
     rdd.filter(tile => {
       tilelist.contains(tile._1.get)
     }).collect.foreach(tile => {
-      newcache.put(tile._1.get, RasterWritable.toRaster(tile._2))
+      newcache.put(tile._1.get, RasterWritable.toMrGeoRaster(tile._2))
     })
 
     cache = newcache
   }
+
+  case class NeighborData(dx:Int, dy:Int, dist:Float)
+
 }

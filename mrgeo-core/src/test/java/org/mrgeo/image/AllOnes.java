@@ -16,8 +16,8 @@
 
 package org.mrgeo.image;
 
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.map.JsonMappingException;
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.TMSUtils;
@@ -26,25 +26,29 @@ import java.io.IOException;
 
 public class AllOnes extends TestFiles
 {
-  public AllOnes() throws JsonGenerationException, JsonMappingException, IOException {
-    super.setup(org.mrgeo.core.Defs.CWD + "/" + org.mrgeo.core.Defs.INPUT + "/" + "all-ones",
-        (ProviderProperties)null);
-  }
-  
-  public static void main(String args[]) throws JsonGenerationException, JsonMappingException, IOException {
-    AllOnes allOnes = new AllOnes();
-    int zoom = allOnes.getMetadata().getMaxZoomLevel();
-    
-    LongRectangle tb = allOnes.getMetadata().getTileBounds(zoom);
-    final long minX = tb.getMinX();
-    final long minY = tb.getMinY();
-    
-    for(int ty=0; ty < allOnes.getRows(); ty++) {
-      for(int tx=0; tx < allOnes.getCols(); tx++) {
-          System.out.println(String.format("Tile %d has bounds %s", 
-                                          TMSUtils.tileid(tx+minX, ty+minY, zoom),
-                                          allOnes.getBounds(ty, tx)));
-      }    
+public AllOnes() throws JsonGenerationException, JsonMappingException, IOException
+{
+  super.setup(org.mrgeo.core.Defs.CWD + "/" + org.mrgeo.core.Defs.INPUT + "/" + "all-ones",
+      (ProviderProperties) null);
+}
+
+public static void main(String args[]) throws JsonGenerationException, JsonMappingException, IOException
+{
+  AllOnes allOnes = new AllOnes();
+  int zoom = allOnes.getMetadata().getMaxZoomLevel();
+
+  LongRectangle tb = allOnes.getMetadata().getTileBounds(zoom);
+  final long minX = tb.getMinX();
+  final long minY = tb.getMinY();
+
+  for (int ty = 0; ty < allOnes.getRows(); ty++)
+  {
+    for (int tx = 0; tx < allOnes.getCols(); tx++)
+    {
+      System.out.println(String.format("Tile %d has bounds %s",
+          TMSUtils.tileid(tx + minX, ty + minY, zoom),
+          allOnes.getBounds(ty, tx)));
     }
   }
+}
 }

@@ -17,7 +17,7 @@
 
 package org.mrgeo.mapalgebra
 
-import java.awt.image.{BandedSampleModel, DataBuffer, Raster, WritableRaster}
+import java.awt.image.DataBuffer
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 import java.util
 
@@ -26,7 +26,8 @@ import org.apache.commons.lang3.builder.HashCodeBuilder
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
-import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
+import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
+import org.mrgeo.data.raster.{MrGeoRaster, RasterWritable}
 import org.mrgeo.data.rdd.{RasterRDD, VectorRDD}
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.vector.FeatureIdWritable
@@ -36,7 +37,7 @@ import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.utils.tms._
-import org.mrgeo.utils.{LatLng, SparkUtils, SparkVectorUtils}
+import org.mrgeo.utils.{LatLng, Logging, SparkUtils, SparkVectorUtils}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
@@ -81,15 +82,15 @@ import scala.collection.mutable.ListBuffer
   */
 object CostDistanceMapOp extends MapOpRegistrar {
 
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("costDistance", "cd")
   }
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new CostDistanceMapOp(node, variables)
 
-  def create(raster:RasterMapOp, maxCost: Double, zoom: Int,
-             sourcePoints: Array[Double]): MapOp = {
+  def create(raster:RasterMapOp, maxCost:Double, zoom:Int,
+             sourcePoints:Array[Double]):MapOp = {
 
     new CostDistanceMapOp(raster, maxCost.toFloat, zoom, sourcePoints)
   }
@@ -98,84 +99,33 @@ object CostDistanceMapOp extends MapOpRegistrar {
 
 class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
 
-  private var rasterRDD: Option[RasterRDD] = None
-
   var friction:Option[RasterMapOp] = None
   var srcVector:Option[VectorMapOp] = None
-  var sourcePoints: Option[Array[Double]] = None
+  var sourcePoints:Option[Array[Double]] = None
   var frictionZoom:Option[Int] = None
-
   var numExecutors:Int = -1
-
+  var numCoresPerExecutor:Int = -1
   var maxCost:Float = -1
+  var providerProperties:ProviderProperties = null
+  private var rasterRDD:Option[RasterRDD] = None
 
-  private[mapalgebra] def this(friction: RasterMapOp, maxCost: Float, zoom: Int,
-                               sourcePoints: Array[Double]) = {
-    this()
+  override def rdd():Option[RasterRDD] = rasterRDD
 
-    this.friction = Some(friction)
-    this.maxCost = maxCost
-    this.sourcePoints = Some(sourcePoints)
-    this.srcVector = None
-  }
-
-  private[mapalgebra] def this(node: ParserNode, variables: String => Option[ParserNode]) = {
-    this()
-
-    val usage: String = "CostDistance takes the following arguments " +
-        "(source points, [friction zoom level], friction raster, [maxCost], [minX, minY, maxX, maxY])"
-
-    val numChildren = node.getNumChildren
-    if (numChildren < 2 || numChildren > 8) {
-      throw new ParserException(usage)
-    }
-
-    var nodeIndex: Int = 0
-    srcVector = VectorMapOp.decodeToVector(node.getChild(nodeIndex), variables)
-    sourcePoints = None
-    nodeIndex += 1
-
-    // Check for optional friction zoom level
-    MapOp.decodeInt(node.getChild(nodeIndex)) match {
-    case Some(i) =>
-      frictionZoom = Some(i)
-      nodeIndex += 1
-    case _ =>
-    }
-
-    // Check that there are enough required arguments left
-    if (numChildren <= nodeIndex) {
-      throw new ParserException(usage)
-    }
-
-    friction = RasterMapOp.decodeToRaster(node.getChild(nodeIndex), variables)
-    nodeIndex += 1
-
-    // Check for optional max cost.
-    if ((numChildren == (nodeIndex + 1)) || (numChildren == (nodeIndex + 5))) {
-      MapOp.decodeDouble(node.getChild(nodeIndex), variables) match {
-      case Some(d) =>
-        maxCost = if (d < 0) -1 else d.toFloat
-        nodeIndex += 1
-      case _ =>
-      }
-    }
-  }
-
-  override def rdd(): Option[RasterRDD] = rasterRDD
-
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = {
+  override def setup(job:JobArguments, conf:SparkConf):Boolean = {
     numExecutors = conf.getInt("spark.executor.instances", -1)
+    numCoresPerExecutor = conf.getInt("spark.executor.cores", -1)
     logInfo("num executors = " + numExecutors)
+    logInfo("num cores per executor = " + numCoresPerExecutor)
+    providerProperties = ProviderProperties.fromDelimitedString(job.getSetting(MapAlgebra.ProviderProperties, ""))
     true
   }
 
-  override def teardown(job: JobArguments, conf: SparkConf): Boolean = true
+  override def teardown(job:JobArguments, conf:SparkConf):Boolean = true
 
-  override def execute(context: SparkContext): Boolean = {
+  override def execute(context:SparkContext):Boolean = {
     val t0 = System.nanoTime()
 
-    val inputFriction:RasterMapOp = friction getOrElse(throw new IOException("Input MapOp not valid!"))
+    val inputFriction:RasterMapOp = friction getOrElse (throw new IOException("Input MapOp not valid!"))
     val sourcePointsRDD = srcVector match {
       case Some(mapOp) => mapOp.rdd().getOrElse(throw new IOException("Missing source points"))
       case None => {
@@ -184,8 +134,8 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
             // Convert the array of lon/let pairs to a VectorRDD
             var recordData = new ListBuffer[(FeatureIdWritable, Geometry)]()
             for (i <- 0 until pointsList.length by 2) {
-              val geom = GeometryFactory.createPoint(pointsList(i).toFloat, pointsList(i+1).toFloat)
-              recordData += ((new FeatureIdWritable(i/2), geom))
+              val geom = GeometryFactory.createPoint(pointsList(i).toFloat, pointsList(i + 1).toFloat)
+              recordData += ((new FeatureIdWritable(i / 2), geom))
             }
             VectorRDD(context.parallelize(recordData))
           }
@@ -193,15 +143,16 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
         }
       }
     }
-    val frictionMeta = inputFriction.metadata() getOrElse(throw new IOException("Can't load metadata! Ouch! " + inputFriction.getClass.getName))
+    val frictionMeta = inputFriction.metadata() getOrElse
+                       (throw new IOException("Can't load metadata! Ouch! " + inputFriction.getClass.getName))
 
     val zoom = frictionZoom match {
-    case Some(z) =>
-      if (frictionMeta.getMaxZoomLevel < z) {
-        throw new IOException("The image has a maximum zoom level of " + frictionMeta.getMaxZoomLevel)
-      }
-      z
-    case _ => frictionMeta.getMaxZoomLevel
+      case Some(z) =>
+        if (frictionMeta.getMaxZoomLevel < z) {
+          throw new IOException("The image has a maximum zoom level of " + frictionMeta.getMaxZoomLevel)
+        }
+        z
+      case _ => frictionMeta.getMaxZoomLevel
     }
 
     val outputBounds = {
@@ -225,10 +176,10 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
         }
         else {
           logInfo("Calculating tile bounds for maxCost " + maxCost + ", min = " + stats.min + " and bounds " +
-              frictionMeta.getBounds)
+                  frictionMeta.getBounds)
           if (stats.min == Double.MaxValue) {
             throw new IllegalArgumentException("Invalid stats for the friction surface: " + frictionMeta.getPyramid +
-                ". You will need to specify a maxCost in the CostDistance call")
+                                               ". You will need to specify a maxCost in the CostDistance call")
           }
           calculateBoundsFromCost(maxCost, sourcePointsRDD, stats.min, frictionMeta.getBounds)
         }
@@ -237,20 +188,24 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
 
     log.debug("outputBounds = " + outputBounds)
     val tilesize = frictionMeta.getTilesize
-    val frictionRDD = inputFriction.rdd(zoom) getOrElse(throw new IOException("Can't load RDD! Ouch! " + inputFriction.getClass.getName))
 
     val tileBounds = {
       TMSUtils.boundsToTile(outputBounds, zoom, tilesize)
     }
-    if (tileBounds == null)
-    {
+    if (tileBounds == null) {
       throw new IllegalArgumentException("No tile bounds for " + frictionMeta.getPyramid + " at zoom level " + zoom)
     }
 
     log.info("tileBounds = " + tileBounds)
+    val prelimRDD = inputFriction.rdd(zoom) getOrElse
+      (throw new IOException("Can't load RDD! Ouch! " + inputFriction.getClass.getName))
+    val frictionRDD = prelimRDD.filter(U => {
+      val t = TMSUtils.tileid(U._1.get, zoom)
+      tileBounds.contains(t, true)
+    })
 
-    val width: Short = tilesize.toShort
-    val height: Short = tilesize.toShort
+    val width:Short = tilesize.toShort
+    val height:Short = tilesize.toShort
     val res = TMSUtils.resolution(zoom, tilesize)
 
     // Create a hash map lookup where the key is the tile id and the value is
@@ -263,7 +218,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
       }
 
       val startPt = startGeom._2.asInstanceOf[Point]
-      val tile: Tile = TMSUtils.latLonToTile(startPt.getY.toFloat, startPt.getX.toFloat, zoom,
+      val tile:Tile = TMSUtils.latLonToTile(startPt.getY.toFloat, startPt.getX.toFloat, zoom,
         tilesize)
       val startTileId = TMSUtils.tileid(tile.tx, tile.ty, zoom)
 
@@ -281,14 +236,16 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     // After some experimentation with different values for repartitioning, the
     // best performance seems to come from using the number of executors for this
     // job.
-    val repartitioned = if (numExecutors > 1) {
-      logInfo("Repartitioning to " + numExecutors + " partitions")
+    val numTasks = numExecutors * numCoresPerExecutor
+    val isDynamicAlloc = context.getConf.getBoolean("spark.dynamicAllocation.enabled", defaultValue = false)
+    val repartitioned = if (!isDynamicAlloc && numTasks > 1) {
+      logInfo("Repartitioning to " + numTasks + " partitions")
       val partitions = frictionRDD.partitions.length
-      if (partitions < numExecutors) {
-        frictionRDD.repartition(numExecutors)
+      if (partitions < numTasks) {
+        frictionRDD.repartition(numTasks)
       }
-      else if (partitions > numExecutors) {
-        frictionRDD.coalesce(numExecutors)
+      else if (partitions > numTasks) {
+        frictionRDD.coalesce(numTasks)
       }
       else {
         frictionRDD
@@ -310,8 +267,9 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
 
 
     // Process changes until there aren't any more
-    var counter: Long = 0
+    var counter:Long = 0
     do {
+//      val t0 = System.currentTimeMillis()
       // Use an accumulator to capture changes for the neighbor tiles as we process.
       val changesAccum = context.accumulator(new NeighborChangedPoints)(NeighborChangesAccumulator)
 
@@ -331,21 +289,25 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
       costs = previous.map(tile => {
         mapAccum += 1
         val tileid = tile._1.get
+//        val t2 = System.currentTimeMillis()
         val tileChanges = changes.get(tileid)
+//        logError("Looking up changes took " + (System.currentTimeMillis() - t2))
         if (tileChanges != null) {
           processedAccum += 1
           //          changesToProcess.dump(zoomLevel)
 
           // This tile has changes to process. Update the pixel values within the
           // tile accordingly while accumulating changes to this tile's neighbors.
-          val raster = RasterUtils.makeRasterWritable(RasterWritable.toRaster(tile._2))
+          val raster = RasterWritable.toMrGeoRaster(tile._2)
 
+//          val t1 = System.currentTimeMillis()
           processTile(tileid, raster, tileChanges, changesAccum, zoom, pixelSizeMeters, tileBounds)
+//          logError("Time for processTile on " + tileid + " is " + (System.currentTimeMillis() - t1))
 
           (tile._1, RasterWritable.toWritable(raster))
         }
         else {
-          (tile._1, new RasterWritable(tile._2))
+          (tile._1, tile._2.copy())
         }
       }).persist(StorageLevel.MEMORY_AND_DISK_SER)
 
@@ -367,24 +329,24 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
 
       logInfo("Changes after iteration " + counter + ": " + changes.totalCount())
       counter += 1
-    } while(changes.size() > 0)
-
+//      logError("Processing time for loop iteration is " + (System.currentTimeMillis() - t0))
+    } while (changes.size() > 0)
 
 
     rasterRDD = Some(RasterRDD(costs.map(tile => {
-      val sourceRaster = RasterWritable.toRaster(tile._2)
+      val sourceRaster = RasterWritable.toMrGeoRaster(tile._2)
 
       // Need to convert our raster to a single band raster for output.
-      val model = new BandedSampleModel(DataBuffer.TYPE_FLOAT, sourceRaster.getWidth,
-        sourceRaster.getHeight, 1)
-      val singleBandRaster = Raster.createWritableRaster(model, null)
-      val totalCostBand = sourceRaster.getNumBands - 1
-      var y: Int = 0
-      while (y < sourceRaster.getHeight) {
-        var x: Int = 0
-        while (x < sourceRaster.getWidth) {
-          val s: Float = sourceRaster.getSampleFloat(x, y, totalCostBand)
-          singleBandRaster.setSample(x, y, 0, s)
+      val h = sourceRaster.height()
+      val w = sourceRaster.width()
+      val singleBandRaster = MrGeoRaster.createEmptyRaster(w, h, 1, DataBuffer.TYPE_FLOAT)
+      val totalCostBand = sourceRaster.bands() - 1
+      var y:Int = 0
+      while (y < h) {
+        var x:Int = 0
+        while (x < w) {
+          val s:Float = sourceRaster.getPixelFloat(x, y, totalCostBand)
+          singleBandRaster.setPixel(x, y, 0, s)
           x += 1
         }
         y += 1
@@ -414,17 +376,16 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     *
     * The returned Bounds will not extend beyond world bounds.
     *
-    * @param maxCost How far the cost distance algorithm should go in computing distances.
-    *                Measured in seconds.
+    * @param maxCost         How far the cost distance algorithm should go in computing distances.
+    *                        Measured in seconds.
     * @param sourcePointsRDD One or more points from which the cost distance algorithm will
-    *                     compute minimum distances to all other pixels.
-    * @param minPixelValue The smallest value assigned to a pixel in the friction surface
-    *                      being used for the cost distance. Measure in seconds/meter.
+    *                        compute minimum distances to all other pixels.
+    * @param minPixelValue   The smallest value assigned to a pixel in the friction surface
+    *                        being used for the cost distance. Measure in seconds/meter.
     * @return
     */
-  def calculateBoundsFromCost(maxCost: Double, sourcePointsRDD:VectorRDD,
-      minPixelValue: Double, imageBounds: Bounds): Bounds =
-  {
+  def calculateBoundsFromCost(maxCost:Double, sourcePointsRDD:VectorRDD,
+                              minPixelValue:Double, imageBounds:Bounds):Bounds = {
     // Locate the MBR of all the source points
     val bounds = SparkVectorUtils.calculateBounds(sourcePointsRDD)
     val distanceInMeters = maxCost / minPixelValue
@@ -451,16 +412,13 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
       Math.min(trExpanded.getLat, imageBounds.n))
   }
 
-
-
-  def processTile(tileid: Long,
-      raster: WritableRaster,
-      changes: List[CostPoint],
-      changesAccum:Accumulator[NeighborChangedPoints],
-      zoom:Int,
-      pixelsize:Float,
-      tileBounds:TileBounds): Unit =
-  {
+  def processTile(tileid:Long,
+                  raster:MrGeoRaster,
+                  changes:List[CostPoint],
+                  changesAccum:Accumulator[NeighborChangedPoints],
+                  zoom:Int,
+                  pixelsize:Float,
+                  tileBounds:TileBounds):Unit = {
     val startTime = System.nanoTime()
 
     val tile = TMSUtils.tileid(tileid, zoom)
@@ -468,56 +426,58 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     // length of the pixel diagonal
     val pixelsizediag = Math.sqrt(2.0 * pixelsize * pixelsize).toFloat
 
-    val costBand = raster.getNumBands - 1 // cost band is the last band in the raster
+    val costBand = raster.bands() - 1
+    // cost band is the last band in the raster
     val multiband = costBand > 1 // if there are more than 2 bands, it is multiband friction
 
-    val width = raster.getWidth
-    val height = raster.getHeight
+    val width = raster.width()
+    val height = raster.height()
 
     @SuppressFBWarnings(value = Array("FE_FLOATING_POINT_EQUALITY"), justification = "Scala generated code")
-    @SuppressFBWarnings(value = Array("UMAC_UNCALLABLE_METHOD_OF_ANONYMOUS_CLASS"), justification = "Scala generated code")
-    case class NeighborData(dx:Int, dy:Int, multibandNdx: Int, dist:Float)
+    @SuppressFBWarnings(value = Array("UMAC_UNCALLABLE_METHOD_OF_ANONYMOUS_CLASS"),
+      justification = "Scala generated code")
+    case class NeighborData(dx:Int, dy:Int, multibandNdx:Int, dist:Float)
 
-    val UP_LEFT    = 0
-    val UP         = 1
-    val UP_RIGHT   = 2
-    val LEFT       = 3
-    val RIGHT      = 4
-    val DOWN_LEFT  = 5
-    val DOWN       = 6
+    val UP_LEFT = 0
+    val UP = 1
+    val UP_RIGHT = 2
+    val LEFT = 3
+    val RIGHT = 4
+    val DOWN_LEFT = 5
+    val DOWN = 6
     val DOWN_RIGHT = 7
 
     val neighborData = Array[NeighborData](
       new NeighborData(-1, -1, 7, pixelsizediag), // UP_LEFT),
-      new NeighborData(0, -1, 0, pixelsize),      // UP),
-      new NeighborData(1, -1, 1, pixelsizediag),  // UP_RIGHT),
-      new NeighborData(-1, 0, 6, pixelsize),      // LEFT),
-      new NeighborData(1, 0, 2, pixelsize),       // RIGHT),
-      new NeighborData(-1, 1, 5, pixelsizediag),  // DOWN_LEFT),
-      new NeighborData(0, 1, 4, pixelsize),       // DOWN),
-      new NeighborData (1, 1, 3, pixelsizediag)   // DOWN_RIGHT)
+      new NeighborData(0, -1, 0, pixelsize), // UP),
+      new NeighborData(1, -1, 1, pixelsizediag), // UP_RIGHT),
+      new NeighborData(-1, 0, 6, pixelsize), // LEFT),
+      new NeighborData(1, 0, 2, pixelsize), // RIGHT),
+      new NeighborData(-1, 1, 5, pixelsizediag), // DOWN_LEFT),
+      new NeighborData(0, 1, 4, pixelsize), // DOWN),
+      new NeighborData(1, 1, 3, pixelsizediag) // DOWN_RIGHT)
     )
 
-    def isSmaller(newcost:Float, oldcost:Float): Boolean = {
+    def isSmaller(newcost:Float, oldcost:Float):Boolean = {
       !newcost.isNaN && (oldcost.isNaN || newcost < (oldcost - 1e-7)) // Allow for floating point math inaccuracy
     }
 
-    def isSmallerMaxCost(newcost:Float, oldcost:Float): Boolean = {
+    def isSmallerMaxCost(newcost:Float, oldcost:Float):Boolean = {
       (maxCost <= 0.0 || newcost <= (maxCost + 1e-8)) &&
-          !newcost.isNaN && (oldcost.isNaN || newcost < (oldcost - 1e-7)) // Allow for floating point math inaccuracy
+      !newcost.isNaN && (oldcost.isNaN || newcost < (oldcost - 1e-7)) // Allow for floating point math inaccuracy
     }
 
     def calculateCostPoint(px:Int, py:Int, direction:Int, cost:Float) = {
       val (diag, dist) = direction match {
-      case UP | LEFT | DOWN | RIGHT => (false, pixelsize)
-      case _ => (true, pixelsizediag)
+        case UP | LEFT | DOWN | RIGHT => (false, pixelsize)
+        case _ => (true, pixelsizediag)
       }
 
       val friction = if (multiband) {
-        raster.getSampleFloat(px, py, neighborData(direction).multibandNdx)
+        raster.getPixelFloat(px, py, neighborData(direction).multibandNdx)
       }
       else {
-        raster.getSampleFloat(px, py, 0)
+        raster.getPixelFloat(px, py, 0)
       }
       val pixelcost = if (multiband) {
         friction * dist
@@ -542,30 +502,30 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
         y = height - y
       }
 
-      new CostPoint(x.toShort, y.toShort, cost,  pixelcost, diag)
+      new CostPoint(x.toShort, y.toShort, cost, pixelcost, diag)
     }
 
 
     // Store the edge values in the raster before processing it so we can compare
     // after processing to see which edge pixels changed
-    val origTopEdgeValues: Array[Float] = new Array[Float](width)
-    val origBottomEdgeValues: Array[Float] = new Array[Float](width)
-    val origLeftEdgeValues: Array[Float] = new Array[Float](height)
-    val origRightEdgeValues: Array[Float] = new Array[Float](height)
+    val origTopEdgeValues:Array[Float] = new Array[Float](width)
+    val origBottomEdgeValues:Array[Float] = new Array[Float](width)
+    val origLeftEdgeValues:Array[Float] = new Array[Float](height)
+    val origRightEdgeValues:Array[Float] = new Array[Float](height)
 
-    val preStart: Double = System.nanoTime()
+    val preStart:Double = System.nanoTime()
 
-    var px: Int = 0
+    var px:Int = 0
     while (px < width) {
-      origTopEdgeValues(px) = raster.getSampleFloat(px, 0, costBand)
-      origBottomEdgeValues(px) = raster.getSampleFloat(px, height - 1, costBand)
+      origTopEdgeValues(px) = raster.getPixelFloat(px, 0, costBand)
+      origBottomEdgeValues(px) = raster.getPixelFloat(px, height - 1, costBand)
       px += 1
     }
 
-    var py: Int = 0
+    var py:Int = 0
     while (py < height) {
-      origLeftEdgeValues(py) = raster.getSampleFloat(0, py, costBand)
-      origRightEdgeValues(py) = raster.getSampleFloat(width - 1, py, costBand)
+      origLeftEdgeValues(py) = raster.getPixelFloat(0, py, costBand)
+      origRightEdgeValues(py) = raster.getPixelFloat(width - 1, py, costBand)
       py += 1
     }
 
@@ -573,13 +533,18 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     val queue = new java.util.PriorityQueue[CostPoint]()
     changes.foreach(pt => {
       // we'll do the cost check here since maintaining the priority queue is expensive
-      val currentCost = raster.getSampleFloat(pt.px, pt.py, costBand)
+      val currentCost = raster.getPixelFloat(pt.px, pt.py, costBand)
 
       // in the single band friction, the edge point (point.pixelCost) has 1/2 the total cost,
       // calculate the rest.  Add the other part...
       if (!multiband) {
-        val friction = raster.getSampleFloat(pt.px, pt.py, 0)
-        pt.pixelCost += (friction * (if (pt.diagonal) pixelsizediag else pixelsize) * 0.5f)
+        val friction = raster.getPixelFloat(pt.px, pt.py, 0)
+        pt.pixelCost += (friction * (if (pt.diagonal) {
+          pixelsizediag
+        }
+        else {
+          pixelsize
+        }) * 0.5f)
       }
 
       val newCost = pt.cost + pt.pixelCost
@@ -598,32 +563,35 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     // for the neighbor point. If a point around the perimeter of the tile
     // changes, then add an entry to local changedPoints.
 
-    val preProcessingTime: Double = System.nanoTime() - preStart
-    var totalEnqueue: Double = 0.0
-    var totalDequeue: Double = 0.0
-    var counter: Long = 0L
+    val preProcessingTime:Double = System.nanoTime() - preStart
+    var totalEnqueue:Double = 0.0
+    var totalDequeue:Double = 0.0
+    var counter:Long = 0L
 
+    val costPointPool = new mutable.Queue[CostPoint]()
+//    var reuseCount:Long = 0
+//    var newCount:Long = 0
     // Process the queue of changed points until it is empty
     while (!queue.isEmpty) {
-//      counter += 1
-//      println("pass: " + counter + " queue size: " + queue.size())
-//      val q = new java.util.PriorityQueue[CostPoint]()
-//      for (p <- queue.toArray) {
-//        p match {
-//        case cp: CostPoint => q.add(cp)
-//        case _ =>
-//        }
-//      }
-//
-//      var cnt = 0
-//
-//      while (!q.isEmpty) {
-//        val cp = q.poll()
-//        println("  " + cnt + " x: " + (cp.px - 74) + " y: " + (cp.py - 197) + " cost: " +
-//            cp.cost + " pc: " + cp.pixelCost + " tot: " + (cp.cost + cp.pixelCost))
-////        println("%2d\t%2d\t%6.3f".format(cp.px - 74, cp.py - 197, cp.cost + cp.pixelCost))
-//        cnt += 1
-//      }
+      //      counter += 1
+      //      println("pass: " + counter + " queue size: " + queue.size())
+      //      val q = new java.util.PriorityQueue[CostPoint]()
+      //      for (p <- queue.toArray) {
+      //        p match {
+      //        case cp: CostPoint => q.add(cp)
+      //        case _ =>
+      //        }
+      //      }
+      //
+      //      var cnt = 0
+      //
+      //      while (!q.isEmpty) {
+      //        val cp = q.poll()
+      //        println("  " + cnt + " x: " + (cp.px - 74) + " y: " + (cp.py - 197) + " cost: " +
+      //            cp.cost + " pc: " + cp.pixelCost + " tot: " + (cp.cost + cp.pixelCost))
+      ////        println("%2d\t%2d\t%6.3f".format(cp.px - 74, cp.py - 197, cp.cost + cp.pixelCost))
+      //        cnt += 1
+      //      }
 
       var t0 = System.nanoTime()
 
@@ -631,12 +599,12 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
 
       totalDequeue = totalDequeue + (System.nanoTime() - t0)
 
-      val newCost =  point.cost + point.pixelCost
-      val currentCost = raster.getSampleFloat(point.px, point.py, costBand)
+      val newCost = point.cost + point.pixelCost
+      val currentCost = raster.getPixelFloat(point.px, point.py, costBand)
 
       // check for a lower cost
       if (isSmallerMaxCost(newCost, currentCost)) {
-        raster.setSample(point.px, point.py, costBand, newCost)
+        raster.setPixel(point.px, point.py, costBand, newCost)
 
         // Since this point has a new cost, check to see if the cost to each
         // of its neighbors is smaller than the current cost assigned to those
@@ -655,21 +623,36 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
             // compute the new cost to the neighbor
             val friction = if (multiband) {
               // multiband friction
-              raster.getSampleFloat(point.px, point.py, direction.multibandNdx)
+              raster.getPixelFloat(point.px, point.py, direction.multibandNdx)
             }
             else {
-              (raster.getSampleFloat(point.px, point.py, 0) +
-                  raster.getSampleFloat(pxNeighbor, pyNeighbor, 0)) * 0.5f
+              (raster.getPixelFloat(point.px, point.py, 0) +
+               raster.getPixelFloat(pxNeighbor, pyNeighbor, 0)) * 0.5f
             }
 
             if (!friction.isNaN) {
-              val currentNeighborCost = raster.getSampleFloat(pxNeighbor, pyNeighbor, costBand)
+              val currentNeighborCost = raster.getPixelFloat(pxNeighbor, pyNeighbor, costBand)
               val pixelCost = friction * direction.dist
               val neighborCost = newCost + pixelCost
 
               if (isSmallerMaxCost(neighborCost, currentNeighborCost)) {
                 // the costpoint contains the current friction and cost to get to the neighbor
-                val neighborPoint = new CostPoint(pxNeighbor, pyNeighbor, newCost, pixelCost)
+                val neighborPoint = {
+                  if (costPointPool.isEmpty) {
+//                    newCount += 1
+                    new CostPoint(pxNeighbor, pyNeighbor, newCost, pixelCost)
+                  }
+                  else {
+//                    reuseCount += 1
+                    val cp = costPointPool.dequeue()
+                    cp.px = pxNeighbor
+                    cp.py = pyNeighbor
+                    cp.cost = newCost
+                    cp.pixelCost = pixelCost
+                    cp.diagonal = false
+                    cp
+                  }
+                }
 
                 t0 = System.nanoTime()
 
@@ -681,10 +664,15 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
           }
           neighbor += 1
         }
+        costPointPool.enqueue(point)
       }
     }
 
 
+//    logError("reuseCount = " + reuseCount)
+//    logError("newCount = " + newCount)
+//    logError("totalDequeue = " + totalDequeue)
+//    logError("totalEnqueue = " + totalEnqueue)
     val t0 = System.nanoTime()
     val edgePoints = new NeighborChangedPoints
 
@@ -697,7 +685,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     // Find edge pixels that have changed so we know how to send messages
     px = 0
     while (px < width) {
-      val currentTopCost = raster.getSampleFloat(px, 0, costBand)
+      val currentTopCost = raster.getPixelFloat(px, 0, costBand)
       val oldTopCost = origTopEdgeValues(px)
 
       if (isSmaller(currentTopCost, oldTopCost)) {
@@ -727,7 +715,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
         }
       }
 
-      val currentBottomCost = raster.getSampleFloat(px, height - 1, costBand)
+      val currentBottomCost = raster.getPixelFloat(px, height - 1, costBand)
       val oldBottomCost = origBottomEdgeValues(px)
 
       if (isSmaller(currentBottomCost, oldBottomCost)) {
@@ -761,7 +749,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     // Don't process corner pixels again (already handled as part of top/bottom processing)
     py = 0
     while (py < height) {
-      val currentLeftCost = raster.getSampleFloat(0, py, costBand)
+      val currentLeftCost = raster.getPixelFloat(0, py, costBand)
       val oldLeftCost = origLeftEdgeValues(py)
 
       if (isSmaller(currentLeftCost, oldLeftCost)) {
@@ -782,7 +770,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
         }
       }
 
-      val currentRightCost = raster.getSampleFloat(width - 1, py, costBand)
+      val currentRightCost = raster.getPixelFloat(width - 1, py, costBand)
       val oldRightCost = origRightEdgeValues(py)
 
       if (isSmaller(currentRightCost, oldRightCost)) {
@@ -816,43 +804,64 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
       changesAccum.add(edgePoints)
     }
 
-    val postProcessingTime: Double = System.nanoTime() - t0
-    val totalTime: Double = System.nanoTime() - startTime
+    val postProcessingTime:Double = System.nanoTime() - t0
+    val totalTime:Double = System.nanoTime() - startTime
   }
 
-
-
-  override def writeExternal(out: ObjectOutput): Unit = {
+  override def writeExternal(out:ObjectOutput):Unit = {
     out.writeFloat(maxCost)
   }
 
-  override def readExternal(in: ObjectInput): Unit = {
+  override def readExternal(in:ObjectInput):Unit = {
     maxCost = in.readFloat()
   }
 
-  override def registerClasses(): Array[Class[_]] = {
+  override def registerClasses():Array[Class[_]] = {
     GeometryFactory.getClasses ++ Array[Class[_]](classOf[FeatureIdWritable], classOf[Pixel])
   }
 
-  def buildInitialPoints(frictionRDD: RDD[(TileIdWritable, RasterWritable)],
-      startingPts: mutable.Map[Long, mutable.Set[Pixel]], context:SparkContext, pixelsize:Float) = {
+  def buildInitialPoints(frictionRDD:RDD[(TileIdWritable, RasterWritable)],
+                         startingPts:mutable.Map[Long, mutable.Set[Pixel]],
+                         context:SparkContext, pixelsize:Float) = {
 
     val initialChangesAccum = context.accumulator(new NeighborChangedPoints)(NeighborChangesAccumulator)
 
+//    val dp = DataProviderFactory.getMrsImageDataProvider(imageName, DataProviderFactory.AccessMode.READ,
+//      providerProperties)
+//    val tileReader= dp.getMrsTileReader(zoom)
+//    val ncp = new NeighborChangedPoints
+//    startingPts.foreach(U => {
+//      val raster = tileReader.get(new TileIdWritable(U._1))
+//      val pointsInTile = startingPts.get(U._1).get
+//      for (startPixel <- pointsInTile) {
+//        val pixelcost = if (raster.bands() > 2) {
+//          0.0f
+//        }
+//        else {
+//          // add a negative 1/2 friction, so the start point cost calculatation will be zero
+//          -raster.getPixelFloat(startPixel.px.toInt, startPixel.py.toInt, 0) * pixelsize * 0.5f
+//        }
+//
+//        // starting pixel has no initial cost and no friction to get to that point
+//        logInfo("Start tile " + U._1 + " and point " + startPixel.px + ", " + startPixel.py)
+//        ncp.add(U._1, new CostPoint(startPixel.px.toShort, startPixel.py.toShort, 0.0f, pixelcost))
+//      }
+//    })
+//    ncp
     frictionRDD.foreach(tile => {
       val tileid = tile._1.get()
       if (startingPts.contains(tileid)) {
-        val raster = RasterWritable.toRaster(tile._2)
+        val raster = RasterWritable.toMrGeoRaster(tile._2)
         val pointsInTile = startingPts.get(tileid).get
 
         val costPoints = new ListBuffer[CostPoint]()
         for (startPixel <- pointsInTile) {
-          val pixelcost = if (raster.getNumBands > 2) {
+          val pixelcost = if (raster.bands() > 2) {
             0.0f
           }
           else {
             // add a negative 1/2 friction, so the start point cost calculatation will be zero
-            -raster.getSampleFloat(startPixel.px.toInt, startPixel.py.toInt, 0) * pixelsize * 0.5f
+            -raster.getPixelFloat(startPixel.px.toInt, startPixel.py.toInt, 0) * pixelsize * 0.5f
           }
 
           // starting pixel has no initial cost and no friction to get to that point
@@ -868,50 +877,108 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     initialChangesAccum.value
   }
 
-  def makeRasters(frictionRDD: RDD[(TileIdWritable, RasterWritable)]) = {
+  def makeRasters(frictionRDD:RDD[(TileIdWritable, RasterWritable)]) = {
     frictionRDD.map(tile => {
       val tileid = tile._1.get()
-      val raster = RasterWritable.toRaster(tile._2)
+      val raster = RasterWritable.toMrGeoRaster(tile._2)
 
       (new TileIdWritable(tileid), RasterWritable.toWritable(addCostBand(raster)))
     })
   }
 
-  def addCostBand(raster:Raster) = {
-    val srcBands = raster.getNumBands
+  def addCostBand(raster:MrGeoRaster) = {
+    val srcBands = raster.bands()
     val dstBands = srcBands + 1
 
-    val height = raster.getHeight
-    val width = raster.getWidth
+    val height = raster.height()
+    val width = raster.width()
 
-    val model = new BandedSampleModel(DataBuffer.TYPE_FLOAT, width, height, dstBands)
-    val dstRaster = Raster.createWritableRaster(model, null)
+    val dstRaster = MrGeoRaster.createEmptyRaster(width, height, dstBands, DataBuffer.TYPE_FLOAT)
 
-    val sourceValue: Array[Float] = new Array[Float](srcBands)
-    val newValue: Array[Float] = new Array[Float](dstBands)
-
-    var y: Int = 0
+    val totalCostBand = dstBands - 1
+    var y:Int = 0
     while (y < height) {
-      var x: Int = 0
+      var x:Int = 0
       while (x < width) {
-        // read all the bands into an array
-        raster.getPixel(x, y, sourceValue)
-
         // copy the bands...
-        var b: Int = 0
+        var b:Int = 0
         while (b < srcBands) {
-          newValue(b) = sourceValue(b)
+          // read all the bands into an array
+          val v = raster.getPixelFloat(x, y, b)
+          dstRaster.setPixel(x, y, b, v)
           b += 1
         }
-        // the last band is the total cost, initialize it to NaN
-        newValue(dstBands - 1) = Float.NaN
-
-        dstRaster.setPixel(x, y, newValue)
+        // initial the total cost to NaN
+        dstRaster.setPixel(x, y, totalCostBand, Float.NaN)
         x += 1
       }
       y += 1
     }
     dstRaster
+  }
+
+  private[mapalgebra] def this(friction:RasterMapOp, maxCost:Float, zoom:Int,
+                               sourcePoints:Array[Double]) = {
+    this()
+
+    this.friction = Some(friction)
+    this.maxCost = maxCost
+    this.sourcePoints = Some(sourcePoints)
+    this.srcVector = None
+    this.frictionZoom = if (zoom > 0) {
+      Some(zoom)
+    }
+    else {
+      None
+    }
+  }
+
+  private[mapalgebra] def this(node:ParserNode, variables:String => Option[ParserNode]) = {
+    this()
+
+    val usage:String = "CostDistance takes the following arguments " +
+                       "(source points, [friction zoom level], friction raster, [maxCost], [minX, minY, maxX, maxY])"
+
+    val numChildren = node.getNumChildren
+    if (numChildren < 2 || numChildren > 8) {
+      throw new ParserException(usage)
+    }
+
+    var nodeIndex:Int = 0
+    srcVector = VectorMapOp.decodeToVector(node.getChild(nodeIndex), variables)
+    sourcePoints = None
+    nodeIndex += 1
+
+    // Check for optional friction zoom level
+    MapOp.decodeInt(node.getChild(nodeIndex)) match {
+      case Some(i) =>
+        frictionZoom = Some(i)
+        nodeIndex += 1
+      case _ =>
+    }
+
+    // Check that there are enough required arguments left
+    if (numChildren <= nodeIndex) {
+      throw new ParserException(usage)
+    }
+
+    friction = RasterMapOp.decodeToRaster(node.getChild(nodeIndex), variables)
+    nodeIndex += 1
+
+    // Check for optional max cost.
+    if ((numChildren == (nodeIndex + 1)) || (numChildren == (nodeIndex + 5))) {
+      MapOp.decodeDouble(node.getChild(nodeIndex), variables) match {
+        case Some(d) =>
+          maxCost = if (d < 0) {
+            -1
+          }
+          else {
+            d.toFloat
+          }
+          nodeIndex += 1
+        case _ =>
+      }
+    }
   }
 }
 
@@ -924,12 +991,13 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
 // pixelcost: cost for the single pixel (friction * pixel size in meters)
 //    OR       if an edge pixel and single band friction, it is the 1/2 cost
 // diag: is the direction a diagonal (true) or straight (false).  Only relevent for edge pixels
-class CostPoint(var px: Short, var py: Short, var cost: Float, var pixelCost: Float, var diagonal:Boolean = false) extends Externalizable with Ordered[CostPoint] {
+class CostPoint(var px:Short, var py:Short, var cost:Float, var pixelCost:Float,
+                var diagonal:Boolean = false) extends Externalizable with Ordered[CostPoint] {
   def this() = {
     this(-1, -1, 0.0f, 0.0f)
   }
 
-  override def writeExternal(out: ObjectOutput): Unit = {
+  override def writeExternal(out:ObjectOutput):Unit = {
     out.writeShort(px)
     out.writeShort(py)
     out.writeFloat(cost)
@@ -937,7 +1005,7 @@ class CostPoint(var px: Short, var py: Short, var cost: Float, var pixelCost: Fl
     out.writeBoolean(diagonal)
   }
 
-  override def readExternal(in: ObjectInput): Unit = {
+  override def readExternal(in:ObjectInput):Unit = {
     px = in.readShort()
     py = in.readShort()
     cost = in.readFloat()
@@ -946,7 +1014,7 @@ class CostPoint(var px: Short, var py: Short, var cost: Float, var pixelCost: Fl
   }
 
 
-  override def compare(that: CostPoint): Int = {
+  override def compare(that:CostPoint):Int = {
     val tc = cost + pixelCost
     val thattc = that.cost + that.pixelCost
 
@@ -961,14 +1029,14 @@ class CostPoint(var px: Short, var py: Short, var cost: Float, var pixelCost: Fl
     }
   }
 
-  override def equals(obj: scala.Any): Boolean = {
+  override def equals(obj:scala.Any):Boolean = {
     obj match {
-    case cp: CostPoint => compare(cp) == 0
-    case _ => false
+      case cp:CostPoint => compare(cp) == 0
+      case _ => false
     }
   }
 
-  override def hashCode: Int = {
+  override def hashCode:Int = {
     new HashCodeBuilder(29, 5).append(px).append(py).append(cost).append(pixelCost).append(diagonal).toHashCode
   }
 }
@@ -982,9 +1050,9 @@ class NeighborChangedPoints extends Externalizable with Logging {
   // direction is from the neighbor tile toward the tile in the key.
   private val changes = new util.HashMap[Long, Seq[CostPoint]]()
 
-  def size(): Int = changes.size()
+  def size():Int = changes.size()
 
-  def dump(zoomLevel: Int) = {
+  def dump(zoomLevel:Int) = {
     val iter = changes.keySet().iterator()
     while (iter.hasNext) {
       val tileId = iter.next()
@@ -1004,15 +1072,15 @@ class NeighborChangedPoints extends Externalizable with Logging {
     map.toMap
   }
 
-  def totalCount(): Int = {
-    var cnt: Int = 0
+  def totalCount():Int = {
+    var cnt:Int = 0
 
     changes.values().foreach(value => cnt += value.length)
 
     cnt
   }
 
-  def put(tileId: Long, changedPoints: Seq[CostPoint]): Unit = {
+  def put(tileId:Long, changedPoints:Seq[CostPoint]):Unit = {
     val value = changes.get(tileId)
     if (value == null) {
       changes.put(tileId, changedPoints)
@@ -1022,7 +1090,8 @@ class NeighborChangedPoints extends Externalizable with Logging {
     }
 
   }
-  def add(tileId: Long, cost: CostPoint): Unit = {
+
+  def add(tileId:Long, cost:CostPoint):Unit = {
     val value = changes.get(tileId)
     if (value == null) {
       changes.put(tileId, Array[CostPoint](cost))
@@ -1032,13 +1101,13 @@ class NeighborChangedPoints extends Externalizable with Logging {
     }
   }
 
-  def addPoints(tileId: Long, points: Seq[CostPoint]): Unit = {
+  def addPoints(tileId:Long, points:Seq[CostPoint]):Unit = {
     put(tileId, points)
   }
 
-  def keySet(): util.Set[Long] = changes.keySet()
+  def keySet():util.Set[Long] = changes.keySet()
 
-  def get(tileId: Long): List[CostPoint] = {
+  def get(tileId:Long):List[CostPoint] = {
     if (changes.containsKey(tileId)) {
       changes.get(tileId).toList
     }
@@ -1048,14 +1117,14 @@ class NeighborChangedPoints extends Externalizable with Logging {
   }
 
 
-  def +=(other: NeighborChangedPoints): NeighborChangedPoints = {
+  def +=(other:NeighborChangedPoints):NeighborChangedPoints = {
     other.changes.foreach(change => {
       put(change._1, change._2)
     })
     this
   }
 
-  override def readExternal(in: ObjectInput): Unit = {
+  override def readExternal(in:ObjectInput):Unit = {
     val tiles = in.readInt()
 
     var tile = 0
@@ -1070,7 +1139,7 @@ class NeighborChangedPoints extends Externalizable with Logging {
         val cp = new CostPoint()
         cp.readExternal(in)
 
-        costs(change)  = cp
+        costs(change) = cp
         change += 1
       }
 
@@ -1079,7 +1148,7 @@ class NeighborChangedPoints extends Externalizable with Logging {
     }
   }
 
-  override def writeExternal(out: ObjectOutput): Unit = {
+  override def writeExternal(out:ObjectOutput):Unit = {
     out.writeInt(changes.size())
     changes.foreach(change => {
       out.writeLong(change._1)
@@ -1093,14 +1162,13 @@ class NeighborChangedPoints extends Externalizable with Logging {
 
 // An accumulator used within Spark to accumulate changes to all of the tiles
 // processed during a single map pass of the cost distance algorithm.
-object NeighborChangesAccumulator extends AccumulatorParam[NeighborChangedPoints]
-{
-  override def addInPlace(r1: NeighborChangedPoints,
-      r2: NeighborChangedPoints): NeighborChangedPoints = {
+object NeighborChangesAccumulator extends AccumulatorParam[NeighborChangedPoints] {
+  override def addInPlace(r1:NeighborChangedPoints,
+                          r2:NeighborChangedPoints):NeighborChangedPoints = {
     r1 += r2
   }
 
-  override def zero(initialValue: NeighborChangedPoints): NeighborChangedPoints = {
+  override def zero(initialValue:NeighborChangedPoints):NeighborChangedPoints = {
     new NeighborChangedPoints
   }
 }

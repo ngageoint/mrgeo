@@ -26,106 +26,106 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
 
-@SuppressWarnings("static-method")
+@SuppressWarnings("all") // test code, not included in production
 public class ModeAggregatorTest
 {
-  private static double epsilon = 0.0000001;
+private static double epsilon = 0.0000001;
 
-  @Test
-  @Category(UnitTest.class)
-  public void testDouble()
-  {
-    double[] values = {0.21, 0.32, 0.32, 0.54};
-    double nodata = Double.NaN;
-    double result;
-    Aggregator agg = new ModeAggregator();
+@Test
+@Category(UnitTest.class)
+public void testDouble()
+{
+  double[] values = {0.21, 0.32, 0.32, 0.54};
+  double nodata = Double.NaN;
+  double result;
+  Aggregator agg = new ModeAggregator();
 
-    //Test normal case
-    result = agg.aggregate(values, nodata);
-    assertEquals(0.32, result, epsilon);
+  //Test normal case
+  result = agg.aggregate(values, nodata);
+  assertEquals(0.32, result, epsilon);
 
-    //Test nodata cases
-    values[0] = nodata;
-    result = agg.aggregate(values, nodata);
-    assertEquals(0.32, result, epsilon);
+  //Test nodata cases
+  values[0] = nodata;
+  result = agg.aggregate(values, nodata);
+  assertEquals(0.32, result, epsilon);
 
-    values[1] = nodata;
-    result = agg.aggregate(values, nodata);
-    assertThat((double)result, AnyOf.anyOf(IsCloseTo.closeTo(0.32f, epsilon), IsCloseTo.closeTo(0.54f, epsilon)));
+  values[1] = nodata;
+  result = agg.aggregate(values, nodata);
+  assertThat((double) result, AnyOf.anyOf(IsCloseTo.closeTo(0.32f, epsilon), IsCloseTo.closeTo(0.54f, epsilon)));
 
-    values[2] = nodata;
-    result = agg.aggregate(values, nodata);
-    assertEquals(0.54, result, epsilon);
+  values[2] = nodata;
+  result = agg.aggregate(values, nodata);
+  assertEquals(0.54, result, epsilon);
 
-    values[3] = nodata;
-    result = agg.aggregate(values, nodata);
-    assertEquals(nodata, result, epsilon);
- 
-  }
+  values[3] = nodata;
+  result = agg.aggregate(values, nodata);
+  assertEquals(nodata, result, epsilon);
 
-  @Test
-  @Category(UnitTest.class)
-  public void testFloat()
-  {
-    float[] values = {0.21f, 0.32f, 0.32f, 0.54f};
-    float nodata = -9999.0f;
-    float result;
-    Aggregator agg = new ModeAggregator();
+}
 
-    //Test normal case
-    result = agg.aggregate(values, nodata);
-    assertEquals(0.32, result, epsilon);
+@Test
+@Category(UnitTest.class)
+public void testFloat()
+{
+  float[] values = {0.21f, 0.32f, 0.32f, 0.54f};
+  float nodata = -9999.0f;
+  float result;
+  Aggregator agg = new ModeAggregator();
 
-    //Test nodata cases
-    values[0] = nodata;
-    result = agg.aggregate(values, nodata);
-    assertEquals(0.32, result, epsilon);
- 
-    values[1] = nodata;
-    result = agg.aggregate(values, nodata);
-    //assertEquals(0.54, result, epsilon);
-    assertThat((double)result, AnyOf.anyOf(IsCloseTo.closeTo(0.32f, epsilon), IsCloseTo.closeTo(0.54f, epsilon)));
+  //Test normal case
+  result = agg.aggregate(values, nodata);
+  assertEquals(0.32, result, epsilon);
 
-    values[2] = nodata;
-    result = agg.aggregate(values, nodata);
-    assertEquals(0.54, result, epsilon);
- 
-    values[3] = nodata;
-    result = agg.aggregate(values, nodata);
-    assertEquals(nodata, result, epsilon);
- 
-  }
+  //Test nodata cases
+  values[0] = nodata;
+  result = agg.aggregate(values, nodata);
+  assertEquals(0.32, result, epsilon);
 
-  @Test
-  @Category(UnitTest.class)
-  public void testInt()
-  {
-    int[] values = {1, 2, 2, 4};
-    int nodata = -9999;
-    int result;
-    Aggregator agg = new ModeAggregator();
+  values[1] = nodata;
+  result = agg.aggregate(values, nodata);
+  //assertEquals(0.54, result, epsilon);
+  assertThat((double) result, AnyOf.anyOf(IsCloseTo.closeTo(0.32f, epsilon), IsCloseTo.closeTo(0.54f, epsilon)));
 
-    //Test normal case
-    result = agg.aggregate(values, nodata);
-    assertEquals(2, result);
+  values[2] = nodata;
+  result = agg.aggregate(values, nodata);
+  assertEquals(0.54, result, epsilon);
 
-    //Test nodata cases
-    values[0] = nodata;
-    result = agg.aggregate(values, nodata);
-    assertEquals(2, result);
- 
-    values[1] = nodata;
-    result = agg.aggregate(values, nodata);
-    assertEquals(2, result);
- 
-    values[2] = nodata;
-    result = agg.aggregate(values, nodata);
-    assertEquals(4, result);
- 
-    values[3] = nodata;
-    result = agg.aggregate(values, nodata);
-    assertEquals(nodata, result);
- 
-  }
+  values[3] = nodata;
+  result = agg.aggregate(values, nodata);
+  assertEquals(nodata, result, epsilon);
+
+}
+
+@Test
+@Category(UnitTest.class)
+public void testInt()
+{
+  int[] values = {1, 2, 2, 4};
+  int nodata = -9999;
+  int result;
+  Aggregator agg = new ModeAggregator();
+
+  //Test normal case
+  result = agg.aggregate(values, nodata);
+  assertEquals(2, result);
+
+  //Test nodata cases
+  values[0] = nodata;
+  result = agg.aggregate(values, nodata);
+  assertEquals(2, result);
+
+  values[1] = nodata;
+  result = agg.aggregate(values, nodata);
+  assertEquals(2, result);
+
+  values[2] = nodata;
+  result = agg.aggregate(values, nodata);
+  assertEquals(4, result);
+
+  values[3] = nodata;
+  result = agg.aggregate(values, nodata);
+  assertEquals(nodata, result);
+
+}
 
 }

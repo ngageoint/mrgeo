@@ -23,29 +23,51 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ContextResolver;
+import javax.ws.rs.ext.Providers;
 
 /**
  * @author Steve Ingram
  *         Date: 11/18/13
  */
 @Path("/")
-public class VersionResource {
+public class VersionResource
+{
+
+@Context
+Providers providers;
 
 @Context
 VersionService service;
 
 @GET
 @Produces("application/json")
-public Response getVersionAtApiRoot() {
-    return Response.ok().entity(service.getVersionJson()).type("application/json").build();
+public Response getVersionAtApiRoot()
+{
+  getService();
+  return Response.ok().entity(service.getVersionJson()).type("application/json").build();
 }
 
 @SuppressFBWarnings(value = "JAXRS_ENDPOINT", justification = "verified")
 @GET
 @Path("/version")
 @Produces("application/json")
-public Response getVersion() {
-    return Response.ok().entity( service.getVersionJson() ).type("application/json").build();
+public Response getVersion()
+{
+  getService();
+  return Response.ok().entity(service.getVersionJson()).type("application/json").build();
 }
+
+private void getService()
+{
+  if (service == null)
+  {
+    ContextResolver<VersionService> resolver =
+        providers.getContextResolver(VersionService.class, MediaType.WILDCARD_TYPE);
+    service = resolver.getContext(VersionService.class);
+  }
+}
+
 }

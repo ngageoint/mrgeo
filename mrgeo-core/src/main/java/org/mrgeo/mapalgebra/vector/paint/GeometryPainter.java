@@ -19,6 +19,7 @@ package org.mrgeo.mapalgebra.vector.paint;
 import org.mrgeo.geometry.*;
 import org.mrgeo.geometry.Point;
 import org.mrgeo.geometry.Polygon;
+import org.mrgeo.utils.FloatUtils;
 import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,6 @@ import java.awt.image.WritableRaster;
  * This class is not thread safe or re-entrant. The final is here to help out the compiler.
  *
  * @author jason.surratt
- *
  */
 public final class GeometryPainter
 {
@@ -43,13 +43,13 @@ private static final Logger log = LoggerFactory.getLogger(GeometryPainter.class)
 
 // Image bounds is in pixels and should not be confused with the world bounds.
 // Rectangle bounds;
-Graphics2D gr;
+private Graphics2D gr;
 
-WritableRaster raster;
+private WritableRaster raster;
 
-Color fillColor;
-Color backgroundColor;
-AffineTransform transform = new AffineTransform();
+private Color fillColor;
+private Color backgroundColor;
+private AffineTransform transform = new AffineTransform();
 
 public GeometryPainter(final Graphics2D gr, final WritableRaster raster, final Color fillColor,
     final Color backgroundColor)
@@ -79,7 +79,16 @@ public Color getFillColor()
 {
   return fillColor;
 }
-public AffineTransform getTransform() { return transform; }
+
+public void setFillColor(final Color color)
+{
+  fillColor = color;
+}
+
+public AffineTransform getTransform()
+{
+  return transform;
+}
 
 public void paint(final Geometry g)
 {
@@ -218,7 +227,8 @@ public void paintRings(final GeometryCollection gc)
   }
 }
 
-public void paintEllipse(Point center, double major, double minor, double orientation) {
+public void paintEllipse(Point center, double major, double minor, double orientation)
+{
   gr.setColor(fillColor);
   gr.setStroke(new BasicStroke(1));
 
@@ -229,7 +239,7 @@ public void paintEllipse(Point center, double major, double minor, double orient
 
   transform.transform(new Point2D.Double(center.getX(), center.getY()), dst);
 
-  if (orientation != 0.0)
+  if (!FloatUtils.isEqual(orientation, 0.0))
   {
     gr.rotate(-orientation, dst.getX(), dst.getY());
   }
@@ -238,12 +248,11 @@ public void paintEllipse(Point center, double major, double minor, double orient
   gr.fill(ellipse);
 
   // rotate back
-  if (orientation != 0.0)
+  if (!FloatUtils.isEqual(orientation, 0.0))
   {
     gr.rotate(orientation, dst.getX(), dst.getY());
   }
 }
-
 
 public void setBackGroundColor(final Color color)
 {
@@ -253,7 +262,6 @@ public void setBackGroundColor(final Color color)
 /**
  * Set the real world boundary (e.g. lat/lng) of the image that is being painted. This
  * reconfigures the matrix of the graphics object to make painting in real coordinates work.
- *
  */
 public void setBounds(final Bounds b)
 {
@@ -269,11 +277,6 @@ public void setBounds(final Bounds b)
   transform = new AffineTransform(scaleX, 0.0, 0.0, -scaleY, xlateX, xlateY);
 
   // System.out.println("xform: " + transform);
-}
-
-public void setFillColor(final Color color)
-{
-  fillColor = color;
 }
 
 private void buildRing(final Path2D.Double path, final LineString ring)

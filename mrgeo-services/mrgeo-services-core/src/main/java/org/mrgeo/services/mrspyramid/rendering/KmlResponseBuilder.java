@@ -47,6 +47,7 @@ public String getMimeType()
 }
 
 @Override
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 public Response getResponse(final String pyrName, final Bounds bounds, final int width,
     final int height, final ColorScale cs, final String reqUrl, final int zoomLevel,
     final ProviderProperties providerProperties)
@@ -57,18 +58,13 @@ public Response getResponse(final String pyrName, final Bounds bounds, final int
         .asKml(pyrName, bounds, reqUrl, providerProperties);
     final String type = new MimetypesFileTypeMap().getContentType(getFormatSuffix());
     final String headerInfo = "attachment; filename=" + pyrName + "." + getFormatSuffix();
-    return Response.ok(kmlBody, type).header("Content-Disposition", headerInfo).header(
-        "Content-type", getMimeType()).build();
+    return Response.ok()
+        .entity(kmlBody)
+        .encoding(type)
+        .header("Content-Disposition", headerInfo)
+        .header("Content-type", getMimeType()).build();
   }
   catch (final IOException e)
-  {
-    if (e.getMessage() != null)
-    {
-      return Response.serverError().entity(e.getMessage()).build();
-    }
-    return Response.serverError().entity("Internal Error").build();
-  }
-  catch (final Exception e)
   {
     if (e.getMessage() != null)
     {

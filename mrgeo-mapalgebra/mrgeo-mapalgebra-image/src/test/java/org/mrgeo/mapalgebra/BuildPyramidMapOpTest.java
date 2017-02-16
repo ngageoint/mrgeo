@@ -16,20 +16,22 @@
 
 package org.mrgeo.mapalgebra;
 
-import org.junit.*;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.TestName;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.mapalgebra.parser.ParserException;
-import org.mrgeo.test.LocalRunnerTest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
 @Ignore
-public class BuildPyramidMapOpTest extends LocalRunnerTest
+@SuppressWarnings("all") // Test code, not included in production
+public class BuildPyramidMapOpTest
 {
 @SuppressWarnings("unused")
 private static final Logger log = LoggerFactory.getLogger(BuildPyramidMapOpTest.class);

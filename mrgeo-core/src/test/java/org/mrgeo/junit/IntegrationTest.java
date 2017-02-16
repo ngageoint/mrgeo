@@ -16,4 +16,6 @@
 
 package org.mrgeo.junit;
 
-public interface IntegrationTest { /* category marker */}
+public interface IntegrationTest
+{ /* category marker */
+}

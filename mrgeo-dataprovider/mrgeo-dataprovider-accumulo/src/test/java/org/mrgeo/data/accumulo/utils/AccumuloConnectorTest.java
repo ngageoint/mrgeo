@@ -26,31 +26,37 @@ import org.junit.experimental.categories.Category;
 import org.mrgeo.junit.UnitTest;
 
 
+@SuppressWarnings("all") // Test code, not included in production
 public class AccumuloConnectorTest
 {
 
-  protected String u = "root";
-  protected String pw = "secret";
-  protected String inst = "accumulo";
-  protected String zoo = "localhost:2181";
+protected String u = "root";
+protected String pw = "secret";
+protected String inst = "accumulo";
+protected String zoo = "localhost:2181";
 
-  
-  @BeforeClass
-  public static void init() throws Exception{} // end init
 
-  @Before
-  public void setup(){} // end setup
-  
+@BeforeClass
+public static void init() throws Exception
+{
+} // end init
 
-  @Ignore
-  @Test
-  @Category(UnitTest.class)
-  public void testConnectorAll() throws Exception{
-    Connector conn = AccumuloConnector.getConnector(inst, zoo, u, pw);
-    
-    Assert.assertNotNull(conn);
+@Before
+public void setup()
+{
+} // end setup
 
-  } // end testConnectorAll
-  
-  
+
+@Ignore
+@Test
+@Category(UnitTest.class)
+public void testConnectorAll() throws Exception
+{
+  Connector conn = AccumuloConnector.getConnector(inst, zoo, u, pw);
+
+  Assert.assertNotNull(conn);
+
+} // end testConnectorAll
+
+
 } // end AccumuloConnectorTest

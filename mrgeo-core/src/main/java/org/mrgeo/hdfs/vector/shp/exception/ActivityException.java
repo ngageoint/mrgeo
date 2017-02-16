@@ -22,55 +22,51 @@ package org.mrgeo.hdfs.vector.shp.exception;
 public class ActivityException extends Exception
 {
 
-  /**
-     *
-     */
-  private static final long serialVersionUID = 1L;
+/**
+ *
+ */
+private static final long serialVersionUID = 1L;
 
-  /**
-   * Creates a new instance of <code>ActivityException</code> without detail
-   * message.
-   */
-  public ActivityException()
-  {
-    super();
-  }
+/**
+ * Creates a new instance of <code>ActivityException</code> without detail
+ * message.
+ */
+public ActivityException()
+{
+  super();
+}
 
-  /**
-   * Constructs an instance of <code>ActivityException</code> with the specified
-   * detail message.
-   * 
-   * @param s
-   *          The message.
-   */
-  public ActivityException(String msg)
-  {
-    super(msg);
-  }
+/**
+ * Constructs an instance of <code>ActivityException</code> with the specified
+ * detail message.
+ *
+ * @param s The message.
+ */
+public ActivityException(String msg)
+{
+  super(msg);
+}
 
-  /**
-   * Constructs an instance of <code>ActivityException</code> with the specified
-   * detail message and throwable cause.
-   * 
-   * @param msg
-   *          the detail message.
-   * @param throwable
-   *          the throwable cause.
-   */
-  public ActivityException(String msg, Throwable throwable)
-  {
-    super(msg, throwable);
-  }
+/**
+ * Constructs an instance of <code>ActivityException</code> with the specified
+ * detail message and throwable cause.
+ *
+ * @param msg       the detail message.
+ * @param throwable the throwable cause.
+ */
+public ActivityException(String msg, Throwable throwable)
+{
+  super(msg, throwable);
+}
 
-  /**
-   * Constructs an instance of <code>ActivityException</code> with the specified
-   * throwable cause.
-   * 
-   * @param throwable
-   *          the throwable cause.
-   */
-  public ActivityException(Throwable throwable)
-  {
-    super(throwable);
-  }
+/**
+ * Constructs an instance of <code>ActivityException</code> with the specified
+ * throwable cause.
+ *
+ * @param throwable the throwable cause.
+ */
+public ActivityException(Throwable throwable)
+{
+  super(throwable);
+}
 }

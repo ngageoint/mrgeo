@@ -17,8 +17,7 @@
 package org.mrgeo.colorscale.applier;
 
 import org.mrgeo.colorscale.ColorScale;
-
-import java.awt.image.*;
+import org.mrgeo.data.raster.MrGeoRaster;
 
 /**
  * Interface to implement for classes who apply color scales to images requested by the WMS;
@@ -27,91 +26,66 @@ import java.awt.image.*;
  */
 public abstract class ColorScaleApplier
 {
-  protected static void apply(final Raster source, final WritableRaster dest,
-    final ColorScale colorScale)
+/**
+ * Applies a color scale to a rendered image
+ */
+public abstract MrGeoRaster applyColorScale(MrGeoRaster raster, ColorScale colorScale, double[] extrema,
+    double[] defaultValue) throws ColorScale.ColorScaleException;
+
+/**
+ * Returns the mime type for the color scale applier
+ *
+ * @return a mime type string
+ */
+public abstract String[] getMimeTypes();
+
+public abstract String[] getWmsFormats();
+
+protected void apply(final MrGeoRaster source, final MrGeoRaster dest, ColorScale colorScale)
+{
+  if (source.bands() == dest.bands() && (source.bands() == 3 || source.bands() == 4))
   {
-    final int w = source.getMinX() + source.getWidth();
-    final int h = source.getMinY() + source.getHeight();
+    dest.copyFrom(0, 0, source.width(), source.height(), source, 0, 0);
+    return;
+  }
 
-    final DataBufferByte buffer = (DataBufferByte) (dest.getDataBuffer());
+  if (colorScale == null)
+  {
+    colorScale = ColorScale.createDefaultGrayScale();
+  }
 
-    final int scanlineStride;
-    final int pixelStride;
-    final int[] bandOffsets;
+  int[] color = new int[4];
 
-    final SampleModel model = dest.getSampleModel();
-    if (model instanceof ComponentSampleModel)
+  for (int y = 0; y < dest.height(); y++)
+  {
+    for (int x = 0; x < dest.width(); x++)
     {
-      final ComponentSampleModel cm = (ComponentSampleModel) model;
-      scanlineStride = cm.getScanlineStride();
-      pixelStride = cm.getPixelStride();
-      bandOffsets = cm.getBandOffsets();
-    }
-    else
-    {
-      scanlineStride = w;
-      pixelStride = 1;
-      bandOffsets = new int[source.getNumBands()];
-      for (int i = 0; i < source.getNumBands(); i++)
+      colorScale.lookup(source.getPixelDouble(x, y, 0), color);
+
+      for (int b = 0; b < color.length; b++)
       {
-        bandOffsets[i] = i;
-      }
-    }
-
-    final byte[][] data = buffer.getBankData();
-    final int banks = data.length;
-
-    for (int y = source.getMinY(); y < h; y++)
-    {
-      final int lineOffset = y * scanlineStride;
-      for (int x = source.getMinX(); x < w; x++)
-      {
-        final double v = source.getSampleDouble(x, y, 0);
-        final int[] color = colorScale.lookup(v);
-
-        if (banks == 1)
+        if (dest.bands() > b)
         {
-          final int pixelOffset = lineOffset + x * pixelStride;
-
-          for (int b = 0; b < dest.getNumBands(); b++)
-          {
-            data[0][pixelOffset + bandOffsets[b]] = (byte) color[b];
-          }
-        }
-        else
-        {
-          // what to do here?
+          dest.setPixel(x, y, b, color[b]);
         }
       }
     }
   }
+}
 
-  /**
-   * Applies a color scale to a rendered image
-   * 
-   * @param image
-   *          the image to apply the color scale to
-   * @param colorScale
-   *          the color scale to apply to the image
-   * @param extrema
-   *          minimum/maximum values in the image raster data
-   * @param defaultValue
-   *          default value in the image raster data
-   * @param isTransparent
-   *          set to true if the image being passed in is transparent; false otherwise
-   * @return a rendered image with a color scale applied
-   * @throws Exception
-   * @todo don't necessarily like "isTransparent", but it will have to do for now
-   */
-  public abstract Raster applyColorScale(Raster raster, ColorScale colorScale, double[] extrema,
-    double[] defaultValue) throws Exception;
+void setupExtrema(ColorScale colorScale, double[] extrema, double defaultValue)
+{
+// if we don't have min/max make the color scale modulo with
+  if (extrema == null)
+  {
+    colorScale.setScaling(ColorScale.Scaling.Modulo);
+    colorScale.setScaleRange(0.0, 10.0);
+  }
+  else if (colorScale.getScaling() == ColorScale.Scaling.MinMax)
+  {
+    colorScale.setScaleRange(extrema[0], extrema[1]);
+  }
 
-  /**
-   * Returns the mime type for the color scale applier
-   * 
-   * @return a mime type string
-   */
-  public abstract String[] getMimeTypes();
-
-  public abstract String[] getWmsFormats();
+  colorScale.setTransparent(defaultValue);
+}
 }

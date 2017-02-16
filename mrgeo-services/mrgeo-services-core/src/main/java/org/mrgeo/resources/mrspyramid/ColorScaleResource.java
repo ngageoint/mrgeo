@@ -18,19 +18,19 @@ package org.mrgeo.resources.mrspyramid;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.mrgeo.colorscale.ColorScale;
+import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
+import org.mrgeo.services.mrspyramid.MrsPyramidServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import javax.xml.parsers.ParserConfigurationException;
-import java.awt.image.Raster;
-import java.io.IOException;
+import javax.ws.rs.ext.ContextResolver;
+import javax.ws.rs.ext.Providers;
 import java.util.List;
 
 /**
@@ -43,25 +43,29 @@ public class ColorScaleResource
 {
 private static final Logger log = LoggerFactory.getLogger(ColorScaleResource.class);
 
+
+@Context
+Providers providers;
+
 @Context
 MrsPyramidService service;
 
 /**
  * Recursively returns all MrGeo color scale files in the file system.
- *
+ * <p>
  * I was unable to return GenericEntity<List<String>> as JSON, so returning a class with a
  * string list member variable here instead.
  *
  * @return A list of color scale file paths
- * @throws IOException If an error occurs while accessing the file system.
+ * @throws MrsPyramidServiceException If an error occurs while accessing the file system.
  */
 @GET
 @Produces(MediaType.APPLICATION_JSON)
-public ColorScaleList get()
-    throws SAXException, ParserConfigurationException, Exception
+public ColorScaleList get() throws MrsPyramidServiceException
 {
   log.info("Retrieving color scales file list...");
 
+  getService();
   List<String> files = service.getColorScales();
 
   log.info("Color scales file list retrieved.");
@@ -72,10 +76,6 @@ public ColorScaleList get()
 /**
  * This is a poorly differentiated REST path, it really should have been /swatch to separate
  * it in namespace from the above. As is, only the query param separates these two.
- *
- * @param colorScalePath
- * @param width
- * @param height
  */
 @SuppressFBWarnings(value = "JAXRS_ENDPOINT", justification = "verified")
 @GET
@@ -86,13 +86,18 @@ public Response getColorScaleSwatch(@PathParam("path") String colorScalePath,
     @DefaultValue("20") @QueryParam("height") int height
 )
 {
-  try {
+  try
+  {
+    getService();
+
     String format = "png";
-    Raster ri = service.createColorScaleSwatch(colorScalePath, format, width, height);
+    MrGeoRaster ri = service.createColorScaleSwatch(colorScalePath, format, width, height);
 
     return service.getImageResponseWriter(format).write(ri).build();
-  } catch (Exception ex) {
-    ex.printStackTrace();
+  }
+  catch (MrsPyramidServiceException e)
+  {
+    log.error("Exception thrown", e);
     return Response.status(Status.BAD_REQUEST).entity("Color scale file not found: " + colorScalePath).build();
   }
 }
@@ -109,7 +114,10 @@ public Response getColorScaleLegend(@PathParam("name") String name,
     @DefaultValue("") @QueryParam("units") String units
 )
 {
-  try {
+  try
+  {
+    getService();
+
     ColorScale cs = service.getColorScaleFromName(name);
     int fontSize = 12;
     String position;
@@ -117,7 +125,8 @@ public Response getColorScaleLegend(@PathParam("name") String name,
     String floatStyle;
     int offset;
     StringBuilder textStyle = new StringBuilder();
-    if (width > height) {
+    if (width > height)
+    {
       String rotate = "90deg";
       String origin = "left top;";
       position = "left";
@@ -144,11 +153,13 @@ public Response getColorScaleLegend(@PathParam("name") String name,
           .append("transform: rotate(").append(rotate).append(");")
           .append("transform-origin: ").append(origin);
       offset = -(fontSize);
-    } else {
+    }
+    else
+    {
       position = "top";
       dimension = height;
       floatStyle = "float:left;";
-      offset = (fontSize/2);
+      offset = (fontSize / 2);
     }
 
 //          String relativePath = "../";
@@ -159,43 +170,58 @@ public Response getColorScaleLegend(@PathParam("name") String name,
     StringBuilder html = new StringBuilder();
 
     html.append("<div>");
-    html.append("<div style='").append(floatStyle).append(" width:").append(width).append("; height:").append(height).append(";'>")
+    html.append("<div style='").append(floatStyle).append(" width:").append(width).append("; height:").append(height)
+        .append(";'>")
         .append("<img src='")
 //                  .append(relativePath)
         .append(name)
         .append("?width=").append(width).append("&amp;height=").append(height)
         .append("' alt='color scale'/>")
         .append("</div>");
-    html.append("<div style='position:relative; font:").append(fontSize).append("px arial,sans-serif; ").append(floatStyle).append(" width:").append(width).append("; height:").append(width).append(";'>");
+    html.append("<div style='position:relative; font:").append(fontSize).append("px arial,sans-serif; ")
+        .append(floatStyle).append(" width:").append(width).append("; height:").append(width).append(";'>");
     //This adds value markers in a linear fashion for the same number of color breaks
     int numBreaks = cs.keySet().size();
-    Double deltaValue = (max-min) / numBreaks;
+    Double deltaValue = (max - min) / numBreaks;
     int deltaPixel = dimension / numBreaks;
-    if (units.equalsIgnoreCase("likelihood")) {
+    if (units.equalsIgnoreCase("likelihood"))
+    {
       String top;
       String bottom;
-      if (width > height) {
+      if (width > height)
+      {
         top = "Lower Likelihood";
         bottom = "Higher Likelihood";
         offset = fontSize;
-      } else {
+      }
+      else
+      {
         top = "Higher Likelihood";
         bottom = "Lower Likelihood";
-        offset = (fontSize*2);
+        offset = (fontSize * 2);
       }
 
-      html.append("<div style='width:").append(deltaPixel).append("; position:absolute; ").append(position).append(":0;'>")
+      html.append("<div style='width:").append(deltaPixel).append("; position:absolute; ").append(position)
+          .append(":0;'>")
           .append(top)
           .append("</div>")
-          .append("<div style='width:").append(deltaPixel).append("; position:absolute; ").append(position).append(":").append(dimension-offset).append(";'>")
+          .append("<div style='width:").append(deltaPixel).append("; position:absolute; ").append(position).append(":")
+          .append(dimension - offset).append(";'>")
           .append(bottom)
           .append("</div>");
-    } else {
-      for (int i=0; i<=numBreaks; i++) {
-        html.append("<div style='").append(textStyle.toString()).append("position:absolute; ").append(position).append(":").append((deltaPixel * i) - offset).append(";'>");
-        if (width > height) {
+    }
+    else
+    {
+      for (int i = 0; i <= numBreaks; i++)
+      {
+        html.append("<div style='").append(textStyle.toString()).append("position:absolute; ").append(position)
+            .append(":").append((deltaPixel * i) - offset).append(";'>");
+        if (width > height)
+        {
           html.append(service.formatValue(min + (deltaValue * i), units));
-        } else {
+        }
+        else
+        {
           html.append(service.formatValue(max - (deltaValue * i), units));
         }
         html.append("</div>");
@@ -203,10 +229,30 @@ public Response getColorScaleLegend(@PathParam("name") String name,
     }
     html.append("</div>");
     html.append("</div>");
-    return Response.ok(html.toString()).header("Content-Type", "text/html").build();
-  } catch (Exception ex) {
-    log.error("Color scale file not found: " + name, ex);
+    return Response.ok()
+        .entity(html.toString())
+        .header("Content-Type", "text/html")
+        .build();
+  }
+  catch (MrsPyramidServiceException e)
+  {
+    log.error("Color scale file not found: " + name, e);
     return Response.status(Status.BAD_REQUEST).entity("Color scale not found: " + name).build();
   }
 }
+
+private void getService()
+{
+  if (service == null)
+  {
+    ContextResolver<MrsPyramidService> resolver =
+        providers.getContextResolver(MrsPyramidService.class, MediaType.WILDCARD_TYPE);
+    if (resolver != null)
+    {
+      service = resolver.getContext(MrsPyramidService.class);
+    }
+  }
+}
+
+
 }

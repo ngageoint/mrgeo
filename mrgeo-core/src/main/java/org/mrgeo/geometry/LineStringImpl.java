@@ -25,7 +25,6 @@ import java.util.*;
 
 /**
  * @author jason.surratt
- *
  */
 public class LineStringImpl extends GeometryImpl implements WritableLineString
 {
@@ -37,7 +36,7 @@ LineStringImpl()
 {
 }
 
-LineStringImpl(Map<String, String>attributes)
+LineStringImpl(Map<String, String> attributes)
 {
   this.attributes.putAll(attributes);
 }
@@ -103,7 +102,6 @@ public void filter(PointFilter pf)
 }
 
 
-
 /*
  * (non-Javadoc)
  *
@@ -142,13 +140,6 @@ public Vector<Point> getPoints()
   return result;
 }
 
-@Override
-public boolean isValid()
-{
-  return points.size() >= 2;
-}
-
-
 /*
  * (non-Javadoc)
  *
@@ -163,6 +154,13 @@ public void setPoints(Collection<Point> points)
     this.points.add((WritablePoint) p.createWritableClone());
   }
 }
+
+@Override
+public boolean isValid()
+{
+  return points.size() >= 2;
+}
+
 @Override
 public void read(DataInputStream stream) throws IOException
 {
@@ -186,20 +184,6 @@ public void write(DataOutputStream stream) throws IOException
   {
     p.write(stream);
   }
-}
-
-private void writeObject(ObjectOutputStream stream) throws IOException
-{
-  DataOutputStream dos = new DataOutputStream(stream);
-  write(dos);
-  writeAttributes(dos);
-}
-
-private void readObject(ObjectInputStream stream) throws IOException
-{
-  DataInputStream dis = new DataInputStream(stream);
-  read(dis);
-  readAttributes(dis);
 }
 
 @Override
@@ -241,7 +225,7 @@ public Bounds getBounds()
 {
   if (bounds == null)
   {
-    for (Point pt: points)
+    for (Point pt : points)
     {
       if (bounds == null)
       {
@@ -257,7 +241,6 @@ public Bounds getBounds()
   return bounds;
 }
 
-
 @Override
 public void addPoint(double x, double y)
 {
@@ -269,7 +252,6 @@ public boolean isEmpty()
 {
   return points.isEmpty();
 }
-
 
 @Override
 public Geometry clip(Polygon geom)
@@ -305,5 +287,19 @@ public Geometry clip(Polygon geom)
     return collection;
   }
   return null;
+}
+
+private void writeObject(ObjectOutputStream stream) throws IOException
+{
+  DataOutputStream dos = new DataOutputStream(stream);
+  write(dos);
+  writeAttributes(dos);
+}
+
+private void readObject(ObjectInputStream stream) throws IOException
+{
+  DataInputStream dis = new DataInputStream(stream);
+  read(dis);
+  readAttributes(dis);
 }
 }

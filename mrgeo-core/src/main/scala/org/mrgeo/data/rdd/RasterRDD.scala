@@ -22,15 +22,17 @@ import org.mrgeo.data.tile.TileIdWritable
 
 @SerialVersionUID(1L)
 object RasterRDD {
-  def apply(parent: MrGeoRDD[TileIdWritable, RasterWritable]): RasterRDD = {
+  def apply(parent:MrGeoRDD[TileIdWritable, RasterWritable]):RasterRDD = {
     new RasterRDD(parent)
   }
-  def apply(parent: RDD[(TileIdWritable, RasterWritable)]): RasterRDD = {
+
+  def apply(parent:RDD[(TileIdWritable, RasterWritable)]):RasterRDD = {
     new RasterRDD(parent)
   }
 }
 
 @SerialVersionUID(1L)
-class RasterRDD(parent: RDD[(TileIdWritable, RasterWritable)]) extends MrGeoRDD[TileIdWritable, RasterWritable](parent) {
+class RasterRDD(parent:RDD[(TileIdWritable, RasterWritable)]) extends MrGeoRDD[TileIdWritable, RasterWritable](
+  parent) {
 
 }

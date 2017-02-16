@@ -41,21 +41,21 @@ import java.util.concurrent.TimeUnit;
 
 public class ColorScaleManager
 {
-  private static final Logger log = LoggerFactory.getLogger(ColorScaleManager.class);
+private static final Logger log = LoggerFactory.getLogger(ColorScaleManager.class);
 
 //  static FileSystemDriver driver;
-  static AdHocDataProvider colorscaleProvider;
+static AdHocDataProvider colorscaleProvider;
 
-  private static LoadingCache<Map<String, Object>, ColorScale> colorscaleCache = CacheBuilder
+private static LoadingCache<Map<String, Object>, ColorScale> colorscaleCache = CacheBuilder
     .newBuilder().maximumSize(1000).expireAfterAccess(10, TimeUnit.MINUTES).build(
-      new CacheLoader<Map<String, Object>, ColorScale>()
-      {
-        @Override
-        public ColorScale load(final Map<String, Object> colorScaleInfo) throws Exception
+        new CacheLoader<Map<String, Object>, ColorScale>()
         {
-          // The following code was used to load a color scale from a specific HDFS
-          // path. It is no longer supported. Color scales must reside in the
-          // configured color scale location.
+          @Override
+          public ColorScale load(final Map<String, Object> colorScaleInfo) throws Exception
+          {
+            // The following code was used to load a color scale from a specific HDFS
+            // path. It is no longer supported. Color scales must reside in the
+            // configured color scale location.
 //          final org.apache.hadoop.fs.Path path = (org.apache.hadoop.fs.Path) colorScaleInfo
 //            .get("path");
 //          final Double min = (Double) colorScaleInfo.get("min");
@@ -69,98 +69,147 @@ public class ColorScaleManager
 //          cs.setTransparent(transparent);
 //          cs.setScaleRange(min, max);
 //          return cs;
-          return null;
-        }
-      });
+            return null;
+          }
+        });
 
-  private static Properties mrgeoProperties = MrGeoProperties.getInstance();
+private static Properties mrgeoProperties = MrGeoProperties.getInstance();
 
-  // returns a ColorScale object based on the following rules
-  // 1. If a colorScaleJSON is provided, load the color scale from the JSON
-  // 2. If a colorScaleName is provided, look for xml file with that name in the
-  // default color scales
-  // dir, if not found throw an exception
-  // 3. if none of the above is provided, use the following to determine the
-  // colorscale
-  // ColorScale.xml file in pyramid dir
-  // Default.xml in image base dir
-  // color scale hardcoded into ColorScale class
-  // public static ColorScale getColorScale(String colorScaleName, String colorScaleJSON,
-  // String pyramidPath) throws Exception
-  // {
-  // return getColorScale(
-  // colorScaleName, colorScaleJSON, pyramidPath, MrGeoProperties.getInstance());
-  // }
+// returns a ColorScale object based on the following rules
+// 1. If a colorScaleJSON is provided, load the color scale from the JSON
+// 2. If a colorScaleName is provided, look for xml file with that name in the
+// default color scales
+// dir, if not found throw an exception
+// 3. if none of the above is provided, use the following to determine the
+// colorscale
+// ColorScale.xml file in pyramid dir
+// Default.xml in image base dir
+// color scale hardcoded into ColorScale class
+// public static ColorScale getColorScale(String colorScaleName, String colorScaleJSON,
+// String pyramidPath) throws Exception
+// {
+// return getColorScale(
+// colorScaleName, colorScaleJSON, pyramidPath, MrGeoProperties.getInstance());
+// }
 
-  public static ColorScale fromJSON(final String colorScaleJSON) throws Exception
+public static ColorScale fromJSON(final String colorScaleJSON) throws ColorScale.ColorScaleException
+{
+  ColorScale cs = null;
+  if (colorScaleJSON != null)
   {
-    ColorScale cs = null;
-    if (colorScaleJSON != null)
+    cs = ColorScale.loadFromJSON(colorScaleJSON);
+  }
+
+  return cs;
+}
+
+public static ColorScale fromName(final String colorScaleName) throws ColorScale.ColorScaleException
+{
+  return fromName(colorScaleName, mrgeoProperties);
+}
+
+public static ColorScale fromName(final String colorScaleName,
+    final Properties props) throws ColorScale.ColorScaleException
+{
+  final Map<String, Object> colorScaleInfo = new HashMap<String, Object>();
+  colorScaleInfo.put("colorscalename", colorScaleName);
+
+  ColorScale cs = colorscaleCache.getIfPresent(colorScaleInfo);
+  if (cs == null)
+  {
+    if (colorScaleName != null)
     {
-      cs = ColorScale.loadFromJSON(colorScaleJSON);
+      cs = createColorScale(colorScaleInfo, colorScaleName, props);
     }
-
-    return cs;
   }
-
-  public static ColorScale fromName(final String colorScaleName) throws ColorScale.ColorScaleException
-  {
-    return fromName(colorScaleName, mrgeoProperties);
-  }
-
-  public static ColorScale fromName(final String colorScaleName,
-      final Properties props) throws ColorScale.ColorScaleException
-  {
-    final Map<String, Object> colorScaleInfo = new HashMap<String, Object>();
-    colorScaleInfo.put("colorscalename", colorScaleName);
-
-    ColorScale cs = colorscaleCache.getIfPresent(colorScaleInfo);
-    if (cs == null)
-    {
-      if (colorScaleName != null)
-      {
-        cs = createColorScale(colorScaleInfo, colorScaleName, props);
-      }
-    }
-    return cs;
-  }
+  return cs;
+}
 
 //  public static ColorScale getColorScale(final Map<String, Object> colorScaleInfo) throws Exception
 //  {
 //    return colorscaleCache.get(colorScaleInfo);
 //  }
 
-  public static void invalidateCache()
-  {
-    colorscaleCache.invalidateAll();
-  }
+public static void invalidateCache()
+{
+  colorscaleCache.invalidateAll();
+}
 
-  private static ColorScale createColorScale(final Map<String, Object> colorScaleInfo,
-      final String colorScaleName, final Properties props) throws ColorScale.ColorScaleException
+@SuppressWarnings("squid:S1166") // Exception caught and handled
+@SuppressFBWarnings(value = "WEAK_FILENAMEUTILS", justification = "Using adhoc provider, our class, for the filename")
+public static ColorScale[] getColorScaleList() throws IOException
+{
+  try
   {
-    InputStream fdis = null;
-    try
+    initializeProvider(mrgeoProperties);
+
+    ArrayList<ColorScale> scales = new ArrayList<>();
+    for (int i = 0; i < colorscaleProvider.size(); i++)
     {
-      initializeProvider(props);
-      fdis = colorscaleProvider.get(colorScaleName);
-      ColorScale cs = ColorScale.loadFromXML(fdis);
-      colorscaleCache.put(colorScaleInfo, cs);
-      return cs;
-    }
-    catch (IOException e)
-    {
-      throw new ColorScale.BadSourceException(e);
-    }
-    finally
-    {
-      if (fdis != null)
+      InputStream fdis = null;
+      try
       {
-        IOUtils.closeQuietly(fdis);
+        fdis = colorscaleProvider.get(i);
+
+        ColorScale scale = ColorScale.loadFromXML(fdis);
+
+        // strip the name from the filename
+        String name = colorscaleProvider.getName(i);
+        name = FilenameUtils.getBaseName(name);
+        scale.setName(name);
+
+        scales.add(scale);
       }
+      catch (IOException ignored)
+      {
+        // no-op could be something other than a color scale in this directory
+      }
+      finally
+      {
+        if (fdis != null)
+        {
+          IOUtils.closeQuietly(fdis);
+        }
+      }
+
+    }
+    return scales.toArray(new ColorScale[0]);
+  }
+  catch (ColorScale.ColorScaleException e)
+  {
+    log.error("Unable to get a list of color scales", e);
+  }
+  return new ColorScale[0];
+}
+
+private static ColorScale createColorScale(final Map<String, Object> colorScaleInfo,
+    final String colorScaleName, final Properties props) throws ColorScale.ColorScaleException
+{
+  InputStream fdis = null;
+  try
+  {
+    initializeProvider(props);
+    fdis = colorscaleProvider.get(colorScaleName);
+    ColorScale cs = ColorScale.loadFromXML(fdis);
+    colorscaleCache.put(colorScaleInfo, cs);
+    return cs;
+  }
+  catch (IOException e)
+  {
+    throw new ColorScale.BadSourceException(e);
+  }
+  finally
+  {
+    if (fdis != null)
+    {
+      IOUtils.closeQuietly(fdis);
     }
   }
+}
 
-  private static void initializeProvider(final Properties props) throws ColorScale.ColorScaleException
+private static void initializeProvider(final Properties props) throws ColorScale.ColorScaleException
+{
+  if (colorscaleProvider == null)
   {
     final String colorScaleBase = HadoopUtils.getDefaultColorScalesBaseDirectory(props);
     if (colorScaleBase != null)
@@ -181,50 +230,5 @@ public class ColorScaleManager
       throw new ColorScale.ColorScaleException("No ColorScaleBase directory configured");
     }
   }
-
-  @SuppressFBWarnings(value = "WEAK_FILENAMEUTILS", justification = "Using adhoc provider, our class, for the filename")
-  public static ColorScale[] getColorScaleList() throws IOException
-  {
-    try
-    {
-      initializeProvider(mrgeoProperties);
-
-      ArrayList<ColorScale> scales = new ArrayList<>();
-      for (int i = 0; i < colorscaleProvider.size(); i++)
-      {
-        InputStream fdis = null;
-        try
-        {
-          fdis = colorscaleProvider.get(i);
-
-          ColorScale scale = ColorScale.loadFromXML(fdis);
-
-          // strip the name from the filename
-          String name = colorscaleProvider.getName(i);
-          name = FilenameUtils.getBaseName(name);
-          scale.setName(name);
-
-          scales.add(scale);
-        }
-        catch (IOException e)
-        {
-          // no-op could be something other than a color scale in this directory
-        }
-        finally
-        {
-          if (fdis != null)
-          {
-            IOUtils.closeQuietly(fdis);
-          }
-        }
-
-      }
-      return scales.toArray(new ColorScale[0]);
-    }
-    catch (ColorScale.ColorScaleException e)
-    {
-      log.error("Unable to get a list of color scales", e);
-    }
-    return new ColorScale[0];
-  }
+}
 }

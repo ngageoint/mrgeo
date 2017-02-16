@@ -28,36 +28,34 @@ import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.vector.VectorMapOp
 
 object LeastCostPathMapOp extends MapOpRegistrar {
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("leastCostPath", "lcp")
   }
 
-  def create(pointsMapOp: VectorMapOp, raster:RasterMapOp): MapOp = {
+  def create(pointsMapOp:VectorMapOp, raster:RasterMapOp):MapOp = {
 
     new LeastCostPathMapOp(pointsMapOp, raster)
   }
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp =
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new LeastCostPathMapOp(node, variables)
 }
 
-class LeastCostPathMapOp extends VectorMapOp with Externalizable
-{
-  var costDistanceMapOp: Option[RasterMapOp] = None
-  var pointsMapOp: Option[VectorMapOp] = None
-  var vectorrdd: Option[VectorRDD] = None
+class LeastCostPathMapOp extends VectorMapOp with Externalizable {
+  var costDistanceMapOp:Option[RasterMapOp] = None
+  var pointsMapOp:Option[VectorMapOp] = None
+  var vectorrdd:Option[VectorRDD] = None
 
-  def this(pointsMapOp: VectorMapOp, costDistanceMapOp: RasterMapOp) = {
+  def this(pointsMapOp:VectorMapOp, costDistanceMapOp:RasterMapOp) = {
     this()
 
     this.costDistanceMapOp = Some(costDistanceMapOp)
     this.pointsMapOp = Some(pointsMapOp)
   }
 
-  def this(node: ParserNode, variables: String => Option[ParserNode]) = {
+  def this(node:ParserNode, variables:String => Option[ParserNode]) = {
     this()
-    if (node.getNumChildren != 2)
-    {
+    if (node.getNumChildren != 2) {
       throw new ParserException(
         "LeastCostPath takes the following arguments (cost raster, destination points")
     }
@@ -66,17 +64,17 @@ class LeastCostPathMapOp extends VectorMapOp with Externalizable
     pointsMapOp = VectorMapOp.decodeToVector(node.getChild(1), variables)
   }
 
-  override def registerClasses(): Array[Class[_]] = {
+  override def registerClasses():Array[Class[_]] = {
     GeometryFactory.getClasses ++ Array[Class[_]](classOf[FeatureIdWritable])
   }
 
-  override def setup(job: JobArguments, conf: SparkConf): Boolean = {
+  override def setup(job:JobArguments, conf:SparkConf):Boolean = {
     true
   }
 
-  override def teardown(job: JobArguments, conf: SparkConf): Boolean = true
+  override def teardown(job:JobArguments, conf:SparkConf):Boolean = true
 
-  override def execute(context: SparkContext): Boolean = {
+  override def execute(context:SparkContext):Boolean = {
     val destrdd = pointsMapOp match {
       case Some(pmo) => pmo.rdd().getOrElse(throw new IOException("Invalid RDD for points input"))
       case None => throw new IOException("Invalid points input")
@@ -86,9 +84,9 @@ class LeastCostPathMapOp extends VectorMapOp with Externalizable
     true
   }
 
-  override def readExternal(in: ObjectInput): Unit = {}
+  override def readExternal(in:ObjectInput):Unit = {}
 
-  override def writeExternal(out: ObjectOutput): Unit = {}
+  override def writeExternal(out:ObjectOutput):Unit = {}
 
-  override def rdd(): Option[VectorRDD] = vectorrdd
+  override def rdd():Option[VectorRDD] = vectorrdd
 }

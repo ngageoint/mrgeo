@@ -16,11 +16,11 @@
 
 package org.mrgeo.hdfs.metadata;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Predicates;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.codehaus.jackson.annotate.JsonIgnore;
 import org.mrgeo.data.image.MrsPyramidMetadataReader;
 import org.mrgeo.data.image.MrsPyramidMetadataReaderContext;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
@@ -42,181 +42,163 @@ import java.util.Set;
  */
 public class HdfsMrsPyramidMetadataReader implements MrsPyramidMetadataReader
 {
-  private static final Logger log = LoggerFactory.getLogger(HdfsMrsPyramidMetadataReader.class);
+private static final Logger log = LoggerFactory.getLogger(HdfsMrsPyramidMetadataReader.class);
+private final HdfsMrsImageDataProvider dataProvider;
+private MrsPyramidMetadata metadata = null;
+private Configuration conf;
+//private final MrsPyramidMetadataReaderContext context;
 
-  private MrsPyramidMetadata metadata = null;
-  private final HdfsMrsImageDataProvider dataProvider;
-  private Configuration conf;
-  //private final MrsPyramidMetadataReaderContext context;
+/**
+ * Constructor
+ *
+ * @param dataProvider MrsImagePyramidDataProvider DataProvider (image pyramid) providing this metadata
+ * @param context      MrsPyramidMetadataReaderContext Additional context data for loading the metadata (currently not used)
+ */
+public HdfsMrsPyramidMetadataReader(HdfsMrsImageDataProvider dataProvider,
+    Configuration conf,
+    MrsPyramidMetadataReaderContext context)
+{
+  this.dataProvider = dataProvider;
+  this.conf = conf;
+  //this.context = context;
+}
 
-  /**
-   * Constructor 
-   * @param dataProvider MrsImagePyramidDataProvider DataProvider (image pyramid) providing this metadata
-   * @param context MrsPyramidMetadataReaderContext Additional context data for loading the metadata (currently not used)
-   */
-  public HdfsMrsPyramidMetadataReader(HdfsMrsImageDataProvider dataProvider,
-                                      Configuration conf,
-                                      MrsPyramidMetadataReaderContext context)
+/**
+ * Return the MrsPyramidMetadate for the supplied HDFS resource
+ */
+@Override
+public MrsPyramidMetadata read() throws IOException
+{
+  if (dataProvider == null)
   {
-    this.dataProvider = dataProvider;
-    this.conf = conf;
-    //this.context = context;
+    throw new IOException("DataProvider not set!");
   }
 
-  /**
-   * Return the MrsPyramidMetadate for the supplied HDFS resource
-   * @see org.mrgeo.pyramid.MrsImagePyramidMetadataReader#read()
-   */
-  @Override
-  public MrsPyramidMetadata read() throws IOException
+  String name = dataProvider.getResourceName();
+  if (name == null || name.length() == 0)
   {
-    if (dataProvider == null)
-    {
-      throw new IOException("DataProvider not set!");
-    }
-
-    String name = dataProvider.getResourceName();
-    if (name == null || name.length() == 0)
-    {
-      throw new IOException("Can not load metadata, resource name is empty!");
-    }
-
-    if (metadata == null)
-    {
-      metadata = loadMetadata();
-    }
-
-    return metadata;
+    throw new IOException("Can not load metadata, resource name is empty!");
   }
 
-  /**
-   * Check for existence and load the metadata
-   * @throws IOException
-   */
-  private MrsPyramidMetadata loadMetadata() throws IOException
+  if (metadata == null)
   {
-    Path metapath = new Path(dataProvider.getResourcePath(true), HdfsMrsImageDataProvider.METADATA);
-    FileSystem fs = HadoopFileUtils.getFileSystem(conf, metapath);
-
-    // metadata file exists at this level
-    if (fs.exists(metapath))
-    {
-      // load the file from HDFS
-      log.debug("Physically loading image metadata from " + metapath.toString());
-      final InputStream is = HadoopFileUtils.open(conf, metapath); // fs.open(path);
-      try
-      {
-        // load the metadata from the input stream
-        MrsPyramidMetadata meta = MrsPyramidMetadata.load(is);
-
-        // set the fully qualified path for the metadata file
-        //Path fullPath = metapath.makeQualified(fs);
-        //meta.setPyramid(fullPath.getParent().toString());
-
-        meta.setPyramid(dataProvider.getResourceName());
-
-        return meta;
-      }
-      catch (Exception e)
-      {
-        throw new IOException(e);
-      }
-      finally
-      {
-        is.close();
-      }
-    }
-
-    throw new IOException("No metadata file found! (resource name: " + dataProvider.getResourceName() + ")");
+    metadata = loadMetadata();
   }
 
-  /**
-   * Reload the metadata.  Uses the existing object and sets all the parameters (getters/setters) to the 
-   * new values.  This allows anyone holding a reference to an existing metadata object to see the
-   * updated values without having to reload the metadata themselves.
-   * @see org.mrgeo.pyramid.MrsImagePyramidMetadataReader#reload()
-   */
-  @SuppressWarnings("unchecked")
-  @Override
-  public MrsPyramidMetadata reload() throws IOException
+  return metadata;
+}
+
+/**
+ * Reload the metadata.  Uses the existing object and sets all the parameters (getters/setters) to the
+ * new values.  This allows anyone holding a reference to an existing metadata object to see the
+ * updated values without having to reload the metadata themselves.
+ */
+@SuppressWarnings({"unchecked", "squid:S1166"}) // Exception caught and handled
+@Override
+public MrsPyramidMetadata reload() throws IOException
+{
+
+  if (metadata == null)
   {
+    return read();
+  }
 
-    if (metadata == null)
-    {
-      return read();
-    }
+  if (dataProvider == null)
+  {
+    throw new IOException("DataProvider not set!");
+  }
 
-    if (dataProvider == null)
-    {
-      throw new IOException("DataProvider not set!");
-    }
+  String name = dataProvider.getResourceName();
+  if (name == null || name.length() == 0)
+  {
+    throw new IOException("Can not load metadata, resource name is empty!");
+  }
 
-    String name = dataProvider.getResourceName();
-    if (name == null || name.length() == 0)
-    {
-      throw new IOException("Can not load metadata, resource name is empty!");
-    }
+  MrsPyramidMetadata copy = loadMetadata();
 
-    MrsPyramidMetadata copy = loadMetadata();
-
-    Set<Method> getters = ReflectionUtils.getAllMethods(MrsPyramidMetadata.class,
-      Predicates.<Method>and (
-        Predicates.<AnnotatedElement>not(ReflectionUtils.withAnnotation(JsonIgnore.class)),
-        ReflectionUtils.withModifier(Modifier.PUBLIC), 
-        ReflectionUtils.withPrefix("get"), 
-        ReflectionUtils. withParametersCount(0)));
-
-    Set<Method> setters = ReflectionUtils.getAllMethods(MrsPyramidMetadata.class,
+  Set<Method> getters = ReflectionUtils.getAllMethods(MrsPyramidMetadata.class,
       Predicates.<Method>and(
-        Predicates.<AnnotatedElement>not(ReflectionUtils.withAnnotation(JsonIgnore.class)),
-        ReflectionUtils.withModifier(Modifier.PUBLIC), 
-        ReflectionUtils.withPrefix("set"), 
-        ReflectionUtils. withParametersCount(1)));
+          Predicates.<AnnotatedElement>not(ReflectionUtils.withAnnotation(JsonIgnore.class)),
+          ReflectionUtils.withModifier(Modifier.PUBLIC),
+          ReflectionUtils.withPrefix("get"),
+          ReflectionUtils.withParametersCount(0)));
+
+  Set<Method> setters = ReflectionUtils.getAllMethods(MrsPyramidMetadata.class,
+      Predicates.<Method>and(
+          Predicates.<AnnotatedElement>not(ReflectionUtils.withAnnotation(JsonIgnore.class)),
+          ReflectionUtils.withModifier(Modifier.PUBLIC),
+          ReflectionUtils.withPrefix("set"),
+          ReflectionUtils.withParametersCount(1)));
 
 
-    //    System.out.println("getters");
-    //    for (Method m: getters)
-    //    {
-    //      System.out.println("  " + m.getName());
-    //    }
-    //    System.out.println();
-    //  
-    //    System.out.println("setters");
-    //    for (Method m: setters)
-    //    {
-    //      System.out.println("  " + m.getName());
-    //    }
-    //    System.out.println();
+  //    System.out.println("getters");
+  //    for (Method m: getters)
+  //    {
+  //      System.out.println("  " + m.getName());
+  //    }
+  //    System.out.println();
+  //
+  //    System.out.println("setters");
+  //    for (Method m: setters)
+  //    {
+  //      System.out.println("  " + m.getName());
+  //    }
+  //    System.out.println();
 
-    for (Method getter: getters)
+  for (Method getter : getters)
+  {
+    String gettername = getter.getName();
+    String settername = gettername.replaceFirst("get", "set");
+
+    for (Method setter : setters)
     {
-      String gettername = getter.getName();
-      String settername = gettername.replaceFirst("get", "set");
-
-      for (Method setter: setters)
+      if (setter.getName().equals(settername))
       {
-        if (setter.getName().equals(settername))
+        //          System.out.println("found setter: " + setter.getName() + " for " + getter.getName() );
+        try
         {
-          //          System.out.println("found setter: " + setter.getName() + " for " + getter.getName() );
-          try
-          {
-            setter.invoke(metadata, getter.invoke(copy, new Object[] {}));
-          }
-          catch (IllegalAccessException e)
-          {
-          }
-          catch (IllegalArgumentException e)
-          {
-          }
-          catch (InvocationTargetException e)
-          {
-          }
-          break;
+          setter.invoke(metadata, getter.invoke(copy, new Object[]{}));
         }
+        catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ignore)
+        {
+        }
+        break;
       }
     }
-
-    return metadata;
   }
+
+  return metadata;
+}
+
+/**
+ * Check for existence and load the metadata
+ */
+private MrsPyramidMetadata loadMetadata() throws IOException
+{
+  Path metapath = new Path(dataProvider.getResourcePath(true), HdfsMrsImageDataProvider.METADATA);
+  FileSystem fs = HadoopFileUtils.getFileSystem(conf, metapath);
+
+  // metadata file exists at this level
+  if (fs.exists(metapath))
+  {
+    // load the file from HDFS
+    log.debug("Physically loading image metadata from " + metapath.toString());
+    try (InputStream is = HadoopFileUtils.open(conf, metapath))
+    {
+      // load the metadata from the input stream
+      MrsPyramidMetadata meta = MrsPyramidMetadata.load(is);
+
+      // set the fully qualified path for the metadata file
+      //Path fullPath = metapath.makeQualified(fs);
+      //meta.setPyramid(fullPath.getParent().toString());
+
+      meta.setPyramid(dataProvider.getResourceName());
+
+      return meta;
+    }
+  }
+
+  throw new IOException("No metadata file found! (resource name: " + dataProvider.getResourceName() + ")");
+}
 
 }

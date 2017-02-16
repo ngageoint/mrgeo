@@ -26,140 +26,148 @@ import java.io.IOException;
 
 public class ShpPolygon implements ShpData
 {
-  protected JPolygon[] p;
-  private ESRILayer parent = null;
+protected JPolygon[] p;
+private ESRILayer parent = null;
 
-  /** Creates new ShpPolygon */
-  public ShpPolygon(int initialSize)
+/**
+ * Creates new ShpPolygon
+ */
+public ShpPolygon(int initialSize)
+{
+  p = new JPolygon[initialSize];
+}
+
+@Override
+public void addShape(JShape obj) throws FormatException
+{
+  if (obj instanceof JPolygon)
   {
-    p = new JPolygon[initialSize];
+    JPolygon[] temp = new JPolygon[p.length + 1];
+    System.arraycopy(p, 0, temp, 0, p.length);
+    temp[p.length] = (JPolygon) obj;
+    p = temp;
   }
+}
 
-  @Override
-  public void addShape(JShape obj) throws FormatException
+@Override
+public int getCount()
+{
+  return parent.index.recordCount;
+}
+
+@Override
+@SuppressWarnings("squid:S00112")
+// I didn't write this code, so I'm not sure why it throws the RuntimeException.  Keeping it
+public JShape getShape(int i) throws IOException
+{
+  try
   {
-    if (obj instanceof JPolygon)
+    if (i < parent.index.getCachePos()
+        || i > (parent.index.getCachePos() + parent.index.getCurrentCacheSize() - 1))
     {
-      JPolygon[] temp = new JPolygon[p.length + 1];
-      System.arraycopy(p, 0, temp, 0, p.length);
-      temp[p.length] = (JPolygon) obj;
-      p = temp;
-    }
-  }
-
-  @Override
-  public int getCount()
-  {
-    return parent.index.recordCount;
-  }
-
-  @Override
-  public JShape getShape(int i) throws IOException
-  {
-    try
-    {
-      if (i < parent.index.getCachePos()
-          || i > (parent.index.getCachePos() + parent.index.getCurrentCacheSize() - 1))
+      // save if necessary
+      if (parent.index.modData)
       {
-        // save if necessary
-        if (parent.index.modData)
-          parent.save();
-        if (parent.table.isModified())
-          parent.table.save();
-        // load
-        parent.index.loadData(i);
-        parent.shape.loadData(i);
-        // set data references
-        for (int j = 0; j < p.length; j++)
-        {
-          JShape obj = p[j];
-          obj.setDataReference(parent.table.getRow(j + parent.index.getCachePos()));
-        }
+        parent.save();
       }
-      return p[i - parent.index.getCachePos()];
-    }
-    catch (Exception e)
-    {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
-  public void load(int i, byte[] record)
-  {
-    int totParts = Convert.getLEInteger(record, 36);
-    int totPoints = Convert.getLEInteger(record, 40);
-    int[] startingPair = new int[totParts + 1];
-    startingPair[totParts] = totPoints;
-    for (int j = 0; j < totParts; j++)
-    {
-      startingPair[j] = Convert.getLEInteger(record, 44 + (j * 4));
-    }
-    p[i] = new JPolygon();
-    p[i].setId(i);
-    for (int part = 0; part < totParts; part++)
-    {
-      for (int j = startingPair[part]; j < startingPair[part + 1]; j++)
+      if (parent.table.isModified())
       {
-        double px = Convert.getLEDouble(record, 44 + (totParts * 4) + (j * 16));
-        double py = Convert.getLEDouble(record, 44 + (totParts * 4) + (j * 16) + 8);
-        if (j == startingPair[part])
+        parent.table.save();
+      }
+      // load
+      parent.index.loadData(i);
+      parent.shape.loadData(i);
+      // set data references
+      for (int j = 0; j < p.length; j++)
+      {
+        JShape obj = p[j];
+        obj.setDataReference(parent.table.getRow(j + parent.index.getCachePos()));
+      }
+    }
+    return p[i - parent.index.getCachePos()];
+  }
+  catch (Exception e)
+  {
+    throw new RuntimeException(e);
+  }
+}
+
+@Override
+public void load(int i, byte[] record)
+{
+  int totParts = Convert.getLEInteger(record, 36);
+  int totPoints = Convert.getLEInteger(record, 40);
+  int[] startingPair = new int[totParts + 1];
+  startingPair[totParts] = totPoints;
+  for (int j = 0; j < totParts; j++)
+  {
+    startingPair[j] = Convert.getLEInteger(record, 44 + (j * 4));
+  }
+  p[i] = new JPolygon();
+  p[i].setId(i);
+  for (int part = 0; part < totParts; part++)
+  {
+    for (int j = startingPair[part]; j < startingPair[part + 1]; j++)
+    {
+      double px = Convert.getLEDouble(record, 44 + (totParts * 4) + (j * 16));
+      double py = Convert.getLEDouble(record, 44 + (totParts * 4) + (j * 16) + 8);
+      if (j == startingPair[part])
+      {
+        // first point in part sequence
+        p[i].add(new Coord(px, py), JPolygon.NEW_PART);
+      }
+      else
+      {
+        if (j == startingPair[part + 1] - 1)
         {
-          // first point in part sequence
-          p[i].add(new Coord(px, py), JPolygon.NEW_PART);
+          // discard, check below will close poly
         }
         else
         {
-          if (j == startingPair[part + 1] - 1)
-          {
-            // discard, check below will close poly
-          }
-          else
-          {
-            p[i].add(new Coord(px, py));
-          }
+          p[i].add(new Coord(px, py));
         }
       }
     }
-    // check line
-    p[i].check(true);
   }
+  // check line
+  p[i].check(true);
+}
 
-  @Override
-  public void resizeCache(int size)
-  {
-    p = new JPolygon[size];
-  }
+@Override
+public void resizeCache(int size)
+{
+  p = new JPolygon[size];
+}
 
-  @Override
-  public byte[] save(int i)
+@Override
+public byte[] save(int i)
+{
+  byte[] record = new byte[p[i].getRecordLength()];
+  Convert.setLEInteger(record, 0, JShape.POLYGON);
+  Convert.setLEDouble(record, 4, p[i].getExtent().getMinX());
+  Convert.setLEDouble(record, 12, p[i].getExtent().getMinY());
+  Convert.setLEDouble(record, 20, p[i].getExtent().getMaxX());
+  Convert.setLEDouble(record, 28, p[i].getExtent().getMaxY());
+  int totParts = p[i].getPartCount();
+  int totPoints = p[i].getPointCount();
+  Convert.setLEInteger(record, 36, totParts);
+  Convert.setLEInteger(record, 40, totPoints);
+  for (int j = 0; j < totParts; j++)
   {
-    byte[] record = new byte[p[i].getRecordLength()];
-    Convert.setLEInteger(record, 0, JShape.POLYGON);
-    Convert.setLEDouble(record, 4, p[i].getExtent().getMinX());
-    Convert.setLEDouble(record, 12, p[i].getExtent().getMinY());
-    Convert.setLEDouble(record, 20, p[i].getExtent().getMaxX());
-    Convert.setLEDouble(record, 28, p[i].getExtent().getMaxY());
-    int totParts = p[i].getPartCount();
-    int totPoints = p[i].getPointCount();
-    Convert.setLEInteger(record, 36, totParts);
-    Convert.setLEInteger(record, 40, totPoints);
-    for (int j = 0; j < totParts; j++)
-    {
-      Convert.setLEInteger(record, 44 + (j * 4), p[i].getPart(j));
-    }
-    for (int j = 0; j < totPoints; j++)
-    {
-      Coord c = p[i].getPoint(j);
-      Convert.setLEDouble(record, 44 + (totParts * 4) + (j * 16), c.x);
-      Convert.setLEDouble(record, 44 + (totParts * 4) + (j * 16) + 8, c.y);
-    }
-    return record;
+    Convert.setLEInteger(record, 44 + (j * 4), p[i].getPart(j));
   }
+  for (int j = 0; j < totPoints; j++)
+  {
+    Coord c = p[i].getPoint(j);
+    Convert.setLEDouble(record, 44 + (totParts * 4) + (j * 16), c.x);
+    Convert.setLEDouble(record, 44 + (totParts * 4) + (j * 16) + 8, c.y);
+  }
+  return record;
+}
 
-  @Override
-  public void setParent(ESRILayer parent)
-  {
-    this.parent = parent;
-  }
+@Override
+public void setParent(ESRILayer parent)
+{
+  this.parent = parent;
+}
 }

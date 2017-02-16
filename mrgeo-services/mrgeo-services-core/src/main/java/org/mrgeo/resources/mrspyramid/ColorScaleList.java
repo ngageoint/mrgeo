@@ -22,20 +22,25 @@ import java.util.List;
 @XmlRootElement
 public class ColorScaleList
 {
-  public ColorScaleList()
-  {
-    
-  }
-  
-  public ColorScaleList(List<String> filePaths)
-  {
-    this.filePaths = filePaths;
-  }
-  
-  private List<String> filePaths;
-  public List<String> getFilePaths() { return filePaths; }
-  public void setFilePaths(List<String> filePaths)
-  {
-    this.filePaths = filePaths;
-  }
+private List<String> filePaths;
+
+public ColorScaleList()
+{
+
+}
+
+public ColorScaleList(List<String> filePaths)
+{
+  this.filePaths = filePaths;
+}
+
+public List<String> getFilePaths()
+{
+  return filePaths;
+}
+
+public void setFilePaths(List<String> filePaths)
+{
+  this.filePaths = filePaths;
+}
 }

@@ -25,28 +25,28 @@ import java.io.IOException;
 
 public interface VectorOutputFormatProvider
 {
-  /**
-   * Returns an instance of an OutputFormat for the data provider that
-   * is responsible for translating the keys and values from the native
-   * InputFormat to FeatureIdWritable keys and Geometry values.
-   *
-   * @return
-   */
-  public OutputFormat<FeatureIdWritable, Geometry> getOutputFormat(String input);
+/**
+ * Returns an instance of an OutputFormat for the data provider that
+ * is responsible for translating the keys and values from the native
+ * InputFormat to FeatureIdWritable keys and Geometry values.
+ *
+ * @return
+ */
+public OutputFormat<FeatureIdWritable, Geometry> getOutputFormat(String input);
 
-  /**
-   * Providers must perform any required Hadoop job setup when outputting
-   * vector data.
-   * 
-   * @param job
-   * @throws IOException 
-   */
-  public void setupJob(final Job job) throws DataProviderException, IOException;
+/**
+ * Providers must perform any required Hadoop job setup when outputting
+ * vector data.
+ *
+ * @param job
+ * @throws IOException
+ */
+public void setupJob(final Job job) throws DataProviderException, IOException;
 
-  /**
-   * Perform any processing required after the map/reduce has completed.
-   * 
-   * @param job
-   */
-  public void teardown(final Job job) throws DataProviderException;
+/**
+ * Perform any processing required after the map/reduce has completed.
+ *
+ * @param job
+ */
+public void teardown(final Job job) throws DataProviderException;
 }

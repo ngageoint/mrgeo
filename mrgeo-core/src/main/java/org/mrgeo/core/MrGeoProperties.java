@@ -17,6 +17,8 @@
 package org.mrgeo.core;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
+import org.jasypt.properties.EncryptableProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,12 +27,17 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 
-public class MrGeoProperties {
-private static Properties properties;
+public class MrGeoProperties
+{
+@SuppressWarnings("squid:S2068") // Not a password!
+static final String MRGEO_ENCRYPTION_MASTER_PASSWORD_PROPERTY = "mrgeo.encryption.masterPassword";
+static Properties properties;
+
 
 private static Logger log = LoggerFactory.getLogger(MrGeoProperties.class);
 
-private MrGeoProperties() {
+private MrGeoProperties()
+{
 
   // not even this class can instantiate the constructor
   throw new AssertionError();
@@ -38,11 +45,26 @@ private MrGeoProperties() {
 } // end base constructor
 
 
+@SuppressWarnings("squid:S1166") // Exception caught and handled
 @SuppressFBWarnings(value = {"DE_MIGHT_IGNORE",
-    "PATH_TRAVERSAL_IN"}, justification = "Ignored exception causes empty properties object, which is fine, false positive, user can't control the path")
-public static synchronized Properties getInstance() {
-  if( properties == null ) {
-    properties = new Properties();
+    "PATH_TRAVERSAL_IN"}, justification = "Ignored exception causes empty properties object, which is fine, " +
+    "false positive, user can't control the path")
+public static synchronized Properties getInstance()
+{
+  if (properties == null)
+  {
+    // If a master password has been specified, create an EncryptableProperties.  Otherwise create a normal properties
+    String masterPassword = System.getProperty(MRGEO_ENCRYPTION_MASTER_PASSWORD_PROPERTY);
+    if (masterPassword != null)
+    {
+      StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
+      encryptor.setPassword(masterPassword);
+      properties = new EncryptableProperties(encryptor);
+    }
+    else
+    {
+      properties = new Properties();
+    }
     FileInputStream fis = null;
     try
     {
@@ -53,10 +75,12 @@ public static synchronized Properties getInstance() {
     catch (IOException e)
     {
       // Try loading from properties file. This is the method used for JBoss deployments
-      try {
-        properties.load( MrGeoProperties.class.getClassLoader().getResourceAsStream( MrGeoConstants.MRGEO_SETTINGS ) );
+      try
+      {
+        properties.load(MrGeoProperties.class.getClassLoader().getResourceAsStream(MrGeoConstants.MRGEO_SETTINGS));
       }
-      catch ( Exception ignored ) {
+      catch (Exception ignored)
+      {
         // An empty props object is fine
       }
     }
@@ -115,4 +139,9 @@ public static String findMrGeoConf() throws IOException
   throw new IOException(MrGeoConstants.MRGEO_CONF_DIR + " not set, or can not find " + file.getCanonicalPath());
 }
 
+// Test method only!   Clear the properties object, so it can be reloaded later.
+static void clearProperties()
+{
+  properties = null;
+}
 }

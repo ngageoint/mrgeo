@@ -28,49 +28,93 @@ import org.slf4j.LoggerFactory;
  */
 public class RequestUtils
 {
-  private static final Logger log = LoggerFactory.getLogger(RequestUtils.class);
+private static final Logger log = LoggerFactory.getLogger(RequestUtils.class);
 
-  /**
-   * Parses a geographic bounds from a request parameter value
-   *
-   * @param param
-   *          request parameter value
-   * @return geographic bounds
-   */
-  public static Bounds boundsFromParam(final String param)
+{
+  GDALUtils.register();
+}
+
+/**
+ * Parses a geographic bounds from a request parameter value
+ *
+ * @param param request parameter value
+ * @return geographic bounds
+ */
+public static Bounds boundsFromParam(final String param)
+{
+  if (param == null)
   {
-    if (param == null)
-    {
-      throw new IllegalArgumentException("Bounding box must be specified.");
-    }
-    log.debug("incoming bounds request: " + param);
-    final String[] bBoxValues = param.split(",");
-    if (bBoxValues.length != 4)
-    {
-      throw new IllegalArgumentException("Bounding box must have four comma delimited arguments.");
-    }
-    return new Bounds(Double.valueOf(bBoxValues[0]), Double.valueOf(bBoxValues[1]),
-            Double.valueOf(bBoxValues[2]), Double.valueOf(bBoxValues[3]));
+    throw new IllegalArgumentException("Bounding box must be specified.");
   }
-  /**
-   * Reprojects a bounds to Geographic
-   *
-   * @param bounds
-   *            the projected input bounds
-   * @param epsg
-   *            the epsg string of the projected bounds crs
-   * @return geographic bounds
-   */
-  public static Bounds reprojectBounds(final Bounds bounds, final String epsg)
+  log.debug("incoming bounds request: " + param);
+  final String[] bBoxValues = param.split(",");
+  if (bBoxValues.length != 4)
   {
-    if (epsg != null && !(epsg.equalsIgnoreCase("EPSG:4326")))
+    throw new IllegalArgumentException("Bounding box must have four comma delimited arguments.");
+  }
+  return new Bounds(Double.valueOf(bBoxValues[0]), Double.valueOf(bBoxValues[1]),
+      Double.valueOf(bBoxValues[2]), Double.valueOf(bBoxValues[3]));
+}
+
+/**
+ * Reprojects a bounds to Geographic
+ *
+ * @param bounds the projected input bounds
+ * @param epsg   the epsg string of the projected bounds crs
+ * @return geographic bounds
+ */
+public static Bounds reprojectBounds(final Bounds bounds, final String epsg)
+{
+  if (epsg != null && !(epsg.equalsIgnoreCase("EPSG:4326")))
+  {
+
+    SpatialReference src = new SpatialReference(GDALUtils.EPSG4326());
+    SpatialReference dst = new SpatialReference();
+    String[] code = epsg.split(":");
+    dst.ImportFromEPSG(Integer.parseInt(code[1]));
+
+    CoordinateTransformation tx = new CoordinateTransformation(src, dst);
+
+    double[] c1;
+    double[] c2;
+    double[] c3;
+    double[] c4;
+
+    c1 = tx.TransformPoint(bounds.w, bounds.s);
+    c2 = tx.TransformPoint(bounds.w, bounds.n);
+    c3 = tx.TransformPoint(bounds.e, bounds.s);
+    c4 = tx.TransformPoint(bounds.e, bounds.n);
+
+    return new Bounds(Math.min(Math.min(c1[0], c2[0]), Math.min(c3[0], c4[0])),
+        Math.min(Math.min(c1[1], c2[1]), Math.min(c3[1], c4[1])),
+        Math.max(Math.max(c1[0], c2[0]), Math.max(c3[0], c4[0])),
+        Math.max(Math.max(c1[1], c2[1]), Math.max(c3[1], c4[1])));
+  }
+  else
+  {
+    return bounds.clone();
+  }
+}
+
+/**
+ * Reprojects a bounds to WGS-84
+ *
+ * @param bounds the projected input bounds
+ * @param epsg   the epsg string of the projected bounds crs
+ * @return geographic bounds
+ */
+public static Bounds reprojectBoundsToWGS84(final Bounds bounds, final String epsg)
+{
+  if (epsg != null)
+  {
+    String[] code = epsg.split(":");
+    int srcEpsg = Integer.parseInt(code[1]);
+    if (srcEpsg != 4326)
     {
+      SpatialReference src = new SpatialReference();
+      src.ImportFromEPSG(srcEpsg);
 
-      SpatialReference src = new SpatialReference(GDALUtils.EPSG4326());
-      SpatialReference dst = new SpatialReference();
-      String[] code = epsg.split(":");
-      dst.ImportFromEPSG(Integer.parseInt(code[1]));
-
+      SpatialReference dst = new SpatialReference(GDALUtils.EPSG4326());
       CoordinateTransformation tx = new CoordinateTransformation(src, dst);
 
       double[] c1;
@@ -84,14 +128,11 @@ public class RequestUtils
       c4 = tx.TransformPoint(bounds.e, bounds.n);
 
       return new Bounds(Math.min(Math.min(c1[0], c2[0]), Math.min(c3[0], c4[0])),
-              Math.min(Math.min(c1[1], c2[1]), Math.min(c3[1], c4[1])),
-              Math.max(Math.max(c1[0], c2[0]), Math.max(c3[0], c4[0])),
-              Math.max(Math.max(c1[1], c2[1]), Math.max(c3[1], c4[1])));
-
-    }
-    else
-    {
-      return bounds.clone();
+          Math.min(Math.min(c1[1], c2[1]), Math.min(c3[1], c4[1])),
+          Math.max(Math.max(c1[0], c2[0]), Math.max(c3[0], c4[0])),
+          Math.max(Math.max(c1[1], c2[1]), Math.max(c3[1], c4[1])));
     }
   }
+  return bounds.clone();
+}
 }

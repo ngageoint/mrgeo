@@ -15,22 +15,24 @@
   -->
 
 <ColorMap name="BrewerGreenLog">
- <Title>Brewer Green, Logarithmic Scaling</Title>
- <Description>9-class sequential green, logarithmic scaling. Map colors based on www.ColorBrewer.org, by Cynthia A. Brewer, Penn State</Description>
- <Scaling>MinMax</Scaling> <!-- Could also be Absolute -->
- <!-- null values will be transparent -->
- <NullColor color="0,0,0" opacity="0" />
- <!-- if opacity is not specified it defaults to 255 -->
- <Color value="0.0" color="0,0,0" opacity="0" />
- <Color value="1e-12" color="255,255,255" opacity="128" />
- <Color value="0.001953125" color="247,252,253" />
- <Color value="0.00390625" color="229,245,249" />
- <Color value="0.0078125" color="204,236,230" />
- <Color value="0.015625" color="153,216,201" />
- <Color value="0.03125" color="102,194,164" />
- <Color value="0.0625" color="65,174,118" />
- <Color value="0.125" color="35,139,69" />
- <Color value="0.25" color="0,109,44" />
- <Color value="0.5" color="0,68,27" />
- <Color value="1.0" color="0,0,0" />
+  <Title>Brewer Green, Logarithmic Scaling</Title>
+  <Description>9-class sequential green, logarithmic scaling. Map colors based on www.ColorBrewer.org, by Cynthia A.
+    Brewer, Penn State
+  </Description>
+  <Scaling>MinMax</Scaling> <!-- Could also be Absolute -->
+  <!-- null values will be transparent -->
+  <NullColor color="0,0,0" opacity="0"/>
+  <!-- if opacity is not specified it defaults to 255 -->
+  <Color value="0.0" color="0,0,0" opacity="0"/>
+  <Color value="1e-12" color="255,255,255" opacity="128"/>
+  <Color value="0.001953125" color="247,252,253"/>
+  <Color value="0.00390625" color="229,245,249"/>
+  <Color value="0.0078125" color="204,236,230"/>
+  <Color value="0.015625" color="153,216,201"/>
+  <Color value="0.03125" color="102,194,164"/>
+  <Color value="0.0625" color="65,174,118"/>
+  <Color value="0.125" color="35,139,69"/>
+  <Color value="0.25" color="0,109,44"/>
+  <Color value="0.5" color="0,68,27"/>
+  <Color value="1.0" color="0,0,0"/>
 </ColorMap>

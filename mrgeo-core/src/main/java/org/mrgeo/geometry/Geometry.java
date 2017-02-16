@@ -27,35 +27,43 @@ import java.util.TreeMap;
 
 /**
  * @author jason.surratt
- * 
  */
 public interface Geometry extends Serializable
 {
-  enum Type {
-    POINT, LINESTRING, LINEARRING, POLYGON, COLLECTION
-  }
+WritableGeometry createWritableClone();
 
-  public WritableGeometry createWritableClone();
-  public WritableGeometry asWritable();
+WritableGeometry asWritable();
 
-  public Map<String, String> getAllAttributes();
-  public TreeMap<String, String> getAllAttributesSorted();
-  public String getAttribute(String key);
-  public boolean hasAttribute(String key);
-  public boolean hasAttribute(String key, String value);
+Map<String, String> getAllAttributes();
 
-  public Bounds getBounds();
+TreeMap<String, String> getAllAttributesSorted();
 
-  public boolean isValid();
-  public boolean isEmpty();
+String getAttribute(String key);
 
-  public com.vividsolutions.jts.geom.Geometry toJTS();
+boolean hasAttribute(String key);
 
-  public Type type();
+boolean hasAttribute(String key, String value);
 
-  public Geometry clip(Bounds bbox);
-  public Geometry clip(Polygon geom);
-  
-  public void write(DataOutputStream stream) throws IOException;
-  public void writeAttributes(DataOutputStream stream) throws IOException;
+Bounds getBounds();
+
+boolean isValid();
+
+boolean isEmpty();
+
+com.vividsolutions.jts.geom.Geometry toJTS();
+
+Type type();
+
+Geometry clip(Bounds bbox);
+
+Geometry clip(Polygon geom);
+
+void write(DataOutputStream stream) throws IOException;
+
+void writeAttributes(DataOutputStream stream) throws IOException;
+
+enum Type
+{
+  POINT, LINESTRING, LINEARRING, POLYGON, COLLECTION
+}
 }

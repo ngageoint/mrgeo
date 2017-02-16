@@ -24,9 +24,7 @@ import org.mrgeo.data.DataProviderException;
 import org.mrgeo.data.ProtectionLevelValidator;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.raster.RasterWritable;
-import org.mrgeo.data.rdd.RasterRDD;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.image.MrsPyramidMetadata;
 
 import java.io.IOException;
 
@@ -42,19 +40,28 @@ import java.io.IOException;
  * <p>
  * A data plugin that wishes to store image data must extent this class and
  * implement its abstract methods.
- * 
+ * <p>
  * This class also contains a series of static methods that are conveniences
  * for configuring Spark jobs that use image pyramids as input data.
  */
 public abstract class MrsImageDataProvider implements ProtectionLevelValidator
 {
-private String resourceName;
-
 protected ProviderProperties providerProperties;
+private String resourceName;
 
 protected MrsImageDataProvider()
 {
   resourceName = null;
+}
+
+public MrsImageDataProvider(final String resourceName)
+{
+  this.resourceName = resourceName;
+}
+
+public String getResourceName()
+{
+  return resourceName;
 }
 
 /**
@@ -66,11 +73,6 @@ protected MrsImageDataProvider()
 protected void setResourceName(String resourceName)
 {
   this.resourceName = resourceName;
-}
-
-public String getResourceName()
-{
-  return resourceName;
 }
 
 /**
@@ -114,12 +116,6 @@ public ProviderProperties getProviderProperties()
 {
   return providerProperties;
 }
-
-public MrsImageDataProvider(final String resourceName)
-{
-  this.resourceName = resourceName;
-}
-
 
 public MrsPyramidMetadataReader getMetadataReader()
 {

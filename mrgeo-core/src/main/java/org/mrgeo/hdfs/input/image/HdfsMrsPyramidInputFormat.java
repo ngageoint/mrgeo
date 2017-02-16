@@ -17,23 +17,22 @@
 package org.mrgeo.hdfs.input.image;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.*;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
+import org.mrgeo.data.image.ImageInputFormatContext;
 import org.mrgeo.data.image.MrsPyramidMetadataReader;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.data.image.ImageInputFormatContext;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
 import org.mrgeo.hdfs.input.MapFileFilter;
 import org.mrgeo.image.MrsPyramid;
-import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 import org.mrgeo.image.MrsPyramidMetadata;
+import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.TMSUtils;
-import org.mrgeo.utils.tms.TileBounds;
 import org.mrgeo.utils.tms.Tile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class HdfsMrsPyramidInputFormat extends InputFormat<TileIdWritable,RasterWritable>
+public class HdfsMrsPyramidInputFormat extends InputFormat<TileIdWritable, RasterWritable>
 {
 private static Logger log = LoggerFactory.getLogger(HdfsMrsPyramidInputFormat.class);
 private String input;
@@ -63,21 +62,14 @@ public HdfsMrsPyramidInputFormat(final String input)
   this.input = input;
 }
 
-@Override
-public RecordReader<TileIdWritable, RasterWritable> createRecordReader(final InputSplit split,
-    final TaskAttemptContext context)
-    throws IOException
-{
-  return new HdfsMrsPyramidRecordReader();
-}
-
 public static String getZoomName(final HdfsMrsImageDataProvider dp,
     final int zoomLevel)
 {
   try
   {
     MrsPyramid pyramid = MrsPyramid.open(dp);
-    String zoomName = pyramid.getMetadata().getName(zoomLevel);
+    MrsPyramidMetadata metadata = pyramid.getMetadata();
+    String zoomName = metadata.getName(zoomLevel);
     if (zoomName != null)
     {
       return new Path(dp.getResourcePath(true), zoomName).toUri().toString();
@@ -85,9 +77,28 @@ public static String getZoomName(final HdfsMrsImageDataProvider dp,
   }
   catch (IOException e)
   {
-    e.printStackTrace();
+    log.error("Error getting zoom name", e);
   }
   return null;
+}
+
+public static void setInputInfo(final Job job, final String inputWithZoom) throws IOException
+{
+//    job.setInputFormatClass(HdfsMrsPyramidInputFormat.class);
+
+  //final String scannedInput = inputs.get(0);
+  //FileInputFormat.addInputPath(job, new Path(scannedInput));
+
+  FileInputFormat.addInputPath(job, new Path(inputWithZoom));
+  FileInputFormat.setInputPathFilter(job, MapFileFilter.class);
+}
+
+@Override
+public RecordReader<TileIdWritable, RasterWritable> createRecordReader(final InputSplit split,
+    final TaskAttemptContext context)
+    throws IOException
+{
+  return new HdfsMrsPyramidRecordReader();
 }
 
 @Override
@@ -106,17 +117,17 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
   final int zoom = ifContext.getZoomLevel();
   final int tilesize = ifContext.getTileSize();
 
-  HdfsMrsImageDataProvider dp = new HdfsMrsImageDataProvider(context.getConfiguration(),
-      input, null);
+  HdfsMrsImageDataProvider dp = createHdfsMrsImageDataProvider(context.getConfiguration());
   Path inputWithZoom = new Path(dp.getResourcePath(true), "" + zoom);
 
-  org.mrgeo.hdfs.tile.FileSplit splitfile = new org.mrgeo.hdfs.tile.FileSplit();
-  splitfile.readSplits(inputWithZoom);
+  // This appears to never be used
+//  org.mrgeo.hdfs.tile.FileSplit splitfile = createFileSplit();
+//  splitfile.readSplits(inputWithZoom);
 
   MrsPyramidMetadataReader metadataReader = dp.getMetadataReader();
   MrsPyramidMetadata metadata = metadataReader.read();
 
-  org.mrgeo.hdfs.tile.FileSplit fsplit = new org.mrgeo.hdfs.tile.FileSplit();
+  org.mrgeo.hdfs.tile.FileSplit fsplit = createFileSplit();
   fsplit.readSplits(inputWithZoom);
 
   org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo[] splits =
@@ -133,29 +144,23 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
     final long endTileId = split.getEndId();
     final long startTileId = split.getStartId();
 
-    final Tile startTile = TMSUtils.tileid(startTileId, zoom);
-    final Tile endTile = TMSUtils.tileid(endTileId, zoom);
-
-    final TileBounds partFileTileBounds =
-        new TileBounds(startTile.tx, startTile.ty, endTile.tx, endTile.ty);
-
-    final Bounds partFileBounds = TMSUtils.tileToBounds(partFileTileBounds, zoom, tilesize);
-
     if (requestedBounds != null)
     {
-      // Only include the split if it intersects the requested bounds.
-      if (requestedBounds.intersects(partFileBounds, false /* include adjacent splits */))
+      // Do not include splits that can't possibly intersect the requested bounds. This
+      // is an HDFS-specific efficiency to avoid needlessly processing splits.
+      final Tile startTile = TMSUtils.tileid(startTileId, zoom);
+      final Bounds startTileBounds = TMSUtils.tileBounds(startTile, zoom, tilesize);
+      final Tile endTile = TMSUtils.tileid(endTileId, zoom);
+      final Bounds endTileBounds = TMSUtils.tileBounds(endTile, zoom, tilesize);
+
+      if (startTileBounds.s > requestedBounds.n || endTileBounds.n < requestedBounds.s)
       {
-        Bounds intersected = requestedBounds.intersection(partFileBounds, false);
-
-        TileBounds tb = TMSUtils.boundsToTile(intersected, zoom, tilesize);
-
-        // If the tile bounds of the actual split intersects the user bounds,
-        // then return the actual split bounds (instead of the full theoretical
-        // range allowed).
-        long s = TMSUtils.tileid(tb.w, tb.s, zoom);
-        long e = TMSUtils.tileid(tb.e, tb.n, zoom);
-        result.add(new TiledInputSplit(new FileSplit(dataFile, 0, 0, null), s, e,
+        // Ignore the split because it's either completely above or completey below
+        // the requested bounds.
+      }
+      else
+      {
+        result.add(new TiledInputSplit(new FileSplit(dataFile, 0, 0, null), startTileId, endTileId,
             zoom, metadata.getTilesize()));
       }
     }
@@ -164,7 +169,7 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
       // If no bounds were specified by the caller, then we include
       // all splits.
       result.add(new TiledInputSplit(new FileSplit(dataFile, 0, 0, null),
-              startTileId, endTileId, zoom, metadata.getTilesize()));
+          startTileId, endTileId, zoom, metadata.getTilesize()));
     }
   }
 
@@ -191,36 +196,14 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
   return result;
 }
 
-
-public static void setInputInfo(final Job job, final String inputWithZoom) throws IOException
+protected HdfsMrsImageDataProvider createHdfsMrsImageDataProvider(Configuration config)
 {
-//    job.setInputFormatClass(HdfsMrsPyramidInputFormat.class);
-
-  //final String scannedInput = inputs.get(0);
-  //FileInputFormat.addInputPath(job, new Path(scannedInput));
-
-  FileInputFormat.addInputPath(job, new Path(inputWithZoom));
-  FileInputFormat.setInputPathFilter(job, MapFileFilter.class);
+  return new HdfsMrsImageDataProvider(config, input, null);
 }
 
-
-
-private static void findInputs(final FileStatus status, final FileSystem fs,
-    final PathFilter inputFilter, List<FileStatus> result) throws IOException
+protected org.mrgeo.hdfs.tile.FileSplit createFileSplit()
 {
-  if (status.isDirectory()) {
-    for(FileStatus childStat: fs.listStatus(status.getPath(), inputFilter)) {
-      if (childStat.isDirectory())
-      {
-        findInputs(childStat, fs, inputFilter, result);
-      }
-      else
-      {
-        result.add(childStat);
-      }
-    }
-  } else {
-    result.add(status);
-  }
+  return new org.mrgeo.hdfs.tile.FileSplit();
 }
+
 }

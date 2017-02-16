@@ -36,6 +36,10 @@ public class HadoopFileUtils
 {
 private static final Logger log = LoggerFactory.getLogger(HadoopFileUtils.class);
 
+private HadoopFileUtils()
+{
+}
+
 public static void cleanDirectory(final Path dir) throws IOException
 {
   cleanDirectory(dir, true);
@@ -59,7 +63,7 @@ public static void cleanDirectory(final String dir, final boolean recursive) thr
 public static void cleanDirectory(final Configuration conf, final String dir, final boolean recursive)
     throws IOException
 {
-  cleanDirectory(new Path(dir), recursive);
+  cleanDirectory(conf, new Path(dir), recursive);
 }
 
 public static void cleanDirectory(final Path dir, final boolean recursive) throws IOException
@@ -91,6 +95,7 @@ public static void copyFileToHdfs(final String fromFile, final String toFile) th
   copyFileToHdfs(fromFile, toFile, true);
 }
 
+@SuppressWarnings("squid:S2095") // hadoop FileSystem cannot be closed, or else subsequent uses will fail
 public static void copyFileToHdfs(final String fromFile, final String toFile,
     final boolean overwrite) throws IOException
 {
@@ -157,6 +162,7 @@ public static void copyToHdfs(final String fromDir, final Path toDir, final Stri
   copyToHdfs(fromDir, toDir, fileName);
 }
 
+@SuppressWarnings("squid:S2095") // hadoop FileSystem cannot be closed, or else subsequent uses will fail
 public static void copyToHdfs(final String fromDir, final String toDir) throws IOException
 {
   final Path toPath = new Path(toDir);
@@ -180,6 +186,7 @@ public static Path createJobTmp() throws IOException
 {
   return createJobTmp(HadoopUtils.createConfiguration());
 }
+
 public static Path createJobTmp(Configuration conf) throws IOException
 {
   return createUniqueTmp(conf);
@@ -196,6 +203,7 @@ public static Path createUniqueTmp() throws IOException
  * @return
  * @throws IOException
  */
+@SuppressWarnings("squid:S2095") // hadoop FileSystem cannot be closed, or else subsequent uses will fail
 public static Path createUniqueTmp(Configuration conf) throws IOException
 {
   // create a corresponding tmp directory for the job
@@ -241,6 +249,7 @@ public static void create(final Configuration conf, final Path path) throws IOEx
   create(conf, path, null);
 }
 
+@SuppressWarnings("squid:S2095") // hadoop FileSystem cannot be closed, or else subsequent uses will fail
 public static void create(final Configuration conf, final Path path, final String mode) throws IOException
 {
   final FileSystem fs = HadoopFileUtils.getFileSystem(conf, path);
@@ -307,16 +316,19 @@ public static void delete(final Configuration conf, final Path path) throws IOEx
     Path qualifiedPath = path.makeQualified(fs);
     URI pathUri = qualifiedPath.toUri();
     String scheme = pathUri.getScheme().toLowerCase();
-    if (scheme.equals("s3") || scheme.equals("s3n")) {
+    if ("s3".equals(scheme) || "s3n".equals(scheme))
+    {
       boolean stillExists = fs.exists(path);
       int sleepIndex = 0;
       // Wait for S3 to finish the deletion in phases - initially checking
       // more frequently and then less frequently as time goes by.
-      int[][] waitPhases = { {60, 1}, {120, 2}, {60, 15} };
-      while (sleepIndex < waitPhases.length) {
+      int[][] waitPhases = {{60, 1}, {120, 2}, {60, 15}};
+      while (sleepIndex < waitPhases.length)
+      {
         int waitCount = 0;
         log.info("Sleep index " + sleepIndex);
-        while (stillExists && waitCount < waitPhases[sleepIndex][0]) {
+        while (stillExists && waitCount < waitPhases[sleepIndex][0])
+        {
           waitCount++;
           log.info("Waiting " + waitPhases[sleepIndex][1] + " seconds " + path.toString() + " to be deleted");
           try
@@ -332,7 +344,8 @@ public static void delete(final Configuration conf, final Path path) throws IOEx
         }
         sleepIndex++;
       }
-      if (stillExists) {
+      if (stillExists)
+      {
         throw new IOException(path.toString() + " was not deleted within the waiting period");
       }
     }
@@ -598,6 +611,42 @@ public static String unqualifyPath(final String path)
   return new Path((new Path(path)).toUri().getPath()).toString();
 }
 
+public static Path resolveName(final String input) throws IOException, URISyntaxException
+{
+  return resolveName(input, true);
+}
+
+public static Path resolveName(final String input, boolean checkForExistance) throws IOException, URISyntaxException
+{
+  return resolveName(HadoopUtils.createConfiguration(), input, checkForExistance);
+}
+
+@SuppressWarnings("squid:S1166") // Exception caught and handled
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "method only makes complete URI out of the name")
+public static Path resolveName(final Configuration conf, final String input,
+    boolean checkForExistance) throws IOException, URISyntaxException
+{
+  // It could be either HDFS or local file system
+  File f = new File(input);
+  if (f.exists())
+  {
+    try
+    {
+      return new Path(new URI("file://" + input));
+    }
+    catch (URISyntaxException ignored)
+    {
+      // The URI is invalid, so let's continue to try to open it in HDFS
+    }
+  }
+  Path p = new Path(new URI(input));
+  if (!checkForExistance || exists(conf, p))
+  {
+    return p;
+  }
+  throw new IOException("Cannot find: " + input);
+}
+
 private static void cleanDirectory(final FileSystem fs, final Path dir) throws IOException
 {
   final Path temp = new Path(dir, "_temporary");
@@ -611,40 +660,5 @@ private static void cleanDirectory(final FileSystem fs, final Path dir) throws I
   {
     fs.delete(success, true);
   }
-}
-
-public static Path resolveName(final String input) throws IOException, URISyntaxException
-{
-  return resolveName(input, true);
-}
-
-public static Path resolveName(final String input, boolean checkForExistance) throws IOException, URISyntaxException
-{
-  return resolveName(HadoopUtils.createConfiguration(), input, checkForExistance);
-}
-
-@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "method only makes complete URI out of the name")
-public static Path resolveName(final Configuration conf, final String input,
-    boolean checkForExistance) throws IOException, URISyntaxException
-{
-  // It could be either HDFS or local file system
-  File f = new File(input);
-  if (f.exists())
-  {
-    try
-    {
-      return new Path(new URI("file://" + input));
-    }
-    catch (URISyntaxException e)
-    {
-      // The URI is invalid, so let's continue to try to open it in HDFS
-    }
-  }
-  Path p = new Path(new URI(input));
-  if (!checkForExistance || exists(conf, p))
-  {
-    return p;
-  }
-  throw new IOException("Cannot find: " + input);
 }
 }

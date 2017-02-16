@@ -44,51 +44,80 @@ import java.util.*;
  */
 public class PgQueryInputFormat extends InputFormat<LongWritable, Geometry> implements Serializable
 {
+public final static String RESULT_COLLECTION = "PgQueryInputFormat.ResultCollection";
 private static final Logger log = LoggerFactory.getLogger(PgQueryInputFormat.class);
-
-static public class ResultSetInputSplit extends InputSplit implements Serializable
-{
-  private static final long serialVersionUID = 1L;
-
-  long endIndex;
-  long startIndex;
-
-  public ResultSetInputSplit(long start, long end)
-  {
-    this.startIndex = start;
-    this.endIndex = end;
-  }
-
-  public long getEnd()
-  {
-    return endIndex;
-  }
-
-  @Override
-  public long getLength()
-  {
-    return endIndex - startIndex;
-  }
-
-  @Override
-  public String[] getLocations() throws IOException
-  {
-    return new String[0];
-  }
-
-  public long getStart()
-  {
-    return startIndex;
-  }
-}
-
 private static final long serialVersionUID = 1L;
 private static final String prefix = PgQueryInputFormat.class.getSimpleName();
 public static final String USERNAME = prefix + ".username";
 public static final String PASSWORD = prefix + ".password";
 public static final String DBCONNECTION = prefix + ".dbconnection";
 
-public final static String RESULT_COLLECTION = "PgQueryInputFormat.ResultCollection";
+@SuppressFBWarnings(value = {"SQL_INJECTION_JDBC", "SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING",
+    "OBL_UNSATISFIED_OBLIGATION_EXCEPTION_EDGE"}, justification =
+    "1 & 2. This is how PGQuery is intended to work.  It is an open-ended query on a database we have no idea what it is," +
+        "3. rs is closed outside this method. ")
+public static ResultSet loadResultSet(Configuration conf) throws IOException, SQLException
+{
+  if (conf.get("mapred.input.dir") != null)
+  {
+    Path sqlPath = new Path(conf.get("mapred.input.dir"));
+    FileSystem fs = HadoopFileUtils.getFileSystem(conf, sqlPath);
+    ResultSet rs = null;
+    if (sqlPath.toString().toLowerCase().endsWith(".sql"))
+    {
+      if (fs.exists(sqlPath))
+      {
+        try (FSDataInputStream in = fs.open(sqlPath))
+        {
+          try (InputStreamReader isr = new InputStreamReader(in))
+          {
+            try (BufferedReader br = new BufferedReader(isr))
+            {
+              StringBuilder sqlStr = new StringBuilder();
+              String tmpStr = null;
+              do
+              {
+                tmpStr = br.readLine();
+                if (tmpStr != null)
+                {
+                  sqlStr.append(tmpStr);
+                }
+              } while (tmpStr != null);
+
+              String username = conf.get(PgQueryInputFormat.USERNAME);
+              String password = conf.get(PgQueryInputFormat.PASSWORD);
+              String dbconnection = conf.get(PgQueryInputFormat.DBCONNECTION);
+
+              Properties props = new Properties();
+              props.setProperty("user", username);
+              props.setProperty("password", password);
+              props.setProperty("ssl", "true");
+
+              try (Connection conn = DriverManager.getConnection(dbconnection, props))
+              {
+//              st = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+//              rs = st.executeQuery(sqlStr);
+
+                try (Statement st = conn
+                    .prepareStatement(sqlStr.toString(), ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY))
+                {
+                  rs = ((PreparedStatement) st).executeQuery();
+                }
+              }
+              catch (SQLException e)
+              {
+                throw new IOException("Could not open database.", e);
+              }
+
+              return rs;
+            }
+          }
+        }
+      }
+    }
+  }
+  throw new IllegalArgumentException("Neither a geometry collection or filename was set.");
+}
 
 //  public static void setInput(Configuration conf, ResultSet rs)
 //  {
@@ -105,8 +134,7 @@ public RecordReader<LongWritable, Geometry> createRecordReader(InputSplit split,
   }
   catch (SQLException e)
   {
-    e.printStackTrace();
-    throw new IOException("Could not get data from ResultSet.");
+    throw new IOException("Could not get data from ResultSet.", e);
   }
 
   if (split instanceof ResultSetInputSplit)
@@ -163,69 +191,40 @@ public List<InputSplit> getSplits(JobContext context) throws IOException, Interr
   return result;
 }
 
-@SuppressFBWarnings(value = {"SQL_INJECTION_JDBC", "SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING",
-    "OBL_UNSATISFIED_OBLIGATION_EXCEPTION_EDGE"}, justification = "1 & 2. This is how PGQuery is intended to work.  It is an open-ended query on a database we have no idea what it is," +
-        "3. rs is closed outside this method. ")
-public static ResultSet loadResultSet(Configuration conf) throws IOException, SQLException
+static public class ResultSetInputSplit extends InputSplit implements Serializable
 {
-  if (conf.get("mapred.input.dir") != null)
+  private static final long serialVersionUID = 1L;
+
+  long endIndex;
+  long startIndex;
+
+  public ResultSetInputSplit(long start, long end)
   {
-    Path sqlPath = new Path(conf.get("mapred.input.dir"));
-    FileSystem fs = HadoopFileUtils.getFileSystem(conf, sqlPath);
-    ResultSet rs = null;
-    if (sqlPath.toString().toLowerCase().endsWith(".sql"))
-    {
-      if (fs.exists(sqlPath))
-      {
-        try (FSDataInputStream in = fs.open(sqlPath))
-        {
-          try (InputStreamReader isr = new InputStreamReader(in))
-          {
-            try (BufferedReader br = new BufferedReader(isr))
-            {
-              StringBuilder sqlStr = new StringBuilder();
-              String tmpStr = null;
-              do
-              {
-                tmpStr = br.readLine();
-                if (tmpStr != null)
-                {
-                  sqlStr.append(tmpStr);
-                }
-              } while (tmpStr != null);
-
-              String username = conf.get(PgQueryInputFormat.USERNAME);
-              String password = conf.get(PgQueryInputFormat.PASSWORD);
-              String dbconnection = conf.get(PgQueryInputFormat.DBCONNECTION);
-
-              Properties props = new Properties();
-              props.setProperty("user", username);
-              props.setProperty("password", password);
-              props.setProperty("ssl", "true");
-
-              try (Connection conn = DriverManager.getConnection(dbconnection, props))
-              {
-//              st = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-//              rs = st.executeQuery(sqlStr);
-
-                try (Statement st = conn.prepareStatement(sqlStr.toString(), ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY))
-                {
-                  rs = ((PreparedStatement) st).executeQuery();
-                }
-              }
-              catch (SQLException e)
-              {
-                throw new IOException("Could not open database.", e);
-              }
-
-              return rs;
-            }
-          }
-        }
-      }
-    }
+    this.startIndex = start;
+    this.endIndex = end;
   }
-  throw new IllegalArgumentException("Neither a geometry collection or filename was set.");
+
+  public long getEnd()
+  {
+    return endIndex;
+  }
+
+  @Override
+  public long getLength()
+  {
+    return endIndex - startIndex;
+  }
+
+  @Override
+  public String[] getLocations() throws IOException
+  {
+    return new String[0];
+  }
+
+  public long getStart()
+  {
+    return startIndex;
+  }
 }
 
 static public class PgQueryRecordReader extends RecordReader<LongWritable, Geometry>
@@ -284,7 +283,6 @@ static public class PgQueryRecordReader extends RecordReader<LongWritable, Geome
         }
         catch (SQLException e1)
         {
-          e1.printStackTrace();
           throw new IOException(e1);
         }
       }
@@ -319,14 +317,12 @@ static public class PgQueryRecordReader extends RecordReader<LongWritable, Geome
         }
         catch (SQLException e)
         {
-          e.printStackTrace();
-          throw new IOException("Could not get data from ResultSet.");
+          throw new IOException("Could not get data from ResultSet.", e);
         }
       }
       catch (SQLException e)
       {
-        e.printStackTrace();
-        throw new IOException("Could now get data from ResultSet.");
+        throw new IOException("Could now get data from ResultSet.", e);
       }
     }
     else
@@ -337,6 +333,7 @@ static public class PgQueryRecordReader extends RecordReader<LongWritable, Geome
   }
 
   @Override
+  @SuppressWarnings("squid:S1166") // Exception caught and handled
   public boolean nextKeyValue() throws IOException
   {
     if (_wktReader == null)
@@ -349,7 +346,7 @@ static public class PgQueryRecordReader extends RecordReader<LongWritable, Geome
       currentIndex++;
       if (currentIndex < end)
       {
-        if (rs.next() == true)
+        if (rs.next())
         {
           String wktGeometry = null;
           Map<String, String> attrs = new HashMap<>();
@@ -381,7 +378,7 @@ static public class PgQueryRecordReader extends RecordReader<LongWritable, Geome
             {
               feature = GeometryFactory.fromJTS(_wktReader.read(wktGeometry), attrs);
             }
-            catch (Exception e)
+            catch (Exception ignored)
             {
               //try to correct wktGeometry if possible
               try
@@ -391,7 +388,7 @@ static public class PgQueryRecordReader extends RecordReader<LongWritable, Geome
               catch (Exception e2)
               {
                 //could not fix the geometry, so just set to null
-                log.error("Could not fix geometry: " + wktGeometry + ". Continuing with null geometry.");
+                log.error("Could not fix geometry: " + wktGeometry + ". Continuing with null geometry.", e2);
                 feature = GeometryFactory.createEmptyGeometry(attrs);
               }
             }
@@ -403,8 +400,7 @@ static public class PgQueryRecordReader extends RecordReader<LongWritable, Geome
     }
     catch (SQLException e)
     {
-      e.printStackTrace();
-      throw new IOException("Could not get data from ResultSet.");
+      throw new IOException("Could not get data from ResultSet.", e);
     }
     return result;
   }
@@ -428,70 +424,3 @@ static public class PgQueryRecordReader extends RecordReader<LongWritable, Geome
   }
 }
 }
-
-
-
-//    result = true;
-//
-//    if (values.length == 0)
-//    {
-//    log.info("Values empty. Weird.");
-//    }
-//
-//    for (int i = 0; i < values.length; i++)
-//    {
-//    if (i == _geometryCol)
-//    {
-//    wktGeometry = values[i];
-//    }
-//
-//    if (i < schema.getAttributeCount())
-//    {
-//    if (schema.getAttributeType(i) == AttributeType.DOUBLE)
-//    {
-//    try
-//    {
-//    if (values[i].trim().length() > 0)
-//    {
-//    feature.setAttribute(i, Double.parseDouble(values[i]));
-//    }
-//    else
-//    {
-//    feature.setAttribute(i, null);
-//    }
-//    }
-//    catch (NumberFormatException e)
-//    {
-//    log.error("Invalid numeric value for " + schema.getAttributeName(i) + ": " + values[i] + ". Continuing with null value.");
-//    feature.setAttribute(i, null);
-//    }
-//    }
-//    else
-//    {
-//    feature.setAttribute(i, values[i]);
-//    }
-//    }
-//    }
-//
-//    if (wktGeometry != null)
-//    {
-//    try
-//    {
-//    feature.setGeometry(_wktReader.read(wktGeometry));
-//    }
-//    catch (Exception e)
-//    {
-//    //try to correct wktGeometry if possible
-//    try
-//    {
-//    feature.setGeometry(_wktReader.read(WktGeometryUtils.wktGeometryFixer(wktGeometry)));
-//    }
-//    catch (Exception e2)
-//    {
-//    //could not fix the geometry, so just set to null
-//    log.error("Could not fix geometry: " + wktGeometry + ". Continuing with null geometry.");
-//    feature.setGeometry(null);
-//    }
-//    }
-//    }
-//    result = true;

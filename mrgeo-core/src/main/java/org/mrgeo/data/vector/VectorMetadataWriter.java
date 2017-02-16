@@ -20,6 +20,7 @@ import java.io.IOException;
 
 public interface VectorMetadataWriter
 {
-  public void write() throws IOException;
-  public void write(VectorMetadata metadata) throws IOException;
+public void write() throws IOException;
+
+public void write(VectorMetadata metadata) throws IOException;
 }

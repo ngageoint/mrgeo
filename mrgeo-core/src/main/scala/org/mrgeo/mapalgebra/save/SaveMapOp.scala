@@ -23,22 +23,22 @@ import org.mrgeo.mapalgebra.vector.{SaveVectorMapOp, VectorMapOp}
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
 
 object SaveMapOp extends MapOpRegistrar {
-  override def register: Array[String] = {
+  override def register:Array[String] = {
     Array[String]("save")
   }
 
   @SuppressFBWarnings(value = Array("BC_UNCONFIRMED_CAST"), justification = "Scala generated code")
-  def create(mapop:MapOp, name:String):MapOp = {
+  def create(mapop:MapOp, name:String, publishImage:Boolean = false):MapOp = {
     mapop match {
-    case raster: RasterMapOp => new SaveRasterMapOp (Some(raster), name)
-    case vector: VectorMapOp => new SaveVectorMapOp (Some(vector), name)
-    case _ => throw new ParserException("MapOp must be a RasterMapOp or VectorMapOp")
+      case raster:RasterMapOp => new SaveRasterMapOp(Some(raster), name, publishImage)
+      case vector:VectorMapOp => new SaveVectorMapOp(Some(vector), name)
+      case _ => throw new ParserException("MapOp must be a RasterMapOp or VectorMapOp")
     }
   }
 
-  override def apply(node:ParserNode, variables: String => Option[ParserNode]): MapOp = {
+  override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp = {
 
-    if (node.getNumChildren != 2) {
+    if (node.getNumChildren < 2) {
       throw new ParserException(node.getName + " takes 2 arguments")
     }
 
@@ -48,7 +48,7 @@ object SaveMapOp extends MapOpRegistrar {
       new SaveRasterMapOp(node, variables)
     }
     catch {
-      case pe: ParserException => {
+      case pe:ParserException => {
         val vector = VectorMapOp.decodeToVector(node.getChild(0), variables)
         new SaveVectorMapOp(node, variables)
       }

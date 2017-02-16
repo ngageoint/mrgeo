@@ -22,7 +22,7 @@
   <!-- red -->
   <Color value="0.0" color="255,0,0"/>
   <!-- yellow -->
-  <Color value="0.2" color="255,255,0"/> 
+  <Color value="0.2" color="255,255,0"/>
   <!-- green -->
   <Color value="0.4" color="0,255,0"/>
   <!-- cyan -->
