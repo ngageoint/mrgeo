@@ -194,11 +194,14 @@ EOF'''
   MRGEO_RPM_FILE=$(basename ${MRGEO_RPM})
   MRGEO_TAR_FILE=$(basename ${MRGEO_TAR})
   PYMRGEO_RPM_FILE=$(basename ${PYMRGEO_RPM})
- 
+ '''
+    echo "MRGEO_RPM_FILE: ${MRGEO_RPM_FILE}"
+    echo "MRGEO_TAR_FILE: ${MRGEO_TAR_FILE}"
+    echo "PYMRGEO_RPM_FILE:  ${PYMRGEO_RPM_FILE}"
+    
     s3Upload(file:'distribution/target/${PYMRGEO_RPM_FILE}', bucket:'mrgeo-deploy', path:'rpm/')
     s3Upload(file:'distribution/target/${MRGEO_TAR_FILE}', bucket:'mrgeo-deploy', path:'rpm/')
     s3Upload(file:'distribution/target/${PYMRGEO_RPM_FILE}', bucket:'mrgeo-deploy', path:'rpm/')
- '''
   }
   }
 }
