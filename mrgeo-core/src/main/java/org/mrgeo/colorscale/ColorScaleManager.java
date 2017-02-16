@@ -22,15 +22,19 @@ import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.adhoc.AdHocDataProvider;
 import org.mrgeo.utils.HadoopUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.TreeMap;
 
 public class ColorScaleManager
 {
+private static final Logger log = LoggerFactory.getLogger(ColorScale.class);
 
 private static Map<String, ColorScale> colorscales;
 
@@ -67,7 +71,16 @@ public static ColorScale fromName(final String colorScaleName) throws ColorScale
 
 public static ColorScale[] getColorScaleList() throws IOException
 {
-  return colorscales.values().toArray(new ColorScale[0]);
+  // for convenience and testing, we'll sort the list...
+  ColorScale[] list = new ColorScale[colorscales.size()];
+  int cnt = 0;
+  for (Map.Entry<String, ColorScale> entry: colorscales.entrySet())
+  {
+    list[cnt++] = entry.getValue();
+  }
+
+  return list;
+  //return colorscales.values().toArray(new ColorScale[0]);
 }
 
 @SuppressFBWarnings(value = "WEAK_FILENAMEUTILS", justification = "Using Java 1.7+, weak filenames are fixed")
@@ -75,7 +88,7 @@ private static synchronized void initializeColorscales() throws ColorScale.Color
 {
   if (colorscales == null)
   {
-    colorscales = new HashMap<>();
+    colorscales = new TreeMap<>();
 
     Properties props = MrGeoProperties.getInstance();
 
@@ -98,7 +111,7 @@ private static synchronized void initializeColorscales() throws ColorScale.Color
             {
               ColorScale cs = ColorScale.loadFromXML(fdis);
 
-              colorscales.put(FilenameUtils.getBaseName(name), cs);
+              colorscales.put(cs.getName(), cs);
             }
           }
           }
@@ -112,6 +125,15 @@ private static synchronized void initializeColorscales() throws ColorScale.Color
     else
     {
       throw new ColorScale.ColorScaleException("No color scale base directory configured");
+    }
+
+    if (log.isInfoEnabled())
+    {
+      log.info("ColorScales:");
+      for (String name : colorscales.keySet())
+      {
+        log.info("  - " + FilenameUtils.getBaseName(name));
+      }
     }
   }
 }

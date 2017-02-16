@@ -569,7 +569,7 @@ public void testGetTileColorScaleNameNonExistent() throws Exception
       .request().get();
 
   Assert.assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
-  Assert.assertEquals("Unable to open color scale file", response.readEntity(String.class));
+  Assert.assertEquals("Unable to open color scale", response.readEntity(String.class));
 }
 
 @Override

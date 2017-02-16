@@ -214,6 +214,10 @@ public Response getTile(@PathParam("version") final String version,
       if (colorScaleName != null)
       {
         cs = ColorScaleManager.fromName(colorScaleName);
+        if (cs == null)
+        {
+          throw new ColorScale.ColorScaleException("Cannot open colorscale: " + colorScaleName);
+        }
       }
       else if (colorScale != null)
       {
