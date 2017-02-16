@@ -15,6 +15,7 @@
 
 package org.mrgeo.colorscale;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.io.FilenameUtils;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
@@ -69,6 +70,7 @@ public static ColorScale[] getColorScaleList() throws IOException
   return colorscales.values().toArray(new ColorScale[0]);
 }
 
+@SuppressFBWarnings(value = "WEAK_FILENAMEUTILS", justification = "Using Java 1.7+, weak filenames are fixed")
 private static synchronized void initializeColorscales() throws ColorScale.ColorScaleException
 {
   if (colorscales == null)
@@ -87,15 +89,18 @@ private static synchronized void initializeColorscales() throws ColorScale.Color
 
         for (int i = 0; i < provider.size(); i++)
         {
-          if (FilenameUtils.getExtension(provider.getName(i)).toLowerCase().equals("xml"))
+          String name = provider.getName(i);
+          if (name != null)
+          {
+          if (FilenameUtils.getExtension(name).toLowerCase().equals("xml"))
           {
             try (InputStream fdis = provider.get(i))
             {
               ColorScale cs = ColorScale.loadFromXML(fdis);
 
-              String name = FilenameUtils.getBaseName(provider.getName(i));
-              colorscales.put(name, cs);
+              colorscales.put(FilenameUtils.getBaseName(name), cs);
             }
+          }
           }
         }
       }
