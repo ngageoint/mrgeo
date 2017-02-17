@@ -336,12 +336,13 @@ public void testGetRasterPngNonExistingZoomLevelAboveWithoutPyramids() throws Ex
       islandsElevationNoPyramid_unqualified, getAspectColorScale());
 }
 
+// This test has differences between GDAL 1.x and GDAL 2.x.  We therefor need to have 2 golden images
 @Test
 @Category(UnitTest.class)
 public void testGetRasterPngRectangularTileSize() throws Exception
 {
   testIslandsElevationFor("png", "700", "300", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_TILE,
-      islandsElevation_unqualified, getDefaultColorScale());
+      islandsElevation_unqualified, getDefaultColorScale(), true);
 }
 
 @Test
@@ -487,7 +488,7 @@ private ColorScale createRainbowColorScale() throws ColorScaleException
 
 private void testIslandsElevationFor(String format, final String width,
     final String height, final String bbox,
-    final String reqImgName, final String colorScale, final int zoomLevel) throws Exception
+    final String reqImgName, final String colorScale, final int zoomLevel, boolean hasgdal2) throws Exception
 {
   ColorScale cs = null;
   Properties mrgeoProperties = MrGeoProperties.getInstance();
@@ -545,19 +546,33 @@ private void testIslandsElevationFor(String format, final String width,
 
   if (GEN_BASELINE_DATA_ONLY)
   {
-    testutils.saveBaselineRaster(testname.getMethodName(), result, format);
+    testutils.saveBaselineRaster(testname.getMethodName(), result, format, hasgdal2);
   }
   else
   {
-    testutils.compareRasters(testname.getMethodName(), result, format);
+    testutils.compareRasters(testname.getMethodName(), result, format, hasgdal2);
   }
+}
+
+private void testIslandsElevationFor(final String format, final String width,
+    final String height, final String bbox,
+    final String reqImgName, final String colorScale, final boolean gdal2) throws Exception
+{
+  testIslandsElevationFor(format, width, height, bbox, reqImgName, colorScale, -1, gdal2);
+}
+
+private void testIslandsElevationFor(final String format, final String width,
+    final String height, final String bbox,
+    final String reqImgName, final String colorScale, final int zoom) throws Exception
+{
+  testIslandsElevationFor(format, width, height, bbox, reqImgName, colorScale, zoom,false);
 }
 
 private void testIslandsElevationFor(final String format, final String width,
     final String height, final String bbox,
     final String reqImgName, final String colorScale) throws Exception
 {
-  testIslandsElevationFor(format, width, height, bbox, reqImgName, colorScale, -1);
+  testIslandsElevationFor(format, width, height, bbox, reqImgName, colorScale, false);
 }
 
 private String getDefaultColorScale() throws IOException

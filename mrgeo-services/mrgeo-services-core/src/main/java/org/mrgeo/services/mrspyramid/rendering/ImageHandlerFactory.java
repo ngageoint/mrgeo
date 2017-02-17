@@ -1,17 +1,16 @@
 /*
- * Copyright 2009-2016 DigitalGlobe, Inc.
+ * Copyright 2009-2017. DigitalGlobe, Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
- *
  */
 
 package org.mrgeo.services.mrspyramid.rendering;
@@ -47,6 +46,9 @@ private static final Logger log = LoggerFactory.getLogger(ImageHandlerFactory.cl
 static Map<Class<?>, Map<String, Class<?>>> imageFormatHandlers = null;
 static Map<Class<?>, Map<String, Class<?>>> mimeTypeHandlers = null;
 
+static {
+  loadHandlers();
+}
 /**
  * Returns a MrGeo WMS "image handler" for the requested image format
  */
@@ -58,11 +60,6 @@ static Map<Class<?>, Map<String, Class<?>>> mimeTypeHandlers = null;
 public static Object getHandler(String imageFormat, final Class<?> handlerType)
     throws IllegalAccessException, InstantiationException
 {
-
-  if (imageFormatHandlers == null || mimeTypeHandlers == null)
-  {
-    loadHandlers();
-  }
 
   if (org.apache.commons.lang3.StringUtils.isEmpty(imageFormat))
   {
@@ -110,10 +107,6 @@ public static Object getHandler(String imageFormat, final Class<?> handlerType)
 
 public static String[] getImageFormats(final Class<?> handlerType)
 {
-  if (imageFormatHandlers == null || mimeTypeHandlers == null)
-  {
-    loadHandlers();
-  }
 
   if (imageFormatHandlers.containsKey(handlerType))
   {
@@ -128,10 +121,6 @@ public static String[] getImageFormats(final Class<?> handlerType)
 
 public static String[] getMimeFormats(final Class<?> handlerType)
 {
-  if (imageFormatHandlers == null || mimeTypeHandlers == null)
-  {
-    loadHandlers();
-  }
 
   if (mimeTypeHandlers.containsKey(handlerType))
   {
@@ -148,7 +137,6 @@ private static void addFormatHandlers(final Map<String, Class<?>> handlers, fina
 {
   try
   {
-
     Object cl;
     cl = clazz.newInstance();
 
@@ -168,7 +156,10 @@ private static void addFormatHandlers(final Map<String, Class<?>> handlers, fina
       }
     }
   }
-  catch (final InstantiationException | InvocationTargetException |
+  catch (final InstantiationException ignored)
+  {
+  }
+  catch (InvocationTargetException |
       IllegalArgumentException | NoSuchMethodException | SecurityException | IllegalAccessException e)
   {
     log.error("Exception thrown while processing class " + clazz.getName(), e);
@@ -275,7 +266,7 @@ private static synchronized void loadHandlers()
 
     for (final Class<? extends ImageResponseWriter> clazz : imageresponsewriters)
     {
-      log.info("Registering Image Image Response Writer: {}", clazz.getCanonicalName());
+      log.info("Registering Image Response Writer: {}", clazz.getCanonicalName());
       log.info("  Mime Types");
       addMimeHandlers(mimeHandlers, clazz);
 

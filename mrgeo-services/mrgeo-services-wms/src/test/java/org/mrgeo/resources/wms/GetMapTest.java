@@ -21,65 +21,22 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.MrGeoConstants;
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.junit.IntegrationTest;
 import org.mrgeo.test.TestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.Response;
+import java.util.Properties;
 
 @SuppressWarnings("all") // Test code, not included in production
 public class GetMapTest extends WmsGeneratorTestAbstract
 {
 private static final Logger log = LoggerFactory.getLogger(GetMapTest.class);
-
-//  public static void main(final String[] args) throws Exception
-//  {
-//    GetMapTest test = new GetMapTest();
-//    test.runTestFromMain();
-//  }
-//
-//  public void runTestFromMain() throws Exception
-//  {
-//    setUpForJUnit();
-//
-//    System.out.println("starting");
-//    long start = System.currentTimeMillis();
-//    WebResource webResource = resource().path("/wms")
-//        .queryParam("SERVICE", "WMS")
-//        .queryParam("REQUEST", "getmap")
-//        .queryParam("LAYERS", "IslandsElevation-v2")
-//        .queryParam("FORMAT", "image/png")
-//        .queryParam("BBOX", "160.0,-12.0,164.0,-8.0")
-//        .queryParam("WIDTH", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT)
-//        .queryParam("HEIGHT", MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT);
-//
-//    System.out.println("time: " + (System.currentTimeMillis() - start));
-//
-//    long totaltime = 0;
-//    final int loops = 10;
-//    ClientResponse response = null;
-//    for (int i = 0; i < loops; i++)
-//    {
-//      start = System.currentTimeMillis();
-//      response = webResource.get(ClientResponse.class);
-//
-//      final long time = (System.currentTimeMillis() - start);
-//      totaltime += time;
-//      System.out.println("time: " + time);
-//    }
-//
-//    System.out.println("Average time: " + (totaltime / loops));
-//    final String outputPath = "test.png";
-//    log.info("Generating baseline image: " + outputPath);
-//    ImageTestUtils.writeBaselineImage(response, outputPath);
-//
-//    // processImageResponse(response, "png");
-//    if (response != null)
-//    {
-//      response.close();
-//    }
-//  }
 
 @BeforeClass
 public static void setUpForJUnit()
@@ -195,7 +152,7 @@ public void testGetMapGeoTifRectangularTileSize() throws Exception
       .queryParam("HEIGHT", "300")
       .request().get();
 
-  processImageResponse(response, contentType, "tif");
+  processImageResponse(response, contentType, "tif", true);
   response.close();
 }
 
@@ -330,7 +287,7 @@ public void testGetMapJpgRectangularTileSize() throws Exception
       .queryParam("HEIGHT", "300")
       .request().get();
 
-  processImageResponse(response, contentType, "jpg");
+  processImageResponse(response, contentType, "jpg", true);
   response.close();
 }
 
@@ -536,7 +493,7 @@ public void testGetMapPngRectangularTileSize() throws Exception
       .queryParam("HEIGHT", "300")
       .request().get();
 
-  processImageResponse(response, contentType, "png");
+  processImageResponse(response, contentType, "png", true);
   response.close();
 }
 
@@ -639,7 +596,7 @@ public void testGetMapTifRectangularTileSize() throws Exception
       .queryParam("HEIGHT", "300")
       .request().get();
 
-  processImageResponse(response, contentType, "tif");
+  processImageResponse(response, contentType, "tif", true);
   response.close();
 }
 
@@ -679,7 +636,7 @@ public void testImageStretch() throws Exception
       .queryParam("HEIGHT", "600")
       .request().get();
 
-  processImageResponse(response, contentType, "png");
+  processImageResponse(response, contentType, "png", true);
   response.close();
 }
 
@@ -699,8 +656,106 @@ public void testImageStretch2() throws Exception
       .queryParam("HEIGHT", "700")
       .request().get();
 
-  processImageResponse(response, contentType, "png");
+  processImageResponse(response, contentType, "png", true);
   response.close();
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void testStylePng() throws Exception
+{
+
+  String contentType = "image/png";
+
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmap")
+      .queryParam("LAYERS", "IslandsElevation-v2")
+      .queryParam("FORMAT", contentType)
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+      .queryParam("WIDTH", "900")
+      .queryParam("HEIGHT", "700")
+      .queryParam("STYLES", "elevation")
+
+      .request().get();
+
+  processImageResponse(response, contentType, "png", true);
+  response.close();
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void testStyleJpg() throws Exception
+{
+
+  String contentType = "image/jpeg";
+
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmap")
+      .queryParam("LAYERS", "IslandsElevation-v2")
+      .queryParam("FORMAT", contentType)
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+      .queryParam("WIDTH", "900")
+      .queryParam("HEIGHT", "700")
+      .queryParam("STYLES", "elevation")
+
+      .request().get();
+
+  processImageResponse(response, contentType, "jpg", true);
+  response.close();
+}
+@Test
+@Category(IntegrationTest.class)
+public void testStyleTiff() throws Exception
+{
+
+  String contentType = "image/geotiff";
+
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmap")
+      .queryParam("LAYERS", "IslandsElevation-v2")
+      .queryParam("FORMAT", contentType)
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+      .queryParam("WIDTH", "900")
+      .queryParam("HEIGHT", "700")
+      .queryParam("STYLES", "elevation")
+
+      .request().get();
+
+  processImageResponse(response, contentType, "tif", true);
+  response.close();
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void testDefaultColorscale() throws Exception
+{
+
+  MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider("IslandsElevation-v2",
+      DataProviderFactory.AccessMode.READ, new ProviderProperties());
+  MrsPyramidMetadata meta = dp.getMetadataReader().read();
+
+  meta.setTag(MrGeoConstants.MRGEO_DEFAULT_COLORSCALE, "elevation");
+
+  String contentType = "image/png";
+
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmap")
+      .queryParam("LAYERS", "IslandsElevation-v2")
+      .queryParam("FORMAT", contentType)
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+      .queryParam("WIDTH", "900")
+      .queryParam("HEIGHT", "700")
+      .request().get();
+
+  processImageResponse(response, contentType, "png", true);
+  response.close();
+
+  meta.setTag(MrGeoConstants.MRGEO_DEFAULT_COLORSCALE, "");
+  dp.getMetadataReader().reload();
 }
 
 @Test
@@ -717,7 +772,7 @@ public void testJpg3band() throws Exception
       .queryParam("HEIGHT", "600")
       .request().get();
 
-  processImageResponse(response, "image/jpeg", "jpg");
+  processImageResponse(response, "image/jpeg", "jpg", true);
   response.close();
 }
 
@@ -737,7 +792,7 @@ public void testPng3band() throws Exception
       .queryParam("HEIGHT", "600")
       .request().get();
 
-  processImageResponse(response, contentType, "png");
+  processImageResponse(response, contentType, "png", true);
   response.close();
 }
 
@@ -757,7 +812,7 @@ public void testTif3band() throws Exception
       .queryParam("HEIGHT", "600")
       .request().get();
 
-  processImageResponse(response, contentType, "tiff");
+  processImageResponse(response, contentType, "tiff", true);
   response.close();
 }
 

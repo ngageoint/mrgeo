@@ -1,17 +1,16 @@
 /*
- * Copyright 2009-2016 DigitalGlobe, Inc.
+ * Copyright 2009-2017. DigitalGlobe, Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
- *
  */
 
 package org.mrgeo.resources.wms;
@@ -43,7 +42,7 @@ import java.util.Comparator;
 /**
  * Generates XML output for OGC WMS GetCapabilities request
  */
-public class GetCapabilitiesDocumentGenerator
+class GetCapabilitiesDocumentGenerator
 {
 private static final Logger log = LoggerFactory.getLogger(GetCapabilitiesDocumentGenerator.class);
 
@@ -83,15 +82,8 @@ private static void addHttpElement(Element parent, String requestUrl, Version ve
 /**
  * Generates an XML document for a DescribeTiles request
  *
- * @param version      WMS version
- * @param requestUrl   HTTP request url
- * @param pyramidFiles list of pyramid directories being served by MrGeo
- * @return XML document list of pyramid directories being served by MrGeo
- * @throws IOException
- * @throws InterruptedException
- * @throws ParserConfigurationException
  */
-public Document generateDoc(Version version, String requestUrl,
+Document generateDoc(Version version, String requestUrl,
     MrsImageDataProvider[] pyramidFiles) throws IOException, InterruptedException,
     ParserConfigurationException
 {
