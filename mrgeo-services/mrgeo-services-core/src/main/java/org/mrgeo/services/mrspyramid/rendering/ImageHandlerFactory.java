@@ -46,6 +46,9 @@ private static final Logger log = LoggerFactory.getLogger(ImageHandlerFactory.cl
 static Map<Class<?>, Map<String, Class<?>>> imageFormatHandlers = null;
 static Map<Class<?>, Map<String, Class<?>>> mimeTypeHandlers = null;
 
+static {
+  loadHandlers();
+}
 /**
  * Returns a MrGeo WMS "image handler" for the requested image format
  */
@@ -57,11 +60,6 @@ static Map<Class<?>, Map<String, Class<?>>> mimeTypeHandlers = null;
 public static Object getHandler(String imageFormat, final Class<?> handlerType)
     throws IllegalAccessException, InstantiationException
 {
-
-  if (imageFormatHandlers == null || mimeTypeHandlers == null)
-  {
-    loadHandlers();
-  }
 
   if (org.apache.commons.lang3.StringUtils.isEmpty(imageFormat))
   {
@@ -109,10 +107,6 @@ public static Object getHandler(String imageFormat, final Class<?> handlerType)
 
 public static String[] getImageFormats(final Class<?> handlerType)
 {
-  if (imageFormatHandlers == null || mimeTypeHandlers == null)
-  {
-    loadHandlers();
-  }
 
   if (imageFormatHandlers.containsKey(handlerType))
   {
@@ -127,10 +121,6 @@ public static String[] getImageFormats(final Class<?> handlerType)
 
 public static String[] getMimeFormats(final Class<?> handlerType)
 {
-  if (imageFormatHandlers == null || mimeTypeHandlers == null)
-  {
-    loadHandlers();
-  }
 
   if (mimeTypeHandlers.containsKey(handlerType))
   {

@@ -105,7 +105,6 @@ public static void setUpForJUnit()
   try
   {
     DataProviderFactory.invalidateCache();
-    ColorScaleManager.invalidateCache();
 
     // use the top level dir for input data
     input = TestUtils.composeInputDir(WmsGeneratorTestAbstract.class);
@@ -296,7 +295,8 @@ protected static void processXMLResponse(final Response response,
         log.info("Comparing result to baseline text in " + baselineFile + " ...");
         //Assert.assertEquals(IOUtils.toString(inputStream), content);
 
-        XMLAssert.assertXMLEqual(IOUtils.toString(inputStream), content);
+        String xml = IOUtils.toString(inputStream);
+        XMLAssert.assertXMLEqual(xml, content);
       }
       finally
       {
@@ -326,7 +326,6 @@ protected static void processXMLResponse(final Response response,
 public void init()
 {
   DataProviderFactory.invalidateCache();
-  ColorScaleManager.invalidateCache();
 }
 
 @Override

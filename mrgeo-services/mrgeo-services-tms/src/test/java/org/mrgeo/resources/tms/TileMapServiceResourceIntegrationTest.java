@@ -510,7 +510,7 @@ public void testGetTileColorScaleNamePng() throws Exception
   int y = 1411;
   int z = 12;
   String format = "png";
-  String colorScaleName = "Default";
+  String colorScaleName = "Rainbow";
 
   when(service.getMetadata(raster)).thenReturn(getMetadata(raster));
   when(service.getPyramid(raster)).thenReturn(getPyramid(raster));
@@ -569,7 +569,7 @@ public void testGetTileColorScaleNameNonExistent() throws Exception
       .request().get();
 
   Assert.assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
-  Assert.assertEquals("Unable to open color scale file", response.readEntity(String.class));
+  Assert.assertEquals("Unable to open color scale", response.readEntity(String.class));
 }
 
 @Override

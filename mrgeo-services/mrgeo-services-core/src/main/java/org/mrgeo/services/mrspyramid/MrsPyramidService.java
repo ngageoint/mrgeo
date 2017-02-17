@@ -69,7 +69,7 @@ public ColorScale getColorScaleFromName(String colorScaleName) throws MrsPyramid
 {
   try
   {
-    return ColorScaleManager.fromName(colorScaleName, config);
+    return ColorScaleManager.fromName(colorScaleName);
   }
   catch (ColorScale.ColorScaleException e)
   {

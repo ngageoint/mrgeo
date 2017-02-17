@@ -19,11 +19,13 @@ import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import junit.framework.Assert;
+import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.MrGeoConstants;
+import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.TestUtils;
 
@@ -37,21 +39,32 @@ import java.util.Properties;
 public class ColorScaleManagerTest
 {
 
+String oldbase;
+
 @Before
-public void init()
+public void setup() throws ColorScale.ColorScaleException
 {
-  ColorScaleManager.invalidateCache();
+  oldbase = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_COLORSCALE);
+  ColorScaleManager.resetColorscales();
 }
 
+@After
+public void teardown()
+{
+  MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_COLORSCALE, oldbase);
+}
+
+
 @SuppressFBWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD", justification = "Force for test")
-@Test(expected = Exception.class)
+@Test(expected = ColorScale.BadSourceException.class)
 @Category(UnitTest.class)
 public void testGetColorScale_ColorScaleBaseDirNotExist() throws Exception
 {
-  final Properties mrgeoConf = new Properties();
-  ColorScaleManager.colorscaleProvider = null;
-  @SuppressWarnings("unused")
-  final ColorScale cs = ColorScaleManager.fromName("ColorScaleTest", mrgeoConf);
+  String base = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_COLORSCALE);
+  MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_COLORSCALE, "foo");
+  ColorScaleManager.resetColorscales();
+
+  ColorScaleManager.fromName("ColorScaleTest");
 }
 
 @Test
@@ -61,13 +74,12 @@ public void testGetColorScale_ColorScaleFromColorScaleBaseDir() throws Exception
   final String colorScaleJSON = getTestColorScale();
   final ColorScale csExp = ColorScale.loadFromJSON(colorScaleJSON);
 
-  final Properties mrgeoConf = new Properties();
-  mrgeoConf.put(MrGeoConstants.MRGEO_COMMON_HOME, TestUtils.composeInputDir(ColorScaleManagerTest.class));
-  mrgeoConf.put(MrGeoConstants.MRGEO_HDFS_IMAGE, TestUtils.composeInputDir(ColorScaleManagerTest.class));
-  mrgeoConf
+  MrGeoProperties.getInstance()
       .put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, "file://" + TestUtils.composeInputDir(ColorScaleManagerTest.class));
 
-  final ColorScale cs = ColorScaleManager.fromName("ColorScaleTest", mrgeoConf);
+  ColorScaleManager.resetColorscales();
+
+  final ColorScale cs = ColorScaleManager.fromName("ColorScaleTest");
   Assert.assertEquals(true, cs.equals(csExp));
 }
 
@@ -77,20 +89,28 @@ public void testGetColorScale_ColorScaleFromColorScaleBaseDir() throws Exception
 public void testGetColorScale_WithColorScaleNameNoXML() throws Exception
 {
   final String colorScaleJSON = getTestColorScale();
-  final Properties mrgeoConf = new Properties();
-  mrgeoConf.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, TestUtils.composeInputDir(ColorScaleManagerTest.class));
-  final ColorScale cs = ColorScaleManager.fromName("ColorScaleTest", mrgeoConf);
+
+  final Properties mrgeoConf = MrGeoProperties.getInstance();
+
+  MrGeoProperties.getInstance()
+  .put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, TestUtils.composeInputDir(ColorScaleManagerTest.class));
+  ColorScaleManager.resetColorscales();
+
+  final ColorScale cs = ColorScaleManager.fromName("ColorScaleTest");
   final ColorScale csExpected = ColorScale.loadFromJSON(colorScaleJSON);
   Assert.assertEquals(true, cs.equals(csExpected));
 }
 
-@Test(expected = Exception.class)
+@Test
 @Category(UnitTest.class)
 public void testGetColorScale_WithColorScaleNameNotExist() throws Exception
 {
-  final Properties mrgeoConf = new Properties();
-  mrgeoConf.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, TestUtils.composeInputDir(ColorScaleManagerTest.class));
-  ColorScaleManager.fromName("ColorScaleTest123", mrgeoConf);
+  MrGeoProperties.getInstance()
+      .put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, TestUtils.composeInputDir(ColorScaleManagerTest.class));
+  ColorScaleManager.resetColorscales();
+
+  Assert.assertNull("Shouldn't have found a colorscale",
+      ColorScaleManager.fromName("ColorScaleTest123"));
 }
 
 @Test
