@@ -1,17 +1,16 @@
 /*
- * Copyright 2009-2016 DigitalGlobe, Inc.
+ * Copyright 2009-2017. DigitalGlobe, Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
- *
  */
 
 package org.mrgeo.utils
@@ -76,7 +75,7 @@ object GDALUtils extends Logging {
   initializeGDAL()
 
   // empty method to force static initializer
-  def register() = {}
+  def register():Unit = {}
 
   def isValidDataset(imagename:String):Boolean = {
     try {
@@ -258,7 +257,7 @@ object GDALUtils extends Logging {
   }
 
 
-  def swapBytes(bytes:Array[Byte], gdaldatatype:Int) = {
+  def swapBytes(bytes:Array[Byte], gdaldatatype:Int):Unit = {
 
     var tmp:Byte = 0
     var i:Int = 0
@@ -498,7 +497,7 @@ object GDALUtils extends Logging {
 
     val filename = output match {
       case Left(f) => f
-      case Right(stream) => File.createTempFile("tmp-file", "").getCanonicalPath
+      case Right(_) => File.createTempFile("tmp-file", "").getCanonicalPath
     }
 
 
@@ -690,12 +689,12 @@ object GDALUtils extends Logging {
     println(gdal.VersionInfo("--version"))
 
     val klass = classOf[gdal]
-    val location = klass.getResource('/' + klass.getName().replace('.', '/') + ".class");
+    val location = klass.getResource('/' + klass.getName.replace('.', '/') + ".class")
     osr.UseExceptions()
     log.info("GDAL jar location: " + location)
     println("GDAL jar location: " + location)
 
-    println("Java library path: " + System.getProperty("java.library.path"));
+    println("Java library path: " + System.getProperty("java.library.path"))
 
     if (log.isDebugEnabled) {
       log.debug("GDAL Drivers supported:")

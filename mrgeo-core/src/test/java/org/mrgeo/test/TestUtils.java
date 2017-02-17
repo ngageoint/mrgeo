@@ -15,11 +15,13 @@
  */
 package org.mrgeo.test;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.gdal.gdal.Dataset;
+import org.gdal.gdal.gdal;
 import org.junit.Assert;
 import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
@@ -558,8 +560,39 @@ private static int getPixelId(int x, int y, int width)
   return x + (y * width);
 }
 
+public static String makeGDALFilename(String filename)
+{
+  GDALUtils.register();
+
+  String infostr = gdal.VersionInfo("--version");
+
+  try
+  {
+    String versionstr = infostr.split(",")[0].split(" ")[1];
+    String majorversion = versionstr.split("\\.")[0];
+
+    if (majorversion.equals("2"))
+    {
+      return FilenameUtils.removeExtension(filename) +
+          "-gdal2" +
+          FilenameUtils.EXTENSION_SEPARATOR +
+          FilenameUtils.getExtension(filename);
+    }
+  }
+  catch (Exception ignored)
+  {
+  }
+
+  return filename;
+}
+
 public void compareRasters(String testName) throws IOException
 {
+  compareRasters(testName, false);
+}
+
+  public void compareRasters(String testName, boolean hasgdal2) throws IOException
+  {
   final MrsPyramid pyramid = MrsPyramid.open(new Path(outputHdfs, testName).toString(),
       (ProviderProperties) null);
   MrsPyramidMetadata meta = pyramid.getMetadata();
@@ -567,7 +600,13 @@ public void compareRasters(String testName) throws IOException
   try (MrsImage image = pyramid.getImage(meta.getMaxZoomLevel()))
   {
     MrGeoRaster raster = image.getRaster();
-    final File baselineTif = new File(new File(inputLocal), testName + ".tif");
+
+    String name = testName + ".tif";
+    if (hasgdal2)
+    {
+      name = makeGDALFilename(name);
+    }
+    final File baselineTif = new File(new File(inputLocal), name);
     compareRasters(baselineTif, raster);
   }
 
@@ -627,32 +666,55 @@ public Path getTestLocal()
   return testLocal;
 }
 
+public void compareRasters(String testName, MrGeoRaster r2, boolean hasgdal2) throws IOException
+{
+  String name;
+
+  if (hasgdal2)
+  {
+    name = makeGDALFilename(testName + ".tif");
+  }
+  else
+  {
+    name = testName + ".tif";
+  }
+  final File baselineTif= new File(new File(inputLocal), name);
+  compareRasters(baselineTif, r2);
+}
+
 public void compareRasters(String testName, MrGeoRaster r2) throws IOException
 {
-  final File baselineTif = new File(new File(inputLocal), testName + ".tif");
-  compareRasters(baselineTif, r2);
+  compareRasters(testName, r2, false);
 }
 
 public void compareRasters(String testName, MrGeoRaster r2, String format) throws IOException
 {
-  File baselineTif = new File(new File(inputLocal), testName);
-  String ext = "";
-  String name = baselineTif.getCanonicalPath();
+  compareRasters(testName, r2, format, false);
+}
+
+public void compareRasters(String testName, MrGeoRaster r2, String format, boolean hasgdal2) throws IOException
+{
+  String name = new File(new File(inputLocal), testName).getCanonicalPath();
 
   if (format.equalsIgnoreCase("tiff") && !name.endsWith(".tif"))
   {
-    ext += ".tif";
+    name += ".tif";
   }
   else if (format.equalsIgnoreCase("jpeg") && !name.endsWith(".jpg"))
   {
-    ext += ".jpg";
+    name += ".jpg";
   }
   else if (format.equalsIgnoreCase("png") && !name.endsWith(".png"))
   {
-    ext += ".png";
+    name += ".png";
   }
 
-  baselineTif = new File(new File(inputLocal), testName + ext);
+  if (hasgdal2)
+  {
+    name = makeGDALFilename(name);
+  }
+
+  final File baselineTif = new File(name);
   compareRasters(baselineTif, r2);
 }
 
@@ -662,8 +724,13 @@ public void compareRasters(String testName, ValueTranslator t1, MrGeoRaster r2, 
   compareRasters(baselineTif, t1, r2, t2);
 }
 
+public void saveBaselineRaster(final String testName, final MrGeoRaster raster, String format) throws IOException
+{
+  saveBaselineRaster(testName, raster, format, false);
+}
+
 public void saveBaselineRaster(final String testName,
-    final MrGeoRaster raster, String format)
+    final MrGeoRaster raster, String format, boolean hasgdal2)
     throws IOException
 {
   final File baselineTif = new File(new File(inputLocal), testName);
@@ -681,6 +748,12 @@ public void saveBaselineRaster(final String testName,
   {
     name += ".png";
   }
+
+  if (hasgdal2)
+  {
+    name = makeGDALFilename(name);
+  }
+
   GDALJavaUtils.saveRaster(raster.toDataset(), name, format);
 }
 
@@ -696,10 +769,26 @@ public void saveBaselineTif(final String testName,
     final MrGeoRaster raster, Bounds bounds, double nodata)
     throws IOException
 {
+  saveBaselineTif(testName, raster, bounds, nodata, false);
+}
+public void saveBaselineTif(final String testName,
+    final MrGeoRaster raster, Bounds bounds, double nodata, boolean hasgdal2)
+    throws IOException
+{
   double[] nodatas = new double[raster.bands()];
   Arrays.fill(nodatas, nodata);
 
-  final File baselineTif = new File(new File(inputLocal), testName + ".tif");
+  String name;
+  if (hasgdal2)
+  {
+    name = makeGDALFilename(testName + ".tif");
+  }
+  else
+  {
+    name = testName + ".tif";
+  }
+
+  final File baselineTif = new File(new File(inputLocal), name);
   GDALJavaUtils.saveRaster(raster.toDataset(bounds, nodatas), baselineTif.getCanonicalPath(), nodata);
 }
 
@@ -726,6 +815,12 @@ public void saveBaselineTif(final String testName,
 public void saveBaselineTif(final String testName)
     throws IOException
 {
+  saveBaselineTif(testName, false);
+}
+
+  public void saveBaselineTif(final String testName, boolean hasgdal2)
+    throws IOException
+  {
   final MrsPyramid pyramid = MrsPyramid.open(new Path(outputHdfs, testName).toString(),
       (ProviderProperties) null);
   MrsPyramidMetadata meta = pyramid.getMetadata();
@@ -734,7 +829,12 @@ public void saveBaselineTif(final String testName)
   {
     MrGeoRaster raster = image.getRaster();
 
-    final File baselineTif = new File(new File(inputLocal), testName + ".tif");
+    String name = testName + ".tif";
+    if (hasgdal2)
+    {
+      name = makeGDALFilename(name);
+    }
+    final File baselineTif = new File(new File(inputLocal), name);
 
     GDALJavaUtils.saveRaster(raster.toDataset(meta.getBounds(), meta.getDefaultValues()),
         baselineTif.getCanonicalPath(), meta.getDefaultValuesDouble()[0]);

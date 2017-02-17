@@ -27,6 +27,8 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.rules.TestName;
 import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
@@ -94,13 +96,15 @@ private static String imageStretch = "cost-distance";
 private static String imageStretch2 = "cost-distance-shift-2";
 private static String small3band = "small-3band";
 
+@Rule
+public TestName testname = new TestName();
+
 @BeforeClass
 public static void setUpForJUnit()
 {
   try
   {
     DataProviderFactory.invalidateCache();
-    ColorScaleManager.invalidateCache();
 
     // use the top level dir for input data
     input = TestUtils.composeInputDir(WmsGeneratorTestAbstract.class);
@@ -142,6 +146,10 @@ protected static void copyInputData() throws IOException
   // set up the system color scale
   fileSystem.copyFromLocalFile(false, true, new Path(input, "rainbow.xml"),
       new Path(inputHdfs, "Default.xml"));
+  fileSystem.copyFromLocalFile(false, true, new Path(input, "rainbow.xml"),
+      new Path(inputHdfs, "rainbow.xml"));
+  fileSystem.copyFromLocalFile(false, true, new Path(input, "elevation.xml"),
+      new Path(inputHdfs, "elevation.xml"));
 
   // copy a custom color scale
   fileSystem.copyFromLocalFile(false, true, new Path(input, "IslandsElevation-v2"),
@@ -287,7 +295,8 @@ protected static void processXMLResponse(final Response response,
         log.info("Comparing result to baseline text in " + baselineFile + " ...");
         //Assert.assertEquals(IOUtils.toString(inputStream), content);
 
-        XMLAssert.assertXMLEqual(IOUtils.toString(inputStream), content);
+        String xml = IOUtils.toString(inputStream);
+        XMLAssert.assertXMLEqual(xml, content);
       }
       finally
       {
@@ -317,7 +326,6 @@ protected static void processXMLResponse(final Response response,
 public void init()
 {
   DataProviderFactory.invalidateCache();
-  ColorScaleManager.invalidateCache();
 }
 
 @Override
@@ -331,6 +339,13 @@ protected Application configure()
 protected void processImageResponse(final Response response, final String contentType, final String extension)
     throws IOException
 {
+  processImageResponse(response, contentType, extension, false);
+
+}
+  protected void processImageResponse(final Response response, final String contentType,
+      final String extension, boolean hasgdal2)
+    throws IOException
+  {
   try
   {
     Assert.assertEquals("Bad response code", Response.Status.OK.getStatusCode(), response.getStatus());
@@ -339,18 +354,18 @@ protected void processImageResponse(final Response response, final String conten
     if (GEN_BASELINE_DATA_ONLY)
     {
       final String outputPath =
-          baselineInput + Thread.currentThread().getStackTrace()[2].getMethodName() + "." +
+          baselineInput + testname.getMethodName() + "." +
               extension;
       log.info("Generating baseline image: " + outputPath);
-      ImageTestUtils.writeBaselineImage(response, outputPath);
+      ImageTestUtils.writeBaselineImage(response, outputPath, hasgdal2);
     }
     else
     {
       final String baselineImageFile =
-          baselineInput + Thread.currentThread().getStackTrace()[2].getMethodName() + "." +
+          baselineInput + testname.getMethodName() + "." +
               extension;
       log.info("Comparing result to baseline image " + baselineImageFile + " ...");
-      ImageTestUtils.outputImageMatchesBaseline(response, baselineImageFile);
+      ImageTestUtils.outputImageMatchesBaseline(response, baselineImageFile, hasgdal2);
     }
   }
   finally

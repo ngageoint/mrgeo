@@ -133,8 +133,12 @@
           <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
         </Style>
         <Style>
-          <Name>Default</Name>
-          <Title>Default</Title>
+          <Name>Rainbow</Name>
+          <Title>Rainbow</Title>
+        </Style>
+        <Style>
+          <Name>elevation</Name>
+          <Title>elevation</Title>
         </Style>
       </Layer>
       <Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1" tiled="1">
@@ -170,8 +174,12 @@
           <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
         </Style>
         <Style>
-          <Name>Default</Name>
-          <Title>Default</Title>
+          <Name>Rainbow</Name>
+          <Title>Rainbow</Title>
+        </Style>
+        <Style>
+          <Name>elevation</Name>
+          <Title>elevation</Title>
         </Style>
       </Layer>
       <Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1" tiled="1">
@@ -207,8 +215,12 @@
           <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
         </Style>
         <Style>
-          <Name>Default</Name>
-          <Title>Default</Title>
+          <Name>Rainbow</Name>
+          <Title>Rainbow</Title>
+        </Style>
+        <Style>
+          <Name>elevation</Name>
+          <Title>elevation</Title>
         </Style>
       </Layer>
       <Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1" tiled="1">
@@ -244,8 +256,12 @@
           <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
         </Style>
         <Style>
-          <Name>Default</Name>
-          <Title>Default</Title>
+          <Name>Rainbow</Name>
+          <Title>Rainbow</Title>
+        </Style>
+        <Style>
+          <Name>elevation</Name>
+          <Title>elevation</Title>
         </Style>
       </Layer>
       <Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1" tiled="1">
@@ -281,8 +297,12 @@
           <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
         </Style>
         <Style>
-          <Name>Default</Name>
-          <Title>Default</Title>
+          <Name>Rainbow</Name>
+          <Title>Rainbow</Title>
+        </Style>
+        <Style>
+          <Name>elevation</Name>
+          <Title>elevation</Title>
         </Style>
       </Layer>
       <Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1" tiled="1">
@@ -318,8 +338,12 @@
           <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
         </Style>
         <Style>
-          <Name>Default</Name>
-          <Title>Default</Title>
+          <Name>Rainbow</Name>
+          <Title>Rainbow</Title>
+        </Style>
+        <Style>
+          <Name>elevation</Name>
+          <Title>elevation</Title>
         </Style>
       </Layer>
       <Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1" tiled="1">
@@ -355,8 +379,12 @@
           <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
         </Style>
         <Style>
-          <Name>Default</Name>
-          <Title>Default</Title>
+          <Name>Rainbow</Name>
+          <Title>Rainbow</Title>
+        </Style>
+        <Style>
+          <Name>elevation</Name>
+          <Title>elevation</Title>
         </Style>
       </Layer>
       <Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1" tiled="1">

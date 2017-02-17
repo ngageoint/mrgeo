@@ -96,6 +96,6 @@ public void testDescribeTiles140() throws Exception
       .queryParam("VERSION", "1.4.0")
       .request().get();
 
-  processXMLResponse(response, "DescribeTiles.xml");
+  processXMLResponse(response, "DescribeTiles140.xml");
 }
 }

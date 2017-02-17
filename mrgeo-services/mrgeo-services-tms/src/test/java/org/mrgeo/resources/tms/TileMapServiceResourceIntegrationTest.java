@@ -21,12 +21,16 @@ import junit.framework.Assert;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TestName;
 import org.mockito.Mockito;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.junit.UnitTest;
@@ -55,6 +59,10 @@ public class TileMapServiceResourceIntegrationTest extends JerseyTest
 // only set this to true to generate new baseline images after correcting tests; image comparison
 // tests won't be run when is set to true
 public final static boolean GEN_BASELINE_DATA_ONLY = false;
+
+@Rule
+public TestName testname = new TestName();
+
 private static final Logger log = LoggerFactory.getLogger(TileMapServiceResourceIntegrationTest.class);
 private static final String rgbsmall_nopyramids = "rgbsmall-nopyramids";
 private static final String astersmall_nopyramids = "astersmall-nopyramids";
@@ -329,7 +337,7 @@ public void testGetTileRgbPngMercator() throws Exception
       URLEncoder.encode(raster, "UTF-8") + "/global-mercator/" + z + "/" + x + "/" + y + "." + format)
       .request().get();
 
-  processImageResponse(response, format);
+  processImageResponse(response, format, true);
 }
 
 @Test
@@ -392,7 +400,7 @@ public void testGetTileRgbTifMercator() throws Exception
       URLEncoder.encode(raster, "UTF-8") + "/global-mercator/" + z + "/" + x + "/" + y + "." + format)
       .request().get();
 
-  processImageResponse(response, format);
+  processImageResponse(response, format, true);
 }
 
 @Test
@@ -502,7 +510,7 @@ public void testGetTileColorScaleNamePng() throws Exception
   int y = 1411;
   int z = 12;
   String format = "png";
-  String colorScaleName = "Default";
+  String colorScaleName = "Rainbow";
 
   when(service.getMetadata(raster)).thenReturn(getMetadata(raster));
   when(service.getPyramid(raster)).thenReturn(getPyramid(raster));
@@ -513,6 +521,34 @@ public void testGetTileColorScaleNamePng() throws Exception
       .request().get();
 
   processImageResponse(response, format);
+}
+
+@Test
+@Category(UnitTest.class)
+public void testGetTileDefaultColorScalePng() throws Exception
+{
+  MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(astersmall_nopyramids_abs,
+      DataProviderFactory.AccessMode.READ, new ProviderProperties());
+  MrsPyramidMetadata meta = dp.getMetadataReader().read();
+
+  meta.setTag(MrGeoConstants.MRGEO_DEFAULT_COLORSCALE, "elevation");
+
+  String version = "1.0.0";
+  String raster = astersmall_nopyramids_abs;
+  int x = 2846;
+  int y = 1411;
+  int z = 12;
+  String format = "png";
+
+  when(service.getMetadata(raster)).thenReturn(getMetadata(raster));
+  when(service.getPyramid(raster)).thenReturn(getPyramid(raster));
+
+  Response response = target("tms" + "/" + version + "/" +
+      URLEncoder.encode(raster, "UTF-8") + "/global-geodetic/" + z + "/" + x + "/" + y + "." + format)
+      .request().get();
+
+  meta.setTag(MrGeoConstants.MRGEO_DEFAULT_COLORSCALE, "");
+  processImageResponse(response, format, true);
 }
 
 @Test
@@ -533,7 +569,7 @@ public void testGetTileColorScaleNameNonExistent() throws Exception
       .request().get();
 
   Assert.assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
-  Assert.assertEquals("Unable to open color scale file", response.readEntity(String.class));
+  Assert.assertEquals("Unable to open color scale", response.readEntity(String.class));
 }
 
 @Override
@@ -576,6 +612,12 @@ private MrsPyramid getPyramid(String pyramid) throws IOException
 private void processImageResponse(final Response response, final String extension)
     throws IOException
 {
+  processImageResponse(response, extension, false);
+}
+
+private void processImageResponse(final Response response, final String extension, boolean hasgdal2)
+    throws IOException
+{
   try
   {
     Assert.assertEquals("Bad response code", Status.OK.getStatusCode(), response.getStatus());
@@ -583,18 +625,18 @@ private void processImageResponse(final Response response, final String extensio
     if (GEN_BASELINE_DATA_ONLY)
     {
       final String outputPath =
-          baselineInput + Thread.currentThread().getStackTrace()[2].getMethodName() + "." +
+          baselineInput + testname.getMethodName() + "." +
               extension;
       log.info("Generating baseline image: " + outputPath);
-      ImageTestUtils.writeBaselineImage(response, outputPath);
+      ImageTestUtils.writeBaselineImage(response, outputPath, hasgdal2);
     }
     else
     {
       final String baselineImageFile =
-          baselineInput + Thread.currentThread().getStackTrace()[2].getMethodName() + "." +
+          baselineInput + testname.getMethodName() + "." +
               extension;
       log.info("Comparing result to baseline image " + baselineImageFile + " ...");
-      ImageTestUtils.outputImageMatchesBaseline(response, baselineImageFile);
+      ImageTestUtils.outputImageMatchesBaseline(response, baselineImageFile, hasgdal2);
     }
   }
   finally
