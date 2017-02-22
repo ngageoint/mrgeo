@@ -212,6 +212,9 @@
       <modules>
         <module>distribution-war</module>
       </modules>
+      <properties>
+        <hadoop.scope>compile</hadoop.scope>
+      </properties>
     </profile>
   </profiles>
   <modules>
