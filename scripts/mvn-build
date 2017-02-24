@@ -344,7 +344,7 @@ while [ $# -gt 0 ] ; do
         ARGS=$ARGS" -DdownloadSources=true"
         ;;
     "-jv" | "--javaversion")
-        ARGS=$ARGS" -Djava-version="$2
+        ARGS=$ARGS" -Djava.version="$2
         shift 1
         ;;
     "-y" | "--yarn")
