@@ -207,9 +207,17 @@
         </dependency>
       </dependencies>
     </profile>
+    <profile>
+      <id>include-war</id>
+      <modules>
+        <module>distribution-war</module>
+      </modules>
+      <properties>
+        <hadoop.scope>compile</hadoop.scope>
+      </properties>
+    </profile>
   </profiles>
   <modules>
     <module>distribution-tgz</module>
-    <module>distribution-war</module>
   </modules>
 </project>
