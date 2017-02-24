@@ -386,10 +386,9 @@ public MrGeoRaster renderImage(final String pyramidName, final Bounds requestBou
             croppedH = merged.height() - offsetY;
           }
 
-          MrGeoRaster cropped = merged.clip(offsetX, offsetY, croppedW, croppedH);
-
-          Dataset src = cropped.toDataset(wgs84Bounds, pyramidMetadata.getDefaultValues());
-          Dataset dst = GDALUtils.createEmptyMemoryRaster(src, width, height);
+          Dataset src = merged.toDiskBasedDataset(wgs84Bounds, pyramidMetadata.getDefaultValues(),
+                  offsetX, offsetY, croppedW, croppedH);
+          Dataset dst = GDALUtils.createEmptyDiskBasedRaster(src, width, height);
 
           log.debug("WGS84 bounds: {}", wgs84Bounds.toString());
           log.debug("WGS84 requested bounds width: {}", wgs84Bounds.width());

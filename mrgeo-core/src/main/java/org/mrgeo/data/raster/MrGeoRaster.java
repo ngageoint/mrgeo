@@ -761,36 +761,51 @@ final public Dataset toDataset()
   return toDataset(null, null);
 }
 
+final public Dataset toDiskBasedDataset(final Bounds bounds, final double[] nodatas,
+                                        int xoffset, int yoffset, int outWidth, int outHeight)
+{
+  int gdaltype = GDALUtils.toGDALDataType(datatype);
+  Dataset ds = GDALUtils.createEmptyDiskBasedRaster(outWidth, outHeight, bands, gdaltype, nodatas);
+  return toDataset(ds, gdaltype, bounds, xoffset, yoffset, outWidth, outHeight, nodatas);
+}
+
 final public Dataset toDataset(final Bounds bounds, final double[] nodatas)
 {
   int gdaltype = GDALUtils.toGDALDataType(datatype);
   Dataset ds = GDALUtils.createEmptyMemoryRaster(width, height, bands, gdaltype, nodatas);
+  return toDataset(ds, gdaltype, bounds, 0, 0, width, height, nodatas);
+}
 
+private Dataset toDataset(final Dataset ds, final int gdaltype, final Bounds bounds,
+                          final int xoffset, final int yoffset,
+                          final int outWidth, final int outHeight,
+                          final double[] nodatas)
+{
   double[] xform = new double[6];
   if (bounds != null)
   {
 
     xform[0] = bounds.w;
-    xform[1] = bounds.width() / width;
+    xform[1] = bounds.width() / outWidth;
     xform[2] = 0;
     xform[3] = bounds.n;
     xform[4] = 0;
-    xform[5] = -bounds.height() / height;
+    xform[5] = -bounds.height() / outHeight;
 
     ds.SetProjection(GDALUtils.EPSG4326());
   }
   else
   {
     xform[0] = 0;
-    xform[1] = width;
+    xform[1] = outWidth;
     xform[2] = 0;
     xform[3] = 0;
     xform[4] = 0;
-    xform[5] = -height;
+    xform[5] = -outHeight;
   }
   ds.SetGeoTransform(xform);
 
-  byte[] banddata = new byte[bytesPerPixel() * width * height];
+  byte[] rowdata = new byte[bytesPerPixel() * outWidth];
 
   for (int b = 0; b < bands; b++)
   {
@@ -806,14 +821,15 @@ final public Dataset toDataset(final Bounds bounds, final double[] nodatas)
         band.SetNoDataValue(nodatas[nodatas.length - 1]);
       }
     }
-
-    System.arraycopy(this.data, calculateByteOffset(0, 0, b), banddata, 0, banddata.length);
-    int success = band.WriteRaster(0, 0, width, height, width, height, gdaltype, banddata);
-    if (success != gdalconstConstants.CE_None)
-    {
-      System.out.println("Failed writing raster. gdal error: " + success);
+    for (int y=0; y < outHeight; y++) {
+      System.arraycopy(this.data, calculateByteOffset(xoffset, y + yoffset, b), rowdata, 0, rowdata.length);
+      int success = band.WriteRaster(0, y, outWidth, 1, outWidth, 1, gdaltype, rowdata);
+      if (success != gdalconstConstants.CE_None)
+      {
+        System.out.println("Failed writing raster. gdal error: " + success);
+        break;
+      }
     }
-
   }
 
   return ds;
