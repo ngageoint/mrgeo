@@ -26,6 +26,8 @@ import org.mrgeo.utils.ByteArrayUtils;
 import org.mrgeo.utils.FloatUtils;
 import org.mrgeo.utils.GDALUtils;
 import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.Pixel;
+import org.mrgeo.utils.tms.TMSUtils;
 
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
@@ -833,6 +835,42 @@ private Dataset toDataset(final Dataset ds, final int gdaltype, final Bounds bou
   }
 
   return ds;
+}
+
+public void copyToDataset(Dataset ds, int dsWidth, int dsHeight, Bounds fullBounds, Bounds bounds,
+                          int tilesize, int zoomlevel, int gdaltype) throws IOException
+{
+  final Pixel ulPixelTile = TMSUtils
+          .latLonToPixelsUL(bounds.n, bounds.w, zoomlevel, tilesize);
+  final Pixel ulPixelDS = TMSUtils
+          .latLonToPixelsUL(fullBounds.n, fullBounds.w, zoomlevel, tilesize);
+  final Pixel lrPixelTile = TMSUtils
+          .latLonToPixelsUL(bounds.s, bounds.e, zoomlevel, tilesize);
+  final Pixel lrPixelDS = TMSUtils
+          .latLonToPixelsUL(fullBounds.s, fullBounds.e, zoomlevel, tilesize);
+
+  long leftPixel = Math.max(ulPixelDS.px, ulPixelTile.px);
+  long rightPixel = Math.min(lrPixelDS.px, lrPixelTile.px);
+  long topPixel = Math.max(ulPixelDS.py, ulPixelTile.py);
+  long bottomPixel = Math.min(lrPixelDS.py, lrPixelTile.py);
+  int xoffset = (ulPixelTile.px < leftPixel) ? (int) (leftPixel - ulPixelTile.px) : 0;
+  int yoffset = (ulPixelTile.py < topPixel) ? (int) (topPixel - ulPixelTile.py) : 0;
+  int xoffsetWrite = (int)(leftPixel - ulPixelDS.px);
+  int yoffsetWrite = (int)(topPixel - ulPixelDS.py);
+  int outWidth = (int) (rightPixel - leftPixel);
+  int outHeight = (int) (bottomPixel - topPixel);
+
+  byte[] rowdata = new byte[bytesPerPixel() * outWidth];
+  for (int b = 0; b < ds.GetRasterCount(); b++) {
+    for (int y = 0; y < outHeight; y++) {
+      Band band = ds.GetRasterBand(b + 1); // gdal bands are 1's based
+      System.arraycopy(this.data, calculateByteOffset(xoffset, y + yoffset, b), rowdata, 0, rowdata.length);
+      int success = band.WriteRaster(xoffsetWrite, y + yoffsetWrite, outWidth, 1, outWidth, 1, gdaltype, rowdata);
+      if (success != gdalconstConstants.CE_None) {
+        throw new IOException("Failed writing raster. gdal error: " + success);
+      }
+    }
+  }
 }
 
 final public Raster toRaster()
