@@ -16,29 +16,26 @@
 package org.mrgeo.services.mrspyramid.rendering;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconstConstants;
 import org.gdal.osr.CoordinateTransformation;
 import org.gdal.osr.SpatialReference;
 import org.mrgeo.core.MrGeoConstants;
-import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.*;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
-import org.mrgeo.data.DataProviderNotFound;
-import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsPyramidMetadataReader;
 import org.mrgeo.data.raster.MrGeoRaster;
+import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.*;
 import org.mrgeo.resources.KmlGenerator;
 import org.mrgeo.services.utils.RequestUtils;
 import org.mrgeo.utils.GDALUtils;
-import org.mrgeo.utils.tms.Bounds;
-import org.mrgeo.utils.tms.Pixel;
-import org.mrgeo.utils.tms.TMSUtils;
-import org.mrgeo.utils.tms.TileBounds;
+import org.mrgeo.utils.tms.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -291,7 +288,6 @@ public MrGeoRaster renderImage(final String pyramidName, final Bounds requestBou
 
     // get the correct zoom level based on the requested bounds
     zoomLevel = getZoomLevel(pyramidMetadata, wgs84Bounds, width, height);
-    int tilesize = pyramidMetadata.getTilesize();
 
     // return empty data when requested bounds is completely outside of the
     // image
@@ -344,136 +340,160 @@ public MrGeoRaster renderImage(final String pyramidName, final Bounds requestBou
     }
     else
     {
-      try
-      {
-        // merge together all tiles that fall within the requested bounds
-        final MrGeoRaster merged = image.getRaster(wgs84Bounds);
-        if (merged != null)
-        {
-          log.debug("merged image width: {}", merged.width());
-          log.debug("merged image height: {}", merged.height());
+      Dataset src = null;
+      Dataset dst = null;
+      try {
+        src = mosaicToDataset(image, zoomLevel, wgs84Bounds, pyramidMetadata.getDefaultValues());
+        dst = GDALUtils.createEmptyDiskBasedRaster(src, width, height);
 
-          TileBounds tb = TMSUtils.boundsToTile(wgs84Bounds, zoomLevel, tilesize);
-          Bounds actualBounds = TMSUtils.tileToBounds(tb, zoomLevel, tilesize);
+        log.debug("WGS84 bounds: {}", wgs84Bounds.toString());
+        log.debug("WGS84 requested bounds width: {}", wgs84Bounds.width());
+        log.debug("WGS84 requested bounds height: {}", wgs84Bounds.height());
 
-          Pixel requestedUL =
-              TMSUtils.latLonToPixelsUL(wgs84Bounds.n, wgs84Bounds.w, zoomLevel, tilesize);
-          log.debug("Requested UL pixel: " + requestedUL.toString());
-          Pixel requestedLR =
-              TMSUtils.latLonToPixelsUL(wgs84Bounds.s, wgs84Bounds.e, zoomLevel, tilesize);
-          log.debug("Requested LR pixel: " + requestedLR.toString());
+        // now change only the resolution for the dst
+        final double[] dstxform = new double[6];
 
+        // default is WGS84
+        String dstcrs = GDALUtils.EPSG4326();
+        if (epsg != null && !epsg.equalsIgnoreCase("epsg:4326")) {
+          SpatialReference scrs = new SpatialReference();
+          scrs.ImportFromEPSG(4326);
 
-          Pixel actualUL =
-              TMSUtils.latLonToPixelsUL(actualBounds.n, actualBounds.w, zoomLevel, tilesize);
-          log.debug("Actual UL pixel: " + actualUL.toString());
-          Pixel actualLR =
-              TMSUtils.latLonToPixelsUL(actualBounds.s, actualBounds.e, zoomLevel, tilesize);
-          log.debug("Actual LR pixel: " + actualLR.toString());
+          SpatialReference dcrs = new SpatialReference();
+          dcrs.ImportFromEPSG(parseEpsgCode(epsg));
 
-          int offsetX = (int) (requestedUL.px - actualUL.px);
-          int offsetY = (int) (requestedUL.py - actualUL.py);
-          log.debug("Requested offset = " + offsetX + ", " + offsetY);
+          dstcrs = dcrs.ExportToWkt();
 
-          int croppedW = (int) (requestedLR.px - requestedUL.px) + 1;
-          if (offsetX + croppedW > merged.width())
-          {
-            croppedW = merged.width() - offsetX;
-          }
-          int croppedH = (int) (requestedLR.py - requestedUL.py) + 1;
-          if (offsetY + croppedH > merged.height())
-          {
-            croppedH = merged.height() - offsetY;
-          }
+          CoordinateTransformation ct = new CoordinateTransformation(scrs, dcrs);
 
-          MrGeoRaster cropped = merged.clip(offsetX, offsetY, croppedW, croppedH);
+          double[] ll = ct.TransformPoint(wgs84Bounds.w, wgs84Bounds.s);
+          double[] tr = ct.TransformPoint(wgs84Bounds.e, wgs84Bounds.n);
 
-          Dataset src = cropped.toDataset(wgs84Bounds, pyramidMetadata.getDefaultValues());
-          Dataset dst = GDALUtils.createEmptyMemoryRaster(src, width, height);
-
-          log.debug("WGS84 bounds: {}", wgs84Bounds.toString());
-          log.debug("WGS84 requested bounds width: {}", wgs84Bounds.width());
-          log.debug("WGS84 requested bounds height: {}", wgs84Bounds.height());
-
-          // now change only the resolution for the dst
-          final double[] dstxform = new double[6];
-
-          // default is WGS84
-          String dstcrs = GDALUtils.EPSG4326();
-          if (epsg != null && !epsg.equalsIgnoreCase("epsg:4326"))
-          {
-            SpatialReference scrs = new SpatialReference();
-            scrs.ImportFromEPSG(4326);
-
-            SpatialReference dcrs = new SpatialReference();
-            dcrs.ImportFromEPSG(parseEpsgCode(epsg));
-
-            dstcrs = dcrs.ExportToWkt();
-
-            CoordinateTransformation ct = new CoordinateTransformation(scrs, dcrs);
-
-            double[] ll = ct.TransformPoint(wgs84Bounds.w, wgs84Bounds.s);
-            double[] tr = ct.TransformPoint(wgs84Bounds.e, wgs84Bounds.n);
-
-            dstxform[0] = ll[0]; /* top left x */
-            dstxform[1] = (tr[0] - ll[0]) / width; /* w-e pixel resolution */
-            dstxform[2] = 0; /* 0 */
-            dstxform[3] = tr[1]; /* top left y */
-            dstxform[4] = 0; /* 0 */
-            dstxform[5] = (ll[1] - tr[1]) / height; /* n-s pixel resolution (negative value) */
-          }
-          else
-          {
-            dstxform[0] = wgs84Bounds.w; /* top left x */
-            dstxform[1] = (wgs84Bounds.e - wgs84Bounds.w) / width; /* w-e pixel resolution */
-            dstxform[2] = 0; /* 0 */
-            dstxform[3] = wgs84Bounds.n; /* top left y */
-            dstxform[4] = 0; /* 0 */
-            dstxform[5] = (wgs84Bounds.s - wgs84Bounds.n) / height; /* n-s pixel resolution (negative value) */
-          }
-
-          dst.SetGeoTransform(dstxform);
-          dst.SetProjection(dstcrs);
-
-          int resample = gdalconstConstants.GRA_Bilinear;
-          if (pyramidMetadata.getClassification() == MrsPyramidMetadata.Classification.Categorical)
-          {
-            // use gdalconstConstants.GRA_Mode for categorical, which may not exist in earlier versions of gdal,
-            // in which case we will use GRA_NearestNeighbour
-            try
-            {
-              Field mode = gdalconstConstants.class.getDeclaredField("GRA_Mode");
-              resample = mode.getInt(gdalconstConstants.class);
-            }
-            catch (Exception e)
-            {
-              resample = gdalconstConstants.GRA_NearestNeighbour;
-            }
-          }
-
-          log.debug("Scaling image...");
-          gdal.ReprojectImage(src, dst, GDALUtils.EPSG4326(), dstcrs, resample);
-          log.debug("Image scaled.");
-
-          return MrGeoRaster.fromDataset(dst);
+          dstxform[0] = ll[0]; /* top left x */
+          dstxform[1] = (tr[0] - ll[0]) / width; /* w-e pixel resolution */
+          dstxform[2] = 0; /* 0 */
+          dstxform[3] = tr[1]; /* top left y */
+          dstxform[4] = 0; /* 0 */
+          dstxform[5] = (ll[1] - tr[1]) / height; /* n-s pixel resolution (negative value) */
+        } else {
+          dstxform[0] = wgs84Bounds.w; /* top left x */
+          dstxform[1] = (wgs84Bounds.e - wgs84Bounds.w) / width; /* w-e pixel resolution */
+          dstxform[2] = 0; /* 0 */
+          dstxform[3] = wgs84Bounds.n; /* top left y */
+          dstxform[4] = 0; /* 0 */
+          dstxform[5] = (wgs84Bounds.s - wgs84Bounds.n) / height; /* n-s pixel resolution (negative value) */
         }
 
-        log.error("Error processing request for image: {}", pyramidName);
+        dst.SetGeoTransform(dstxform);
+        dst.SetProjection(dstcrs);
 
-        // isTransparent = true;
-        // return ImageUtils.getTransparentImage(width, height);
-        throw new IOException("Error processing request for image: " + pyramidName);
+        int resample = gdalconstConstants.GRA_Bilinear;
+        if (pyramidMetadata.getClassification() == MrsPyramidMetadata.Classification.Categorical) {
+          // use gdalconstConstants.GRA_Mode for categorical, which may not exist in earlier versions of gdal,
+          // in which case we will use GRA_NearestNeighbour
+          try {
+            Field mode = gdalconstConstants.class.getDeclaredField("GRA_Mode");
+            resample = mode.getInt(gdalconstConstants.class);
+          } catch (Exception e) {
+            resample = gdalconstConstants.GRA_NearestNeighbour;
+          }
+        }
+
+        log.debug("Scaling image...");
+        gdal.ReprojectImage(src, dst, GDALUtils.EPSG4326(), dstcrs, resample);
+        log.debug("Image scaled.");
+
+        return MrGeoRaster.fromDataset(dst);
       }
-      finally
-      {
+      finally {
+        if (src != null) {
+          GDALUtils.delete(src, true);
+        }
+        if (dst != null) {
+          GDALUtils.delete(dst, true);
+        }
         image.close();
       }
     }
   }
   catch (Exception e)
   {
+    log.error("Error rendering image to request bounds", e);
     throw new ImageRendererException(e);
   }
+}
+
+Dataset mosaicToDataset(final MrsImage image, final int zoomlevel,
+                        final Bounds requestedBounds, final double[] nodatas) throws IOException
+{
+  MrsPyramidMetadata metadata = image.getMetadata(); // make sure metadata is loaded
+
+  final int tilesize = metadata.getTilesize();
+  final TileBounds tileBounds = TMSUtils.boundsToTile(requestedBounds, zoomlevel, tilesize);
+
+  Bounds actualBounds = TMSUtils.tileToBounds(tileBounds, zoomlevel, tilesize);
+  Pixel actualUL =
+          TMSUtils.latLonToPixelsUL(actualBounds.n, actualBounds.w, zoomLevel, tilesize);
+  log.debug("Actual UL pixel: " + actualUL.toString());
+  Pixel actualLR =
+          TMSUtils.latLonToPixelsUL(actualBounds.s, actualBounds.e, zoomLevel, tilesize);
+  log.debug("Actual LR pixel: " + actualLR.toString());
+  Pixel requestedUL =
+          TMSUtils.latLonToPixelsUL(requestedBounds.n, requestedBounds.w, zoomLevel, tilesize);
+  log.debug("Requested UL pixel: " + requestedUL.toString());
+  Pixel requestedLR =
+          TMSUtils.latLonToPixelsUL(requestedBounds.s, requestedBounds.e, zoomLevel, tilesize);
+  log.debug("Requested LR pixel: " + requestedLR.toString());
+  int dsWidth = (int)(requestedLR.px - requestedUL.px);
+  int dsHeight = (int)(requestedLR.py - requestedUL.py);
+  int gdaltype = GDALUtils.toGDALDataType(metadata.getTileType());
+  Dataset ds = GDALUtils.createEmptyDiskBasedRaster(dsWidth, dsHeight, metadata.getBands(),
+          gdaltype, nodatas);
+  double[] xform = new double[6];
+  xform[0] = requestedBounds.w;
+  xform[1] = requestedBounds.width() / dsWidth;
+  xform[2] = 0;
+  xform[3] = requestedBounds.n;
+  xform[4] = 0;
+  xform[5] = -requestedBounds.height() / dsHeight;
+
+  ds.SetProjection(GDALUtils.EPSG4326());
+  ds.SetGeoTransform(xform);
+  for (int b = 0; b < ds.GetRasterCount(); b++) {
+    Band band = ds.GetRasterBand(b + 1); // gdal bands are 1's based
+    if (nodatas != null) {
+      if (b < nodatas.length) {
+        band.SetNoDataValue(nodatas[b]);
+      } else {
+        band.SetNoDataValue(nodatas[nodatas.length - 1]);
+      }
+    }
+  }
+  // the iterator is _much_ faster than requesting individual tiles...
+  // final KVIterator<TileIdWritable, Raster> iter = image.getTiles(TileBounds
+  // .convertToLongRectangle(tileBounds));
+  for (long row = tileBounds.s; row <= tileBounds.n; row++) {
+    final TileIdWritable rowStart = new TileIdWritable(TMSUtils.tileid(tileBounds.w, row, zoomlevel));
+    final TileIdWritable rowEnd = new TileIdWritable(TMSUtils.tileid(tileBounds.e, row, zoomlevel));
+
+    final KVIterator<TileIdWritable, MrGeoRaster> iter = image.getTiles(rowStart, rowEnd);
+    while (iter.hasNext()) {
+      final MrGeoRaster source = iter.currentValue();
+      if (source != null) {
+        final Tile tile = TMSUtils.tileid(iter.currentKey().get(), zoomlevel);
+        final Bounds b = TMSUtils.tileBounds(tile.tx, tile.ty, zoomlevel, tilesize);
+        source.copyToDataset(ds, dsWidth, dsHeight, requestedBounds, b, tilesize, zoomlevel, gdaltype);
+      }
+    }
+    if (iter instanceof CloseableKVIterator) {
+      try {
+        ((CloseableKVIterator) iter).close();
+      } catch (IOException e) {
+        log.error("Exception thrown", e);
+      }
+    }
+  }
+  return ds;
 }
 
 /**
