@@ -34,7 +34,6 @@ import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.*;
 import org.mrgeo.resources.KmlGenerator;
 import org.mrgeo.services.utils.RequestUtils;
-//import org.mrgeo.utils.GDALJavaUtils;
 import org.mrgeo.utils.GDALUtils;
 import org.mrgeo.utils.tms.*;
 import org.slf4j.Logger;
@@ -345,7 +344,6 @@ public MrGeoRaster renderImage(final String pyramidName, final Bounds requestBou
       Dataset dst = null;
       try {
         src = mosaicToDataset(image, zoomLevel, wgs84Bounds, pyramidMetadata.getDefaultValues());
-//        GDALJavaUtils.saveRaster(src, "/data/misc/test2/test2.tif", wgs84Bounds);
         dst = GDALUtils.createEmptyDiskBasedRaster(src, width, height);
 
         log.debug("WGS84 bounds: {}", wgs84Bounds.toString());
@@ -408,13 +406,19 @@ public MrGeoRaster renderImage(final String pyramidName, final Bounds requestBou
         return MrGeoRaster.fromDataset(dst);
       }
       finally {
-        src.delete();
-        dst.delete();
+        if (src != null) {
+          GDALUtils.delete(src, true);
+        }
+        if (dst != null) {
+          GDALUtils.delete(dst, true);
+        }
+        image.close();
       }
     }
   }
   catch (Exception e)
   {
+    log.error("Error rendering image to request bounds", e);
     throw new ImageRendererException(e);
   }
 }

@@ -415,7 +415,7 @@ object GDALUtils extends Logging {
     }
   }
 
-  def delete(image:Dataset): Unit = {
+  def delete(image:Dataset, deleteNow: Boolean = false): Unit = {
     val files = image.GetFileList
 
     image.delete()
@@ -424,7 +424,12 @@ object GDALUtils extends Logging {
       f match {
         case file:String =>
           val f = new File(file)
-          f.deleteOnExit()
+          if (deleteNow) {
+            f.delete();
+          }
+          else {
+            f.deleteOnExit()
+          }
         case _ =>
       }
     }

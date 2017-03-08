@@ -46,6 +46,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.dom.DOMSource;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -455,8 +457,11 @@ private Response getMap(MultivaluedMap<String, String> allParams, ProviderProper
   }
   catch (IllegalAccessException | InstantiationException | WmsGeneratorException | ImageRendererException e)
   {
-    log.error("Unable to render the image in getTile", e);
-    return writeError(Response.Status.BAD_REQUEST, e.getMessage());
+    StringWriter errors = new StringWriter();
+    e.printStackTrace(new PrintWriter(errors));
+   String msg = errors.toString();
+    log.error("Unable to render the image in getTile", msg);
+    return writeError(Response.Status.BAD_REQUEST, msg);
   }
 }
 
