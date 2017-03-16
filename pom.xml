@@ -39,6 +39,7 @@
     <commons-codec.version>1.4</commons-codec.version>
     <commons-collections.version>3.2.2</commons-collections.version>
     <commons-fileupload.version>1.2.1</commons-fileupload.version>
+    <commons-httpclient.version>3.1</commons-httpclient.version>
     <commons-io.version>2.4</commons-io.version>
     <commons-jexl.version>2.1.1</commons-jexl.version>
     <commons-lang.version>3.3.1</commons-lang.version>
@@ -54,6 +55,7 @@
     <hadoop.aws.version>2.7.1</hadoop.aws.version>
     <hadoop.yarn.version>${hadoop.version}</hadoop.yarn.version>
     <hppc.version>0.5.2</hppc.version>
+    <httpcomponents.version>4.3.4</httpcomponents.version>
     <imageio.version>1.1.7</imageio.version>
     <jackson.version>2.4.4</jackson.version>
     <jai-imageio.version>1.1</jai-imageio.version>
@@ -789,7 +791,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
@@ -831,7 +833,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
@@ -873,7 +875,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
@@ -915,7 +917,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
@@ -957,7 +959,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
@@ -999,7 +1001,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
@@ -1041,7 +1043,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
@@ -1083,7 +1085,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
@@ -1125,7 +1127,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
@@ -1167,7 +1169,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
@@ -1209,7 +1211,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
@@ -1245,7 +1247,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
       </dependencies>
@@ -1277,7 +1279,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
       </dependencies>
@@ -1310,7 +1312,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
       </dependencies>
@@ -1342,7 +1344,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
       </dependencies>
@@ -1374,7 +1376,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
       </dependencies>
@@ -1406,7 +1408,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
       </dependencies>
@@ -1438,7 +1440,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
       </dependencies>
@@ -1470,7 +1472,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
       </dependencies>
@@ -1502,7 +1504,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
       </dependencies>
@@ -1548,7 +1550,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
       </dependencies>
@@ -1594,7 +1596,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
       </dependencies>
@@ -1640,7 +1642,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
       </dependencies>
@@ -1660,7 +1662,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
       </dependencies>
@@ -1680,7 +1682,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
       </dependencies>
@@ -1700,7 +1702,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
       </dependencies>
@@ -1720,7 +1722,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
       </dependencies>
@@ -1740,7 +1742,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
       </dependencies>
@@ -1760,7 +1762,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
       </dependencies>
@@ -1780,7 +1782,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
       </dependencies>
@@ -1800,7 +1802,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
       </dependencies>
@@ -1820,7 +1822,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
       </dependencies>
@@ -1840,7 +1842,7 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
       </dependencies>
@@ -1873,13 +1875,13 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
           <groupId>org.apache.httpcomponents</groupId>
           <artifactId>httpclient</artifactId>
-          <version>4.3.4</version>
+          <version>${httpcomponents.version}</version>
           <scope>provided</scope>
         </dependency>
       </dependencies>
@@ -1901,13 +1903,13 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
           <groupId>org.apache.httpcomponents</groupId>
           <artifactId>httpclient</artifactId>
-          <version>4.3.4</version>
+          <version>${httpcomponents.version}</version>
           <scope>provided</scope>
         </dependency>
       </dependencies>
@@ -1929,13 +1931,13 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
           <groupId>org.apache.httpcomponents</groupId>
           <artifactId>httpclient</artifactId>
-          <version>4.3.4</version>
+          <version>${httpcomponents.version}</version>
           <scope>provided</scope>
         </dependency>
       </dependencies>
@@ -1957,13 +1959,13 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
           <groupId>org.apache.httpcomponents</groupId>
           <artifactId>httpclient</artifactId>
-          <version>4.3.4</version>
+          <version>${httpcomponents.version}</version>
           <scope>provided</scope>
         </dependency>
       </dependencies>
@@ -1985,13 +1987,13 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
           <groupId>org.apache.httpcomponents</groupId>
           <artifactId>httpclient</artifactId>
-          <version>4.3.4</version>
+          <version>${httpcomponents.version}</version>
           <scope>provided</scope>
         </dependency>
       </dependencies>
@@ -2013,13 +2015,13 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
           <groupId>org.apache.httpcomponents</groupId>
           <artifactId>httpclient</artifactId>
-          <version>4.3.4</version>
+          <version>${httpcomponents.version}</version>
           <scope>provided</scope>
         </dependency>
       </dependencies>
@@ -2041,13 +2043,13 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
           <groupId>org.apache.httpcomponents</groupId>
           <artifactId>httpclient</artifactId>
-          <version>4.3.4</version>
+          <version>${httpcomponents.version}</version>
           <scope>provided</scope>
         </dependency>
       </dependencies>
@@ -2069,13 +2071,13 @@
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
-          <version>3.1</version>
+          <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
         <dependency>
           <groupId>org.apache.httpcomponents</groupId>
           <artifactId>httpclient</artifactId>
-          <version>4.3.4</version>
+          <version>${httpcomponents.version}</version>
           <scope>provided</scope>
         </dependency>
       </dependencies>
@@ -2088,6 +2090,32 @@
           <artifactId>hadoop-aws</artifactId>
           <version>${hadoop.version}</version>
           <scope>${hadoop.scope}</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>standalone-webserver</id>
+      <properties>
+        <hadoop.scope>compile</hadoop.scope>
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>javax.servlet</groupId>
+          <artifactId>javax.servlet-api</artifactId>
+          <version>${servlet-api.version}</version>
+          <scope>compile</scope>
+        </dependency>
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>${commons-httpclient.version}</version>
+          <scope>compile</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.httpcomponents</groupId>
+          <artifactId>httpclient</artifactId>
+          <version>${httpcomponents.version}</version>
+          <scope>compile</scope>
         </dependency>
       </dependencies>
     </profile>

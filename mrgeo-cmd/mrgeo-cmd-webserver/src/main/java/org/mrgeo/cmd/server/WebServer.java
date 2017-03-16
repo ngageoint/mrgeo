@@ -18,11 +18,15 @@ package org.mrgeo.cmd.server;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.cli.*;
 import org.apache.hadoop.conf.Configuration;
+import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.util.thread.ThreadPool;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
@@ -57,8 +61,10 @@ public static Options createOptions()
 {
   Options result = MrGeo.createOptions();
 
-  Option output = new Option("p", "port", true, "The HTTP port on which the server will listen (default 8080)");
-  result.addOption(output);
+  Option port = new Option("p", "port", true, "The HTTP port on which the server will listen (default 8080)");
+  result.addOption(port);
+  Option singleThreaded = new Option("st", "singleThreaded", false, "Specify this argument in order to run the web server in essentially single-threaded mode for processing one request at a time");
+  result.addOption(singleThreaded);
 
   return result;
 }
@@ -102,6 +108,17 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
         return -1;
       }
     }
+    boolean singleThreaded = false;
+    try
+    {
+      singleThreaded = line.hasOption("st");
+    }
+    catch (NumberFormatException nfe)
+    {
+      System.err.println("Invalid number of connections specified: " + line.getOptionValue("n"));
+      return -1;
+    }
+
     if (line.hasOption("v"))
     {
       LoggingUtils.setDefaultLogLevel(LoggingUtils.INFO);
@@ -111,7 +128,7 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
       LoggingUtils.setDefaultLogLevel(LoggingUtils.DEBUG);
     }
 
-    runWebServer(httpPort);
+    runWebServer(httpPort, singleThreaded);
 
     long end = System.currentTimeMillis();
     long duration = end - start;
@@ -138,11 +155,27 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
 
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File() checking for existence")
 @SuppressWarnings("squid:S00112") // Passing on exception thrown from 3rd party API
-private Server startWebServer(int httpPort) throws Exception
+private Server startWebServer(int httpPort, boolean singleThreaded) throws Exception
 {
   System.out.println("Starting embedded web server on port " + httpPort);
   URI uri = UriBuilder.fromUri("http://" + getHostName() + "/").port(httpPort).build();
-  Server server = new Server(httpPort);
+  Server server = null;
+  if (singleThreaded) {
+    System.out.println("  Running in single-threaded mode");
+    // Based on the connector configuration below (min = 1, max = 1), Jetty requires a
+    // minimum thread pool size of three threads for its processing. One acceptor thread,
+    // one selector thread, and one request thread. It will queue up requests that it
+    // can't immediately process.
+    ThreadPool threadPool = new QueuedThreadPool(3, 1);
+    server = new Server(threadPool);
+    ServerConnector connector = new ServerConnector(server, 1, 1);
+//    connector.setAcceptQueueSize(0);
+    connector.setPort(httpPort);
+    server.setConnectors(new Connector[]{connector});
+  }
+  else {
+    server = new Server(httpPort);
+  }
   HandlerCollection coll = new HandlerCollection();
   ServletContextHandler context = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
   context.setContextPath("/mrgeo");
@@ -193,9 +226,9 @@ private Server startWebServer(int httpPort) throws Exception
 }
 
 @SuppressWarnings("squid:S00112") // Passing on exception thrown from 3rd party API
-private void runWebServer(int httpPort) throws Exception
+private void runWebServer(int httpPort, boolean singleThreaded) throws Exception
 {
-  Server server = startWebServer(httpPort);
+  Server server = startWebServer(httpPort, singleThreaded);
   System.out.println("Use ctrl-C to stop the web server");
   server.join();
 }
