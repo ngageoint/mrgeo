@@ -207,6 +207,19 @@ public Response getTile(@PathParam("version") final String version,
       raster = renderer.renderImage(pyramid, bounds, providerProperties, SRSs[index]);
     }
 
+    if (raster == null) {
+      // The requested tile does not exist
+      try {
+        final MrsPyramidMetadata metadata = service.getMetadata(pyramid);
+        return createEmptyTile(((ImageResponseWriter) ImageHandlerFactory.getHandler(format,
+                ImageResponseWriter.class)), metadata.getTilesize(), metadata.getTilesize());
+      }
+      catch (IllegalAccessException | MrGeoRaster.MrGeoRasterException | InstantiationException | ExecutionException e1)
+      {
+        throw new IOException("Exception occurred creating blank tile " + pyramid + "/" + z + "/" + x + "/" +
+                y + "." + format, e1);
+      }
+    }
     if (!(renderer instanceof TiffImageRenderer) && raster.bands() != 3 &&
         raster.bands() != 4)
     {

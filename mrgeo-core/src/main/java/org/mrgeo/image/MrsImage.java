@@ -335,7 +335,12 @@ public MrGeoRaster getTile(final long tx, final long ty) throws TileNotFoundExce
     openReader();
   }
 
-  return reader.get(new TileIdWritable(TMSUtils.tileid(tx, ty, getZoomlevel())));
+  MrGeoRaster result = reader.get(new TileIdWritable(TMSUtils.tileid(tx, ty, getZoomlevel())));
+  if (result == null) {
+    final String msg = String.format("Tile (%d, %d) not found", tx, ty);
+    throw new TileNotFoundException(msg);
+  }
+  return result;
 }
 
 public LongRectangle getTileBounds()
@@ -532,14 +537,11 @@ public MrGeoRaster getRaster(final Tile[] tiles) throws MrGeoRaster.MrGeoRasterE
     {
       MrGeoRaster source = getTile((int) tile.tx, (int) tile.ty);
 
-      if (source != null)
-      {
-        log.debug("Tile {}, {} with bounds {}, {}, {}, {} pasted onto px {} py {}", tile.tx,
-            tile.ty, bounds.w, bounds.s, bounds.e, bounds.n, start.px - ul.px, start.py - ul.py);
+      log.debug("Tile {}, {} with bounds {}, {}, {}, {} pasted onto px {} py {}", tile.tx,
+          tile.ty, bounds.w, bounds.s, bounds.e, bounds.n, start.px - ul.px, start.py - ul.py);
 
-        merged.copyFrom(0, 0, source.width(), source.height(),
-            source, (int) (start.px - ul.px), (int) (start.py - ul.py));
-      }
+      merged.copyFrom(0, 0, source.width(), source.height(),
+          source, (int) (start.px - ul.px), (int) (start.py - ul.py));
     }
     // bad tile - tile could be out of bounds - ignore it
     catch (TileNotFoundException ignored)

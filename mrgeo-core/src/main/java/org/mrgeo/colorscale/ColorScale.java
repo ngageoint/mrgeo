@@ -51,7 +51,6 @@ import java.util.TreeMap;
  */
 public class ColorScale extends TreeMap<Double, Color>
 {
-
 private static final long serialVersionUID = 1L;
 private static final int CACHE_SIZE = 1024;
 private static final int A = 3;
@@ -177,24 +176,38 @@ public synchronized static void setDefault(final ColorScale colorScale)
   }
 }
 
+private static int parseOpacity(String opacityStr)
+{
+  if (opacityStr != null && !opacityStr.isEmpty())
+  {
+    return Integer.parseInt(opacityStr);
+  }
+  else
+  {
+    return 255;
+  }
+}
+
 private static void parseColor(final String colorStr, final String opacityStr, final int[] color)
     throws IOException
 {
   final String[] colors = colorStr.split(",");
-  if (colors.length != 3)
-  {
+  if (colors.length == 3) {
+    color[0] = Integer.parseInt(colors[0]);
+    color[1] = Integer.parseInt(colors[1]);
+    color[2] = Integer.parseInt(colors[2]);
+    color[3] = parseOpacity(opacityStr);
+  }
+  else if (colors.length == 1) {
+    // Allows colors to be specified in hex as #0F0F0F for example
+    int c = Integer.decode(colors[0]).intValue();
+    color[0] = (c & 0xFF0000) >> 16;
+    color[1] = (c & 0x00FF00) >> 8;
+    color[2] = (c & 0x0000FF);
+    color[3] = parseOpacity(opacityStr);
+  }
+  else {
     throw new IOException("Error parsing XML: There must be three elements in color.");
-  }
-  color[0] = Integer.parseInt(colors[0]);
-  color[1] = Integer.parseInt(colors[1]);
-  color[2] = Integer.parseInt(colors[2]);
-  if (opacityStr != null && !opacityStr.isEmpty())
-  {
-    color[3] = Integer.parseInt(opacityStr);
-  }
-  else
-  {
-    color[3] = 255;
   }
 }
 
