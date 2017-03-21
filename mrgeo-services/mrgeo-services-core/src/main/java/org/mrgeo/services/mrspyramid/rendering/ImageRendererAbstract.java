@@ -639,7 +639,7 @@ public MrGeoRaster renderImage(final String pyramidName, final int tileColumn, f
   }
   catch (IOException | NullPointerException e)
   {
-    throw new ImageRendererException("Unable to open image: " + HadoopFileUtils.unqualifyPath(pyramidName), e);
+    throw new ImageRendererException("Unable to open image: " + HadoopFileUtils.unqualifyPath(pyramidName + " at zoom level " + zoom), e);
   }
 }
 
