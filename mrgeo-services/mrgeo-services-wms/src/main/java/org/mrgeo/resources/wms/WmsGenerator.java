@@ -460,7 +460,7 @@ private Response getMap(MultivaluedMap<String, String> allParams, ProviderProper
     StringWriter errors = new StringWriter();
     e.printStackTrace(new PrintWriter(errors));
    String msg = errors.toString();
-    log.error("Unable to render the image in getTile", msg);
+    log.error("Unable to render the image in getTile: " + msg, e);
     return writeError(Response.Status.BAD_REQUEST, msg);
   }
 }
