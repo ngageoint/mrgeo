@@ -18,7 +18,7 @@ import static org.mockito.Mockito.when;
 public class HdfsMrsImageReaderBuilder
 {
 private HdfsMrsImageReader hdfsMrsImageReader;
-private List<MapFile.Reader> mapFileReaders = new ArrayList<>();
+private List<HadoopFileUtils.MapFileReaderWrapper> mapFileReaderWrappers = new ArrayList<>();
 private boolean canBeCached;
 private int zoom;
 
@@ -27,10 +27,10 @@ public HdfsMrsImageReaderBuilder()
   this.hdfsMrsImageReader = mock(HdfsMrsImageReader.class);
 }
 
-public HdfsMrsImageReaderBuilder mapFileReader(MapFile.Reader mapFileReader)
+public HdfsMrsImageReaderBuilder mapFileReader(HadoopFileUtils.MapFileReaderWrapper mapFileReader)
 {
   // each call adds a new map file reader to the list
-  this.mapFileReaders.add(mapFileReader);
+  this.mapFileReaderWrappers.add(mapFileReader);
 
   return this;
 }
@@ -52,18 +52,18 @@ public HdfsMrsImageReaderBuilder zoom(int zoom)
 public HdfsMrsImageReader build() throws IOException
 {
   // Return the MapFile.Readers for the specified index
-  when(hdfsMrsImageReader.getReader(anyInt())).thenAnswer(new Answer<MapFile.Reader>()
+  when(hdfsMrsImageReader.getReaderWrapper(anyInt())).thenAnswer(new Answer<HadoopFileUtils.MapFileReaderWrapper>()
   {
     @Override
-    public MapFile.Reader answer(InvocationOnMock invocationOnMock) throws Throwable
+    public HadoopFileUtils.MapFileReaderWrapper answer(InvocationOnMock invocationOnMock) throws Throwable
     {
       int index = (Integer) invocationOnMock.getArguments()[0];
-      return mapFileReaders.get(index);
+      return mapFileReaderWrappers.get(index);
     }
   });
 
   // Return the number of MapFile.Reader that have been configured
-  when(hdfsMrsImageReader.getMaxPartitions()).thenReturn(mapFileReaders.size());
+  when(hdfsMrsImageReader.getMaxPartitions()).thenReturn(mapFileReaderWrappers.size());
 
   // Always start at 0 for mock
   when(hdfsMrsImageReader.getPartitionIndex(any(TileIdWritable.class))).thenReturn(0);

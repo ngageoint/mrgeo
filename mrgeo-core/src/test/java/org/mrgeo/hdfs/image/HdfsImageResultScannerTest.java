@@ -1,6 +1,7 @@
 package org.mrgeo.hdfs.image;
 
 import junit.framework.Assert;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.MapFile;
 import org.junit.After;
 import org.junit.Before;
@@ -8,6 +9,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
+import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.hdfs.utils.HdfsMrsImageReaderBuilder;
 import org.mrgeo.hdfs.utils.MapFileReaderBuilder;
 import org.mrgeo.junit.UnitTest;
@@ -32,7 +34,9 @@ private static final Logger logger = LoggerFactory.getLogger(HdfsImageResultScan
 
 private HdfsMrsImageReader mockImageReader;
 private MapFile.Reader firstPartitionMockMapFileReader;
-private MapFile.Reader secondPartitionMapFileReader;
+private MapFile.Reader secondPartitionMockMapFileReader;
+private HadoopFileUtils.MapFileReaderWrapper firstPartitionMapFileReaderWrapper;
+private HadoopFileUtils.MapFileReaderWrapper secondPartitionMapFileReaderWrapper;
 private LongRectangle bounds = new LongRectangle(0L, 0L, 7L, 3L);
 private TileIdWritable[] firstPartitionTileIds =
     {new TileIdWritable(2L), new TileIdWritable(4L), new TileIdWritable(6L)};
@@ -258,22 +262,24 @@ public void testClose() throws Exception
 
 private HdfsMrsImageReader createDefaultImageReader(int zoomLevel, boolean canBeCached) throws IOException
 {
-  firstPartitionMockMapFileReader = new MapFileReaderBuilder()
-      .keyClass(TileIdWritable.class)
-      .valueClass(RasterWritable.class)
-      .keys(firstPartitionTileIds)
-      .values(firstPartitionRasters)
-      .build();
-  secondPartitionMapFileReader = new MapFileReaderBuilder()
-      .keyClass(TileIdWritable.class)
-      .valueClass(RasterWritable.class)
-      .keys(secondPartitionTileIds)
-      .values(secondPartitionRasters)
-      .build();
+  MapFileReaderBuilder firstMapFileReaderBuilder = new MapFileReaderBuilder()
+          .keyClass(TileIdWritable.class)
+          .valueClass(RasterWritable.class)
+          .keys(firstPartitionTileIds)
+          .values(firstPartitionRasters);
+  firstPartitionMockMapFileReader = firstMapFileReaderBuilder.build();
+  firstPartitionMapFileReaderWrapper = new HadoopFileUtils.MapFileReaderWrapper(firstPartitionMockMapFileReader, new Path("/testing/first"));
+  MapFileReaderBuilder secondMapFileReaderBuilder = new MapFileReaderBuilder()
+          .keyClass(TileIdWritable.class)
+          .valueClass(RasterWritable.class)
+          .keys(secondPartitionTileIds)
+          .values(secondPartitionRasters);
+  secondPartitionMockMapFileReader = secondMapFileReaderBuilder.build();
+  secondPartitionMapFileReaderWrapper = new HadoopFileUtils.MapFileReaderWrapper(secondPartitionMockMapFileReader, new Path("/testing/second"));
   HdfsMrsImageReaderBuilder builder = new HdfsMrsImageReaderBuilder()
       .canBeCached(canBeCached)
-      .mapFileReader(firstPartitionMockMapFileReader)
-      .mapFileReader(secondPartitionMapFileReader);
+      .mapFileReader(firstPartitionMapFileReaderWrapper)
+      .mapFileReader(secondPartitionMapFileReaderWrapper);
   if (zoomLevel > 0)
   {
     return builder.zoom(zoomLevel).build();
