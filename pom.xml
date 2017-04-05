@@ -1982,6 +1982,10 @@
           <version>${httpcomponents.version}</version>
           <scope>provided</scope>
         </dependency>
+        <dependency>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
+        </dependency>
       </dependencies>
     </profile>
     <profile>
@@ -2009,6 +2013,10 @@
           <artifactId>httpclient</artifactId>
           <version>${httpcomponents.version}</version>
           <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -2038,6 +2046,10 @@
           <version>${httpcomponents.version}</version>
           <scope>provided</scope>
         </dependency>
+        <dependency>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
+        </dependency>
       </dependencies>
     </profile>
     <profile>
@@ -2066,6 +2078,10 @@
           <version>${httpcomponents.version}</version>
           <scope>provided</scope>
         </dependency>
+        <dependency>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
+        </dependency>
       </dependencies>
     </profile>
     <profile>
@@ -2093,6 +2109,10 @@
           <artifactId>httpclient</artifactId>
           <version>${httpcomponents.version}</version>
           <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
       </dependencies>
     </profile>
