@@ -77,22 +77,22 @@ public static Reprojector createFromWkt(String wktSrc, String wktDest)
   return new Reprojector(sourceSrs, destSrs);
 }
 
-private static int parseEpsgCode(String epsg)
-{
-  String prefix = "epsg:";
-  int index = epsg.toLowerCase().indexOf(prefix);
-  if (index >= 0)
-  {
-    try
-    {
-      return Integer.parseInt(epsg.substring(index + prefix.length()));
-    }
-    catch (NumberFormatException nfe)
-    {
-    }
-  }
-  throw new IllegalArgumentException("Invalid EPSG code: " + epsg);
-}
+//private static int parseEpsgCode(String epsg)
+//{
+//  String prefix = "epsg:";
+//  int index = epsg.toLowerCase().indexOf(prefix);
+//  if (index >= 0)
+//  {
+//    try
+//    {
+//      return Integer.parseInt(epsg.substring(index + prefix.length()));
+//    }
+//    catch (NumberFormatException nfe)
+//    {
+//    }
+//  }
+//  throw new IllegalArgumentException("Invalid EPSG code: " + epsg);
+//}
 
 @Override
 public void filter(WritablePoint p)

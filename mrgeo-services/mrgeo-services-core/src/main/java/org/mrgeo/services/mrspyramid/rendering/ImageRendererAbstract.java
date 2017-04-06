@@ -161,22 +161,22 @@ private static MrsImage getImageForScale(final MrsPyramid pyramid, final double 
   return image;
 }
 
-private static int parseEpsgCode(String epsg)
-{
-  String prefix = "epsg:";
-  int index = epsg.toLowerCase().indexOf(prefix);
-  if (index >= 0)
-  {
-    try
-    {
-      return Integer.parseInt(epsg.substring(index + prefix.length()));
-    }
-    catch (NumberFormatException ignored)
-    {
-    }
-  }
-  throw new IllegalArgumentException("Invalid EPSG code: " + epsg);
-}
+//private static int parseEpsgCode(String epsg)
+//{
+//  String prefix = "epsg:";
+//  int index = epsg.toLowerCase().indexOf(prefix);
+//  if (index >= 0)
+//  {
+//    try
+//    {
+//      return Integer.parseInt(epsg.substring(index + prefix.length()));
+//    }
+//    catch (NumberFormatException ignored)
+//    {
+//    }
+//  }
+//  throw new IllegalArgumentException("Invalid EPSG code: " + epsg);
+//}
 
 /*
  * (non-Javadoc)
