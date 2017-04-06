@@ -59,18 +59,18 @@ public static Bounds boundsFromParam(final String param)
  * Reprojects a bounds to Geographic
  *
  * @param bounds the projected input bounds
- * @param epsg   the epsg string of the projected bounds crs
+ * @param srs   the spatial reference of the projected bounds crs. The format is described
+ *              in http://gdal.org/java/org/gdal/osr/SpatialReference.html#SetFromUserInput(java.lang.String).
+ *              Examples include "EPSG:4326" and "CRS:84".
  * @return geographic bounds
  */
-public static Bounds reprojectBounds(final Bounds bounds, final String epsg)
+public static Bounds reprojectBounds(final Bounds bounds, final String srs)
 {
-  if (epsg != null && !(epsg.equalsIgnoreCase("EPSG:4326")))
+  if (srs != null && !(srs.equalsIgnoreCase("EPSG:4326")))
   {
-
     SpatialReference src = new SpatialReference(GDALUtils.EPSG4326());
     SpatialReference dst = new SpatialReference();
-    String[] code = epsg.split(":");
-    dst.ImportFromEPSG(Integer.parseInt(code[1]));
+    dst.SetFromUserInput(srs);
 
     CoordinateTransformation tx = new CoordinateTransformation(src, dst);
 
@@ -99,38 +99,35 @@ public static Bounds reprojectBounds(final Bounds bounds, final String epsg)
  * Reprojects a bounds to WGS-84
  *
  * @param bounds the projected input bounds
- * @param epsg   the epsg string of the projected bounds crs
+ * @param srs   the spatial reference of the projected bounds crs. The format is
+ *              described in http://gdal.org/java/org/gdal/osr/SpatialReference.html#SetFromUserInput(java.lang.String)
+ *              Examples include "EPSG:4326" and "CRS:84".
  * @return geographic bounds
  */
-public static Bounds reprojectBoundsToWGS84(final Bounds bounds, final String epsg)
+public static Bounds reprojectBoundsToWGS84(final Bounds bounds, final String srs)
 {
-  if (epsg != null)
+  if (srs != null)
   {
-    String[] code = epsg.split(":");
-    int srcEpsg = Integer.parseInt(code[1]);
-    if (srcEpsg != 4326)
-    {
-      SpatialReference src = new SpatialReference();
-      src.ImportFromEPSG(srcEpsg);
+    SpatialReference src = new SpatialReference();
+    src.SetFromUserInput(srs);
 
-      SpatialReference dst = new SpatialReference(GDALUtils.EPSG4326());
-      CoordinateTransformation tx = new CoordinateTransformation(src, dst);
+    SpatialReference dst = new SpatialReference(GDALUtils.EPSG4326());
+    CoordinateTransformation tx = new CoordinateTransformation(src, dst);
 
-      double[] c1;
-      double[] c2;
-      double[] c3;
-      double[] c4;
+    double[] c1;
+    double[] c2;
+    double[] c3;
+    double[] c4;
 
-      c1 = tx.TransformPoint(bounds.w, bounds.s);
-      c2 = tx.TransformPoint(bounds.w, bounds.n);
-      c3 = tx.TransformPoint(bounds.e, bounds.s);
-      c4 = tx.TransformPoint(bounds.e, bounds.n);
+    c1 = tx.TransformPoint(bounds.w, bounds.s);
+    c2 = tx.TransformPoint(bounds.w, bounds.n);
+    c3 = tx.TransformPoint(bounds.e, bounds.s);
+    c4 = tx.TransformPoint(bounds.e, bounds.n);
 
-      return new Bounds(Math.min(Math.min(c1[0], c2[0]), Math.min(c3[0], c4[0])),
-          Math.min(Math.min(c1[1], c2[1]), Math.min(c3[1], c4[1])),
-          Math.max(Math.max(c1[0], c2[0]), Math.max(c3[0], c4[0])),
-          Math.max(Math.max(c1[1], c2[1]), Math.max(c3[1], c4[1])));
-    }
+    return new Bounds(Math.min(Math.min(c1[0], c2[0]), Math.min(c3[0], c4[0])),
+        Math.min(Math.min(c1[1], c2[1]), Math.min(c3[1], c4[1])),
+        Math.max(Math.max(c1[0], c2[0]), Math.max(c3[0], c4[0])),
+        Math.max(Math.max(c1[1], c2[1]), Math.max(c3[1], c4[1])));
   }
   return bounds.clone();
 }

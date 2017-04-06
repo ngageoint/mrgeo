@@ -360,7 +360,7 @@ public MrGeoRaster renderImage(final String pyramidName, final Bounds requestBou
           scrs.ImportFromEPSG(4326);
 
           SpatialReference dcrs = new SpatialReference();
-          dcrs.ImportFromEPSG(parseEpsgCode(epsg));
+          dcrs.SetFromUserInput(epsg);
 
           dstcrs = dcrs.ExportToWkt();
 

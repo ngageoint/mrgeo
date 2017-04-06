@@ -50,11 +50,9 @@ private Reprojector(SpatialReference sourceSrs, SpatialReference destSrs)
 public static Reprojector createFromCode(String codeSrc, String codeDest)
 {
   SpatialReference sourceSrs = new SpatialReference();
-  int sourceEpsg = parseEpsgCode(codeSrc);
-  sourceSrs.ImportFromEPSG(sourceEpsg);
+  sourceSrs.SetFromUserInput(codeSrc);
   SpatialReference destSrs = new SpatialReference();
-  int destEpsg = parseEpsgCode(codeDest);
-  destSrs.ImportFromEPSG(destEpsg);
+  destSrs.SetFromUserInput(codeDest);
 
   return new Reprojector(sourceSrs, destSrs);
 }
