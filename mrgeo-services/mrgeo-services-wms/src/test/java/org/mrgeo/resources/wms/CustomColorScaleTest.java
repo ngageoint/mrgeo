@@ -18,6 +18,7 @@ package org.mrgeo.resources.wms;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -55,6 +56,12 @@ public static void setUpForJUnit()
   {
     e.printStackTrace();
   }
+}
+
+@After
+public void teardown()
+{
+  MrGeoProperties.resetProperties();
 }
 
 /*

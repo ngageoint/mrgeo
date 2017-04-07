@@ -26,6 +26,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.core.MrGeoPropertiesTest;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.TestUtils;
 
@@ -39,19 +40,21 @@ import java.util.Properties;
 public class ColorScaleManagerTest
 {
 
-String oldbase;
+//String oldbase;
 
 @Before
 public void setup() throws ColorScale.ColorScaleException
 {
-  oldbase = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_COLORSCALE);
+  MrGeoProperties.resetProperties();
+//  oldbase = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_COLORSCALE);
   ColorScaleManager.resetColorscales();
 }
 
 @After
 public void teardown()
 {
-  MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_COLORSCALE, oldbase);
+//  MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_COLORSCALE, oldbase);
+  MrGeoProperties.resetProperties();
 }
 
 

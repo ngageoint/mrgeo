@@ -25,7 +25,7 @@ private String encryptedValue;
 @Before
 public void setUp() throws Exception
 {
-  MrGeoProperties.clearProperties();
+  MrGeoProperties.resetProperties();
 
   StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
   encryptor.setPassword(TEST_MASTER_PASSWORD);

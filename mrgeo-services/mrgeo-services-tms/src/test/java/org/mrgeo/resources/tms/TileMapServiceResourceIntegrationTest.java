@@ -79,6 +79,7 @@ public void setUp() throws Exception
 {
   super.setUp();
   Mockito.reset(service, request);
+  MrGeoProperties.resetProperties();
   Properties props = MrGeoProperties.getInstance();
   props.put(MrGeoConstants.MRGEO_HDFS_IMAGE, input);
   props.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, input + "color-scales");
@@ -86,6 +87,12 @@ public void setUp() throws Exception
   baselineInput = TestUtils.composeInputDir(TileMapServiceResourceIntegrationTest.class);
 
   TileMapServiceResource.props = props;
+}
+
+@Override
+public void tearDown() throws Exception {
+  super.tearDown();
+  MrGeoProperties.resetProperties();
 }
 
 @Test
