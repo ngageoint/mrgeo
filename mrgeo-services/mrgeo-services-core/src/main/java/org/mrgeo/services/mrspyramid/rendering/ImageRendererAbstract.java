@@ -161,22 +161,22 @@ private static MrsImage getImageForScale(final MrsPyramid pyramid, final double 
   return image;
 }
 
-private static int parseEpsgCode(String epsg)
-{
-  String prefix = "epsg:";
-  int index = epsg.toLowerCase().indexOf(prefix);
-  if (index >= 0)
-  {
-    try
-    {
-      return Integer.parseInt(epsg.substring(index + prefix.length()));
-    }
-    catch (NumberFormatException ignored)
-    {
-    }
-  }
-  throw new IllegalArgumentException("Invalid EPSG code: " + epsg);
-}
+//private static int parseEpsgCode(String epsg)
+//{
+//  String prefix = "epsg:";
+//  int index = epsg.toLowerCase().indexOf(prefix);
+//  if (index >= 0)
+//  {
+//    try
+//    {
+//      return Integer.parseInt(epsg.substring(index + prefix.length()));
+//    }
+//    catch (NumberFormatException ignored)
+//    {
+//    }
+//  }
+//  throw new IllegalArgumentException("Invalid EPSG code: " + epsg);
+//}
 
 /*
  * (non-Javadoc)
@@ -360,7 +360,7 @@ public MrGeoRaster renderImage(final String pyramidName, final Bounds requestBou
           scrs.ImportFromEPSG(4326);
 
           SpatialReference dcrs = new SpatialReference();
-          dcrs.ImportFromEPSG(parseEpsgCode(epsg));
+          dcrs.SetFromUserInput(epsg);
 
           dstcrs = dcrs.ExportToWkt();
 
