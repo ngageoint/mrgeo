@@ -50,11 +50,9 @@ private Reprojector(SpatialReference sourceSrs, SpatialReference destSrs)
 public static Reprojector createFromCode(String codeSrc, String codeDest)
 {
   SpatialReference sourceSrs = new SpatialReference();
-  int sourceEpsg = parseEpsgCode(codeSrc);
-  sourceSrs.ImportFromEPSG(sourceEpsg);
+  sourceSrs.SetFromUserInput(codeSrc);
   SpatialReference destSrs = new SpatialReference();
-  int destEpsg = parseEpsgCode(codeDest);
-  destSrs.ImportFromEPSG(destEpsg);
+  destSrs.SetFromUserInput(codeDest);
 
   return new Reprojector(sourceSrs, destSrs);
 }
@@ -79,22 +77,22 @@ public static Reprojector createFromWkt(String wktSrc, String wktDest)
   return new Reprojector(sourceSrs, destSrs);
 }
 
-private static int parseEpsgCode(String epsg)
-{
-  String prefix = "epsg:";
-  int index = epsg.toLowerCase().indexOf(prefix);
-  if (index >= 0)
-  {
-    try
-    {
-      return Integer.parseInt(epsg.substring(index + prefix.length()));
-    }
-    catch (NumberFormatException nfe)
-    {
-    }
-  }
-  throw new IllegalArgumentException("Invalid EPSG code: " + epsg);
-}
+//private static int parseEpsgCode(String epsg)
+//{
+//  String prefix = "epsg:";
+//  int index = epsg.toLowerCase().indexOf(prefix);
+//  if (index >= 0)
+//  {
+//    try
+//    {
+//      return Integer.parseInt(epsg.substring(index + prefix.length()));
+//    }
+//    catch (NumberFormatException nfe)
+//    {
+//    }
+//  }
+//  throw new IllegalArgumentException("Invalid EPSG code: " + epsg);
+//}
 
 @Override
 public void filter(WritablePoint p)

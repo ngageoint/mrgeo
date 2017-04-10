@@ -58,6 +58,7 @@ static public void setup() throws IOException
 @Before
 public void init()
 {
+  MrGeoProperties.resetProperties();
   MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, (new File(Defs.INPUT)).toURI().toString());
   provider = new HdfsMrsImageDataProvider(conf, all_ones, null);
 }
@@ -65,6 +66,7 @@ public void init()
 @After
 public void tearDown() throws IOException
 {
+  MrGeoProperties.resetProperties();
 }
 
 @Test

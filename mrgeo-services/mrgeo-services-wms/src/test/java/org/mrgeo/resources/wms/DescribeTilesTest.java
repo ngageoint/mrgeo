@@ -16,6 +16,7 @@
 
 package org.mrgeo.resources.wms;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -54,6 +55,12 @@ public static void setUpForJUnit()
   {
     e.printStackTrace();
   }
+}
+
+@AfterClass
+public static void teardownForJUnit()
+{
+  MrGeoProperties.resetProperties();
 }
 
   /*

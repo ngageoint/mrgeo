@@ -23,7 +23,8 @@ usage() {
     echo "  apache250 - Apache hadoop, version 2.5.0"
     echo "  apache241 - Apache hadoop, version 2.4.1"
     echo "  apache240 - Apache hadoop, version 2.4.0"
-    echo "  cdh5100    - Cloudera hadoop 5.10.0"
+    echo "  cdh5101   - Cloudera hadoop 5.10.1"
+    echo "  cdh5100   - Cloudera hadoop 5.10.0"
     echo "  cdh591    - Cloudera hadoop 5.9.1"
     echo "  cdh590    - Cloudera hadoop 5.9.0"
     echo "  cdh582    - Cloudera hadoop 5.8.2"
@@ -285,7 +286,7 @@ while [ $# -gt 0 ] ; do
     "cdh590" | "cdh590-yarn" | "cdh591" | "cdh591-yarn")
         BUILD=$1
         ;;
-    "cdh5100" | "cdh5100-yarn")
+    "cdh5100" | "cdh5100-yarn" | "cdh5101" | "cdh5101-yarn")
         BUILD=$1
         ;;
     "build")

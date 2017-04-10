@@ -25,11 +25,11 @@ import org.custommonkey.xmlunit.XMLAssert;
 import org.custommonkey.xmlunit.XMLUnit;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.TestName;
-import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
@@ -83,7 +83,7 @@ final static String ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL =
 private static final Logger log = LoggerFactory.getLogger(WmsGeneratorTestAbstract.class);
 // only set this to true to generate new baseline images after correcting tests; image comparison
 // tests won't be run when is set to true
-private final static boolean GEN_BASELINE_DATA_ONLY = true;
+private final static boolean GEN_BASELINE_DATA_ONLY = false;
 protected static String input;
 protected static String baselineInput;
 protected static Path inputHdfs;
@@ -102,6 +102,7 @@ public TestName testname = new TestName();
 @BeforeClass
 public static void setUpForJUnit()
 {
+  MrGeoProperties.resetProperties();
   try
   {
     DataProviderFactory.invalidateCache();
@@ -123,6 +124,12 @@ public static void setUpForJUnit()
   {
     e.printStackTrace();
   }
+}
+
+@AfterClass
+public static void teardownForJUnit()
+{
+  MrGeoProperties.resetProperties();
 }
 
 // TODO: all test classes are using the same set of input data for now to make things simpler...
