@@ -19,6 +19,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.mrgeo.utils.FloatUtils;
 import org.mrgeo.utils.XmlUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -51,6 +53,7 @@ import java.util.TreeMap;
  */
 public class ColorScale extends TreeMap<Double, Color>
 {
+  private static final Logger log = LoggerFactory.getLogger(ColorScale.class);
 private static final long serialVersionUID = 1L;
 private static final int CACHE_SIZE = 1024;
 private static final int A = 3;
@@ -541,6 +544,7 @@ public void fromXML(final Document doc) throws ColorScaleException
   }
   catch (XPathExpressionException | IOException e)
   {
+    log.error("Got XML error " + e.getMessage(), e);
     throw new BadXMLException(e);
   }
 }
@@ -553,6 +557,7 @@ public void fromXML(final InputStream strm) throws ColorScaleException
   }
   catch (final Exception e)
   {
+    log.error("Got exception while parsing color scale " + e.getMessage(), e);
     throw new ColorScaleException(e);
   }
 }
