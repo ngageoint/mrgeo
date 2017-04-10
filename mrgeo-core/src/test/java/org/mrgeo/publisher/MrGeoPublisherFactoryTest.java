@@ -5,6 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.core.MrGeoPropertiesTest;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.junit.UnitTest;
 
@@ -35,6 +36,7 @@ private Properties mrGeoProperties;
 @Before
 public void setUp() throws Exception
 {
+  MrGeoProperties.resetProperties();
   // Get the MrGeoProperties instance.  Because a static reference to the properties returned are held by the
   // MrGeoProperties class, we can inject any properties needed for testing
   mrGeoProperties = MrGeoProperties.getInstance();
@@ -60,7 +62,8 @@ public void setUp() throws Exception
 @After
 public void tearDown() throws Exception
 {
-  mrGeoProperties.clear();
+  MrGeoProperties.resetProperties();
+
   MrGeoPublisherFactory.clearCache();
   MrGeoTestPublisherConfigurator1.clearArguments();
   MrGeoTestPublisherConfigurator2.clearArguments();

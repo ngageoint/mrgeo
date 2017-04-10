@@ -16,6 +16,7 @@
 package org.mrgeo.services.mrspyramid;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -77,6 +78,12 @@ public MrsPyramidServiceTest()
 public void setUp() throws Exception
 {
   testutils = new TestUtils(MrsPyramidServiceTest.class);
+}
+
+@After
+public void teardown()
+{
+  MrGeoProperties.resetProperties();
 }
 
 @Test

@@ -29,6 +29,7 @@ import org.junit.experimental.categories.Category;
 import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.core.MrGeoPropertiesTest;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
@@ -51,7 +52,7 @@ private static String all_ones = Defs.INPUT + "all-ones";
 HdfsMrsImageDataProviderFactory factory;
 Configuration conf;
 ProviderProperties providerProperties;
-private String oldImageBase;
+//private String oldImageBase;
 
 @BeforeClass
 static public void setup() throws IOException
@@ -66,7 +67,8 @@ static public void setup() throws IOException
 @Before
 public void init()
 {
-  oldImageBase = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, "");
+  MrGeoProperties.resetProperties();
+//  oldImageBase = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, "");
 
   MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, (new File(Defs.INPUT)).toURI().toString());
   factory = new HdfsMrsImageDataProviderFactory();
@@ -78,7 +80,8 @@ public void init()
 @After
 public void teardown()
 {
-  MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, oldImageBase);
+//  MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, oldImageBase);
+  MrGeoProperties.resetProperties();
 }
 
 @Test
