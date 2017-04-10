@@ -25,11 +25,11 @@ import org.custommonkey.xmlunit.XMLAssert;
 import org.custommonkey.xmlunit.XMLUnit;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.TestName;
-import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
@@ -102,6 +102,7 @@ public TestName testname = new TestName();
 @BeforeClass
 public static void setUpForJUnit()
 {
+  MrGeoProperties.resetProperties();
   try
   {
     DataProviderFactory.invalidateCache();
@@ -123,6 +124,12 @@ public static void setUpForJUnit()
   {
     e.printStackTrace();
   }
+}
+
+@AfterClass
+public static void teardownForJUnit()
+{
+  MrGeoProperties.resetProperties();
 }
 
 // TODO: all test classes are using the same set of input data for now to make things simpler...
