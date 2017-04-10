@@ -83,7 +83,7 @@ final static String ISLANDS_ELEVATION_V2_PAST_HIGHEST_RES_ZOOM_LEVEL =
 private static final Logger log = LoggerFactory.getLogger(WmsGeneratorTestAbstract.class);
 // only set this to true to generate new baseline images after correcting tests; image comparison
 // tests won't be run when is set to true
-private final static boolean GEN_BASELINE_DATA_ONLY = true;
+private final static boolean GEN_BASELINE_DATA_ONLY = false;
 protected static String input;
 protected static String baselineInput;
 protected static Path inputHdfs;
