@@ -20,7 +20,10 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
-import com.google.common.cache.*;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -40,7 +43,10 @@ import javax.ws.rs.core.UriBuilder;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.text.MessageFormat;
+import java.util.Scanner;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class HadoopFileUtils
@@ -673,7 +679,8 @@ private static void cleanDirectory(final FileSystem fs, final Path dir) throws I
   }
 }
 
-private static long copyFileFromS3(AmazonS3 s3Client, URI uri, File tmpFile) throws IOException
+private static long copyFileFromS3(AmazonS3 s3Client, URI uri, File localFile,
+                                   S3CacheEntry cacheEntry) throws IOException
 {
   S3Object object = null;
   try {
@@ -691,18 +698,21 @@ private static long copyFileFromS3(AmazonS3 s3Client, URI uri, File tmpFile) thr
     throw new IOException(e);
   }
 
-  FileUtils.forceMkdir(tmpFile.getParentFile());
+  FileUtils.forceMkdir(localFile.getParentFile());
+  log.debug("In copyFileFromS3 - after force mkdir");
+  FileOutputStream fos = (cacheEntry != null && cacheEntry instanceof S3FileCacheEntry)
+          ? ((S3FileCacheEntry)cacheEntry).getLocalFile1OutputStream()
+          : new FileOutputStream(localFile);
+  log.debug("In copyFileFromS3 - after FOS constructor " + localFile.getAbsolutePath());
   InputStream objectData = object.getObjectContent();
-  FileOutputStream fos = new FileOutputStream(tmpFile);
-  log.debug("Got input stream from S3 object " + object.toString());
   try {
     long byteCount = org.apache.commons.io.IOUtils.copyLarge(objectData, fos);
-    log.debug("Copied data from " + uri.toString() + " to " + tmpFile.getAbsolutePath() + ": " + byteCount);
     return byteCount;
-  } finally {
-    log.debug("Closing S3 input stream for " + object.toString());
-    fos.close();
+  }
+  finally {
     objectData.close();
+    fos.close();
+    log.debug("Length of local " + localFile.getAbsolutePath() + " is " + localFile.length());
   }
 }
 
@@ -719,6 +729,13 @@ public static class SequenceFileReaderWrapper {
     this.conf = conf;
   }
 
+  public String toString()
+  {
+    return "SequenceFileReaderWrapper for " +
+            ((localPath == null) ? "null" : localPath.toString()) +
+            " in lieu of " + path.toString();
+  }
+
   @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File() - name is gotten from mrgeo.conf")
   public SequenceFile.Reader getReader() throws IOException
   {
@@ -726,48 +743,51 @@ public static class SequenceFileReaderWrapper {
       FileSystem fs = path.getFileSystem(conf);
       Path qualifiedPath = path.makeQualified(fs);
       URI pathUri = qualifiedPath.toUri();
-      URI indexUri = UriBuilder.fromUri(pathUri).path("index").build();
-      URI dataUri = UriBuilder.fromUri(pathUri).path("data").build();
       String scheme = pathUri.getScheme().toLowerCase();
       if ("s3".equals(scheme) || "s3a".equals(scheme) || "s3n".equals(scheme)) {
-        Cache<String, S3CacheEntry> localS3FileCache = getS3FileCache();
+        S3Cache localS3Cache = getS3Cache();
+        File tmpFile = new File(cacheDir, pathUri.getPath().substring(1));
         // Copy the file from S3 to the local drive and return a reader for that file
-        cacheEntry = localS3FileCache.getIfPresent(path.toString());
+        Path tryLocalPath = new Path("file://" + tmpFile.getParentFile().getAbsolutePath());
+        cacheEntry = localS3Cache.getEntry(path.toString(), tryLocalPath, tmpFile, null);
         if (cacheEntry != null) {
-          locker.readLock(cacheEntry);
+          cacheEntry.readLock();
           localPath = cacheEntry.getLocalPath();
         }
         else {
           // The file(s) do not exist locally, so bring them down.
-          File tmpIndexFile = new File(cacheDir, indexUri.getPath().substring(1));
-          File tmpDataFile = new File(cacheDir, dataUri.getPath().substring(1));
-          localPath = new Path("file://" + tmpIndexFile.getParentFile().getAbsolutePath());
+          localPath = new Path("file://" + tmpFile.getParentFile().getAbsolutePath());
           // Add a placeholder entry to the cache so that other threads can see that
           // S3 files are being copied for this resource. Once the copy is done,
           // this placeholder will be replaced with a real cache entry. Set the
           // local file objects to null to prevent deleting them wher the placeholder
           // entry is replaced later.
-          cacheEntry = new S3CacheEntry(localPath, null, null);
-          locker.writeLock(cacheEntry);
-          try {
-            // Add the entry to the cache even before the files are copied so that if
-            // another thread tries to copy the same map file from S3, it will get an
-            // existing cache entry and wait on the lock to be released (which happens
-            // after the files have been copied - below).
-            localS3FileCache.put(path.toString(), cacheEntry);
-            AmazonS3 s3Client = new AmazonS3Client(new DefaultAWSCredentialsProviderChain());
-            // Copy the index and data files locally
-            long indexSize = copyFileFromS3(s3Client, indexUri, tmpIndexFile);
-            log.debug("Index " + indexUri.toString() + " size is " + indexSize);
-            long dataSize = copyFileFromS3(s3Client, dataUri, tmpDataFile);
-            log.debug("Data " + dataUri.toString() + " size is " + dataSize);
+          cacheEntry = localS3Cache.createEntry(localPath, tmpFile);
+          boolean writeLocked = cacheEntry.tryWriteLock();
+          if (writeLocked) {
+            try {
+              // Add the entry to the cache even before the files are copied so that if
+              // another thread tries to copy the same map file from S3, it will get an
+              // existing cache entry and wait on the lock to be released (which happens
+              // after the files have been copied - below).
+              s3Cache.addEntry(path.toString(), cacheEntry);
+              AmazonS3 s3Client = new AmazonS3Client(new DefaultAWSCredentialsProviderChain());
+              // Copy the index and data files locally
+              long fileSize = copyFileFromS3(s3Client, pathUri, tmpFile, cacheEntry);
+              log.debug("Copied data from " + pathUri.toString() + " to " + tmpFile.getAbsolutePath() + ": " + fileSize);
+              log.debug("SequenceFile " + pathUri.toString() + " size is " + fileSize);
+            } finally {
+              // Release the write lock on the original cache entry to allow locks
+              // to readers waiting for the write to complete.
+              log.debug("Downgrading from writeLock to readLock from thread " + Thread.currentThread().getId() + " on cacheEntry " + cacheEntry.toString());
+              cacheEntry.releaseWriteLock();
+              cacheEntry.readLock();
+            }
           }
-          finally {
-            // Release the write lock on the original cache entry to allow locks
-            // to readers waiting for the write to complete.
-            log.debug("Downgrading from writeLock to readLock from thread " + Thread.currentThread().getId() + " on cacheEntry " + cacheEntry.toString());
-            locker.readLock(cacheEntry);
-            locker.releaseWriteLock(cacheEntry);
+          else {
+            // Another process is trying to fetch the same file from S3, so we need
+            // attempt a read lock, which will wait until the write is done.
+            cacheEntry.readLock();
           }
         }
         log.debug("Opening local reader to " + localPath.toString());
@@ -789,48 +809,9 @@ public static class SequenceFileReaderWrapper {
       reader = null;
       // Inform the file cache that we are done with the file
       if (cacheEntry != null) {
-        locker.releaseReadLock(cacheEntry);
+        cacheEntry.releaseReadLock();
       }
     }
-  }
-}
-
-public static interface S3Locker
-{
-  public void readLock(S3CacheEntry cacheEntry);
-  public void writeLock(S3CacheEntry cacheEntry);
-  public void releaseReadLock(S3CacheEntry cacheEntry);
-  public void releaseWriteLock(S3CacheEntry cacheEntry);
-}
-
-public static class S3MemoryLocker implements S3Locker
-{
-  @Override
-  public void readLock(final S3CacheEntry cacheEntry)
-  {
-    log.debug("Lock readLock lock from thread " + Thread.currentThread().getId() + " on cacheEntry " + cacheEntry.toString());
-    cacheEntry.readLock().lock();
-  }
-
-  @Override
-  public void writeLock(final S3CacheEntry cacheEntry)
-  {
-    log.debug("Lock writeLock lock from thread " + Thread.currentThread().getId() + " on cacheEntry " + cacheEntry.toString());
-    cacheEntry.writeLock().lock();
-  }
-
-  @Override
-  public void releaseReadLock(final S3CacheEntry cacheEntry)
-  {
-    log.debug("Lock readLock unlock from thread " + Thread.currentThread().getId() + " on cacheEntry " + cacheEntry.toString());
-    cacheEntry.readLock().unlock();
-  }
-
-  @Override
-  public void releaseWriteLock(final S3CacheEntry cacheEntry)
-  {
-    log.debug("Lock writeLock unlock from thread " + Thread.currentThread().getId() + " on cacheEntry " + cacheEntry.toString());
-    cacheEntry.writeLock().unlock();
   }
 }
 
@@ -854,6 +835,13 @@ public static class MapFileReaderWrapper
     this.path = path;
   }
 
+  public String toString()
+  {
+    return "MapFileReaderWrapper for " +
+            ((localPath == null) ? "null" : localPath.toString()) +
+            " in lieu of " + path.toString();
+  }
+
   @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File() - name is generated in code")
   public MapFile.Reader getReader() throws IOException
   {
@@ -865,44 +853,58 @@ public static class MapFileReaderWrapper
       URI dataUri = UriBuilder.fromUri(pathUri).path("data").build();
       String scheme = pathUri.getScheme().toLowerCase();
       if ("s3".equals(scheme) || "s3a".equals(scheme) || "s3n".equals(scheme)) {
-        Cache<String, S3CacheEntry> localS3FileCache = getS3FileCache();
-        // Copy the file from S3 to the local drive and return a reader for that file
-        cacheEntry = localS3FileCache.getIfPresent(path.toString());
+        S3Cache localS3Cache = getS3Cache();
+        log.debug("cacheDir = " + cacheDir.getAbsolutePath());
+        File tmpIndexFile = new File(cacheDir, indexUri.getPath().substring(1));
+        File tmpDataFile = new File(cacheDir, dataUri.getPath().substring(1));
+        // Copy the file from S3 to the local drive if it is not already there
+        // and return a reader for that file. Use locking to prevent multiple
+        // processes from copying the same file at the same time.
+        Path tryLocalPath = new Path("file://" + tmpIndexFile.getParentFile().getAbsolutePath());
+        log.debug("Checking if cache entry exists at " + tmpIndexFile.getAbsolutePath());
+        cacheEntry = localS3Cache.getEntry(path.toString(), tryLocalPath, tmpIndexFile, tmpDataFile);
         if (cacheEntry != null) {
-          locker.readLock(cacheEntry);
+          cacheEntry.readLock();
           localPath = cacheEntry.getLocalPath();
         }
         else {
           // The file(s) do not exist locally, so bring them down.
-          File tmpIndexFile = new File(cacheDir, indexUri.getPath().substring(1));
-          File tmpDataFile = new File(cacheDir, dataUri.getPath().substring(1));
           localPath = new Path("file://" + tmpIndexFile.getParentFile().getAbsolutePath());
           // Add a placeholder entry to the cache so that other threads can see that
           // S3 files are being copied for this resource. Once the copy is done,
           // this placeholder will be replaced with a real cache entry. Set the
           // local file objects to null to prevent deleting them wher the placeholder
           // entry is replaced later.
-          cacheEntry = new S3CacheEntry(localPath, null, null);
-          locker.writeLock(cacheEntry);
-          try {
-            // Add the entry to the cache even before the files are copied so that if
-            // another thread tries to copy the same map file from S3, it will get an
-            // existing cache entry and wait on the lock to be released (which happens
-            // after the files have been copied - below).
-            localS3FileCache.put(path.toString(), cacheEntry);
-            AmazonS3 s3Client = new AmazonS3Client(new DefaultAWSCredentialsProviderChain());
-            // Copy the index and data files locally
-            long indexSize = copyFileFromS3(s3Client, indexUri, tmpIndexFile);
-            log.debug("Index " + indexUri.toString() + " size is " + indexSize);
-            long dataSize = copyFileFromS3(s3Client, dataUri, tmpDataFile);
-            log.debug("Data " + dataUri.toString() + " size is " + dataSize);
+          cacheEntry = localS3Cache.createEntry(localPath, tmpIndexFile, tmpDataFile);
+          boolean writeLocked = cacheEntry.tryWriteLock();
+          if (writeLocked) {
+            try {
+              // Add the entry to the cache even before the files are copied so that if
+              // another thread tries to copy the same map file from S3, it will get an
+              // existing cache entry and wait on the lock to be released (which happens
+              // after the files have been copied - below).
+              localS3Cache.addEntry(path.toString(), cacheEntry);
+              AmazonS3 s3Client = new AmazonS3Client(new DefaultAWSCredentialsProviderChain());
+              // Copy the index and data files locally. Do the index file last since it also
+              // acts as the lock file for both and we don't want to release the lock until
+              // all the files are copied.
+              long dataSize = copyFileFromS3(s3Client, dataUri, tmpDataFile, null);
+              log.debug("Copied data from " + dataUri.toString() + " to " + tmpDataFile.getAbsolutePath() + ": " + dataSize);
+              long indexSize = copyFileFromS3(s3Client, indexUri, tmpIndexFile, cacheEntry);
+              log.debug("Copied data from " + indexUri.toString() + " to " + tmpIndexFile.getAbsolutePath() + ": " + indexSize);
+              log.debug("Index " + indexUri.toString() + " size is " + indexSize);
+            } finally {
+              // Release the write lock on the original cache entry to allow locks
+              // to readers waiting for the write to complete.
+              log.debug("Downgrading from writeLock to readLock from thread " + Thread.currentThread().getId() + " on cacheEntry " + cacheEntry.toString());
+              cacheEntry.releaseWriteLock();
+              cacheEntry.readLock();
+            }
           }
-          finally {
-            // Release the write lock on the original cache entry to allow locks
-            // to readers waiting for the write to complete.
-            log.debug("Downgrading from writeLock to readLock from thread " + Thread.currentThread().getId() + " on cacheEntry " + cacheEntry.toString());
-            locker.readLock(cacheEntry);
-            locker.releaseWriteLock(cacheEntry);
+          else {
+            // Another process is trying to fetch the same file from S3, so we need
+            // attempt a read lock, which will wait until the write is done.
+            cacheEntry.readLock();
           }
         }
         log.debug("Opening local reader to " + localPath.toString());
@@ -924,39 +926,51 @@ public static class MapFileReaderWrapper
       reader = null;
       // Inform the file cache that we are done with the file
       if (cacheEntry != null) {
-        locker.releaseReadLock(cacheEntry);
+        cacheEntry.releaseReadLock();
       }
     }
   }
 }
 
+public static interface S3CacheEntry
+{
+  public void readLock() throws IOException;
+  public void writeLock() throws IOException;
+  public boolean tryWriteLock() throws IOException;
+  public void releaseReadLock() throws IOException;
+  public void releaseWriteLock() throws IOException;
+  public Path getLocalPath();
+  public void cleanup() throws IOException;
+}
+
 @SuppressFBWarnings(value = {"SE_BAD_FIELD", "SE_NO_SERIALVERSIONID"}, justification = "Class is never serialized")
-//@SuppressFBWarnings(value = "SE_BAD_FIELD", justification = "Class is never serialized")
-//@SuppressFBWarnings(value = "SE_NO_SERIALVERSIONID", justification = "Class is never serialized")
-public static class S3CacheEntry extends ReentrantReadWriteLock
+public static class S3MemoryCacheEntry implements S3CacheEntry
 {
   private Path localPath;
   private File localFile1;
   private File localFile2;
+  private ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
-  public S3CacheEntry(Path localPath, File localFile)
+  public S3MemoryCacheEntry(Path localPath, File localFile)
   {
     this.localPath = localPath;
     this.localFile1 = localFile;
   }
 
-  public S3CacheEntry(Path localPath, File localFile1, File localFile2)
+  public S3MemoryCacheEntry(Path localPath, File localFile1, File localFile2)
   {
     this.localPath = localPath;
     this.localFile1 = localFile1;
     this.localFile2 = localFile2;
   }
 
+  @Override
   public Path getLocalPath() { return localPath; }
 
-  public synchronized void cleanup()
+  @Override
+  public void cleanup() throws IOException
   {
-    locker.writeLock(this);
+    writeLock();
     try {
       if (localFile1 != null) {
         log.debug("Deleting cached file " + localFile1.getAbsolutePath());
@@ -976,56 +990,444 @@ public static class S3CacheEntry extends ReentrantReadWriteLock
       }
     }
     finally {
-      locker.releaseWriteLock(this);
+      releaseWriteLock();
+    }
+  }
+
+  @Override
+  public void readLock() throws IOException
+  {
+    log.debug("Lock readLock lock from thread " + Thread.currentThread().getId() + " on cacheEntry " + this.toString());
+    rwLock.readLock().lock();
+  }
+
+  @Override
+  public void writeLock() throws IOException
+  {
+    log.debug("Lock writeLock lock from thread " + Thread.currentThread().getId() + " on cacheEntry " + this.toString());
+    rwLock.writeLock().lock();
+  }
+
+  @Override
+  public boolean tryWriteLock() throws IOException
+  {
+    log.debug("Lock writeLock lock from thread " + Thread.currentThread().getId() + " on cacheEntry " + this.toString());
+    return rwLock.writeLock().tryLock();
+  }
+
+  @Override
+  public void releaseReadLock()
+  {
+    log.debug("Lock readLock unlock from thread " + Thread.currentThread().getId() + " on cacheEntry " + this.toString());
+    rwLock.readLock().unlock();
+  }
+
+  @Override
+  public void releaseWriteLock()
+  {
+    log.debug("Lock writeLock unlock from thread " + Thread.currentThread().getId() + " on cacheEntry " + this.toString());
+    rwLock.writeLock().unlock();
+  }
+}
+
+public static class S3FileCacheEntry implements S3CacheEntry
+{
+  private Path localPath;
+  private File localFile1;
+  private File localFile2;
+  private FileLock readFileLock;
+  private FileLock writeFileLock;
+  private FileOutputStream fos;
+  private FileInputStream fis;
+  private FileChannel readChannel;
+  private FileChannel writeChannel;
+
+  public S3FileCacheEntry(Path localPath, File localFile)
+  {
+    this.localPath = localPath;
+    this.localFile1 = localFile;
+  }
+
+  public S3FileCacheEntry(Path localPath, File localFile1, File localFile2)
+  {
+    this.localPath = localPath;
+    this.localFile1 = localFile1;
+    this.localFile2 = localFile2;
+  }
+
+  public FileOutputStream getLocalFile1OutputStream()
+  {
+    return fos;
+  }
+
+  @Override
+  public void readLock() throws IOException
+  {
+    initReadChannel();
+    log.debug("readLock from thread " + Thread.currentThread().getId() + " on entry " + localFile1.getAbsolutePath());
+    readFileLock = readChannel.lock(0, Long.MAX_VALUE, true);
+    log.debug("  readLock from thread " + Thread.currentThread().getId() + " done ");
+    // Some operating systems do not support shared locks, so report that here. But
+    // keep the lock active - the system will just run slower.
+    if (!readFileLock.isShared()) {
+      log.warn("Unable to create a shared lock on " + getLocalPath().toString());
+    }
+  }
+
+  @Override
+  public void writeLock() throws IOException
+  {
+    initWriteChannel();
+    log.debug("writeLock from thread " + Thread.currentThread().getId() + " on entry " + localFile1.getAbsolutePath());
+    writeFileLock = writeChannel.lock(0, Long.MAX_VALUE, false);
+    log.debug("  done writeLock from thread " + Thread.currentThread().getId() + " on entry " + localFile1.getAbsolutePath());
+  }
+
+  @Override
+  public boolean tryWriteLock() throws IOException
+  {
+    initWriteChannel();
+    log.debug("tryWriteLock from thread " + Thread.currentThread().getId() + " on entry " + localFile1.getAbsolutePath());
+    writeFileLock = writeChannel.tryLock(0, Long.MAX_VALUE, false);
+    log.debug("  done tryWriteLock from thread " + Thread.currentThread().getId() + " on entry " + localFile1.getAbsolutePath());
+    return (writeFileLock != null);
+  }
+
+  @Override
+  public void releaseReadLock() throws IOException
+  {
+    if (readChannel != null) {
+      log.debug("releaseReadLock from thread " + Thread.currentThread().getId() + " on entry " + localFile1.getAbsolutePath());
+      readChannel.close();
+      log.debug("  done releaseReadLock from thread " + Thread.currentThread().getId() + " on entry " + localFile1.getAbsolutePath());
+    }
+    if (fis != null) {
+      fis.close();
+    }
+//    if (readFileLock != null) {
+//      log.debug("releaseReadLock from thread " + Thread.currentThread().getId() + " on entry " + localFile1.getAbsolutePath());
+//      readFileLock.release();
+//      log.debug("  done releaseReadLock from thread " + Thread.currentThread().getId() + " on entry " + localFile1.getAbsolutePath());
+//    }
+  }
+
+  @Override
+  public void releaseWriteLock() throws IOException
+  {
+    if (writeChannel != null) {
+      log.debug("releaseWriteLock from thread " + Thread.currentThread().getId() + " on entry " + localFile1.getAbsolutePath());
+      writeChannel.close();
+      log.debug("  done releaseWriteLock from thread " + Thread.currentThread().getId() + " on entry " + localFile1.getAbsolutePath());
+    }
+    if (fos != null) {
+      fos.close();
+    }
+//    if (writeFileLock != null) {
+//      log.debug("releaseWriteLock from thread " + Thread.currentThread().getId() + " on entry " + localFile1.getAbsolutePath());
+//      writeFileLock.release();
+//      log.debug("  done releaseWriteLock from thread " + Thread.currentThread().getId() + " on entry " + localFile1.getAbsolutePath());
+//    }
+  }
+
+  @Override
+  public Path getLocalPath() { return localPath; }
+
+  @Override
+  public void cleanup() throws IOException
+  {
+    writeLock();
+    try {
+      if (localFile2 != null) {
+        log.debug("Deleting cached file " + localFile2.getAbsolutePath());
+        boolean file2Deleted = localFile2.delete();
+        if (!file2Deleted) {
+          log.error("Unable to delete local cache file " + localFile2.getAbsolutePath());
+        }
+        localFile2 = null;
+      }
+      if (localFile1 != null) {
+        log.debug("Deleting cached file " + localFile1.getAbsolutePath());
+        boolean file1Deleted = localFile1.delete();
+        if (!file1Deleted) {
+          log.error("Unable to delete local cache file " + localFile1.getAbsolutePath());
+        }
+        localFile1 = null;
+      }
+    }
+    finally {
+      releaseWriteLock();
+      releaseReadLock();
+    }
+  }
+
+  private void initWriteChannel() throws IOException
+  {
+    if (writeChannel == null) {
+      FileUtils.forceMkdir(localFile1.getParentFile());
+      fos = new FileOutputStream(localFile1);
+      writeChannel = fos.getChannel();
+    }
+  }
+
+  private void initReadChannel() throws IOException
+  {
+    if (readChannel == null) {
+      fis = new FileInputStream(localFile1);
+      readChannel = fis.getChannel();
+    }
+  }
+
+  public static void run(String[] args)
+  {
+    Path lockPath = new Path(args[0]);
+    File file1 = new File(args[1]);
+    File file2 = new File(args[2]);
+
+    Scanner scanner = new Scanner(System.in);
+    System.out.print("Command (twl, wl, rwl, rl, rrl, rwlrl, wf, quit): ");
+    String line = scanner.nextLine();
+    S3FileCacheEntry entry = null;
+    while (!line.equalsIgnoreCase("quit")) {
+      if (entry ==null) {
+        entry = new S3FileCacheEntry(lockPath, file1, file2);
+      }
+      if (line.equalsIgnoreCase("rl")) {
+        try {
+          entry.readLock();
+          System.out.println("result: success");
+        } catch (Throwable e) {
+          System.out.println("Error from readLock: " + e);
+        }
+      } else if (line.equalsIgnoreCase("rrl")) {
+        try {
+          entry.releaseReadLock();
+          entry = null;
+          System.out.println("result: success");
+        } catch (Throwable e) {
+          System.out.println("Error from releaseReadLock: " + e);
+        }
+      } else if (line.equalsIgnoreCase("twl")) {
+        try {
+          System.out.println("result: " + entry.tryWriteLock());
+        } catch (Throwable e) {
+          System.out.println("Error from tryWriteLock: " + e);
+        }
+      } else if (line.equalsIgnoreCase("wl")) {
+        try {
+          entry.writeLock();
+          System.out.println("result: success");
+        } catch (Throwable e) {
+          System.out.println("Error from writeLock: " + e);
+        }
+      } else if (line.equalsIgnoreCase("rwl")) {
+        try {
+          entry.releaseWriteLock();
+          entry = null;
+          System.out.println("result: success");
+        } catch (Throwable e) {
+          System.out.println("Error from releaseWriteLock: " + e);
+        }
+      } else if (line.equalsIgnoreCase("rwlrl")) {
+        try {
+          entry.releaseWriteLock();
+          System.out.println("released write lock, now getting read lock");
+          entry.readLock();
+          System.out.println("result: success");
+        } catch (Throwable e) {
+          System.out.println("Error from releaseWriteLock: " + e);
+        }
+      } else if (line.equalsIgnoreCase("wf")) {
+        try {
+          FileOutputStream fos = entry.getLocalFile1OutputStream();
+          PrintWriter pw = new PrintWriter(fos);
+          pw.println("blah");
+          pw.close();
+        } catch (Throwable e) {
+          System.out.println("Error from releaseWriteLock: " + e);
+        }
+      }
+      System.out.print("Command (twl, wl, rwl, rl, rrl, rwlrl, wf, quit): ");
+      line = scanner.nextLine();
     }
   }
 }
 
-private static Cache<String, S3CacheEntry> s3FileCache;
-private static File cacheDir;
-private static S3Locker locker;
-
-@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File() - name is gotten from mrgeo.conf")
-private static synchronized Cache<String, S3CacheEntry> getS3FileCache() throws IOException
+public static interface S3Cache
 {
-  if (s3FileCache == null) {
-    long s3CacheSize = 200L;
-    String strCacheSize = MrGeoProperties.getInstance().getProperty("s3.cache.size.elements");
-    if (strCacheSize != null && !strCacheSize.isEmpty()) {
-      s3CacheSize = Long.parseLong(strCacheSize);
+  public void init() throws IOException;
+  public S3CacheEntry getEntry(String key, Path localPath, File localFile1, File localFile2);
+  public void addEntry(String key, S3CacheEntry entry);
+  // For now, we only need an entry with either 1 or 2 local files since we only
+  // need support for sequence files and map files at the moment. If we ever need
+  // more, then change the following two methods to a single signature that takes
+  // a variable number of local files. For now, it avoids the overhead of storing
+  // an array for each entry.
+  public S3CacheEntry createEntry(Path localPath, File localFile);
+  public S3CacheEntry createEntry(Path localPath, File localFile1, File localFile2);
+}
+
+public static class CacheCleanupHook extends Thread
+{
+  private File cleanupDir;
+
+  public CacheCleanupHook(File cleanupDir)
+  {
+    this.cleanupDir = cleanupDir;
+  }
+
+  @Override
+  public void run()
+  {
+    try {
+      FileUtils.cleanDirectory(cleanupDir);
+      System.out.println("In shutdown, deleting " + cleanupDir.getAbsolutePath());
+      log.debug("In shutdown, deleting " + cleanupDir.getAbsolutePath());
+      FileUtils.deleteDirectory(cleanupDir);
+    } catch (IOException e) {
+      log.debug("Unable to clean MrGeo S3 cache directory " + e.getMessage());
     }
-    log.debug("cache size " + s3CacheSize);
+  }
+}
+
+public static class CacheCleanupOnElementRemoval implements RemovalListener<String, S3CacheEntry>
+{
+  @Override
+  public void onRemoval(RemovalNotification<String, S3CacheEntry> notification) {
+    log.debug("S3 cache removal key: " + notification.getKey() + " with cause " + notification.getCause().toString() + " from thread " + Thread.currentThread().getId());
+    log.debug("S3 cache removal value: " + notification.getValue().toString() + " from thread " + Thread.currentThread().getId());
+    try {
+      notification.getValue().cleanup();
+    } catch (IOException e) {
+      log.error("Got exception while cleaning up a cache entry for " + notification.getKey(), e);
+    }
+  }
+}
+
+public static class S3MemoryCache implements S3Cache
+{
+  private Cache<String, S3CacheEntry> s3FileCache;
+
+  @Override
+  @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File() - name is gotten from mrgeo.conf")
+  public void init() throws IOException
+  {
     if (cacheDir == null) {
+      // For the memory-based cache approach, the locally cached S3 files
+      // must be cleaned up when the process exits. Also, the local cache
+      // dir is in a temp subdir so it does not conflict with other running
+      // processes that use this same cache approach (e.g. multiple instances
+      // of MrGeo web services running on a single machine)
       String strTmpDir = MrGeoProperties.getInstance().getProperty("s3.cache.dir", "/tmp/mrgeo");
       FileUtils.forceMkdir(new File(strTmpDir));
       java.nio.file.Path tmpPath = java.nio.file.Files.createTempDirectory(java.nio.file.Paths.get(strTmpDir), "mrgeo");
       cacheDir = tmpPath.toFile();
     }
-    String strLocker = MrGeoProperties.getInstance().getProperty("s3.cache.locker", "file");
-    locker = (strLocker.equalsIgnoreCase("file")) ? new S3MemoryLocker() : new S3MemoryLocker();
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-      @Override
-      public void run() {
-        try {
-          FileUtils.cleanDirectory(cacheDir);
-          System.out.println("In shutdown, deleting " + cacheDir.getAbsolutePath());
-          log.debug("In shutdown, deleting " + cacheDir.getAbsolutePath());
-          FileUtils.deleteDirectory(cacheDir);
-        } catch (IOException e) {
-          log.debug("Unable to clean MrGeo S3 cache directory " + e.getMessage());
-        }
+    if (s3FileCache == null) {
+      long s3CacheSize = 200L;
+      String strCacheSize = MrGeoProperties.getInstance().getProperty("s3.cache.size.elements");
+      if (strCacheSize != null && !strCacheSize.isEmpty()) {
+        s3CacheSize = Long.parseLong(strCacheSize);
       }
-    });
-    s3FileCache = CacheBuilder
-            .newBuilder().maximumSize(s3CacheSize).removalListener(new RemovalListener<String, S3CacheEntry>() {
-              @Override
-              public void onRemoval(RemovalNotification<String, S3CacheEntry> notification) {
-                log.debug("S3 cache removal key: " + notification.getKey() + " with cause " + notification.getCause().toString() + " from thread " + Thread.currentThread().getId());
-                log.debug("S3 cache removal value: " + notification.getValue().toString() + " from thread " + Thread.currentThread().getId());
-                notification.getValue().cleanup();
-              }
-            }).build();
+      log.debug("cache size " + s3CacheSize);
+      String strLocker = MrGeoProperties.getInstance().getProperty("s3.cache.locker", "file");
+      useFileLocker = strLocker.equalsIgnoreCase("file");
+      Runtime.getRuntime().addShutdownHook(new CacheCleanupHook(cacheDir));
+      s3FileCache = CacheBuilder
+              .newBuilder().maximumSize(s3CacheSize)
+              .removalListener(new CacheCleanupOnElementRemoval()).build();
+    }
   }
-  return s3FileCache;
+
+  @Override
+  public S3CacheEntry getEntry(final String key, final Path localPath, final File localFile1,
+                               final File localFile2)
+  {
+    return s3FileCache.getIfPresent(key);
+  }
+
+  @Override
+  public void addEntry(final String key, final S3CacheEntry entry)
+  {
+    s3FileCache.put(key, entry);
+  }
+
+  @Override
+  public S3CacheEntry createEntry(final Path localPath, final File localFile)
+  {
+    return new S3MemoryCacheEntry(localPath, localFile);
+  }
+
+  @Override
+  public S3CacheEntry createEntry(Path localPath, File localFile1, File localFile2)
+  {
+    return new S3MemoryCacheEntry(localPath, localFile1, localFile2);
+  }
+}
+
+@SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File() - name is configured by an admin")
+public static class S3FileCache implements S3Cache
+{
+  @Override
+  public void init() throws IOException
+  {
+    if (cacheDir == null) {
+      // When using a file-based S3 local cache, all processes use the same
+      // file-based cache and file locking to coordinate access. There is no need
+      // the delete the cache directory when the process exits because it will
+      // automatically re-use the cache contents the next time it starts up.
+      String strTmpDir = MrGeoProperties.getInstance().getProperty("s3.cache.dir", "/tmp/mrgeo");
+      FileUtils.forceMkdir(new File(strTmpDir));
+      cacheDir = new File(strTmpDir);
+    }
+  }
+
+  @Override
+  public S3CacheEntry getEntry(String key, Path localPath, File localFile1, File localFile2)
+  {
+    if (localFile1.exists()) {
+      log.debug("Found existing entry for " + key);
+      return new S3FileCacheEntry(localPath, localFile1, localFile2);
+    }
+    log.debug("Did not find existing entry for " + key);
+    return null;
+  }
+
+  @Override
+  public void addEntry(String key, S3CacheEntry entry)
+  {
+    // Nothing to do
+  }
+
+  @Override
+  public S3CacheEntry createEntry(Path localPath, File localFile)
+  {
+    return new S3FileCacheEntry(localPath, localFile);
+  }
+
+  @Override
+  public S3CacheEntry createEntry(Path localPath, File localFile1, File localFile2)
+  {
+    return new S3FileCacheEntry(localPath, localFile1, localFile2);
+  }
+}
+
+private static S3Cache s3Cache;
+private static File cacheDir;
+private static boolean useFileLocker;
+
+private static synchronized S3Cache getS3Cache() throws IOException
+{
+  if (s3Cache == null) {
+    String strLocker = MrGeoProperties.getInstance().getProperty("s3.cache.locker", "file");
+    useFileLocker = strLocker.equalsIgnoreCase("file");
+    s3Cache = (useFileLocker) ? new S3FileCache() : new S3MemoryCache();
+    s3Cache.init();
+  }
+  return s3Cache;
+}
+
+public static void main(String[] args)
+{
+  S3FileCacheEntry.run(args);
 }
 }
