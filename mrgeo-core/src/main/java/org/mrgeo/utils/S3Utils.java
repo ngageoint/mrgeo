@@ -22,13 +22,21 @@ import com.google.common.cache.RemovalNotification;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.fs.Path;
 import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
-import java.util.Scanner;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
+import java.time.Instant;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class S3Utils
@@ -533,8 +541,180 @@ public class S3Utils
     return cacheDir;
   }
 
+
+  private interface MrGeoImageCallback
+  {
+    void foundImage(java.nio.file.Path imagePath, long imageSize, FileTime lastAccess);
+  }
+
   /**
-   * This is only meant for testing from the command line.
+   * MrGeo images are split into partitions. Each partition is a Hadoop MapFile which
+   * is a directory containing two files named "index" and "data". When performing
+   * cache cleaning, we want to make sure that we remove both files and the parent
+   * directory.
+   */
+  private static class MrGeoImageCacheFileVisitor extends SimpleFileVisitor<java.nio.file.Path>
+  {
+    private BasicFileAttributes indexAttributes;
+    private BasicFileAttributes dataAttributes;
+    private long partitionSize;
+    private FileTime lastAccessTime = FileTime.from(Instant.now());
+    private MrGeoImageCallback callback;
+
+    public MrGeoImageCacheFileVisitor(MrGeoImageCallback callback)
+    {
+      this.callback = callback;
+    }
+
+    @Override
+    public FileVisitResult preVisitDirectory(java.nio.file.Path dir, BasicFileAttributes attrs) throws IOException
+    {
+      partitionSize = 0L;
+      lastAccessTime = FileTime.from(Instant.now());
+      return FileVisitResult.CONTINUE;
+    }
+
+    @Override
+    public FileVisitResult visitFile(java.nio.file.Path file, BasicFileAttributes attrs) throws IOException
+    {
+      if (file != null) {
+        java.nio.file.Path nameOnly = file.getFileName();
+        if (nameOnly != null) {
+          String fileName = nameOnly.toString();
+          if (fileName.equals("index")) {
+            indexAttributes = attrs;
+            if (attrs.lastAccessTime().compareTo(lastAccessTime) < 0) {
+              lastAccessTime = attrs.lastAccessTime();
+            }
+          } else if (fileName.equals("data")) {
+            dataAttributes = attrs;
+            if (attrs.lastAccessTime().compareTo(lastAccessTime) < 0) {
+              lastAccessTime = attrs.lastAccessTime();
+            }
+          }
+        }
+      }
+      return FileVisitResult.CONTINUE;
+    }
+
+    @Override
+    public FileVisitResult postVisitDirectory(java.nio.file.Path dir, IOException exc) throws IOException
+    {
+      if (indexAttributes != null && dataAttributes != null) {
+        partitionSize = indexAttributes.size() + dataAttributes.size();
+        callback.foundImage(dir, partitionSize, lastAccessTime);
+        indexAttributes = null;
+        dataAttributes = null;
+        lastAccessTime = FileTime.from(Instant.now());
+        partitionSize = 0L;
+      }
+      return FileVisitResult.CONTINUE;
+    }
+  }
+
+  private static class MrGeoImageEntry
+  {
+    private java.nio.file.Path imagePath;
+    private long imageSize;
+    private FileTime lastAccess;
+
+    public MrGeoImageEntry(java.nio.file.Path imagePath, long imageSize, FileTime lastAccess)
+    {
+      this.imagePath = imagePath;
+      this.imageSize = imageSize;
+      this.lastAccess = lastAccess;
+    }
+  }
+
+  private static class MrGeoImageCollection implements MrGeoImageCallback
+  {
+    private List<MrGeoImageEntry> images;
+
+    public MrGeoImageCollection(List<MrGeoImageEntry> images)
+    {
+      this.images = images;
+    }
+
+    @Override
+    public void foundImage(java.nio.file.Path imagePath, long imageSize, FileTime lastAccess) {
+      images.add(new MrGeoImageEntry(imagePath, imageSize, lastAccess));
+    }
+  }
+
+  public static void cleanCache(long maxCacheSize, int ageDays, Bounds geography,
+                                int minZoom, int maxZoom, boolean dryrun) throws IOException
+  {
+    // The following call figures out the cacheDir
+    File useCacheDir = getCacheDir();
+    if (maxCacheSize > 0) {
+      java.nio.file.Path startPath = Paths.get(useCacheDir.getAbsolutePath());
+      // Scan all entries and sort by last access time.
+      List<MrGeoImageEntry> imageList = new ArrayList<MrGeoImageEntry>(500);
+      MrGeoImageCollection images = new MrGeoImageCollection(imageList);
+      Files.walkFileTree(startPath, new MrGeoImageCacheFileVisitor(images));
+      // Sort in ascending order by lastAccess then descending order by size.
+      imageList.sort(new Comparator<MrGeoImageEntry>() {
+        @Override
+        public int compare(MrGeoImageEntry image1, MrGeoImageEntry image2) {
+          int result = image1.lastAccess.compareTo(image2.lastAccess);
+          if (result == 0) {
+            if (image1.imageSize > image2.imageSize) {
+              result = -1;
+            }
+            else if (image1.imageSize < image2.imageSize) {
+              result = 1;
+            }
+          }
+          return result;
+        }
+      });
+      if (imageList.size() > 0) {
+        long totalSize = 0L;
+        // Compute the total size of all images.
+        for (MrGeoImageEntry entry : imageList) {
+          totalSize += entry.imageSize;
+        }
+        if (totalSize > 0) {
+          long newSize = totalSize;
+          Iterator<MrGeoImageEntry> iter = imageList.iterator();
+          long deleteCount = 0L;
+          while (iter.hasNext() && newSize > maxCacheSize) {
+            MrGeoImageEntry entry = iter.next();
+            try {
+//              System.out.println(entry.lastAccess.toString() + " " + entry.imagePath.toString() +
+//                      " with size " + entry.imageSize +
+//                      ". New cache size is " + newSize);
+//              if (newSize > maxCacheSize) {
+//                System.out.println("  DELETE");
+//                newSize -= entry.imageSize;
+//              }
+              if (newSize > maxCacheSize) {
+                if (dryrun) {
+                  System.out.println("Would delete S3 cached file at " + entry.imagePath.toString());
+                }
+                else {
+                  org.mrgeo.utils.FileUtils.deleteDir(entry.imagePath.toFile(), true);
+                  System.out.println("Deleted S3 cached file at " + entry.imagePath.toString());
+                }
+                deleteCount++;
+                newSize -= entry.imageSize;
+              }
+            }
+            catch(IOException e) {
+              log.warn("Unable to clean cached S3 image at " + entry.imagePath.toString(), e);
+            }
+          }
+          System.out.println(((dryrun) ? "Would have deleted " : "Deleted ") + deleteCount + " cache entries");
+        }
+      }
+    }
+    else {
+      // TODO:
+    }
+  }
+
+  /**
+   * This is only meant for testing S3 caching from the command line.
    * @param args
    */
   public static void main(String[] args) {
