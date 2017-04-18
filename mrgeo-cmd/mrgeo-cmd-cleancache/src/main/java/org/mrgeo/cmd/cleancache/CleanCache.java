@@ -19,6 +19,8 @@ import org.apache.commons.cli.*;
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.cmd.MrGeo;
+import org.mrgeo.core.MrGeoConstants;
+import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.utils.S3Utils;
 import org.mrgeo.utils.SparkUtils;
@@ -26,6 +28,8 @@ import org.mrgeo.utils.logging.LoggingUtils;
 import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.GregorianCalendar;
 
 public class CleanCache extends Command
 {
@@ -45,10 +49,10 @@ public static Options createOptions()
 
   Option size = new Option("s", "size", true, "Clean out the oldest cached files until the cache is no bigger than the specified size");
   result.addOption(size);
-  Option geog = new Option("g", "geography", true, "Clean out cached files that intersect the specified bounding box");
-  result.addOption(geog);
-  Option time = new Option("a", "age", true, "Clean out cached files that were last accessed before the specified age in days");
-  result.addOption(time);
+  Option bbox = new Option("b", "bbox", true, "Clean out cached files that intersect the specified bounding box");
+  result.addOption(bbox);
+  Option age = new Option("a", "age", true, "Clean out cached files that were last accessed before the specified age in days (e.g. 90 days ago)");
+  result.addOption(age);
   Option zoom = new Option("z", "zoom", true, "Clean out cached files for the specified zoom level");
   result.addOption(zoom);
   Option dryrun = new Option("dr", "dry-run", false, "Dry run the clean out of cached files without actually deleting them");
@@ -97,7 +101,12 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
           if (zoomValues.length == 1 || zoomValues.length == 2) {
             try {
               zoomMin = Integer.parseInt(zoomValues[0]);
-              zoomMax = Integer.parseInt(zoomValues[1]);
+              if (zoomValues.length == 2) {
+                zoomMax = Integer.parseInt(zoomValues[1]);
+              }
+              else {
+                zoomMax = zoomMin;
+              }
             }
             catch(NumberFormatException nfe) {
               System.err.println("The zoom argument must either be a single numeric zoom level or a comma-separated min zoom value and max zoom value");
@@ -115,11 +124,11 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
         System.err.println("Invalid zoom level specified: " + line.getOptionValue("z"));
         return -1;
       }
-      if (zoomMin < 1) {
+      if (zoomMin < 1 || zoomMax < 1) {
         System.err.println("Zoom level must be at least 1");
         return -1;
       }
-      if (zoomMax >= 0 && zoomMax < zoomMin) {
+      if (zoomMax < zoomMin) {
         System.err.println("The maximum zoom level must be >= minimum zoom level");
         return -1;
       }
@@ -134,27 +143,80 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
         return -1;
       }
     }
+    if (zoomMin > 0 && maxCacheSize > 0) {
+      System.err.println("You cannot combine zoom options and size options");
+      return -1;
+    }
 
-    int ageDays = -1;
+    int age = -1;
+    int ageField = -1;
     if (line.hasOption("a")) {
-      ageDays = Integer.parseInt(line.getOptionValue("a", ""));
-      if (ageDays <= 0) {
-        System.err.println("You must specify the age in days > 0");
+      String ageOption = line.getOptionValue("a").trim();
+      char ageType = ageOption.charAt(ageOption.length()-1);
+      switch(ageType) {
+        case 'd':
+        case 'D':
+          ageField = GregorianCalendar.DAY_OF_YEAR;
+          break;
+        case 'M':
+          ageField = GregorianCalendar.MONTH;
+          break;
+        case 'y':
+          ageField = GregorianCalendar.YEAR;
+          break;
+        case 'w':
+        case 'W':
+          ageField = GregorianCalendar.WEEK_OF_YEAR;
+          break;
+        case 'h':
+        case 'H':
+          ageField = GregorianCalendar.HOUR;
+          break;
+        case 'm':
+          ageField = GregorianCalendar.MINUTE;
+          break;
+        case 'S':
+          ageField = GregorianCalendar.SECOND;
+          break;
+        case 's':
+          ageField = GregorianCalendar.MILLISECOND;
+          break;
+        default:
+          System.err.println("Invalid age type '" + ageType + "'. Must be 'D' (days), 'd' (days), 'M' (months), 'y' (years), 'H' (hours), 'h' (hours), 'm' (minutes), 'S' (seconds), 's' (milliseconds)");
+          return -1;
+      }
+      try {
+        age = Integer.parseInt(ageOption.substring(0, ageOption.length() - 1));
+      }
+      catch(NumberFormatException e) {
+        System.err.println("Invalid age " + ageOption.substring(0, ageOption.length() - 1) + ". Age must be a positive integer");
+        return -1;
+      }
+      if (age <= 0) {
+        System.err.println("The age must be > 0");
         return -1;
       }
     }
+    if (age > 0 && (zoomMin > 0 || maxCacheSize > 0)) {
+      System.err.println("You cannot combine age option with either zoom or size option");
+      return -1;
+    }
 
-    Bounds geography = null;
-    if (line.hasOption("g")) {
-      String geogSpec = line.getOptionValue("g", "");
-      String[] geogComponents = geogSpec.split(",");
-      if (geogComponents.length == 4) {
-        geography = Bounds.fromCommaString(geogSpec);
+    Bounds bbox = null;
+    if (line.hasOption("b")) {
+      String bboxSpec = line.getOptionValue("b", "");
+      String[] bboxComponents = bboxSpec.split(",");
+      if (bboxComponents.length == 4) {
+        bbox = Bounds.fromCommaString(bboxSpec);
       }
       else {
         System.err.println("You must provide a bounding box with -a like <minx, miny, maxx, maxy>");
         return -1;
       }
+    }
+    if (bbox != null && (age > 0 || zoomMin > 0 || maxCacheSize > 0)) {
+      System.err.println("You cannot combine bbox option with zoom, age or size options");
+      return -1;
     }
 
     boolean dryrun = line.hasOption("dr");
@@ -168,7 +230,18 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
     }
 
     // Clean out the cache now.
-    S3Utils.cleanCache(maxCacheSize, ageDays, geography, zoomMin, zoomMax, dryrun);
+    int defaultTilesize = -1;
+    try {
+      defaultTilesize = Integer.parseInt(MrGeoProperties.getInstance().getProperty(
+              MrGeoConstants.MRGEO_MRS_TILESIZE,
+              MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT));
+    }
+    catch(NumberFormatException e) {
+      System.err.println("Unable to get the default tile size from mrgeo.conf");
+      return -1;
+    }
+    S3Utils.cleanCache(maxCacheSize, age, ageField, bbox, zoomMin, zoomMax, dryrun,
+            defaultTilesize, conf, providerProperties);
     return 0;
   }
   catch (Exception e)

@@ -20,9 +20,19 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.SequenceFile;
 import org.mrgeo.core.MrGeoProperties;
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.data.image.MrsPyramidMetadataReader;
+import org.mrgeo.data.tile.TileIdWritable;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
+import org.mrgeo.utils.tms.Tile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -406,7 +416,6 @@ public class S3Utils
     public void run() {
       try {
         org.apache.commons.io.FileUtils.cleanDirectory(cleanupDir);
-        System.out.println("In shutdown, deleting " + cleanupDir.getAbsolutePath());
         log.debug("In shutdown, deleting " + cleanupDir.getAbsolutePath());
         org.apache.commons.io.FileUtils.deleteDirectory(cleanupDir);
       } catch (IOException e) {
@@ -641,46 +650,68 @@ public class S3Utils
     }
   }
 
-  public static void cleanCache(long maxCacheSize, int ageDays, Bounds geography,
-                                int minZoom, int maxZoom, boolean dryrun) throws IOException
+  public static void cleanCache(long maxCacheSize, int age, int ageField, Bounds bbox,
+                                int minZoom, int maxZoom, boolean dryrun,
+                                int defaultTileSize,
+                                Configuration conf,
+                                ProviderProperties providerProperties) throws IOException
   {
     // The following call figures out the cacheDir
     File useCacheDir = getCacheDir();
-    if (maxCacheSize > 0) {
-      java.nio.file.Path startPath = Paths.get(useCacheDir.getAbsolutePath());
-      // Scan all entries and sort by last access time.
-      List<MrGeoImageEntry> imageList = new ArrayList<MrGeoImageEntry>(500);
-      MrGeoImageCollection images = new MrGeoImageCollection(imageList);
-      Files.walkFileTree(startPath, new MrGeoImageCacheFileVisitor(images));
-      // Sort in ascending order by lastAccess then descending order by size.
-      imageList.sort(new Comparator<MrGeoImageEntry>() {
-        @Override
-        public int compare(MrGeoImageEntry image1, MrGeoImageEntry image2) {
-          int result = image1.lastAccess.compareTo(image2.lastAccess);
-          if (result == 0) {
-            if (image1.imageSize > image2.imageSize) {
-              result = -1;
-            }
-            else if (image1.imageSize < image2.imageSize) {
-              result = 1;
+    java.nio.file.Path startPath = Paths.get(useCacheDir.getAbsolutePath());
+    // Scan all entries and sort by last access time.
+    List<MrGeoImageEntry> imageList = new ArrayList<MrGeoImageEntry>(500);
+    MrGeoImageCollection images = new MrGeoImageCollection(imageList);
+    Files.walkFileTree(startPath, new MrGeoImageCacheFileVisitor(images));
+    // Sort in ascending order by lastAccess then descending order by size.
+    imageList.sort(new Comparator<MrGeoImageEntry>() {
+      @Override
+      public int compare(MrGeoImageEntry image1, MrGeoImageEntry image2) {
+        int result = image1.lastAccess.compareTo(image2.lastAccess);
+        if (result == 0) {
+          if (image1.imageSize > image2.imageSize) {
+            result = -1;
+          }
+          else if (image1.imageSize < image2.imageSize) {
+            result = 1;
+          }
+        }
+        return result;
+      }
+    });
+    if (imageList.size() > 0) {
+      long totalSize = 0L;
+      // Compute the total size of all images.
+      for (MrGeoImageEntry entry : imageList) {
+        totalSize += entry.imageSize;
+      }
+      if (totalSize > 0) {
+        long newSize = totalSize;
+        final java.util.Calendar c = GregorianCalendar.getInstance();
+        if (age > 0) {
+          c.add(ageField, -age);
+        }
+        Iterator<MrGeoImageEntry> iter = imageList.iterator();
+        long deleteCount = 0L;
+        Map<String, Integer> tileSizes = new HashMap<String, Integer>();
+        while (iter.hasNext()) {
+          MrGeoImageEntry entry = iter.next();
+          boolean deleteFile = false;
+          // Get the zoom level of the current file
+          int zoomLevel = -1;
+          java.nio.file.Path zoomPath = entry.imagePath.getParent();
+          if (zoomPath != null) {
+            java.nio.file.Path zoomName = zoomPath.getFileName();
+            if (zoomName != null) {
+              try {
+                zoomLevel = Integer.parseInt(zoomName.toString());
+              }
+              catch(NumberFormatException nfe) {
+                log.error("Unable to parse zoom level from " + zoomName.toString());
+              }
             }
           }
-          return result;
-        }
-      });
-      if (imageList.size() > 0) {
-        long totalSize = 0L;
-        // Compute the total size of all images.
-        for (MrGeoImageEntry entry : imageList) {
-          totalSize += entry.imageSize;
-        }
-        if (totalSize > 0) {
-          long newSize = totalSize;
-          Iterator<MrGeoImageEntry> iter = imageList.iterator();
-          long deleteCount = 0L;
-          while (iter.hasNext() && newSize > maxCacheSize) {
-            MrGeoImageEntry entry = iter.next();
-            try {
+          try {
 //              System.out.println(entry.lastAccess.toString() + " " + entry.imagePath.toString() +
 //                      " with size " + entry.imageSize +
 //                      ". New cache size is " + newSize);
@@ -688,28 +719,81 @@ public class S3Utils
 //                System.out.println("  DELETE");
 //                newSize -= entry.imageSize;
 //              }
+            if (maxCacheSize > 0) {
               if (newSize > maxCacheSize) {
-                if (dryrun) {
-                  System.out.println("Would delete S3 cached file at " + entry.imagePath.toString());
-                }
-                else {
-                  org.mrgeo.utils.FileUtils.deleteDir(entry.imagePath.toFile(), true);
-                  System.out.println("Deleted S3 cached file at " + entry.imagePath.toString());
-                }
-                deleteCount++;
+                deleteFile = true;
                 newSize -= entry.imageSize;
               }
+              else {
+                // We are below the size threshold, so bail out
+                break;
+              }
             }
-            catch(IOException e) {
-              log.warn("Unable to clean cached S3 image at " + entry.imagePath.toString(), e);
+            else if (minZoom > 0) {
+              deleteFile = (minZoom <= zoomLevel && zoomLevel <= maxZoom);
+            }
+            else if (age > 0) {
+              deleteFile = (entry.lastAccess.toMillis() < c.getTimeInMillis());
+            }
+            else if (bbox != null) {
+              // Have to read the tiles from the partition and see if any of them
+              // intersect the specified bbox.
+              Path indexPath = new Path("file://" + entry.imagePath.toString(), "index");
+              int tilesize = defaultTileSize;
+              try {
+                // Get the image name
+                java.nio.file.Path imagePath = zoomPath.getParent();
+                java.nio.file.Path cachePath = Paths.get(cacheDir.toString());
+                java.nio.file.Path relativeImagePath = cachePath.relativize(imagePath);
+                if (relativeImagePath != null) {
+                  String strRelativeImagePath = relativeImagePath.toString();
+                  if (tileSizes.containsKey(strRelativeImagePath)) {
+                    tilesize = tileSizes.get(strRelativeImagePath);
+                  }
+                  else {
+                    MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(
+                            "s3://" + strRelativeImagePath,
+                            DataProviderFactory.AccessMode.READ, providerProperties);
+                    MrsPyramidMetadataReader metadataReader = dp.getMetadataReader();
+                    if (metadataReader != null) {
+                      MrsPyramidMetadata metadata = metadataReader.read();
+                      tileSizes.put(strRelativeImagePath, tilesize);
+                      tilesize = metadata.getTilesize();
+                    }
+                  }
+                }
+                SequenceFile.Reader indexReader = new SequenceFile.Reader(conf, SequenceFile.Reader.file(indexPath));
+                TileIdWritable key = (TileIdWritable)indexReader.getKeyClass().newInstance();
+                boolean hasKey = indexReader.next(key);
+                while (hasKey && !deleteFile) {
+                  Tile tile = TMSUtils.tileid(key.get(), zoomLevel);
+                  Bounds tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoomLevel, tilesize);
+                  deleteFile = bbox.intersects(tb);
+                  hasKey = indexReader.next(key);
+                }
+              } catch (IllegalAccessException e) {
+                log.error("Unable to check the bounds of " + indexPath.toString(), e);
+              } catch (InstantiationException e) {
+                log.error("Unable to check the bounds of " + indexPath.toString(), e);
+              }
+            }
+
+            if (deleteFile) {
+              deleteCount++;
+              if (dryrun) {
+                System.out.println("Would delete S3 cached file at " + entry.imagePath.toString());
+              } else {
+                org.mrgeo.utils.FileUtils.deleteDir(entry.imagePath.toFile(), true);
+                System.out.println("Deleted S3 cached file at " + entry.imagePath.toString());
+              }
             }
           }
-          System.out.println(((dryrun) ? "Would have deleted " : "Deleted ") + deleteCount + " cache entries");
+          catch(IOException e) {
+            log.warn("Unable to clean cached S3 image at " + entry.imagePath.toString(), e);
+          }
         }
+        System.out.println(((dryrun) ? "Would have deleted " : "Deleted ") + deleteCount + " cache entries");
       }
-    }
-    else {
-      // TODO:
     }
   }
 
