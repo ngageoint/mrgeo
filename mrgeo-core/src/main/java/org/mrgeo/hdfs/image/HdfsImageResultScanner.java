@@ -21,6 +21,7 @@ import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.tile.Splits;
+import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImageException;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.TMSUtils;
@@ -45,7 +46,7 @@ private final long rowStart;
 private final long rowEnd;
 private final int zoom;
 // hdfs specific reader
-private MapFile.Reader mapfile;
+private HadoopFileUtils.MapFileReaderWrapper mapfile;
 // keep track of where the reader is
 private int curPartitionIndex;
 // return item
@@ -165,7 +166,7 @@ public boolean hasNext()
     {
       // TODO eaw - The contract on java.util.Iterator requires that this method implementation not advance the iterator.
       //            This code should be on next()
-      final boolean found = mapfile.next(currentKey, currentValue);
+      final boolean found = mapfile.getReader().next(currentKey, currentValue);
       if (found)
       {
         if (currentKey.compareTo(endKey) <= 0)
@@ -202,7 +203,7 @@ public boolean hasNext()
           mapfile.close();
         }
 
-        mapfile = reader.getReader(curPartitionIndex);
+        mapfile = reader.getReaderWrapper(curPartitionIndex);
       }
     }
   }
@@ -296,27 +297,27 @@ private void primeScanner(final long startTileId, final long endTileId)
       {
         mapfile.close();
       }
-      mapfile = reader.getReader(partitionIndex);
+      mapfile = reader.getReaderWrapper(partitionIndex);
       try
       {
         // We need the mapfile in order to do the following, but we only
         // need to do it once.
         if (startKey == null)
         {
-          startKey = (TileIdWritable) mapfile.getKeyClass().newInstance();
+          startKey = (TileIdWritable) mapfile.getReader().getKeyClass().newInstance();
           startKey.set(startTileId);
-          endKey = (TileIdWritable) mapfile.getKeyClass().newInstance();
+          endKey = (TileIdWritable) mapfile.getReader().getKeyClass().newInstance();
           endKey.set(endTileId);
           // Because package names for some of our Writable value classes changed,
           // we need to create the
-          currentValue = (RasterWritable) mapfile.getValueClass().newInstance();
+          currentValue = (RasterWritable) mapfile.getReader().getValueClass().newInstance();
         }
       }
       catch (InstantiationException | IllegalAccessException e)
       {
         throw new MrsImageException(e);
       }
-      currentKey = (TileIdWritable) mapfile.getClosest(startKey, currentValue);
+      currentKey = (TileIdWritable) mapfile.getReader().getClosest(startKey, currentValue);
       if (currentKey != null)
       {
         // Did we get a key and have we not run past the end key
