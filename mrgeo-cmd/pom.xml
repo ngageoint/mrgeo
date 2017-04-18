@@ -43,6 +43,7 @@
     </dependencies>
   </dependencyManagement>
   <modules>
+    <module>mrgeo-cmd-cleancache</module>
     <module>mrgeo-cmd-core</module>
     <module>mrgeo-cmd-developers</module>
     <module>mrgeo-cmd-distribution</module>

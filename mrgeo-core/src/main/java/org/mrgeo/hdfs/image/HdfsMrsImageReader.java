@@ -23,7 +23,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DataOutputBuffer;
-import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.io.SequenceFile;
 import org.mrgeo.data.KVIterator;
 import org.mrgeo.data.image.MrsImageException;
@@ -68,14 +67,14 @@ final boolean profile;
 //final private HdfsMrsImageDataProvider provider;
 final private MrsPyramidReaderContext context;
 final private FileSplit splits = new FileSplit();
-private final LoadingCache<Integer, MapFile.Reader> readerCache = CacheBuilder.newBuilder()
+private final LoadingCache<Integer, HadoopFileUtils.MapFileReaderWrapper> readerCache = CacheBuilder.newBuilder()
     .maximumSize(READER_CACHE_SIZE)
     .expireAfterAccess(READER_CACHE_EXPIRE, TimeUnit.SECONDS)
     .removalListener(
-        new RemovalListener<Integer, MapFile.Reader>()
+        new RemovalListener<Integer, HadoopFileUtils.MapFileReaderWrapper>()
         {
           @Override
-          public void onRemoval(final RemovalNotification<Integer, MapFile.Reader> notification)
+          public void onRemoval(final RemovalNotification<Integer, HadoopFileUtils.MapFileReaderWrapper> notification)
           {
             try
             {
@@ -86,11 +85,11 @@ private final LoadingCache<Integer, MapFile.Reader> readerCache = CacheBuilder.n
               log.error("IOException removing HdfsMrsImageReader from cache {} ", e);
             }
           }
-        }).build(new CacheLoader<Integer, MapFile.Reader>()
+        }).build(new CacheLoader<Integer, HadoopFileUtils.MapFileReaderWrapper>()
     {
 
       @Override
-      public MapFile.Reader load(final Integer partitionIndex) throws IOException
+      public HadoopFileUtils.MapFileReaderWrapper load(final Integer partitionIndex) throws IOException
       {
         return loadReader(partitionIndex);
       }
@@ -193,12 +192,16 @@ public long calculateTileCount()
         {
           if (dirFile.getPath().getName().equals("index"))
           {
-            try (SequenceFile.Reader index = new SequenceFile.Reader(fs, dirFile.getPath(), conf))
+            SequenceFile.Reader index = new SequenceFile.Reader(fs, dirFile.getPath(), conf);
+            try
             {
               while (index.nextRawKey(key) >= 0)
               {
                 count++;
               }
+            }
+            finally {
+              index.close();
             }
           }
         }
@@ -247,20 +250,25 @@ public KVIterator<TileIdWritable, MrGeoRaster> get()
 @Override
 public MrGeoRaster get(final TileIdWritable key)
 {
-  MapFile.Reader reader = null;
+  HadoopFileUtils.MapFileReaderWrapper readerWrapper = null;
   try
   {
     // get the reader that handles the partition/map file
-    reader = getReader(getPartitionIndex(key));
+    readerWrapper = getReaderWrapper(getPartitionIndex(key));
 
     // return object
-    RasterWritable val = (RasterWritable) reader.getValueClass().newInstance();
+    RasterWritable val = (RasterWritable) readerWrapper.getReader().getValueClass().newInstance();
 
     // get the tile from map file from HDFS
     try
     {
       // log.debug("getting " + key);
-      reader.get(key, val);
+      try {
+        readerWrapper.getReader().get(key, val);
+      }
+      catch(java.io.EOFException e) {
+        log.error("Got EOF exception trying to read " + readerWrapper.toString());
+      }
       if (getWritableSize(val) > 0)
       {
         // return the data
@@ -289,11 +297,11 @@ public MrGeoRaster get(final TileIdWritable key)
   }
   finally
   {
-    if (reader != null && !canBeCached())
+    if (readerWrapper != null && !canBeCached())
     {
       try
       {
-        reader.close();
+        readerWrapper.close();
       }
       catch (IOException e)
       {
@@ -345,24 +353,24 @@ public int getPartitionIndex(final TileIdWritable key) throws IOException
  */
 @SuppressWarnings("squid:S1166") // Exception caught and handled
 @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST_OF_RETURN_VALUE", justification = "We _are_ checking!")
-public MapFile.Reader getReader(final int partitionIndex) throws IOException
+public HadoopFileUtils.MapFileReaderWrapper getReaderWrapper(final int partitionIndex) throws IOException
 {
   try
   {
     if (canBeCached)
     {
       log.info("Loading reader for partitionIndex " + partitionIndex + " through the cache");
-      MapFile.Reader reader = readerCache.get(partitionIndex);
+      HadoopFileUtils.MapFileReaderWrapper reader = readerCache.get(partitionIndex);
       try
       {
         // there is a slim chance the cached reader was closed, this will check, close the reader,
         // then reopen it if needed
-        TileIdWritable key = new TileIdWritable();
-        reader.finalKey(key);
-        reader.reset();
+        TileIdWritable key = (TileIdWritable)reader.getReader().getKeyClass().newInstance();
+        reader.getReader().finalKey(key);
+        reader.getReader().reset();
         return reader;
       }
-      catch (IOException e)
+      catch (IOException | IllegalAccessException | InstantiationException e)
       {
         log.info("Reader had been previously closed, opening a new one");
         reader = loadReader(partitionIndex);
@@ -402,13 +410,13 @@ protected Path getTilePath()
   return imagePath;
 }
 
-private MapFile.Reader loadReader(int partitionIndex) throws IOException
+private HadoopFileUtils.MapFileReaderWrapper loadReader(int partitionIndex) throws IOException
 {
   final FileSplit.FileSplitInfo part =
       (FileSplit.FileSplitInfo) splits.getSplits()[partitionIndex];
 
   final Path path = new Path(imagePath, part.getName());
-  return new MapFile.Reader(path, conf);
+  return new HadoopFileUtils.MapFileReaderWrapper(path, conf);
 
 //    if (profile)
 //    {

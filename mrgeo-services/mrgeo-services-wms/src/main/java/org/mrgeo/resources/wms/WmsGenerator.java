@@ -455,13 +455,18 @@ private Response getMap(MultivaluedMap<String, String> allParams, ProviderProper
         .write(result, layerNames[0], bounds);
     return setupCaching(builder, allParams).build();
   }
-  catch (IllegalAccessException | InstantiationException | WmsGeneratorException | ImageRendererException e)
+  catch (ImageRendererException e) {
+    log.error("Unable to render the image in getMap", e);
+    return writeError(Response.Status.BAD_REQUEST, "Unable to render the image in getMap");
+  }
+  catch (IllegalAccessException | InstantiationException | WmsGeneratorException e)
   {
-    StringWriter errors = new StringWriter();
-    e.printStackTrace(new PrintWriter(errors));
-   String msg = errors.toString();
-    log.error("Unable to render the image in getTile: " + msg, e);
-    return writeError(Response.Status.BAD_REQUEST, msg);
+    log.error("Unable to render the image in getMap", e);
+    return writeError(Response.Status.INTERNAL_SERVER_ERROR, "Unable to render the image in getMap");
+  }
+  catch (Throwable e) {
+    log.error("Unable to render the image in getMap", e);
+    return writeError(Response.Status.INTERNAL_SERVER_ERROR, "Unable to render the image in getMap");
   }
 }
 
