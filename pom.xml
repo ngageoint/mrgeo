@@ -2625,6 +2625,11 @@
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-cmd-cleancache</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-cmd-core</artifactId>
         <version>${project.version}</version>
       </dependency>

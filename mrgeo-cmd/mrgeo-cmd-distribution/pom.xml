@@ -252,6 +252,10 @@
     </dependency>
     <dependency>
       <groupId>org.mrgeo</groupId>
+      <artifactId>mrgeo-cmd-cleancache</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-cmd-export</artifactId>
     </dependency>
     <dependency>

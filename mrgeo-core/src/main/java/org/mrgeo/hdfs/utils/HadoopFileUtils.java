@@ -690,7 +690,6 @@ private static long copyFileFromS3(AmazonS3 s3Client, URI uri, File localFile,
     throw new IOException(e);
   }
 
-  log.debug("In copyFileFromS3 - after force mkdir");
   InputStream objectData = object.getObjectContent();
   try {
     long byteCount = org.apache.commons.io.IOUtils.copyLarge(objectData, fos);
@@ -733,7 +732,8 @@ public static class SequenceFileReaderWrapper {
       if ("s3".equals(scheme) || "s3a".equals(scheme) || "s3n".equals(scheme)) {
         S3Utils.S3Cache localS3Cache = S3Utils.getS3Cache();
         S3Utils.S3Cache s3Cache = S3Utils.getS3Cache();
-        File tmpFile = new File(S3Utils.getCacheDir(), pathUri.getPath().substring(1));
+        File tmpBucketDir = new File(S3Utils.getCacheDir(), pathUri.getHost());
+        File tmpFile = new File(tmpBucketDir, pathUri.getPath().substring(1));
         // Copy the file from S3 to the local drive and return a reader for that file
         Path tryLocalPath = new Path("file://" + tmpFile.getParentFile().getAbsolutePath());
         cacheEntry = localS3Cache.getEntry(path.toString(), tryLocalPath, tmpFile, null);
@@ -843,8 +843,9 @@ public static class MapFileReaderWrapper
         S3Utils.S3Cache localS3Cache = S3Utils.getS3Cache();
         File cacheDir = S3Utils.getCacheDir();
         log.debug("cacheDir = " + cacheDir.getAbsolutePath());
-        File tmpIndexFile = new File(cacheDir, indexUri.getPath().substring(1));
-        File tmpDataFile = new File(cacheDir, dataUri.getPath().substring(1));
+        File tmpBucketDir = new File(S3Utils.getCacheDir(), pathUri.getHost());
+        File tmpIndexFile = new File(tmpBucketDir, indexUri.getPath().substring(1));
+        File tmpDataFile = new File(tmpBucketDir, dataUri.getPath().substring(1));
         // Copy the file from S3 to the local drive if it is not already there
         // and return a reader for that file. Use locking to prevent multiple
         // processes from copying the same file at the same time.
