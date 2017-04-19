@@ -15,8 +15,9 @@
 
 package org.mrgeo.cmd.mrsimageinfo;
 
-import com.typesafe.config.ConfigException;
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -25,7 +26,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.joda.time.format.DateTimeFormat;
 import org.mrgeo.cmd.Command;
-import org.mrgeo.cmd.MrGeo;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.DataProviderNotFound;
