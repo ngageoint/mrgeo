@@ -16,11 +16,13 @@
 package org.mrgeo.cmd.export;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.cmd.Command;
-import org.mrgeo.cmd.MrGeo;
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.colorscale.applier.ColorScaleApplier;
@@ -73,239 +75,219 @@ private boolean useTMS;
 
 @Override
 @SuppressWarnings("squid:S1166") // Exception caught and handled
-public int run(final String[] args, Configuration conf, ProviderProperties providerProperties)
+public int run(CommandLine line, Configuration conf,
+               ProviderProperties providerProperties) throws ParseException
 {
   log.info("Export");
 
   try
   {
-    final Options options = createOptions();
-    CommandLine line;
-    try
+    if (line.hasOption("b") &&
+        (line.hasOption("t") || line.hasOption("c") || line.hasOption("r") || line.hasOption("p")))
     {
-      final CommandLineParser parser = new PosixParser();
-      line = parser.parse(options, args);
+      throw new ParseException("Option -b is currently incompatible with -t, -c, -p, and -r");
+    }
 
-      if (line == null || line.hasOption("h"))
+    if (line.hasOption("s") && line.hasOption("m"))
+    {
+      throw new ParseException("Cannot use both -s and -m");
+    }
+    if (line.hasOption("v"))
+    {
+      LoggingUtils.setDefaultLogLevel(LoggingUtils.INFO);
+    }
+    if (line.hasOption("d"))
+    {
+      LoggingUtils.setDefaultLogLevel(LoggingUtils.DEBUG);
+    }
+
+    if (line.hasOption("l"))
+    {
+      System.out.println("Using local runner");
+      HadoopUtils.setupLocalRunner(conf);
+    }
+
+    String outputbase = line.getOptionValue("o");
+
+    if (line.hasOption("c"))
+    {
+      maxTiles = Integer.parseInt(line.getOptionValue("c"));
+    }
+
+    useRand = line.hasOption("r");
+    boolean all = line.hasOption("a");
+
+    boolean singleImage = line.hasOption("s");
+    mosaicTiles = line.hasOption("m");
+    if (mosaicTiles)
+    {
+      mosaicTileCount = Integer.parseInt(line.getOptionValue("m"));
+    }
+
+    useBounds = line.hasOption("b");
+    if (useBounds)
+    {
+      final String boundsOption = line.getOptionValue("b");
+      bounds = parseBounds(boundsOption);
+    }
+
+    if (line.hasOption("cs"))
+    {
+      colorscale = ColorScaleManager.fromName(line.getOptionValue("cs"));
+    }
+
+    boolean useTileSet = line.hasOption("t");
+    if (useTileSet)
+    {
+      tileset = new HashSet<Long>();
+      final String tileIdOption = line.getOptionValue("t");
+      final String[] tileIds = tileIdOption.split(",");
+      for (final String tileId : tileIds)
       {
-        new HelpFormatter().printHelp("Export", options);
-        return 1;
+        tileset.add(Long.valueOf(tileId));
       }
+    }
 
-      if (line.hasOption("b") &&
-          (line.hasOption("t") || line.hasOption("c") || line.hasOption("r") || line.hasOption("p")))
-      {
-        log.debug("Option -b is currently incompatible with -t, -c, -p, and -r");
-        throw new ParseException("Incorrect combination of arguments");
-      }
+    int zoomlevel = -1;
+    if (line.hasOption("z"))
+    {
+      zoomlevel = Integer.parseInt(line.getOptionValue("z"));
+    }
 
-      if (line.hasOption("s") && line.hasOption("m"))
-      {
-        log.debug("Cannot use both -s and -m");
-        throw new ParseException("Incorrect combination of arguments");
-      }
-      if (line.hasOption("v"))
-      {
-        LoggingUtils.setDefaultLogLevel(LoggingUtils.INFO);
-      }
-      if (line.hasOption("d"))
-      {
-        LoggingUtils.setDefaultLogLevel(LoggingUtils.DEBUG);
-      }
+    String format = "tif";
+    if (line.hasOption("f"))
+    {
+      format = line.getOptionValue("f");
+    }
 
-      if (line.hasOption("l"))
-      {
-        System.out.println("Using local runner");
-        HadoopUtils.setupLocalRunner(conf);
-      }
-
-      String outputbase = line.getOptionValue("o");
-
-      if (line.hasOption("c"))
-      {
-        maxTiles = Integer.parseInt(line.getOptionValue("c"));
-      }
-
-      useRand = line.hasOption("r");
-      boolean all = line.hasOption("a");
-
-      boolean singleImage = line.hasOption("s");
-      mosaicTiles = line.hasOption("m");
-      if (mosaicTiles)
-      {
-        mosaicTileCount = Integer.parseInt(line.getOptionValue("m"));
-      }
-
-      useBounds = line.hasOption("b");
-      if (useBounds)
-      {
-        final String boundsOption = line.getOptionValue("b");
-        bounds = parseBounds(boundsOption);
-      }
-
-      if (line.hasOption("cs"))
-      {
-        colorscale = ColorScaleManager.fromName(line.getOptionValue("cs"));
-      }
-
-      boolean useTileSet = line.hasOption("t");
-      if (useTileSet)
-      {
-        tileset = new HashSet<Long>();
-        final String tileIdOption = line.getOptionValue("t");
-        final String[] tileIds = tileIdOption.split(",");
-        for (final String tileId : tileIds)
-        {
-          tileset.add(Long.valueOf(tileId));
-        }
-      }
-
-      int zoomlevel = -1;
-      if (line.hasOption("z"))
-      {
-        zoomlevel = Integer.parseInt(line.getOptionValue("z"));
-      }
-
-      String format = "tif";
-      if (line.hasOption("f"))
-      {
-        format = line.getOptionValue("f");
-      }
-
-      useTMS = line.hasOption("tms");
+    useTMS = line.hasOption("tms");
 
 //      if (!singleImage)
 //      {
 //        FileUtils.createDir(new File(outputbase));
 //      }
 
-      for (final String arg : line.getArgs())
+    for (final String arg : line.getArgs())
+    {
+      // The input can be either an image or a vector.
+      MrsPyramid imagePyramid;
+      MrsPyramid pyramid = null;
+      String pyramidName = "";
+      try
       {
-        // The input can be either an image or a vector.
-        MrsPyramid imagePyramid;
-        MrsPyramid pyramid = null;
-        String pyramidName = "";
+        MrsImageDataProvider dp =
+            DataProviderFactory.getMrsImageDataProvider(arg, DataProviderFactory.AccessMode.READ, providerProperties);
+        imagePyramid = MrsPyramid.open(dp);
+        pyramidName = dp.getSimpleResourceName();
+        pyramid = imagePyramid;
+      }
+      catch (IOException e)
+      {
+        imagePyramid = null;
+      }
+
+      if (imagePyramid == null)
+      {
+        throw new ParseException("Specified input must be either an image or a vector");
+      }
+      if (zoomlevel <= 0)
+      {
+        zoomlevel = pyramid.getMaximumLevel();
+      }
+
+      int end = zoomlevel;
+      if (all)
+      {
+        end = 1;
+      }
+
+      while (zoomlevel >= end)
+      {
+        //final String output = outputbase + (all ? "_" + Integer.toString(zoomlevel) : "");
+
+        // If tile id's were not specified with -t, but -p is specified, then we
+        // need to re-compute the tiles for the specified points for each zoom level.
+        if (!useTileSet && line.hasOption("p"))
+        {
+          tileset = new HashSet<Long>();
+          final String pointsOption = line.getOptionValue("p");
+          final String[] points = pointsOption.split(",");
+          if (points.length % 2 != 0)
+          {
+            throw new IOException("The -p option requires lon/lat pairs");
+          }
+          for (int i = 0; i < points.length; i += 2)
+          {
+            double lon = Double.valueOf(points[i].trim());
+            double lat = Double.valueOf(points[i + 1].trim());
+            Tile pointTile = TMSUtils.latLonToTile(lat, lon, zoomlevel, pyramid.getTileSize());
+            tileset.add(Long.valueOf(TMSUtils.tileid(pointTile.getTx(), pointTile.getTy(), zoomlevel)));
+          }
+        }
+
+        MrsImage image = imagePyramid.getImage(zoomlevel);
         try
         {
-          MrsImageDataProvider dp =
-              DataProviderFactory.getMrsImageDataProvider(arg, DataProviderFactory.AccessMode.READ, providerProperties);
-          imagePyramid = MrsPyramid.open(dp);
-          pyramidName = dp.getSimpleResourceName();
-          pyramid = imagePyramid;
-        }
-        catch (IOException e)
-        {
-          imagePyramid = null;
-        }
+          final Set<Long> tiles = calculateTiles(pyramid, zoomlevel);
 
-        if (imagePyramid == null)
-        {
-          throw new IOException("Specified input must be either an image or a vector");
-        }
-        if (zoomlevel <= 0)
-        {
-          zoomlevel = pyramid.getMaximumLevel();
-        }
+          int tilesize = imagePyramid.getTileSize();
 
-        int end = zoomlevel;
-        if (all)
-        {
-          end = 1;
-        }
-
-        while (zoomlevel >= end)
-        {
-          //final String output = outputbase + (all ? "_" + Integer.toString(zoomlevel) : "");
-
-          // If tile id's were not specified with -t, but -p is specified, then we
-          // need to re-compute the tiles for the specified points for each zoom level.
-          if (!useTileSet && line.hasOption("p"))
+          if (singleImage)
           {
-            tileset = new HashSet<Long>();
-            final String pointsOption = line.getOptionValue("p");
-            final String[] points = pointsOption.split(",");
-            if (points.length % 2 != 0)
+            String ob = outputbase;
+            if (all)
             {
-              throw new IOException("The -p option requires lon/lat pairs");
+              ob += "-" + zoomlevel;
             }
-            for (int i = 0; i < points.length; i += 2)
-            {
-              double lon = Double.valueOf(points[i].trim());
-              double lat = Double.valueOf(points[i + 1].trim());
-              Tile pointTile = TMSUtils.latLonToTile(lat, lon, zoomlevel, pyramid.getTileSize());
-              tileset.add(Long.valueOf(TMSUtils.tileid(pointTile.getTx(), pointTile.getTy(), zoomlevel)));
-            }
+            saveMultipleTiles(ob, pyramidName, format,
+                image, ArrayUtils.toPrimitive(tiles.toArray(new Long[tiles.size()])), providerProperties);
           }
-
-          MrsImage image = imagePyramid.getImage(zoomlevel);
-          try
+          else if (mosaicTiles && mosaicTileCount > 0)
           {
-            final Set<Long> tiles = calculateTiles(pyramid, zoomlevel);
 
-            int tilesize = imagePyramid.getTileSize();
-
-            if (singleImage)
+            if (!outputbase.contains(X) || !outputbase.contains(Y) ||
+                !outputbase.contains(LAT) || !outputbase.contains(LON))
             {
-              String ob = outputbase;
-              if (all)
-              {
-                ob += "-" + zoomlevel;
-              }
-              saveMultipleTiles(ob, pyramidName, format,
-                  image, ArrayUtils.toPrimitive(tiles.toArray(new Long[tiles.size()])), providerProperties);
+              outputbase = outputbase + "/$Y-$X";
             }
-            else if (mosaicTiles && mosaicTileCount > 0)
+            for (final Long tileid : tiles)
             {
-
-              if (!outputbase.contains(X) || !outputbase.contains(Y) ||
-                  !outputbase.contains(LAT) || !outputbase.contains(LON))
+              final Tile t = TMSUtils.tileid(tileid, zoomlevel);
+              final Set<Long> tilesToMosaic = new HashSet<>();
+              final LongRectangle tileBounds = pyramid.getTileBounds(zoomlevel);
+              for (long ty1 = t.ty; ((ty1 < (t.ty + mosaicTileCount)) && (ty1 <= tileBounds
+                  .getMaxY())); ty1++)
               {
-                outputbase = outputbase + "/$Y-$X";
-              }
-              for (final Long tileid : tiles)
-              {
-                final Tile t = TMSUtils.tileid(tileid, zoomlevel);
-                final Set<Long> tilesToMosaic = new HashSet<>();
-                final LongRectangle tileBounds = pyramid.getTileBounds(zoomlevel);
-                for (long ty1 = t.ty; ((ty1 < (t.ty + mosaicTileCount)) && (ty1 <= tileBounds
-                    .getMaxY())); ty1++)
+                for (long tx1 = t.tx; ((tx1 < (t.tx + mosaicTileCount)) && (tx1 <= tileBounds
+                    .getMaxX())); tx1++)
                 {
-                  for (long tx1 = t.tx; ((tx1 < (t.tx + mosaicTileCount)) && (tx1 <= tileBounds
-                      .getMaxX())); tx1++)
-                  {
-                    tilesToMosaic.add(TMSUtils.tileid(tx1, ty1, zoomlevel));
-                  }
+                  tilesToMosaic.add(TMSUtils.tileid(tx1, ty1, zoomlevel));
                 }
+              }
 //                final String mosaicOutput = output + "/" + t.ty + "-" + t.tx + "-" +
 //                    TMSUtils.tileid(t.tx, t.ty, zoomlevel);
-                saveMultipleTiles(outputbase, pyramidName, format, image,
-                    ArrayUtils.toPrimitive(tilesToMosaic.toArray(new Long[tilesToMosaic.size()])), providerProperties);
-              }
-            }
-            else
-            {
-              for (final Long tileid : tiles)
-              {
-                saveSingleTile(outputbase, pyramidName, image, format, tileid, zoomlevel, tilesize, providerProperties);
-              }
+              saveMultipleTiles(outputbase, pyramidName, format, image,
+                  ArrayUtils.toPrimitive(tilesToMosaic.toArray(new Long[tilesToMosaic.size()])), providerProperties);
             }
           }
-          finally
+          else
           {
-            if (image != null)
+            for (final Long tileid : tiles)
             {
-              image.close();
+              saveSingleTile(outputbase, pyramidName, image, format, tileid, zoomlevel, tilesize, providerProperties);
             }
           }
-
-          zoomlevel--;
         }
+        finally
+        {
+          if (image != null)
+          {
+            image.close();
+          }
+        }
+
+        zoomlevel--;
       }
-    }
-    catch (final ParseException e)
-    {
-      new HelpFormatter().printHelp("Export", options);
-      return 1;
     }
 
     return 0;
@@ -318,68 +300,68 @@ public int run(final String[] args, Configuration conf, ProviderProperties provi
   return -1;
 }
 
-private Options createOptions()
-{
-  Options result = MrGeo.createOptions();
+@Override
+public String getUsage() { return "export <options> <input>"; }
 
+@Override
+public void addOptions(Options options)
+{
   final Option output = new Option("o", "output", true, "Output directory");
   output.setRequired(true);
-  result.addOption(output);
+  options.addOption(output);
 
   final Option zoom = new Option("z", "zoom", true, "Zoom level");
   zoom.setRequired(false);
-  result.addOption(zoom);
+  options.addOption(zoom);
 
   final Option count = new Option("c", "count", true, "Number of tiles to export");
   count.setRequired(false);
-  result.addOption(count);
+  options.addOption(count);
 
   final Option mosaic = new Option("m", "mosaic", true, "Number of adjacent tiles to mosaic");
   mosaic.setRequired(false);
-  result.addOption(mosaic);
+  options.addOption(mosaic);
 
   final Option fmt = new Option("f", "format", true, "Output format (tif, jpg, png)");
   fmt.setRequired(false);
-  result.addOption(fmt);
+  options.addOption(fmt);
 
   final Option random = new Option("r", "random", false, "Randomize export");
   random.setRequired(false);
-  result.addOption(random);
+  options.addOption(random);
 
   final Option single = new Option("s", "single", false, "Export as a single image");
   single.setRequired(false);
-  result.addOption(single);
+  options.addOption(single);
 
   final Option tms = new Option("tms", "tms", false, "Export in TMS tile naming scheme");
   tms.setRequired(false);
-  result.addOption(tms);
+  options.addOption(tms);
 
   final Option color = new Option("cs", "colorscale", true, "Color scale to apply");
   color.setRequired(false);
-  result.addOption(color);
+  options.addOption(color);
 
   final Option tileIds = new Option("t", "tileids", true,
       "A comma separated list of tile ID's to export");
   tileIds.setRequired(false);
-  result.addOption(tileIds);
+  options.addOption(tileIds);
 
   final Option points = new Option("p", "points", true,
       "A comma separated list of lon, lat, lon, lat, ... for which to export tiles");
   points.setRequired(false);
-  result.addOption(points);
+  options.addOption(points);
 
   final Option bounds = new Option("b", "bounds", true,
       "Returns the tiles intersecting and interior to"
           + "the bounds specified.  Lat/Lon Bounds in w, s, e, n format "
           + "(e.g., \"-180\",\"-90\",180,90). Does not honor \"-r\"");
   bounds.setRequired(false);
-  result.addOption(bounds);
+  options.addOption(bounds);
 
   final Option all = new Option("a", "all-levels", false, "Output all levels");
   all.setRequired(false);
-  result.addOption(all);
-
-  return result;
+  options.addOption(all);
 }
 
 private Bounds parseBounds(String boundsOption)

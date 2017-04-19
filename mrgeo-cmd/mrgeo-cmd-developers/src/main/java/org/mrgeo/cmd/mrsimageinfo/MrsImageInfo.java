@@ -15,6 +15,7 @@
 
 package org.mrgeo.cmd.mrsimageinfo;
 
+import com.typesafe.config.ConfigException;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.hadoop.conf.Configuration;
@@ -59,11 +60,13 @@ public MrsImageInfo()
 {
 }
 
-public static Options createOptions()
-{
-  Options result = MrGeo.createOptions();
+@Override
+public String getUsage() { return "MrsImageInfo <pyramid>"; }
 
-  return result;
+@Override
+public void addOptions(Options options)
+{
+  // No additional options
 }
 
 public static String human(final long bytes)
@@ -143,8 +146,8 @@ private static void printTileType(final MrsPyramidMetadata metadata, PrintStream
 
 @Override
 @SuppressWarnings("squid:S1166") // DataProviderNotFound exception caught and message printed
-public int run(final String[] args, final Configuration conf,
-    final ProviderProperties providerProperties)
+public int run(final CommandLine line, final Configuration conf,
+    final ProviderProperties providerProperties) throws ParseException
 {
   log.info("MrsImageInfo");
 
@@ -152,29 +155,20 @@ public int run(final String[] args, final Configuration conf,
   {
     config = conf;
 
-    final Options options = MrsImageInfo.createOptions();
-    CommandLine line;
+    debug = line.hasOption("d");
+    verbose = debug || line.hasOption("v");
 
-    try
+    String pyramidName = null;
+    for (final String arg : line.getArgs())
     {
-      final CommandLineParser parser = new PosixParser();
-      line = parser.parse(options, args);
+      pyramidName = arg;
+      break;
+    }
 
-      debug = line.hasOption("d");
-      verbose = debug || line.hasOption("v");
-
-      String pyramidName = null;
-      for (final String arg : line.getArgs())
-      {
-        pyramidName = arg;
-        break;
-      }
-
-      if (pyramidName == null)
-      {
-        new HelpFormatter().printHelp("MrsImageInfo <pyramid>", options);
-        return 1;
-      }
+    if (pyramidName == null)
+    {
+      throw new ParseException("Missing input pyramid");
+    }
 
 //      final Path p = new Path(pyramidName);
 //      final FileSystem fs = p.getFileSystem(config);
@@ -185,45 +179,37 @@ public int run(final String[] args, final Configuration conf,
 //        return 1;
 //      }
 
-      try (ByteArrayOutputStream baos = new ByteArrayOutputStream())
-      {
-        try (PrintStream out = new PrintStream(baos))
-        {
-          try
-          {
-            final MrsImageDataProvider dp =
-                DataProviderFactory.getMrsImageDataProviderNoCache(pyramidName, AccessMode.READ, providerProperties);
-
-
-            out.println("");
-            out.println("");
-            out.println("MrsPyramid Information");
-            out.println("======================");
-
-            final MrsPyramid pyramid = MrsPyramid.open(dp);
-
-            //final MrsPyramid pyramid = MrsPyramid.open(pyramidName, providerProperties);
-            printMetadata(pyramid.getMetadata(), providerProperties, out);
-
-            if (line.hasOption("v"))
-            {
-              printSplitPoints(pyramidName, out);
-            }
-          }
-          catch (final DataProviderNotFound dpnf)
-          {
-            out.println("MrsPyramid does not exist: \"" + pyramidName + "\"");
-            new HelpFormatter().printHelp("MrsImageInfo <pyramid>", options);
-            return 1;
-          }
-          System.out.println(new String(baos.toByteArray(), StandardCharsets.UTF_8));
-        }
-      }
-    }
-    catch (final ParseException e)
+    try (ByteArrayOutputStream baos = new ByteArrayOutputStream())
     {
-      new HelpFormatter().printHelp("MrsImageInfo", options);
-      return 1;
+      try (PrintStream out = new PrintStream(baos))
+      {
+        try
+        {
+          final MrsImageDataProvider dp =
+              DataProviderFactory.getMrsImageDataProviderNoCache(pyramidName, AccessMode.READ, providerProperties);
+
+
+          out.println("");
+          out.println("");
+          out.println("MrsPyramid Information");
+          out.println("======================");
+
+          final MrsPyramid pyramid = MrsPyramid.open(dp);
+
+          //final MrsPyramid pyramid = MrsPyramid.open(pyramidName, providerProperties);
+          printMetadata(pyramid.getMetadata(), providerProperties, out);
+
+          if (line.hasOption("v"))
+          {
+            printSplitPoints(pyramidName, out);
+          }
+        }
+        catch (final DataProviderNotFound dpnf)
+        {
+          throw new ParseException("MrsPyramid does not exist: \"" + pyramidName + "\"");
+        }
+        System.out.println(new String(baos.toByteArray(), StandardCharsets.UTF_8));
+      }
     }
 
     return 0;

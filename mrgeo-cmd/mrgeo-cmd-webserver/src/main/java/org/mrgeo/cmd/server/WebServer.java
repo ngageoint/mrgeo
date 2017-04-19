@@ -16,7 +16,10 @@
 package org.mrgeo.cmd.server;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.conf.Configuration;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
@@ -32,7 +35,6 @@ import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 import org.mrgeo.cmd.Command;
-import org.mrgeo.cmd.MrGeo;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.utils.logging.LoggingUtils;
@@ -49,51 +51,30 @@ public class WebServer extends Command
 {
 
 private static Logger log = LoggerFactory.getLogger(WebServer.class);
-private Options options;
 
 public WebServer()
 {
-  options = createOptions();
-}
-
-
-public static Options createOptions()
-{
-  Options result = MrGeo.createOptions();
-
-  Option port = new Option("p", "port", true, "The HTTP port on which the server will listen (default 8080)");
-  result.addOption(port);
-  Option singleThreaded = new Option("st", "singleThreaded", false, "Specify this argument in order to run the web server in essentially single-threaded mode for processing one request at a time");
-  result.addOption(singleThreaded);
-
-  return result;
 }
 
 @Override
-public int run(String[] args, Configuration conf, ProviderProperties providerProperties)
+public void addOptions(Options options)
+{
+  Option port = new Option("p", "port", true, "The HTTP port on which the server will listen (default 8080)");
+  options.addOption(port);
+  Option singleThreaded = new Option("st", "singleThreaded", false, "Specify this argument in order to run the web server in essentially single-threaded mode for processing one request at a time");
+  options.addOption(singleThreaded);
+}
+
+@Override
+public String getUsage() { return "webserver <options>"; }
+
+@Override
+public int run(CommandLine line, Configuration conf,
+               ProviderProperties providerProperties) throws ParseException
 {
   try
   {
     long start = System.currentTimeMillis();
-
-    CommandLine line = null;
-    try
-    {
-      CommandLineParser parser = new GnuParser();
-      line = parser.parse(options, args);
-    }
-    catch (ParseException e)
-    {
-      System.out.println(e.getMessage());
-      new HelpFormatter().printHelp("webserver <options> <operation>", options);
-      return -1;
-    }
-
-    if (line == null || line.hasOption("h"))
-    {
-      new HelpFormatter().printHelp("webserver <options> <operation>", options);
-      return -1;
-    }
 
     int httpPort = 8080;
     if (line.hasOption("p"))
@@ -104,8 +85,7 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
       }
       catch (NumberFormatException nfe)
       {
-        System.err.println("Invalid HTTP port specified: " + line.getOptionValue("p"));
-        return -1;
+        throw new ParseException("Invalid HTTP port specified: " + line.getOptionValue("p"));
       }
     }
     boolean singleThreaded = false;
@@ -115,8 +95,7 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
     }
     catch (NumberFormatException nfe)
     {
-      System.err.println("Invalid number of connections specified: " + line.getOptionValue("n"));
-      return -1;
+      throw new ParseException("Invalid number of connections specified: " + line.getOptionValue("n"));
     }
 
     if (line.hasOption("v"))
@@ -133,13 +112,13 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
     long end = System.currentTimeMillis();
     long duration = end - start;
     PeriodFormatter formatter = new PeriodFormatterBuilder()
-        .appendHours()
-        .appendSuffix("h:")
-        .appendMinutes()
-        .appendSuffix("m:")
-        .appendSeconds()
-        .appendSuffix("s")
-        .toFormatter();
+            .appendHours()
+            .appendSuffix("h:")
+            .appendMinutes()
+            .appendSuffix("m:")
+            .appendSeconds()
+            .appendSuffix("s")
+            .toFormatter();
     String formatted = formatter.print(new Period(duration));
     log.info("IngestImage complete in " + formatted);
 

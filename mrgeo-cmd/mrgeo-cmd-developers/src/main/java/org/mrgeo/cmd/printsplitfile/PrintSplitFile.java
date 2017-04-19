@@ -42,34 +42,27 @@ public class PrintSplitFile extends Command
 {
 private static Logger log = LoggerFactory.getLogger(PrintSplitFile.class);
 
-public static Options createOptions()
-{
-  Options result = MrGeo.createOptions();
+@Override
+public String getUsage() { return "printsplits <options>"; }
 
+@Override
+public void addOptions(Options options)
+{
   final Option zoom = new Option("z", "zoom", true, "Zoom level");
   zoom.setRequired(false);
-  result.addOption(zoom);
+  options.addOption(zoom);
 
   final Option regen = new Option("r", "regenerate", false, "Regenerate Splits");
   regen.setRequired(false);
-  result.addOption(regen);
-
-  return result;
+  options.addOption(regen);
 }
 
 @Override
-public int run(final String[] args, final Configuration conf,
-    final ProviderProperties providerProperties)
+public int run(final CommandLine line, final Configuration conf,
+    final ProviderProperties providerProperties) throws ParseException
 {
-
   try
   {
-    final Options options = PrintSplitFile.createOptions();
-    CommandLine line;
-    final CommandLineParser parser = new PosixParser();
-    line = parser.parse(options, args);
-
-
     int zoomlevel = -1;
     if (line.hasOption("z"))
     {
@@ -131,7 +124,7 @@ public int run(final String[] args, final Configuration conf,
       }
     }
   }
-  catch (ParseException | IOException e)
+  catch (IOException e)
   {
     log.error("Exception thrown", e);
   }

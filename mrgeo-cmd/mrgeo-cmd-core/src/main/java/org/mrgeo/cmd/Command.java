@@ -15,8 +15,12 @@
 
 package org.mrgeo.cmd;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.data.ProviderProperties;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * Command is the abstract base class for all mrgeo pluggable commands.  At run-time, all classes
@@ -32,16 +36,33 @@ protected Command()
 }
 
 /**
- * Command entry point.
- * <p>
- * args are straight from the main() method.  That means args[0] will contain the name of the command being run.
+ * The command should add the command-line options it supports to the options
+ * passed in.
  *
- * @param args               String[] String array of all arguments.
- * @param conf               Hadoop Configuration object, containing all the default configuration values from a hadoop installation.
- * @param providerProperties properties required for accessing resources while executing
- *                           the command
- * @return int The return status of the command.  Follow typical main() return values: 0 - success,
- * other values - failure (failure code)
+ * @param options
  */
-public abstract int run(String[] args, Configuration conf, ProviderProperties providerProperties);
+public void addOptions(Options options) {}
+
+/**
+ * Subclasses should return the string that is displayed to the user when a command-line
+ * parsing error occurs. It should return something like "mycommand <options>". Information
+ * about the available options will be included automatically (based on the Options assigned
+ * in addOptions).
+ *
+ * @return
+ */
+public abstract String getUsage();
+
+/**
+ * Sub-classes override this to perform their processing. If there are command-line arguments
+ * that are incorrect, throw a ParseException with the description ofthe problem. It
+ * will be displayed to the user along with the usage help for the command.
+ *
+ * @param cmdLine
+ * @param conf
+ * @param providerProperties
+ * @return
+ */
+public abstract int run(CommandLine cmdLine, Configuration conf,
+                        ProviderProperties providerProperties) throws ParseException;
 }

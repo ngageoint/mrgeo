@@ -43,102 +43,85 @@ public AddColorscale()
 {
 }
 
-private static Options createOptions()
+@Override
+public String getUsage() { return "colorscale <pyramid> [colorscale name]"; }
+
+@Override
+public void addOptions(Options options)
 {
-  Options result = new Options();
-
-  result.addOption(new Option("l", "list", false, "List existing colorscale"));
-  result.addOption(new Option("h", "help", false, "help"));
-
-  return result;
+  options.addOption(new Option("l", "list", false, "List existing colorscale"));
+  options.addOption(new Option("h", "help", false, "help"));
 }
 
 
 @Override
-public int run(final String[] args, final Configuration conf,
-    final ProviderProperties providerProperties)
+public int run(final CommandLine line, final Configuration conf,
+    final ProviderProperties providerProperties) throws ParseException
 {
   log.info("AddColorscale");
 
+  String pyramidName = null;
+  String colorscale = null;
+
+  boolean list = line.hasOption("l");
+
+
+  if (line.getArgs().length >= 1)
+  {
+    pyramidName = line.getArgs()[0];
+  }
+
+  if (line.getArgs().length == 2)
+  {
+    colorscale = line.getArgs()[1];
+  }
+
+
+  if (pyramidName == null || (!list && colorscale == null))
+  {
+    throw new ParseException("An input pyramid name and color scale is required");
+  }
+
   try
   {
+    MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(pyramidName, DataProviderFactory.AccessMode.READ, new ProviderProperties());
+    MrsPyramidMetadata meta = dp.getMetadataReader().read();
 
-    final Options options = AddColorscale.createOptions();
-    CommandLine line;
-
-    final CommandLineParser parser = new PosixParser();
-    line = parser.parse(options, args);
-
-    String pyramidName = null;
-    String colorscale = null;
-
-    boolean list = line.hasOption("l");
-
-
-    if (line.getArgs().length >= 1)
+    if (list)
     {
-      pyramidName = line.getArgs()[0];
+      String existing = meta.getTag(MrGeoConstants.MRGEO_DEFAULT_COLORSCALE, "[not set]");
+      System.out.println("Default colorscale: " + existing);
+
+      return 0;
     }
 
-    if (line.getArgs().length == 2)
-    {
-      colorscale = line.getArgs()[1];
-    }
+    meta.setTag(MrGeoConstants.MRGEO_DEFAULT_COLORSCALE, colorscale);
+    dp.getMetadataWriter().write(meta);
 
-
-    if (pyramidName == null || (!list && colorscale == null) || line.hasOption("h"))
-    {
-      new HelpFormatter().printHelp("colorscale <pyramid> [colorscale name]", options);
-      return 1;
-    }
-
+    ColorScale cs = null;
     try
     {
-      MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(pyramidName, DataProviderFactory.AccessMode.READ, new ProviderProperties());
-      MrsPyramidMetadata meta = dp.getMetadataReader().read();
-
-      if (list)
-      {
-        String existing = meta.getTag(MrGeoConstants.MRGEO_DEFAULT_COLORSCALE, "[not set]");
-        System.out.println("Default colorscale: " + existing);
-
-        return 0;
-      }
-
-      meta.setTag(MrGeoConstants.MRGEO_DEFAULT_COLORSCALE, colorscale);
-      dp.getMetadataWriter().write(meta);
-
-      ColorScale cs = null;
-      try
-      {
-        cs = ColorScaleManager.fromName(colorscale);
-      }
-      catch (ColorScale.ColorScaleException ignored)
-      {
-      }
-
-      if (cs == null)
-      {
-        System.out.println("The default colorscale was set, however, it doesn't exist in the colorscale directory (" +
-            MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_COLORSCALE) + ")");
-      }
-      else
-      {
-        System.out.println("Default colorscale set to: " + colorscale);
-      }
+      cs = ColorScaleManager.fromName(colorscale);
     }
-    catch (IOException ignored)
+    catch (ColorScale.ColorScaleException ignored)
     {
-      System.out.println("Pyramid not found: " + pyramidName);
     }
-    return 0;
-  }
-  catch (ParseException e)
-  {
-    log.error("Exception thrown", e);
-  }
 
-  return -1;
+    if (cs == null)
+    {
+      throw new ParseException("The default colorscale was set, however, it doesn't exist in the colorscale directory (" +
+          MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_COLORSCALE) + ")");
+    }
+    else
+    {
+      System.out.println("Default colorscale set to: " + colorscale);
+    }
+  }
+  catch (IOException ignored)
+  {
+    throw new ParseException("Pyramid not found: " + pyramidName);
+  }
+  return 0;
 }
 
 }
