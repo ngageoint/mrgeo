@@ -38,26 +38,25 @@ private static final Logger log = LoggerFactory.getLogger(PythonGateway.class);
 
 Queue<Integer> portQueue = null;
 
-private static Options createOptions()
-{
-  Options result = MrGeo.createOptions();
-
-  Option port = new Option("p", "port", true, "Listen port (used for remote operation");
-  port.setRequired(true);
-  result.addOption(port);
-
-  Option portrange =
-      new Option("pr", "port-range", true, "Port range for mail py4j communications (\"minport-maxport\")");
-  portrange.setRequired(false);
-  result.addOption(portrange);
-
-  return result;
-}
-
+@Override
+public String getUsage() { return "python <options>"; }
 
 @Override
-public int run(final String[] args, final Configuration conf,
-    final ProviderProperties providerProperties)
+public void addOptions(Options options)
+{
+  Option port = new Option("p", "port", true, "Listen port (used for remote operation");
+  port.setRequired(true);
+  options.addOption(port);
+
+  Option portrange =
+          new Option("pr", "port-range", true, "Port range for mail py4j communications (\"minport-maxport\")");
+  portrange.setRequired(false);
+  options.addOption(portrange);
+}
+
+@Override
+public int run(final CommandLine line, final Configuration conf,
+    final ProviderProperties providerProperties) throws ParseException
 {
 
 //  try
@@ -71,46 +70,32 @@ public int run(final String[] args, final Configuration conf,
 //    e.printStackTrace();
 //  }
 
-  try
+  if (line.hasOption("pr"))
   {
-    final Options options = PythonGateway.createOptions();
-    CommandLine line;
-    final CommandLineParser parser = new PosixParser();
-    line = parser.parse(options, args);
-
-    if (line.hasOption("pr"))
+    String rangeStr = line.getOptionValue("pr");
+    if (rangeStr != null)
     {
-      String rangeStr = line.getOptionValue("pr");
-      if (rangeStr != null)
+      String[] rng = rangeStr.split("-");
+      if (rng.length == 2)
       {
-        String[] rng = rangeStr.split("-");
-        if (rng.length == 2)
+        portQueue = new ConcurrentLinkedQueue<>();
+
+        int min = Integer.parseInt(rng[0]);
+        int max = Integer.parseInt(rng[1]);
+
+        int minPort = Math.min(min, max);
+        int maxPort = Math.max(min, max);
+
+        for (int i = minPort; i <= maxPort; i++)
         {
-          portQueue = new ConcurrentLinkedQueue<>();
-
-          int min = Integer.parseInt(rng[0]);
-          int max = Integer.parseInt(rng[1]);
-
-          int minPort = Math.min(min, max);
-          int maxPort = Math.max(min, max);
-
-          for (int i = minPort; i <= maxPort; i++)
-          {
-            portQueue.add(i);
-          }
+          portQueue.add(i);
         }
       }
     }
-
-    int listenPort = Integer.parseInt(line.getOptionValue("p"));
-    return remoteConnection(listenPort);
-
   }
-  catch (ParseException e)
-  {
-    log.error("Exception thrown", e);
-    return -1;
-  }
+
+  int listenPort = Integer.parseInt(line.getOptionValue("p"));
+  return remoteConnection(listenPort);
 }
 
 private int remoteConnection(int listenPort)
