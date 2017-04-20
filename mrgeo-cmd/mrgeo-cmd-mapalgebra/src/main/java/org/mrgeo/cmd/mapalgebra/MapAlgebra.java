@@ -42,26 +42,28 @@ public class MapAlgebra extends Command
 {
 private static Logger log = LoggerFactory.getLogger(MapAlgebra.class);
 
-public static Options createOptions()
-{
-  Options result = MrGeo.createOptions();
+@Override
+public String getUsage() { return "mapalgebra <options>"; }
 
+@Override
+public void addOptions(Options options)
+{
   Option expression = new Option("e", "expression", true, "Expression to calculate");
   expression.setRequired(false);
-  result.addOption(expression);
+  options.addOption(expression);
 
   Option output = new Option("o", "output", true, "Output path");
   output.setRequired(true);
-  result.addOption(output);
+  options.addOption(output);
 
   Option script = new Option("s", "script", true, "Path to the script to execute");
   script.setRequired(false);
-  result.addOption(script);
+  options.addOption(script);
 
   Option buildPyramids =
       new Option("b", "buildPyramids", false, "Build pyramids on the job output.");
   buildPyramids.setRequired(false);
-  result.addOption(buildPyramids);
+  options.addOption(buildPyramids);
 
   Option protectionLevelOption = new Option("pl", "protectionLevel", true, "Protection level");
   // If mrgeo.conf security.classification.required is true and there is no
@@ -81,15 +83,14 @@ public static Options createOptions()
   {
     protectionLevelOption.setRequired(false);
   }
-  result.addOption(protectionLevelOption);
-
-  return result;
+  options.addOption(protectionLevelOption);
 }
 
 @Override
 @SuppressWarnings("squid:S1166") // Exception caught and error message printed
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File used for reading script")
-public int run(String[] args, Configuration conf, final ProviderProperties providerProperties)
+public int run(final CommandLine line, final Configuration conf,
+               final ProviderProperties providerProperties) throws ParseException
 {
   long starttime = System.currentTimeMillis();
   try
@@ -97,36 +98,13 @@ public int run(String[] args, Configuration conf, final ProviderProperties provi
     long t0 = System.currentTimeMillis();
     System.out.println(log.getClass().getName());
 
-    Options options = MapAlgebra.createOptions();
-    CommandLine line = null;
-    try
-    {
-      CommandLineParser parser = new PosixParser();
-      line = parser.parse(options, args);
-    }
-    catch (ParseException e)
-    {
-      System.out.println();
-      new HelpFormatter().printHelp("MapAlgebra", options);
-      return 1;
-    }
-
-    if (line == null || line.hasOption("h"))
-    {
-      new HelpFormatter().printHelp("MapAlgebra", options);
-      return 1;
-    }
-
     String expression = line.getOptionValue("e");
     String output = line.getOptionValue("o");
     String script = line.getOptionValue("s");
 
     if (expression == null && script == null)
     {
-      System.out.println("Either an expression or script must be specified.");
-      System.out.println();
-      new HelpFormatter().printHelp("MapAlgebra", options);
-      return 1;
+      throw new ParseException("Either an expression or script must be specified.");
     }
 
     try

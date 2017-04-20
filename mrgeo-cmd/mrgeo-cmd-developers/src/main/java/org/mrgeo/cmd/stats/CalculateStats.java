@@ -27,64 +27,39 @@ public class CalculateStats extends Command
 {
 private static Logger log = LoggerFactory.getLogger(CalculateStats.class);
 
-private boolean verbose = false;
-private boolean debug = false;
-
-
 public CalculateStats()
 {
 }
 
-public static Options createOptions()
-{
-  Options result = MrGeo.createOptions();
+@Override
+public String getUsage() { return "calcstats <pyramid>"; }
 
-  return result;
+@Override
+public void addOptions(Options options)
+{
+  // No additional options
 }
 
 
 @Override
-public int run(final String[] args, final Configuration conf,
-    final ProviderProperties providerProperties)
+public int run(final CommandLine line, final Configuration conf,
+    final ProviderProperties providerProperties) throws ParseException
 {
   log.info("CalculateStats");
 
-  try
+  String pyramidName = null;
+  for (final String arg : line.getArgs())
   {
-
-    final Options options = CalculateStats.createOptions();
-    CommandLine line;
-
-    final CommandLineParser parser = new PosixParser();
-    line = parser.parse(options, args);
-
-    debug = line.hasOption("d");
-    verbose = debug || line.hasOption("v");
-
-    String pyramidName = null;
-    for (final String arg : line.getArgs())
-    {
-      pyramidName = arg;
-      break;
-    }
-
-    if (pyramidName == null)
-    {
-      new HelpFormatter().printHelp("calcstats <pyramid>", options);
-      return 1;
-    }
-
-    StatsCalculator.calculate(pyramidName, conf, providerProperties);
-
-    return 0;
-
-  }
-  catch (Exception e)
-  {
-    log.error("Exception thrown", e);
+    pyramidName = arg;
+    break;
   }
 
-  return -1;
+  if (pyramidName == null)
+  {
+    throw new ParseException("Missing input pyramid");
+  }
+  StatsCalculator.calculate(pyramidName, conf, providerProperties);
+  return 0;
 }
 
 }

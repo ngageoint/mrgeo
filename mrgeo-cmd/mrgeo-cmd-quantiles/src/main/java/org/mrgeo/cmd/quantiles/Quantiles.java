@@ -15,14 +15,16 @@
 
 package org.mrgeo.cmd.quantiles;
 
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 import org.mrgeo.cmd.Command;
-import org.mrgeo.cmd.MrGeo;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.ProviderProperties;
@@ -42,56 +44,29 @@ public class Quantiles extends Command
 {
 private static Logger log = LoggerFactory.getLogger(Quantiles.class);
 
-
-public static Options createOptions()
+@Override
+public void addOptions(Options options)
 {
-  Options result = MrGeo.createOptions();
-
   Option mean = new Option("n", "numQuantiles", true, "The number of quantiles to compute");
   mean.setRequired(true);
-  result.addOption(mean);
+  options.addOption(mean);
 
   Option sum = new Option("f", "fraction", true, "The fraction of pixel values to sample. Must be between 0.0 - 1.0");
   sum.setRequired(false);
-  result.addOption(sum);
-
-  return result;
+  options.addOption(sum);
 }
 
+@Override
+public String getUsage() { return "quantiles <options> <input>"; }
 
 @Override
 @SuppressWarnings("squid:S1166") // Exception caught and error message printed
-public int run(String[] args, final Configuration conf,
-    final ProviderProperties providerProperties)
+public int run(CommandLine line, final Configuration conf,
+               final ProviderProperties providerProperties) throws ParseException
 {
   log.info("quantiles");
 
   long start = System.currentTimeMillis();
-
-  Options options = Quantiles.createOptions();
-  CommandLine line;
-
-  try
-  {
-    //if no arguments, print help
-    if (args.length == 0)
-    {
-      throw new ParseException(null);
-    }
-    CommandLineParser parser = new PosixParser();
-    line = parser.parse(options, args);
-  }
-  catch (ParseException e)
-  {
-    new HelpFormatter().printHelp("quantiles <options> <input>", options);
-    return -1;
-  }
-
-  if (line == null || line.hasOption("h"))
-  {
-    new HelpFormatter().printHelp("quantiles <options> <input>", options);
-    return -1;
-  }
 
   String input = null;
   for (String arg : line.getArgs())
@@ -105,7 +80,6 @@ public int run(String[] args, final Configuration conf,
   {
     try
     {
-      // TODO: Need to obtain provider properties
       //if (!BuildPyramidDriver.build(input, aggregator, conf, providerProperties))
 
       // Validate that the user provided an image
@@ -115,8 +89,7 @@ public int run(String[] args, final Configuration conf,
       }
       catch (DataProviderNotFound e)
       {
-        log.error(input + " is not an image");
-        return -1;
+        throw new ParseException(input + " is not an image");
       }
       Path outputPath = HadoopFileUtils.createUniqueTmpPath(conf);
       try

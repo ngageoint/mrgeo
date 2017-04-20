@@ -29,6 +29,7 @@ import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.GregorianCalendar;
 
 public class CleanCache extends Command
@@ -39,14 +40,14 @@ private Options options;
 
 public CleanCache()
 {
-  options = createOptions();
 }
 
+@Override
+public String getUsage() { return "cleancache <options> <operation>"; }
 
-public static Options createOptions()
+@Override
+public void addOptions(Options result)
 {
-  Options result = MrGeo.createOptions();
-
   Option size = new Option("s", "size", true, "Clean out the oldest cached files until the cache is no bigger than the specified size");
   result.addOption(size);
   Option bbox = new Option("b", "bbox", true, "Clean out cached files that intersect the specified bounding box");
@@ -57,34 +58,14 @@ public static Options createOptions()
   result.addOption(zoom);
   Option dryrun = new Option("dr", "dry-run", false, "Dry run the clean out of cached files without actually deleting them");
   result.addOption(dryrun);
-
-  return result;
 }
 
 @Override
-public int run(String[] args, Configuration conf, ProviderProperties providerProperties)
+public int run(CommandLine line, Configuration conf,
+               ProviderProperties providerProperties) throws ParseException
 {
   try
   {
-    CommandLine line = null;
-    try
-    {
-      CommandLineParser parser = new GnuParser();
-      line = parser.parse(options, args);
-    }
-    catch (ParseException e)
-    {
-      System.out.println(e.getMessage());
-      new HelpFormatter().printHelp("cleancache <options> <operation>", options);
-      return -1;
-    }
-
-    if (line == null || line.getOptions().length == 0 || line.hasOption("h"))
-    {
-      new HelpFormatter().printHelp("cleancache <options> <operation>", options);
-      return -1;
-    }
-
     int zoomMin = -1;
     int zoomMax = -1;
     if (line.hasOption("z"))
@@ -93,8 +74,7 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
       {
         String zoomSpec = line.getOptionValue("z", "");
         if (zoomSpec.isEmpty()) {
-          System.err.println("The zoom argument must either be a single numeric zoom level or a comma-separated min zoom value and max zoom value");
-          return -1;
+          throw new ParseException("The zoom argument must either be a single numeric zoom level or a comma-separated min zoom value and max zoom value");
         }
         else {
           String[] zoomValues = zoomSpec.split(",");
@@ -109,28 +89,23 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
               }
             }
             catch(NumberFormatException nfe) {
-              System.err.println("The zoom argument must either be a single numeric zoom level or a comma-separated min zoom value and max zoom value");
-              return -1;
+              throw new ParseException("The zoom argument must either be a single numeric zoom level or a comma-separated min zoom value and max zoom value");
             }
           }
           else {
-            System.err.println("The zoom argument must either be a single zoom level or a comma-separated min zoom value and max zoom value");
-            return -1;
+            throw new ParseException("The zoom argument must either be a single zoom level or a comma-separated min zoom value and max zoom value");
           }
         }
       }
       catch (NumberFormatException nfe)
       {
-        System.err.println("Invalid zoom level specified: " + line.getOptionValue("z"));
-        return -1;
+        throw new ParseException("Invalid zoom level specified: " + line.getOptionValue("z"));
       }
       if (zoomMin < 1 || zoomMax < 1) {
-        System.err.println("Zoom level must be at least 1");
-        return -1;
+        throw new ParseException("Zoom level must be at least 1");
       }
       if (zoomMax < zoomMin) {
-        System.err.println("The maximum zoom level must be >= minimum zoom level");
-        return -1;
+        throw new ParseException("The maximum zoom level must be >= minimum zoom level");
       }
     }
 
@@ -139,13 +114,11 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
       String sizeSpec = line.getOptionValue("s", "");
       maxCacheSize = (SparkUtils.humantokb(sizeSpec) * 1024L);
       if (maxCacheSize <= 0) {
-        System.err.println("The maximum cache size cannot be <= 0");
-        return -1;
+        throw new ParseException("The maximum cache size cannot be <= 0");
       }
     }
     if (zoomMin > 0 && maxCacheSize > 0) {
-      System.err.println("You cannot combine zoom options and size options");
-      return -1;
+      throw new ParseException("You cannot combine zoom options and size options");
     }
 
     int age = -1;
@@ -182,24 +155,20 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
           ageField = GregorianCalendar.MILLISECOND;
           break;
         default:
-          System.err.println("Invalid age type '" + ageType + "'. Must be 'D' (days), 'd' (days), 'M' (months), 'y' (years), 'H' (hours), 'h' (hours), 'm' (minutes), 'S' (seconds), 's' (milliseconds)");
-          return -1;
+          throw new ParseException("Invalid age type '" + ageType + "'. Must be 'D' (days), 'd' (days), 'M' (months), 'y' (years), 'H' (hours), 'h' (hours), 'm' (minutes), 'S' (seconds), 's' (milliseconds)");
       }
       try {
         age = Integer.parseInt(ageOption.substring(0, ageOption.length() - 1));
       }
       catch(NumberFormatException e) {
-        System.err.println("Invalid age " + ageOption.substring(0, ageOption.length() - 1) + ". Age must be a positive integer");
-        return -1;
+        throw new ParseException("Invalid age " + ageOption.substring(0, ageOption.length() - 1) + ". Age must be a positive integer");
       }
       if (age <= 0) {
-        System.err.println("The age must be > 0");
-        return -1;
+        throw new ParseException("The age must be > 0");
       }
     }
     if (age > 0 && (zoomMin > 0 || maxCacheSize > 0)) {
-      System.err.println("You cannot combine age option with either zoom or size option");
-      return -1;
+      throw new ParseException("You cannot combine age option with either zoom or size option");
     }
 
     Bounds bbox = null;
@@ -210,13 +179,11 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
         bbox = Bounds.fromCommaString(bboxSpec);
       }
       else {
-        System.err.println("You must provide a bounding box with -a like <minx, miny, maxx, maxy>");
-        return -1;
+        throw new ParseException("You must provide a bounding box with -a like <minx, miny, maxx, maxy>");
       }
     }
     if (bbox != null && (age > 0 || zoomMin > 0 || maxCacheSize > 0)) {
-      System.err.println("You cannot combine bbox option with zoom, age or size options");
-      return -1;
+      throw new ParseException("You cannot combine bbox option with zoom, age or size options");
     }
 
     boolean dryrun = line.hasOption("dr");
@@ -237,14 +204,13 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
               MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT));
     }
     catch(NumberFormatException e) {
-      System.err.println("Unable to get the default tile size from mrgeo.conf");
-      return -1;
+      throw new ParseException("Unable to get the default tile size from mrgeo.conf");
     }
     S3Utils.cleanCache(maxCacheSize, age, ageField, bbox, zoomMin, zoomMax, dryrun,
             defaultTilesize, conf, providerProperties);
     return 0;
   }
-  catch (Exception e)
+  catch (IOException e)
   {
     log.error("Exception thrown", e);
   }

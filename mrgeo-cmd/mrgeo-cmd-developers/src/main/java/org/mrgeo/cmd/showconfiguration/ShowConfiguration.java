@@ -16,6 +16,8 @@
 package org.mrgeo.cmd.showconfiguration;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -313,7 +315,16 @@ public String buildReport()
 } // end buildReport
 
 @Override
-public int run(String[] args, Configuration conf, ProviderProperties providerProperties)
+public String getUsage() { return "showconf"; }
+
+@Override
+public void addOptions(Options options)
+{
+  // no additional options
+}
+
+@Override
+public int run(CommandLine line, Configuration conf, ProviderProperties providerProperties)
 {
   initialize(conf);
   System.out.println(buildReport());

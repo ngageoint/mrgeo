@@ -88,7 +88,7 @@ public static Options createOptions()
 /**
  * Print generic usage to std out.
  */
-private static void usage()
+private static void usage(Options options)
 {
   System.out.println("Usage: mrgeo COMMAND");
   System.out.println("       where command is one of:");
@@ -107,7 +107,7 @@ private static void usage()
   }
 
   System.out.println("Generic options supported are:");
-  new HelpFormatter().printHelp("command <options>", createOptions());
+  new HelpFormatter().printHelp("command <options>", options);
 }
 
 /**
@@ -141,33 +141,68 @@ public int run(String[] args) throws IOException
     loadCommands();
   }
 
+  Options options = createOptions();
   if (args.length == 0)
   {
-    usage();
+    usage(options);
     return -1;
   }
 
-  Options options = createOptions();
+  String cmdStr = args[0];
+  if (cmdStr.equals("-h")) {
+    // If the user provided the -h switch, then the exit code should be 0
+    usage(options);
+    return 0;
+  }
+
+  CommandSpi spi = commands.get(cmdStr);
+  Command cmd = null;
+  if (spi == null) {
+    int ret = 0;
+    System.out.println("Command not found: " + cmdStr);
+    System.out.println();
+    usage(options);
+    return -1;
+  }
+  else {
+    try {
+      cmd = spi.getCommandClass().newInstance();
+    } catch (InstantiationException | IllegalAccessException e) {
+      log.error("Exception thrown", e);
+      return -1;
+    }
+    cmd.addOptions(options);
+  }
 
   CommandLine line;
   try
   {
     CommandLineParser parser = new ExtendedGnuParser(true);
-    line = parser.parse(options, args);
+    // The arguments used for parsing the command line should not include the
+    // command name itself.
+    line = parser.parse(options, Arrays.copyOfRange(args, 1, args.length));
   }
   catch (ParseException e)
   {
-    usage();
+    System.out.println(e.getMessage());
+    usage(options);
     return -1;
   }
 
+  // Process the command-line arguments
   if (line == null)
   {
-    usage();
+    usage(options);
     return 0;
   }
   else
   {
+    if (line.hasOption("h"))
+    {
+      new HelpFormatter().printHelp(cmd.getUsage(), options);
+      return 0;
+    }
+
     if (line.hasOption("np"))
     {
       MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_AUTOPERSISTANCE, "false");
@@ -211,8 +246,6 @@ public int run(String[] args) throws IOException
     MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_SHUFFLE_FRACTION, line.getOptionValue("sf"));
   }
 
-  String cmdStr = args[0];
-
   if (!commands.containsKey(cmdStr))
   {
     int ret = 0;
@@ -223,25 +256,19 @@ public int run(String[] args) throws IOException
       ret = -1;
     }
 
-    usage();
+    usage(options);
     return ret;
   }
 
-  CommandSpi spi = commands.get(cmdStr);
-  try
-  {
-    Command cmd = spi.getCommandClass().newInstance();
-
-    // strip the 1st argument (the command name) and pass the rest to the command
-    ProviderProperties providerProperties = new ProviderProperties();
-    return cmd.run(Arrays.copyOfRange(args, 1, args.length), getConf(), providerProperties);
+  ProviderProperties providerProperties = new ProviderProperties();
+  try {
+    return cmd.run(line, getConf(), providerProperties);
   }
-  catch (InstantiationException | IllegalAccessException e)
-  {
-    log.error("Exception thrown", e);
+  catch(ParseException e) {
+    System.out.println(e.getMessage());
+    new HelpFormatter().printHelp(cmd.getUsage(), options);
     return -1;
   }
-
 }
 
 public static class ExtendedGnuParser extends GnuParser

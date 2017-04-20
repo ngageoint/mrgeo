@@ -16,6 +16,9 @@
 package org.mrgeo.cmd.generatekeys;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -46,6 +49,25 @@ private static final Logger log = LoggerFactory.getLogger(GenerateKeys.class);
 //    }
 //    out.close();
 //  }
+
+@Override
+public String getUsage() { return "generatekeys <options>"; }
+
+@Override
+public void addOptions(Options options)
+{
+  Option keyfile = new Option("k", "keyfile", true, "");
+  keyfile.setRequired(true);
+  options.addOption(keyfile);
+
+  Option mintile = new Option("min", "mintile", true, "");
+  mintile.setRequired(true);
+  options.addOption(mintile);
+
+  Option maxtile = new Option("max", "maxtile", true, "");
+  maxtile.setRequired(true);
+  options.addOption(maxtile);
+}
 
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File() - name is generated in code")
 public static List<Long> getRandom(String randomKeyFileDir, String allKeyFile, int num, long min, long max, Random r)
@@ -237,34 +259,33 @@ private static void writeRandomKeys(List<Long> keys, File file) throws FileNotFo
 
 @SuppressFBWarnings(value = "PREDICTABLE_RANDOM", justification = "Just getting random tileids")
 @Override
-public int run(String[] args, Configuration conf, ProviderProperties providerProperties)
+public int run(CommandLine line, Configuration conf,
+               ProviderProperties providerProperties) throws ParseException
 {
   try
   {
-    OptionsParser parser = new OptionsParser(args);
-
     //  List<Long> keys = getSequential(parser.getOptionValue("keyfile"), 100, 27000, 28000);
     //  for(Long key : keys)
     //    System.out.println(key);
     //  System.out.println("---------");
 
-    String keyFile = parser.getOptionValue("keyfile");
-    long minTile = Long.parseLong(parser.getOptionValue("mintile"));
-    long maxTile = Long.parseLong(parser.getOptionValue("maxtile"));
+    String keyFile = line.getOptionValue("k");
+    long minTile = Long.parseLong(line.getOptionValue("min"));
+    long maxTile = Long.parseLong(line.getOptionValue("max"));
     List<Long> keys2 =
-        getRandom(keyFile, Integer.parseInt(parser.getOptionValue("tiles")), minTile, maxTile, new Random());
+        getRandom(keyFile, Integer.parseInt(line.getOptionValue("tiles")), minTile, maxTile, new Random());
     for (Long key : keys2)
     {
       System.out.println(key);
       if (key < minTile || key > maxTile)
       {
-        throw new IOException(String.format("Error: %d is not in range [%d,%d]", key, minTile, maxTile));
+        throw new ParseException(String.format("Error: %d is not in range [%d,%d]", key, minTile, maxTile));
       }
     }
 
     return 0;
   }
-  catch (ParseException | IOException e)
+  catch (IOException e)
   {
     log.error("Exception thrown", e);
   }

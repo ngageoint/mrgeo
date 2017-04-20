@@ -36,76 +36,56 @@ public class BuildPyramid extends Command
 {
 private static Logger log = LoggerFactory.getLogger(BuildPyramid.class);
 
+@Override
+public String getUsage() { return "BuildPyramid <options> <input>"; }
 
-public static Options createOptions()
+@Override
+public void addOptions(Options options)
 {
-  Options result = MrGeo.createOptions();
-
   Option mean = new Option("m", "mean", false, "Mean (Average) Pixel Resampling Method");
   mean.setRequired(false);
-  result.addOption(mean);
+  options.addOption(mean);
 
   Option sum = new Option("s", "sum", false, "Summing Pixel Resampling Method");
   sum.setRequired(false);
-  result.addOption(sum);
+  options.addOption(sum);
 
   Option cat = new Option("c", "categorical", false, "Category (Mode) Pixel Resampling Method");
   cat.setRequired(false);
-  result.addOption(cat);
+  options.addOption(cat);
 
   Option nearest = new Option("n", "nearest", false, "Nearest Pixel Resampling Method");
   nearest.setRequired(false);
-  result.addOption(nearest);
+  options.addOption(nearest);
 
   Option min = new Option("min", "minimum", false, "Minimum Pixel Resampling Method");
   min.setRequired(false);
-  result.addOption(min);
+  options.addOption(min);
 
   Option max = new Option("max", "maximum", false, "Maximum Pixel Resampling Method");
   max.setRequired(false);
-  result.addOption(max);
+  options.addOption(max);
 
   Option minavgpair =
       new Option("minavgpair", "miminumaveragepair", false, "Minimum Average Pair Pixel Resampling Method");
   minavgpair.setRequired(false);
-  result.addOption(minavgpair);
-
-  return result;
+  options.addOption(minavgpair);
 }
 
 
 @Override
 @SuppressWarnings("squid:S1166") // Catching exceptions and logging error
-public int run(String[] args, final Configuration conf,
-    final ProviderProperties providerProperties)
+public int run(CommandLine line, final Configuration conf,
+    final ProviderProperties providerProperties) throws ParseException
 {
   log.info("BuildPyramid");
 
   long start = System.currentTimeMillis();
 
-  Options options = BuildPyramid.createOptions();
-  CommandLine line;
-
-  try
+  //if no arguments, print help
+  if (line.getArgs().length == 0)
   {
-    //if no arguments, print help
-    if (args.length == 0)
-    {
-      throw new ParseException(null);
-    }
-    CommandLineParser parser = new PosixParser();
-    line = parser.parse(options, args);
-  }
-  catch (ParseException e)
-  {
-    new HelpFormatter().printHelp("BuildPyramid <input>", options);
-    return -1;
-  }
-
-  if (line == null || line.hasOption("h"))
-  {
-    new HelpFormatter().printHelp("ingest <options> <input>", options);
-    return -1;
+    throw new ParseException("Missing input image name");
   }
 
   Aggregator aggregator = new MeanAggregator();
@@ -144,28 +124,26 @@ public int run(String[] args, final Configuration conf,
 
   if (input != null)
   {
+    //if (!BuildPyramidDriver.build(input, aggregator, conf, providerProperties))
+
+    // Validate that the user provided an image
     try
     {
-      // TODO: Need to obtain provider properties
-      //if (!BuildPyramidDriver.build(input, aggregator, conf, providerProperties))
-
-      // Validate that the user provided an image
-      try
-      {
-        DataProviderFactory.getMrsImageDataProvider(input, DataProviderFactory.AccessMode.READ, providerProperties);
-      }
-      catch (DataProviderNotFound e)
-      {
-        log.error(input + " is not an image");
-        return -1;
-      }
+      DataProviderFactory.getMrsImageDataProvider(input, DataProviderFactory.AccessMode.READ, providerProperties);
+    }
+    catch (DataProviderNotFound e)
+    {
+      System.out.println(input + " is not an image");
+      return -1;
+    }
+    try
+    {
       if (!org.mrgeo.buildpyramid.BuildPyramid.build(input, aggregator, conf, providerProperties))
       {
         log.error("BuildPyramid exited with error");
         return -1;
       }
     }
-
     catch (Exception e)
     {
       log.error("BuildPyramid exited with error", e);
