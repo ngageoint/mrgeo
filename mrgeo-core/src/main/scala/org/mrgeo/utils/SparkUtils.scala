@@ -319,6 +319,14 @@ object SparkUtils extends Logging {
     //          classOf[RasterWritable])
   }
 
+  def saveMrsPyramidMetadata(imageName:String, context:SparkContext, metadata:MrsPyramidMetadata,
+                             providerProps:ProviderProperties): Unit = {
+    val dp:MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(imageName,
+      DataProviderFactory.AccessMode.READ, providerProps)
+    val mdWriter= dp.getMetadataWriter
+    mdWriter.write(metadata)
+  }
+
   def loadMrsPyramid(imageName:String, context:SparkContext):RasterRDD = {
     val providerProps:ProviderProperties = null
     val dp:MrsImageDataProvider = DataProviderFactory.getMrsImageDataProvider(imageName,
