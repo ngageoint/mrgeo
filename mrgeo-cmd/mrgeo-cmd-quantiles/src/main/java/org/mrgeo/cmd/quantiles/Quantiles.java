@@ -20,7 +20,6 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
@@ -28,14 +27,13 @@ import org.mrgeo.cmd.Command;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.data.image.MrsImageDataProvider;
+import org.mrgeo.data.image.MrsPyramidMetadataReader;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 
 /**
  *
@@ -47,13 +45,13 @@ private static Logger log = LoggerFactory.getLogger(Quantiles.class);
 @Override
 public void addOptions(Options options)
 {
-  Option mean = new Option("n", "numQuantiles", true, "The number of quantiles to compute");
-  mean.setRequired(true);
-  options.addOption(mean);
+  Option num = new Option("n", "numQuantiles", true, "The number of quantiles to compute");
+  num.setRequired(false);
+  options.addOption(num);
 
-  Option sum = new Option("f", "fraction", true, "The fraction of pixel values to sample. Must be between 0.0 - 1.0");
-  sum.setRequired(false);
-  options.addOption(sum);
+  Option fraction = new Option("f", "fraction", true, "The fraction of pixel values to sample. Must be between 0.0 - 1.0");
+  fraction.setRequired(false);
+  options.addOption(fraction);
 }
 
 @Override
@@ -83,43 +81,61 @@ public int run(CommandLine line, final Configuration conf,
       //if (!BuildPyramidDriver.build(input, aggregator, conf, providerProperties))
 
       // Validate that the user provided an image
+      MrsImageDataProvider dp = null;
       try
       {
-        DataProviderFactory.getMrsImageDataProvider(input, DataProviderFactory.AccessMode.READ, providerProperties);
+        dp = DataProviderFactory.getMrsImageDataProvider(input, DataProviderFactory.AccessMode.READ, providerProperties);
       }
       catch (DataProviderNotFound e)
       {
         throw new ParseException(input + " is not an image");
       }
-      Path outputPath = HadoopFileUtils.createUniqueTmpPath(conf);
-      try
-      {
-        int numQuantiles = Integer.parseInt(line.getOptionValue("numQuantiles"));
-        if (line.hasOption("fraction"))
-        {
+      int numQuantiles = Integer.parseInt(line.getOptionValue("numQuantiles", "0"));
+      if (numQuantiles > 0) {
+        if (line.hasOption("fraction")) {
           float fraction = Float.parseFloat(line.getOptionValue("fraction"));
-          if (!org.mrgeo.quantiles.Quantiles.compute(input, outputPath.toString(),
-              numQuantiles, fraction, conf, providerProperties))
-          {
+          if (!org.mrgeo.quantiles.Quantiles.compute(input, numQuantiles, fraction,
+                  conf, providerProperties)) {
             log.error("Quantiles exited with error");
             return -1;
           }
-          printResults(outputPath, conf);
-        }
-        else
-        {
-          if (!org.mrgeo.quantiles.Quantiles.compute(input, outputPath.toString(),
-              numQuantiles, conf, providerProperties))
-          {
+        } else {
+          if (!org.mrgeo.quantiles.Quantiles.compute(input, numQuantiles,
+                  conf, providerProperties)) {
             log.error("Quantiles exited with error");
             return -1;
           }
-          printResults(outputPath, conf);
         }
       }
-      finally
-      {
-        HadoopFileUtils.delete(conf, outputPath);
+      if (dp != null)  {
+        MrsPyramidMetadataReader mdReader = dp.getMetadataReader();
+        if (mdReader != null) {
+          MrsPyramidMetadata metadata = mdReader.read();
+          double[][] quantiles = metadata.getQuantiles();
+          if (quantiles == null || quantiles.length == 0) {
+            System.out.println("No quantiles have been computed for " + input);
+            return 0;
+          }
+          boolean singleBand = (quantiles.length == 1);
+          String indent = (singleBand) ? "" : "  ";
+          boolean gotQuantiles = false;
+          // Print the existing quantiles
+          for (int b=0; b < quantiles.length; b++) {
+            if (quantiles[b] != null) {
+              if (quantiles.length > 1) {
+                System.out.println("Band " + (b + 1));
+                indent = "  ";
+              }
+              for (int q = 0; q < quantiles[b].length; q++) {
+                System.out.println(indent + quantiles[b][q]);
+              }
+              gotQuantiles = true;
+            }
+          }
+          if (!gotQuantiles) {
+            System.out.println("No quantiles have been computed for " + input);
+          }
+        }
       }
     }
     catch (IOException e)
@@ -145,24 +161,4 @@ public int run(CommandLine line, final Configuration conf,
 
   return 0;
 }
-
-private void printResults(Path outputPath, Configuration conf) throws IOException
-{
-  InputStream is = HadoopFileUtils.open(conf, outputPath);
-  BufferedReader br = new BufferedReader(new InputStreamReader(is));
-  try
-  {
-    String line = br.readLine();
-    while (line != null)
-    {
-      System.out.println(line);
-      line = br.readLine();
-    }
-  }
-  finally
-  {
-    br.close();
-  }
-}
-
 }
