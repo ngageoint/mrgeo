@@ -38,6 +38,8 @@ double[] getDefaultValues();
  */
 double[] getExtrema();
 
+double[][] getQuantiles();
+
 /**
  * Returns the mime types for the image renderer
  **/

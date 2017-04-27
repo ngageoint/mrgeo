@@ -158,7 +158,7 @@ public MrGeoRaster createColorScaleSwatch(ColorScale cs, String format, int widt
 
     ColorScaleApplier applier = (ColorScaleApplier) ImageHandlerFactory.getHandler(format, ColorScaleApplier.class);
 
-    return applier.applyColorScale(wr, cs, extrema, new double[]{-9999, 0});
+    return applier.applyColorScale(wr, cs, extrema, new double[]{-9999, 0},null);
   }
   catch (IllegalAccessException | InstantiationException | ColorScale.ColorScaleException | MrGeoRaster.MrGeoRasterException e)
   {
@@ -201,10 +201,15 @@ public MrGeoRaster applyColorScaleToImage(String format, MrGeoRaster result, Col
     ColorScaleApplier applier = (ColorScaleApplier) ImageHandlerFactory.getHandler(format,
         ColorScaleApplier.class);
 
-    return applier.applyColorScale(result, cs, extrema, renderer.getDefaultValues());
+    return applier.applyColorScale(result, cs, extrema, renderer.getDefaultValues(),
+            renderer.getQuantiles());
   }
-  catch (Exception e)
+  catch (ColorScale.ColorScaleException e)
   {
+    throw new MrsPyramidServiceException(e);
+  } catch (IllegalAccessException e) {
+    throw new MrsPyramidServiceException(e);
+  } catch (InstantiationException e) {
     throw new MrsPyramidServiceException(e);
   }
 }

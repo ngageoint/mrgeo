@@ -142,7 +142,7 @@ private static MrGeoRaster colorRaster(String layer, String style, String imageF
       }
       result = ((ColorScaleApplier) ImageHandlerFactory.getHandler(imageFormat,
           ColorScaleApplier.class)).applyColorScale(result, cs, renderer.getExtrema(),
-          renderer.getDefaultValues());
+          renderer.getDefaultValues(), renderer.getQuantiles());
       log.debug("Color scale applied to image {}", layer);
     }
 
