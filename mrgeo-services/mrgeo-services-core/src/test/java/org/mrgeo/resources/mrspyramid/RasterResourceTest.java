@@ -32,6 +32,7 @@ import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.image.MrsPyramid;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.services.mrspyramid.MrsPyramidService;
 import org.mrgeo.services.mrspyramid.MrsPyramidServiceException;
@@ -204,6 +205,9 @@ public void testGetImagePng() throws Exception
   String typ = "image/png";
   MrsPyramid pyramidMock = mock(MrsPyramid.class);
   when(pyramidMock.getBounds()).thenReturn(Bounds.fromCommaString("142,-18, 143,-17"));
+  MrsPyramidMetadata metadataMock = mock(MrsPyramidMetadata.class);
+  when(metadataMock.getQuantiles()).thenReturn(null);
+  when(pyramidMock.getMetadata()).thenReturn(metadataMock);
   when(service.getPyramid((String) any(), (ProviderProperties) any())).thenReturn(pyramidMock);
   when(service.getColorScaleFromName(anyString())).thenReturn(null);
   ImageRenderer renderer = mock(ImageRenderer.class);
@@ -238,6 +242,9 @@ public void testGetImageTiff() throws Exception
   String typ = "image/tiff";
   MrsPyramid pyramidMock = mock(MrsPyramid.class);
   when(pyramidMock.getBounds()).thenReturn(Bounds.fromCommaString("142,-18, 143,-17"));
+  MrsPyramidMetadata metadataMock = mock(MrsPyramidMetadata.class);
+  when(metadataMock.getQuantiles()).thenReturn(null);
+  when(pyramidMock.getMetadata()).thenReturn(metadataMock);
   when(service.getPyramid((String) any(), (ProviderProperties) any())).thenReturn(pyramidMock);
   when(service.getColorScaleFromName(anyString())).thenReturn(null);
   ImageRenderer renderer = mock(ImageRenderer.class);

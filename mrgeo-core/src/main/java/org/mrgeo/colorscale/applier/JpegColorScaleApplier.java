@@ -33,14 +33,15 @@ private static final Logger log = LoggerFactory.getLogger(JpegColorScaleApplier.
 
 @Override
 public MrGeoRaster applyColorScale(final MrGeoRaster raster, ColorScale colorScale, final double[] extrema,
-    final double[] defaultValues) throws ColorScale.ColorScaleException
+    final double[] defaultValues, final double[][] quantiles) throws ColorScale.ColorScaleException
 {
   try
   {
     MrGeoRaster colored = MrGeoRaster.createEmptyRaster(raster.width(), raster.height(), 3, DataBuffer.TYPE_BYTE);
     colored.fill(RasterUtils.getDefaultNoDataForType(DataBuffer.TYPE_BYTE));
 
-    setupExtrema(colorScale, extrema, defaultValues[0]);
+    setupExtrema(colorScale, extrema, defaultValues[0],
+            (quantiles == null || quantiles.length == 0) ? null : quantiles[0]);
     apply(raster, colored, colorScale);
     return colored;
   }
