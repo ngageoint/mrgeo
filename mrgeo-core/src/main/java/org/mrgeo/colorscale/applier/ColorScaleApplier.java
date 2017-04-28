@@ -29,7 +29,7 @@ public abstract class ColorScaleApplier
  * Applies a color scale to a rendered image
  */
 public abstract MrGeoRaster applyColorScale(MrGeoRaster raster, ColorScale colorScale, double[] extrema,
-    double[] defaultValue) throws ColorScale.ColorScaleException;
+    double[] defaultValue, double[][] quantiles) throws ColorScale.ColorScaleException;
 
 /**
  * Returns the mime type for the color scale applier
@@ -72,7 +72,7 @@ protected void apply(final MrGeoRaster source, final MrGeoRaster dest, ColorScal
   }
 }
 
-void setupExtrema(ColorScale colorScale, double[] extrema, double defaultValue)
+void setupExtrema(ColorScale colorScale, double[] extrema, double defaultValue, double[] quantiles)
 {
 // if we don't have min/max make the color scale modulo with
   if (extrema == null)
@@ -83,6 +83,9 @@ void setupExtrema(ColorScale colorScale, double[] extrema, double defaultValue)
   else if (colorScale.getScaling() == ColorScale.Scaling.MinMax)
   {
     colorScale.setScaleRange(extrema[0], extrema[1]);
+  }
+  else if (colorScale.getScaling() == ColorScale.Scaling.Quantile) {
+    colorScale.setScaleRangeWithQuantiles(extrema[0], extrema[1], quantiles);
   }
 
   colorScale.setTransparent(defaultValue);

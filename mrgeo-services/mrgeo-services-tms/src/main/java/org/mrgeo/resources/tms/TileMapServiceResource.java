@@ -270,7 +270,7 @@ public Response getTile(@PathParam("version") final String version,
 
       raster = ((ColorScaleApplier) ImageHandlerFactory.getHandler(format,
           ColorScaleApplier.class)).applyColorScale(raster, cs, extrema, renderer
-          .getDefaultValues());
+          .getDefaultValues(), renderer.getQuantiles());
     }
 
     return ((ImageResponseWriter) ImageHandlerFactory.getHandler(format,

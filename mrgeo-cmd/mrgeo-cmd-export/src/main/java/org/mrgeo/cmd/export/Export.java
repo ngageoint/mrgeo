@@ -469,7 +469,8 @@ private MrGeoRaster colorRaster(MrsImage image, String format, MrGeoRaster raste
 
   try
   {
-    raster = applier.applyColorScale(raster, colorscale, image.getExtrema(), image.getMetadata().getDefaultValues());
+    raster = applier.applyColorScale(raster, colorscale, image.getExtrema(),
+            image.getMetadata().getDefaultValues(), image.getMetadata().getQuantiles());
   }
   catch (Exception e)
   {

@@ -203,6 +203,26 @@ public double[] getDefaultValues()
   return new double[]{-1.0};
 }
 
+@Override
+public double[][] getQuantiles()
+{
+  try
+  {
+    MrsImageDataProvider dp = getDataProvider();
+    if (dp != null)
+    {
+      MrsPyramidMetadata metadata = dp.getMetadataReader().read();
+      return metadata.getQuantiles();
+    }
+  }
+  catch (IOException e)
+  {
+    log.error("Exception thrown", e);
+  }
+
+  return null;
+}
+
 /*
  * (non-Javadoc)
  *
