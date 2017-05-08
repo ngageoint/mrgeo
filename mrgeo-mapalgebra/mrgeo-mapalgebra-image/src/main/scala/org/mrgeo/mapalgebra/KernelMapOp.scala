@@ -272,6 +272,7 @@ class KernelMapOp extends RasterMapOp with Externalizable {
       case KernelMapOp.Laplacian =>
       case _ => throw new ParserException("Bad kernel method: " + method)
     }
+    this.method = method
   }
 
   private[mapalgebra] def this(node:ParserNode, variables:String => Option[ParserNode]) = {
