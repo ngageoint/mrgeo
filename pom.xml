@@ -229,6 +229,24 @@
     <pluginManagement>
       <plugins>
         <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <version>1.2</version>
+          <executions>
+            <execution>
+              <id>enforce</id>
+              <configuration>
+                <rules>
+                  <DependencyConvergence/>
+                </rules>
+              </configuration>
+              <goals>
+                <goal>enforce</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
           <artifactId>maven-jar-plugin</artifactId>
           <version>${maven-jar.version}</version>
           <configuration>
@@ -2214,6 +2232,12 @@
           <scope>${hadoop.scope}</scope>
         </dependency>
       </dependencies>
+    </profile>
+    <profile>
+      <id>databricks</id>
+      <properties>
+        <spark.scope>provided</spark.scope>
+      </properties>
     </profile>
     <profile>
       <id>standalone-webserver</id>
