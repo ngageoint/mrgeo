@@ -143,6 +143,38 @@ public Response getRootResource(@Context final HttpServletRequest hsr)
 @SuppressFBWarnings(value = "JAXRS_ENDPOINT", justification = "verified")
 @GET
 @Produces("image/*")
+@Path("mapproxy/{version}/{raster}/{profile}/{z}/{x}/{y}.{format}")
+/**
+ * Mapproxy starts at zoom level 0 for some reason rather 1. The mapproxy code
+ * does not seem to use the capabilities docs returned by a TMS server. They
+ * compute zoom, resolution and tiles based on the grid configured in mapproxy
+ * for the source. It appears they incorrectly compute the resolution based on
+ * a single tile at the world level, but strangely, they make TMS requests using
+ * two tiles at the world level.
+ */
+public Response getTileForMapproxy(@PathParam("version") final String version,
+                        @PathParam("raster") String pyramid,
+                        @PathParam("profile") String profile,
+                        @PathParam("z") final Integer z,
+                        @PathParam("x") final Integer x,
+                        @PathParam("y") final Integer y,
+                        @PathParam("format") final String format,
+                        @QueryParam("color-scale-name") final String colorScaleName,
+                        @QueryParam("color-scale") final String colorScale,
+                        @QueryParam("min") final Double min,
+                        @QueryParam("max") final Double max,
+                        @DefaultValue("1") @QueryParam("maskMax") final Double maskMax,
+                        @QueryParam("mask") final String mask)
+{
+  int zoomLevel = z + 1;
+  return getTile(version, pyramid, profile, zoomLevel, x, y, format, colorScaleName,
+          colorScale, min, max, maskMax, mask);
+}
+
+@SuppressWarnings("squid:S1166") // TileNotFoundException (only) caught and handled
+@SuppressFBWarnings(value = "JAXRS_ENDPOINT", justification = "verified")
+@GET
+@Produces("image/*")
 @Path("{version}/{raster}/{profile}/{z}/{x}/{y}.{format}")
 public Response getTile(@PathParam("version") final String version,
     @PathParam("raster") String pyramid,
@@ -207,6 +239,19 @@ public Response getTile(@PathParam("version") final String version,
       raster = renderer.renderImage(pyramid, bounds, providerProperties, SRSs[index]);
     }
 
+    if (raster == null) {
+      // The requested tile does not exist
+      try {
+        final MrsPyramidMetadata metadata = service.getMetadata(pyramid);
+        return createEmptyTile(((ImageResponseWriter) ImageHandlerFactory.getHandler(format,
+                ImageResponseWriter.class)), metadata.getTilesize(), metadata.getTilesize());
+      }
+      catch (IllegalAccessException | MrGeoRaster.MrGeoRasterException | InstantiationException | ExecutionException e1)
+      {
+        throw new IOException("Exception occurred creating blank tile " + pyramid + "/" + z + "/" + x + "/" +
+                y + "." + format, e1);
+      }
+    }
     if (!(renderer instanceof TiffImageRenderer) && raster.bands() != 3 &&
         raster.bands() != 4)
     {
@@ -257,7 +302,7 @@ public Response getTile(@PathParam("version") final String version,
 
       raster = ((ColorScaleApplier) ImageHandlerFactory.getHandler(format,
           ColorScaleApplier.class)).applyColorScale(raster, cs, extrema, renderer
-          .getDefaultValues());
+          .getDefaultValues(), renderer.getQuantiles());
     }
 
     return ((ImageResponseWriter) ImageHandlerFactory.getHandler(format,

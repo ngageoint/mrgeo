@@ -46,6 +46,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.dom.DOMSource;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -140,7 +142,7 @@ private static MrGeoRaster colorRaster(String layer, String style, String imageF
       }
       result = ((ColorScaleApplier) ImageHandlerFactory.getHandler(imageFormat,
           ColorScaleApplier.class)).applyColorScale(result, cs, renderer.getExtrema(),
-          renderer.getDefaultValues());
+          renderer.getDefaultValues(), renderer.getQuantiles());
       log.debug("Color scale applied to image {}", layer);
     }
 
@@ -453,10 +455,18 @@ private Response getMap(MultivaluedMap<String, String> allParams, ProviderProper
         .write(result, layerNames[0], bounds);
     return setupCaching(builder, allParams).build();
   }
-  catch (IllegalAccessException | InstantiationException | WmsGeneratorException | ImageRendererException e)
+  catch (ImageRendererException e) {
+    log.error("Unable to render the image in getMap", e);
+    return writeError(Response.Status.BAD_REQUEST, "Unable to render the image in getMap");
+  }
+  catch (IllegalAccessException | InstantiationException | WmsGeneratorException e)
   {
-    log.error("Unable to render the image in getTile", e);
-    return writeError(Response.Status.BAD_REQUEST, e.getMessage());
+    log.error("Unable to render the image in getMap", e);
+    return writeError(Response.Status.INTERNAL_SERVER_ERROR, "Unable to render the image in getMap");
+  }
+  catch (Throwable e) {
+    log.error("Unable to render the image in getMap", e);
+    return writeError(Response.Status.INTERNAL_SERVER_ERROR, "Unable to render the image in getMap");
   }
 }
 

@@ -53,46 +53,46 @@ private boolean firstInput = true;
 
 public IngestImage()
 {
-  options = createOptions();
 }
 
+@Override
+public String getUsage() { return "ingest <options> <input>"; }
 
-public static Options createOptions()
+@Override
+public void addOptions(Options options)
 {
-  Options result = MrGeo.createOptions();
-
   Option output = new Option("o", "output", true, "MrsPyramid image name");
   output.setRequired(true);
-  result.addOption(output);
+  options.addOption(output);
 
   Option cat = new Option("c", "categorical", false, "Input [pixels] are categorical values");
   cat.setRequired(false);
-  result.addOption(cat);
+  options.addOption(cat);
 
   Option skipCat = new Option("sc", "skip-cat-load", false, "Do not load categories from source");
   skipCat.setRequired(false);
-  result.addOption(skipCat);
+  options.addOption(skipCat);
 
   Option pyramid = new Option("sp", "skippyramid", false, "Skip building pyramids");
   pyramid.setRequired(false);
-  result.addOption(pyramid);
+  options.addOption(pyramid);
 
   Option recurse = new Option("nr", "norecursion", false, "Do not recurse through sub-directories");
   recurse.setRequired(false);
-  result.addOption(recurse);
+  options.addOption(recurse);
 
   Option nodata = new Option("nd", "nodata", true, "override nodata value");
   //nodata.setArgPattern(argPattern, limit);
   nodata.setRequired(false);
-  result.addOption(nodata);
+  options.addOption(nodata);
 
   Option tags = new Option("t", "tags", true, "tags (fmt: \"k1,v:k2,v:...\"");
   tags.setRequired(false);
-  result.addOption(tags);
+  options.addOption(tags);
 
   Option notags = new Option("nt", "notags", false, "Do not automatically load tags from source images");
   notags.setRequired(false);
-  result.addOption(notags);
+  options.addOption(notags);
 
   OptionGroup aggregators = new OptionGroup();
 
@@ -122,23 +122,23 @@ public static Options createOptions()
   minavgpair.setRequired(false);
   aggregators.addOption(minavgpair);
 
-  result.addOptionGroup(aggregators);
+  options.addOptionGroup(aggregators);
 
   Option local = new Option("lc", "local", false, "Use local files for ingest, good for small ingests");
   local.setRequired(false);
-  result.addOption(local);
+  options.addOption(local);
 
   Option quick = new Option("q", "quick", false, "Quick ingest (for small files only)");
   quick.setRequired(false);
-  result.addOption(quick);
+  options.addOption(quick);
 
   Option zoom = new Option("z", "zoom", true, "force zoom level");
   zoom.setRequired(false);
-  result.addOption(zoom);
+  options.addOption(zoom);
 
   Option skippre = new Option("sk", "skippreprocessing", false, "Skip the preprocessing step (must specify zoom)");
   skippre.setRequired(false);
-  result.addOption(skippre);
+  options.addOption(skippre);
 
   Option protectionLevelOption = new Option("pl", "protectionLevel", true, "Protection level");
   // If mrgeo.conf security.classification.required is true and there is no
@@ -158,40 +158,17 @@ public static Options createOptions()
   {
     protectionLevelOption.setRequired(false);
   }
-  result.addOption(protectionLevelOption);
-
-  return result;
+  options.addOption(protectionLevelOption);
 }
 
 @Override
 @SuppressWarnings("squid:S1166") // Exceptions caught and error message printed
-public int run(String[] args, Configuration conf, ProviderProperties providerProperties)
+public int run(CommandLine line, Configuration conf,
+               ProviderProperties providerProperties) throws ParseException
 {
-  try
-  {
+//  try
+//  {
     long start = System.currentTimeMillis();
-
-    CommandLine line;
-    try
-    {
-      CommandLineParser parser = new GnuParser();
-      line = parser.parse(options, args);
-    }
-    catch (ParseException e)
-    {
-      System.out.println(e.getMessage());
-      new HelpFormatter().printHelp("ingest <options> <input>", options);
-
-      return -1;
-    }
-
-
-    if (line == null || line.hasOption("h"))
-    {
-      new HelpFormatter().printHelp("ingest <options> <input>", options);
-      return -1;
-    }
-
 
     boolean overrideNodata = line.hasOption("nd");
     double[] nodataOverride = null;
@@ -208,8 +185,7 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
         }
         catch (NumberFormatException nfe)
         {
-          System.out.println("Invalid nodata value: " + strElements[i]);
-          return -1;
+          throw new ParseException("Invalid nodata value: " + strElements[i]);
         }
       }
     }
@@ -230,7 +206,6 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
 
     ArrayList<String> inputs = new ArrayList<String>();
 
-
     int zoomlevel = -1;
     if (line.hasOption("z"))
     {
@@ -239,8 +214,7 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
 
     if (skippreprocessing && zoomlevel < 1)
     {
-      log.error("Need to specify zoomlevel to skip preprocessing");
-      return -1;
+      throw new ParseException("Need to specify zoomlevel to skip preprocessing");
     }
     IngestInputProcessor iip = new IngestInputProcessor(conf, nodataOverride, zoomlevel, skippreprocessing);
 
@@ -254,8 +228,7 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
     }
     catch (IllegalArgumentException e)
     {
-      System.out.println(e.getMessage());
-      return -1;
+      throw new ParseException(e.getMessage());
     }
 
     log.info("Ingest inputs (" + inputs.size() + ")");
@@ -274,8 +247,7 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
         String[] s = t.split(":");
         if (s.length != 2)
         {
-          log.error("Bad tag format.  Should be: k1:v1,k2:v2,...  is: " + rawTags);
-          return -1;
+          throw new ParseException("Bad tag format.  Should be: k1:v1,k2:v2,...  is: " + rawTags);
         }
 
         tags.put(s[0], s[1]);
@@ -285,6 +257,10 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
     quick = quick || line.hasOption("q");
     local = local || line.hasOption("lc");
 
+    if (quick)
+    {
+      throw new ParseException("Quick Ingest is not yet implemented");
+    }
     String protectionLevel = line.getOptionValue("pl");
 
     if (inputs.size() > 0)
@@ -292,14 +268,13 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
       try
       {
         final boolean success;
-        if (quick)
-        {
+//        if (quick)
+//        {
 //            success = IngestImage.quickIngest(inputs.get(0), output, categorical,
 //                conf, overrideNodata, nodata, tags, protectionLevel, providerProperties);
-          log.error("Quick Ingest is not yet implemented");
-          return -1;
-        }
-        else if (local)
+//        }
+//        else if (local)
+        if (local)
         {
           success = org.mrgeo.ingest.IngestImage.localIngest(inputs.toArray(new String[inputs.size()]),
               output, categorical, skipCatLoad, conf, iip.getBounds(), iip.getZoomlevel(), iip.tilesize(),
@@ -372,13 +347,13 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
     log.info("IngestImage complete in " + formatted);
 
     return 0;
-  }
-  catch (Exception e)
-  {
-    log.error("IngestImage exited with error", e);
-  }
+//  }
+//  catch (Exception e)
+//  {
+//    log.error("IngestImage exited with error", e);
+//  }
 
-  return -1;
+//  return -1;
 }
 
 private double parseNoData(String fromArg) throws NumberFormatException

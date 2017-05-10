@@ -437,6 +437,249 @@ public void testAbsoluteInterpolate() throws Exception
   check(cs.lookup(110.0), new int[]{0, 0, 0, 0});
 }
 
+@Test
+@Category(UnitTest.class)
+public void testQuantilesFallbackToAbsolute1() throws Exception
+{
+  ColorScale cs = ColorScale.empty();
+  cs.setInterpolate(true);
+  cs.setScaling(ColorScale.Scaling.Quantile);
+  cs.setTransparent(-1.0);
+  cs.put(1.0, 255, 0, 0);
+  cs.put(2.0, 0, 0, 255);
+  cs.setScaleRangeWithQuantiles(0, 100, null);
+
+  check(cs.lookup(0.0), new int[]{255, 0, 0, 255});
+  check(cs.lookup(50.0), new int[]{127, 0, 128, 255});
+  check(cs.lookup(100.0), new int[]{0, 0, 255, 255});
+}
+
+@Test
+@Category(UnitTest.class)
+public void testQuantilesFallbackToAbsolute2() throws Exception
+{
+  ColorScale cs = ColorScale.empty();
+  cs.setInterpolate(true);
+  cs.setScaling(ColorScale.Scaling.Quantile);
+  cs.setTransparent(-1.0);
+  double[] quantiles = { };
+  cs.put(1.0, 255, 0, 0);
+  cs.put(2.0, 0, 0, 255);
+  cs.setScaleRangeWithQuantiles(0, 100, quantiles);
+
+  check(cs.lookup(0.0), new int[]{255, 0, 0, 255});
+  check(cs.lookup(50.0), new int[]{127, 0, 128, 255});
+  check(cs.lookup(100.0), new int[]{0, 0, 255, 255});
+}
+
+@Test
+@Category(UnitTest.class)
+public void testQuantilesOne() throws Exception
+{
+  ColorScale cs = ColorScale.empty();
+  cs.setInterpolate(true);
+  cs.setScaling(ColorScale.Scaling.Quantile);
+  cs.setTransparent(-1.0);
+  double[] quantiles = { 75 };
+  cs.put(1.0, 255, 0, 0);
+  cs.put(2.0, 128, 0, 128);
+  cs.put(3.0, 0, 0, 255);
+  cs.setScaleRangeWithQuantiles(0, 100, quantiles);
+
+  check(cs.lookup(0.0), new int[]{255, 0, 0, 255});
+  check(cs.lookup(75.0), new int[]{128, 0, 128, 255});
+  check(cs.lookup(100.0), new int[]{0, 0, 255, 255});
+}
+
+@Test
+@Category(UnitTest.class)
+public void testMultiOddColorOneQuantile() throws Exception
+{
+  ColorScale cs = ColorScale.empty();
+  cs.setInterpolate(true);
+  cs.setScaling(ColorScale.Scaling.Quantile);
+  cs.setTransparent(-1.0);
+  double[] quantiles = { 75 };
+  cs.put(1.0, 255, 0, 0);
+  cs.put(2.0, 170, 0, 60);
+  cs.put(3.0, 128, 0, 128);
+  cs.put(4.0, 120, 0, 140);
+  cs.put(5.0, 0, 0, 255);
+  cs.setScaleRangeWithQuantiles(0, 100, quantiles);
+
+  check(cs.lookup(0.0), new int[]{255, 0, 0, 255});
+  check(cs.lookup(75.0), new int[]{128, 0, 128, 255});
+  check(cs.lookup(100.0), new int[]{0, 0, 255, 255});
+}
+
+@Test
+@Category(UnitTest.class)
+public void testMultiEvenColorOneQuantile() throws Exception
+{
+  ColorScale cs = ColorScale.empty();
+  cs.setInterpolate(true);
+  cs.setScaling(ColorScale.Scaling.Quantile);
+  cs.setTransparent(-1.0);
+  double[] quantiles = { 75 };
+  cs.put(1.0, 255, 0, 0);
+  cs.put(2.0, 170, 0, 60);
+  cs.put(3.0, 128, 0, 128);
+  cs.put(4.0, 120, 0, 140);
+  cs.put(5.0, 80, 0, 180);
+  cs.put(6.0, 0, 0, 255);
+  cs.setScaleRangeWithQuantiles(0, 100, quantiles);
+
+  check(cs.lookup(0.0), new int[]{255, 0, 0, 255});
+  check(cs.lookup(75.0), new int[]{128, 0, 128, 255});
+  check(cs.lookup(100.0), new int[]{0, 0, 255, 255});
+}
+
+@Test
+@Category(UnitTest.class)
+public void testMultiOddColorTwoQuantiles() throws Exception
+{
+  ColorScale cs = ColorScale.empty();
+  cs.setInterpolate(true);
+  cs.setScaling(ColorScale.Scaling.Quantile);
+  cs.setTransparent(-1.0);
+  double[] quantiles = { 75, 90 };
+  cs.put(1.0, 255, 0, 0);
+  cs.put(2.0, 170, 0, 60);
+  cs.put(3.0, 128, 0, 128);
+  cs.put(4.0, 120, 0, 140);
+  cs.put(5.0, 0, 0, 255);
+  cs.setScaleRangeWithQuantiles(0, 100, quantiles);
+
+  check(cs.lookup(0.0), new int[]{255, 0, 0, 255});
+  check(cs.lookup(75.0), new int[]{170, 0, 60, 255});
+  check(cs.lookup(90.0), new int[]{128, 0, 128, 255});
+  check(cs.lookup(100.0), new int[]{0, 0, 255, 255});
+}
+
+@Test
+@Category(UnitTest.class)
+public void testMultiEvenColorTwoQuantiles() throws Exception
+{
+  ColorScale cs = ColorScale.empty();
+  cs.setInterpolate(true);
+  cs.setScaling(ColorScale.Scaling.Quantile);
+  cs.setTransparent(-1.0);
+  double[] quantiles = { 75, 90 };
+  cs.put(1.0, 255, 0, 0);
+  cs.put(2.0, 170, 0, 60);
+  cs.put(3.0, 128, 0, 128);
+  cs.put(4.0, 120, 0, 140);
+  cs.put(5.0, 80, 0, 180);
+  cs.put(6.0, 0, 0, 255);
+  cs.setScaleRangeWithQuantiles(0, 100, quantiles);
+
+  check(cs.lookup(0.0), new int[]{255, 0, 0, 255});
+  check(cs.lookup(75.0), new int[]{170, 0, 60, 255});
+  check(cs.lookup(90.0), new int[]{120, 0, 140, 255});
+  check(cs.lookup(100.0), new int[]{0, 0, 255, 255});
+}
+
+@Test
+@Category(UnitTest.class)
+public void testQuantilesTwo() throws Exception
+{
+  ColorScale cs = ColorScale.empty();
+  cs.setInterpolate(true);
+  cs.setScaling(ColorScale.Scaling.Quantile);
+  cs.setTransparent(-1.0);
+  double[] quantiles = { 70, 90 };
+  cs.put(1.0, 255, 0, 0);
+  cs.put(2.0, 128, 0, 128);
+  cs.put(3.0, 0, 0, 255);
+  cs.setScaleRangeWithQuantiles(0, 100, quantiles);
+
+  check(cs.lookup(0.0), new int[]{255, 0, 0, 255});
+  check(cs.lookup(70.0), new int[]{128, 0, 128, 255});
+  check(cs.lookup(90.0), new int[]{64, 0, 191, 255});
+  check(cs.lookup(100.0), new int[]{0, 0, 255, 255});
+}
+
+@Test
+@Category(UnitTest.class)
+public void testQuantilesThree() throws Exception
+{
+  ColorScale cs = ColorScale.empty();
+  cs.setInterpolate(true);
+  cs.setScaling(ColorScale.Scaling.Quantile);
+  cs.setTransparent(-1.0);
+  double[] quantiles = { 60, 70, 90 };
+  cs.put(1.0, 255, 0, 0, 0);
+  cs.put(2.0, 128, 0, 128);
+  cs.put(3.0, 0, 0, 255);
+  cs.setScaleRangeWithQuantiles(0, 100, quantiles);
+
+  check(cs.lookup(0.0), new int[]{255, 0, 0, 0});
+  check(cs.lookup(70.0), new int[]{128, 0, 128, 255});
+  check(cs.lookup(100.0), new int[]{0, 0, 255, 255});
+  check(cs.lookup(90.0), new int[]{64, 0, 191, 255});
+  // 75.0 is 25% of the distance between q2 and q3, so the color
+  // value should be 25% less that the color value for q2.
+  int expectedRed = (int) Math.round(128 - (0.25 * (128 - 64)));
+  int expectedBlue = (int) Math.round(128 - (0.25 * (128 - 191)));
+  check(cs.lookup(75.0), new int[]{expectedRed, 0, expectedBlue, 255});
+}
+
+@Test
+@Category(UnitTest.class)
+public void testQuantilesFour() throws Exception
+{
+  ColorScale cs = ColorScale.empty();
+  cs.setInterpolate(true);
+  cs.setScaling(ColorScale.Scaling.Quantile);
+  cs.setTransparent(-1.0);
+  double[] quantiles = { 60, 65, 70, 90 };
+  cs.put(1.0, 255, 0, 0, 0);
+  cs.put(2.0, 128, 0, 128);
+  cs.put(3.0, 0, 0, 255);
+  cs.setScaleRangeWithQuantiles(0, 100, quantiles);
+
+  check(cs.lookup(0.0), new int[]{255, 0, 0, 0});
+  check(cs.lookup(65.0), new int[]{128, 0, 128, 255});
+  check(cs.lookup(100.0), new int[]{0, 0, 255, 255});
+  check(cs.lookup(60.0), new int[]{192, 0, 64, 127});
+}
+
+@Test
+@Category(UnitTest.class)
+public void testQuantilesFive() throws Exception
+{
+  ColorScale cs = ColorScale.empty();
+  cs.setInterpolate(true);
+  cs.setScaling(ColorScale.Scaling.Quantile);
+  cs.setTransparent(-1.0);
+  double[] quantiles = { 60, 65, 70, 80, 90 };
+  cs.put(1.0, 255, 0, 0, 0);
+  cs.put(2.0, 128, 0, 128);
+  cs.put(3.0, 0, 0, 255);
+  cs.setScaleRangeWithQuantiles(0, 100, quantiles);
+
+  check(cs.lookup(0.0), new int[]{255, 0, 0, 0});
+  check(cs.lookup(70.0), new int[]{128, 0, 128, 255});
+  check(cs.lookup(100.0), new int[]{0, 0, 255, 255});
+  check(cs.lookup(60.0), new int[]{213, 0, 42, 85});
+  check(cs.lookup(65.0), new int[]{171, 0, 85, 170});
+  check(cs.lookup(80.0), new int[]{86, 0, 170, 255});
+  check(cs.lookup(90.0), new int[]{43, 0, 212, 255});
+
+  // Check interpolated colors
+  // For 62.5, color values should be halfway between the color values assigned
+  // to 60.0 and 65.0
+  check(cs.lookup(62.5), new int[]{192, 0, 64, 128});
+  // For 30.0, color values should be halfway between the color values assigned
+  // to 60.0 and 0
+  check(cs.lookup(30.0), new int[]{234, 0, 21, 43});
+}
+
+//private void dump(double value, int[] color)
+//{
+//  System.out.println("Color for value " + value + " is " +  color[0] + ", " + color[1] + ", " + color[2]);
+//}
+
 private void check(int[] lookup, int[] is)
 {
   for (int i = 0; i < 4; i++)

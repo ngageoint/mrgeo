@@ -16,19 +16,25 @@
 package org.mrgeo.cmd.server;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.conf.Configuration;
+import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.util.thread.ThreadPool;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 import org.mrgeo.cmd.Command;
-import org.mrgeo.cmd.MrGeo;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.utils.logging.LoggingUtils;
@@ -45,49 +51,30 @@ public class WebServer extends Command
 {
 
 private static Logger log = LoggerFactory.getLogger(WebServer.class);
-private Options options;
 
 public WebServer()
 {
-  options = createOptions();
-}
-
-
-public static Options createOptions()
-{
-  Options result = MrGeo.createOptions();
-
-  Option output = new Option("p", "port", true, "The HTTP port on which the server will listen (default 8080)");
-  result.addOption(output);
-
-  return result;
 }
 
 @Override
-public int run(String[] args, Configuration conf, ProviderProperties providerProperties)
+public void addOptions(Options options)
+{
+  Option port = new Option("p", "port", true, "The HTTP port on which the server will listen (default 8080)");
+  options.addOption(port);
+  Option singleThreaded = new Option("st", "singleThreaded", false, "Specify this argument in order to run the web server in essentially single-threaded mode for processing one request at a time");
+  options.addOption(singleThreaded);
+}
+
+@Override
+public String getUsage() { return "webserver <options>"; }
+
+@Override
+public int run(CommandLine line, Configuration conf,
+               ProviderProperties providerProperties) throws ParseException
 {
   try
   {
     long start = System.currentTimeMillis();
-
-    CommandLine line = null;
-    try
-    {
-      CommandLineParser parser = new GnuParser();
-      line = parser.parse(options, args);
-    }
-    catch (ParseException e)
-    {
-      System.out.println(e.getMessage());
-      new HelpFormatter().printHelp("webserver <options> <operation>", options);
-      return -1;
-    }
-
-    if (line == null || line.hasOption("h"))
-    {
-      new HelpFormatter().printHelp("webserver <options> <operation>", options);
-      return -1;
-    }
 
     int httpPort = 8080;
     if (line.hasOption("p"))
@@ -98,10 +85,19 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
       }
       catch (NumberFormatException nfe)
       {
-        System.err.println("Invalid HTTP port specified: " + line.getOptionValue("p"));
-        return -1;
+        throw new ParseException("Invalid HTTP port specified: " + line.getOptionValue("p"));
       }
     }
+    boolean singleThreaded = false;
+    try
+    {
+      singleThreaded = line.hasOption("st");
+    }
+    catch (NumberFormatException nfe)
+    {
+      throw new ParseException("Invalid number of connections specified: " + line.getOptionValue("n"));
+    }
+
     if (line.hasOption("v"))
     {
       LoggingUtils.setDefaultLogLevel(LoggingUtils.INFO);
@@ -111,18 +107,18 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
       LoggingUtils.setDefaultLogLevel(LoggingUtils.DEBUG);
     }
 
-    runWebServer(httpPort);
+    runWebServer(httpPort, singleThreaded);
 
     long end = System.currentTimeMillis();
     long duration = end - start;
     PeriodFormatter formatter = new PeriodFormatterBuilder()
-        .appendHours()
-        .appendSuffix("h:")
-        .appendMinutes()
-        .appendSuffix("m:")
-        .appendSeconds()
-        .appendSuffix("s")
-        .toFormatter();
+            .appendHours()
+            .appendSuffix("h:")
+            .appendMinutes()
+            .appendSuffix("m:")
+            .appendSeconds()
+            .appendSuffix("s")
+            .toFormatter();
     String formatted = formatter.print(new Period(duration));
     log.info("IngestImage complete in " + formatted);
 
@@ -138,11 +134,27 @@ public int run(String[] args, Configuration conf, ProviderProperties providerPro
 
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File() checking for existence")
 @SuppressWarnings("squid:S00112") // Passing on exception thrown from 3rd party API
-private Server startWebServer(int httpPort) throws Exception
+private Server startWebServer(int httpPort, boolean singleThreaded) throws Exception
 {
   System.out.println("Starting embedded web server on port " + httpPort);
   URI uri = UriBuilder.fromUri("http://" + getHostName() + "/").port(httpPort).build();
-  Server server = new Server(httpPort);
+  Server server = null;
+  if (singleThreaded) {
+    System.out.println("  Running in single-threaded mode");
+    // Based on the connector configuration below (min = 1, max = 1), Jetty requires a
+    // minimum thread pool size of three threads for its processing. One acceptor thread,
+    // one selector thread, and one request thread. It will queue up requests that it
+    // can't immediately process.
+    ThreadPool threadPool = new QueuedThreadPool(3, 1);
+    server = new Server(threadPool);
+    ServerConnector connector = new ServerConnector(server, 1, 1);
+//    connector.setAcceptQueueSize(0);
+    connector.setPort(httpPort);
+    server.setConnectors(new Connector[]{connector});
+  }
+  else {
+    server = new Server(httpPort);
+  }
   HandlerCollection coll = new HandlerCollection();
   ServletContextHandler context = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
   context.setContextPath("/mrgeo");
@@ -193,9 +205,9 @@ private Server startWebServer(int httpPort) throws Exception
 }
 
 @SuppressWarnings("squid:S00112") // Passing on exception thrown from 3rd party API
-private void runWebServer(int httpPort) throws Exception
+private void runWebServer(int httpPort, boolean singleThreaded) throws Exception
 {
-  Server server = startWebServer(httpPort);
+  Server server = startWebServer(httpPort, singleThreaded);
   System.out.println("Use ctrl-C to stop the web server");
   server.join();
 }

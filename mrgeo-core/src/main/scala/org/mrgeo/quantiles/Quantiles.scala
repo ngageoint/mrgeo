@@ -16,12 +16,11 @@
 package org.mrgeo.quantiles
 
 import java.awt.image.DataBuffer
-import java.io.{Externalizable, ObjectInput, ObjectOutput, PrintWriter}
+import java.io.{Externalizable, ObjectInput, ObjectOutput}
 import java.util.Random
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
@@ -29,7 +28,6 @@ import org.mrgeo.data
 import org.mrgeo.data.ProviderProperties
 import org.mrgeo.data.raster.{MrGeoRaster, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
-import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.{JobArguments, MrGeoDriver, MrGeoJob}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
@@ -45,27 +43,26 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
   justification = "Use of Random has no impact on security")
 object Quantiles extends MrGeoDriver with Externalizable {
   final private val Input = "input"
-  final private val Output = "output"
   final private val NumQuantiles = "num.quantiles"
   final private val Fraction = "fraction"
   final private val ProviderProperties = "provider.properties"
 
-  def compute(input:String, output:String, numQuantiles:Int,
+  def compute(input:String, numQuantiles:Int,
               conf:Configuration, providerProperties:ProviderProperties):Boolean = {
     val name = "Quantiles"
 
-    val args = setupArguments(input, output, numQuantiles, None, providerProperties)
+    val args = setupArguments(input, numQuantiles, None, providerProperties)
 
     run(name, classOf[Quantiles].getName, args.toMap, conf)
 
     true
   }
 
-  def compute(input:String, output:String, numQuantiles:Int, fraction:Float,
+  def compute(input:String, numQuantiles:Int, fraction:Float,
               conf:Configuration, providerProperties:ProviderProperties):Boolean = {
     val name = "Quantiles"
 
-    val args = setupArguments(input, output, numQuantiles, Some(fraction), providerProperties)
+    val args = setupArguments(input, numQuantiles, Some(fraction), providerProperties)
 
     run(name, classOf[Quantiles].getName, args.toMap, conf)
 
@@ -408,14 +405,13 @@ object Quantiles extends MrGeoDriver with Externalizable {
   override def writeExternal(out:ObjectOutput):Unit = {
   }
 
-  private def setupArguments(input:String, output:String,
+  private def setupArguments(input:String,
                              numQuantiles:Int,
                              fraction:Option[Float],
                              providerProperties:ProviderProperties):mutable.Map[String, String] = {
     val args = mutable.Map[String, String]()
 
     args += Input -> input
-    args += Output -> output
     args += NumQuantiles -> numQuantiles.toString
     if (fraction.isDefined) {
       args += Fraction -> fraction.get.toString
@@ -435,7 +431,6 @@ object Quantiles extends MrGeoDriver with Externalizable {
 class Quantiles extends MrGeoJob with Externalizable {
   var providerproperties:ProviderProperties = _
   private var input:String = _
-  private var output:String = _
   private var numQuantiles:Int = 0
   private var fraction:Option[Float] = None
 
@@ -450,7 +445,6 @@ class Quantiles extends MrGeoJob with Externalizable {
 
   override def setup(job:JobArguments, conf:SparkConf):Boolean = {
     input = job.getSetting(Quantiles.Input)
-    output = job.getSetting(Quantiles.Output)
     numQuantiles = job.getSetting(Quantiles.NumQuantiles).toInt
     fraction = if (job.hasSetting(Quantiles.Fraction)) {
       Some(job.getSetting(Quantiles.Fraction).toFloat)
@@ -466,31 +460,13 @@ class Quantiles extends MrGeoJob with Externalizable {
 
   override def execute(context:SparkContext):Boolean = {
     val imagePair = SparkUtils.loadMrsPyramidAndMetadata(input, context)
-    val result = org.mrgeo.quantiles.Quantiles.compute(imagePair._1, numQuantiles, fraction, imagePair._2)
-    // Write the quantiles to the specified HDFS output file
-    val p = new Path(output)
-    val fs = HadoopFileUtils.getFileSystem(context.hadoopConfiguration, p)
-    val os = fs.create(p, true)
-    val pw = new PrintWriter(os)
-    try {
-      if (result.length == 1) {
-        result.head.foreach(v => {
-          pw.println("" + v)
-        })
-      }
-      else {
-        result.zipWithIndex.foreach(v => {
-          pw.println("Band " + (v._2 + 1))
-          v._1.foreach(q => {
-            pw.println("  " + q)
-          })
-        })
-      }
-      true
+    if (numQuantiles > 0) {
+      val quantiles = org.mrgeo.quantiles.Quantiles.compute(imagePair._1, numQuantiles, fraction, imagePair._2)
+      // Save the quantiles to metadata
+      imagePair._2.setQuantiles(quantiles.toArray)
+      SparkUtils.saveMrsPyramidMetadata(input, context, imagePair._2, providerproperties)
     }
-    finally {
-      pw.close()
-    }
+    true
   }
 
   override def teardown(job:JobArguments, conf:SparkConf):Boolean = {
@@ -499,7 +475,6 @@ class Quantiles extends MrGeoJob with Externalizable {
 
   override def readExternal(in:ObjectInput):Unit = {
     input = in.readUTF()
-    output = in.readUTF()
     numQuantiles = in.readInt()
     val hasFraction = in.readBoolean()
     if (hasFraction) {
@@ -513,7 +488,6 @@ class Quantiles extends MrGeoJob with Externalizable {
 
   override def writeExternal(out:ObjectOutput):Unit = {
     out.writeUTF(input)
-    out.writeUTF(output)
     out.writeInt(numQuantiles)
     out.writeBoolean(fraction.isDefined)
     if (fraction.isDefined) {
@@ -525,24 +499,22 @@ class Quantiles extends MrGeoJob with Externalizable {
     }
   }
 
-  private[quantiles] def this(input:String, output:String,
+  private[quantiles] def this(input:String,
                               numQuantiles:Int,
                               providerProperties:ProviderProperties) = {
     this()
 
     this.input = input
-    this.output = output
     this.numQuantiles = numQuantiles
     this.providerproperties = providerproperties
   }
 
-  private[quantiles] def this(input:String, output:String,
+  private[quantiles] def this(input:String,
                               numQuantiles:Int, fraction:Float,
                               providerProperties:ProviderProperties) = {
     this()
 
     this.input = input
-    this.output = output
     this.numQuantiles = numQuantiles
     this.fraction = Some(fraction)
     this.providerproperties = providerproperties

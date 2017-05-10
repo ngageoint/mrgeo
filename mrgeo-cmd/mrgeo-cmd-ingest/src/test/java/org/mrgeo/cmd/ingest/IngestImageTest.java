@@ -36,7 +36,6 @@ import org.mrgeo.test.TestUtils;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.logging.LoggingUtils;
-import org.mrgeo.utils.tms.Bounds;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -105,10 +104,11 @@ public static void init() throws IOException
 
   LoggingUtils.setDefaultLogLevel(LoggingUtils.ERROR);
 
-  Properties props = MrGeoProperties.getInstance();
-  origProtectionLevelRequired = props.getProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED);
-  origProtectionLevelDefault = props.getProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT);
-  origProtectionLevel = props.getProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL);
+  MrGeoProperties.resetProperties();
+//  Properties props = MrGeoProperties.getInstance();
+//  origProtectionLevelRequired = props.getProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED);
+//  origProtectionLevelDefault = props.getProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT);
+//  origProtectionLevel = props.getProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL);
   conf = HadoopUtils.createConfiguration();
 
   testUtils = new TestUtils(IngestImageTest.class);
@@ -126,39 +126,46 @@ public static void init() throws IOException
 
 }
 
+@AfterClass
+public static void finish()
+{
+  MrGeoProperties.resetProperties();
+}
+
 @After
 public void teardown()
 {
   System.setSecurityManager(null); // or save and restore original
 
   // Restore MrGeoProperties
-  Properties props = MrGeoProperties.getInstance();
-  if (origProtectionLevelRequired == null)
-  {
-    props.remove(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED);
-  }
-  else
-  {
-    props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED, origProtectionLevelRequired);
-  }
-
-  if (origProtectionLevelDefault == null)
-  {
-    props.remove(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT);
-  }
-  else
-  {
-    props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT, origProtectionLevelDefault);
-  }
-
-  if (origProtectionLevel == null)
-  {
-    props.remove(MrGeoConstants.MRGEO_PROTECTION_LEVEL);
-  }
-  else
-  {
-    props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL, origProtectionLevel);
-  }
+//  Properties props = MrGeoProperties.getInstance();
+//  if (origProtectionLevelRequired == null)
+//  {
+//    props.remove(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED);
+//  }
+//  else
+//  {
+//    props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_REQUIRED, origProtectionLevelRequired);
+//  }
+//
+//  if (origProtectionLevelDefault == null)
+//  {
+//    props.remove(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT);
+//  }
+//  else
+//  {
+//    props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL_DEFAULT, origProtectionLevelDefault);
+//  }
+//
+//  if (origProtectionLevel == null)
+//  {
+//    props.remove(MrGeoConstants.MRGEO_PROTECTION_LEVEL);
+//  }
+//  else
+//  {
+//    props.setProperty(MrGeoConstants.MRGEO_PROTECTION_LEVEL, origProtectionLevel);
+//  }
+  MrGeoProperties.resetProperties();
 }
 
 @Before

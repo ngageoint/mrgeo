@@ -19,6 +19,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.mrgeo.utils.FloatUtils;
 import org.mrgeo.utils.XmlUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -32,10 +34,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * @author jason.surratt
@@ -51,9 +50,9 @@ import java.util.TreeMap;
  */
 public class ColorScale extends TreeMap<Double, Color>
 {
-
+  private static final Logger log = LoggerFactory.getLogger(ColorScale.class);
 private static final long serialVersionUID = 1L;
-private static final int CACHE_SIZE = 1024;
+private int CACHE_SIZE = 1024;
 private static final int A = 3;
 private static final int B = 2;
 private static final int G = 1;
@@ -72,6 +71,8 @@ private double transparent = Double.NaN;
 private String name = null;
 private String title = null;
 private String description = null;
+private double[] quantiles;
+private ColorScale[] quantileSubScales;
 
 private ColorScale()
 {
@@ -177,24 +178,38 @@ public synchronized static void setDefault(final ColorScale colorScale)
   }
 }
 
+private static int parseOpacity(String opacityStr)
+{
+  if (opacityStr != null && !opacityStr.isEmpty())
+  {
+    return Integer.parseInt(opacityStr);
+  }
+  else
+  {
+    return 255;
+  }
+}
+
 private static void parseColor(final String colorStr, final String opacityStr, final int[] color)
     throws IOException
 {
   final String[] colors = colorStr.split(",");
-  if (colors.length != 3)
-  {
+  if (colors.length == 3) {
+    color[0] = Integer.parseInt(colors[0]);
+    color[1] = Integer.parseInt(colors[1]);
+    color[2] = Integer.parseInt(colors[2]);
+    color[3] = parseOpacity(opacityStr);
+  }
+  else if (colors.length == 1) {
+    // Allows colors to be specified in hex as #0F0F0F for example
+    int c = Integer.decode(colors[0]).intValue();
+    color[0] = (c & 0xFF0000) >> 16;
+    color[1] = (c & 0x00FF00) >> 8;
+    color[2] = (c & 0x0000FF);
+    color[3] = parseOpacity(opacityStr);
+  }
+  else {
     throw new IOException("Error parsing XML: There must be three elements in color.");
-  }
-  color[0] = Integer.parseInt(colors[0]);
-  color[1] = Integer.parseInt(colors[1]);
-  color[2] = Integer.parseInt(colors[2]);
-  if (opacityStr != null && !opacityStr.isEmpty())
-  {
-    color[3] = Integer.parseInt(opacityStr);
-  }
-  else
-  {
-    color[3] = 255;
   }
 }
 
@@ -375,6 +390,12 @@ public boolean equals(final ColorScale cs)
       return false;
     }
   }
+  if (!Arrays.equals(quantiles, cs.quantiles)) {
+    return false;
+  }
+  if (!Arrays.equals(quantileSubScales, cs.quantileSubScales)) {
+    return false;
+  }
 
   return true;
 }
@@ -528,6 +549,7 @@ public void fromXML(final Document doc) throws ColorScaleException
   }
   catch (XPathExpressionException | IOException e)
   {
+    log.error("Got XML error " + e.getMessage(), e);
     throw new BadXMLException(e);
   }
 }
@@ -540,6 +562,7 @@ public void fromXML(final InputStream strm) throws ColorScaleException
   }
   catch (final Exception e)
   {
+    log.error("Got exception while parsing color scale " + e.getMessage(), e);
     throw new ColorScaleException(e);
   }
 }
@@ -633,6 +656,15 @@ public void fromJSON(final String json) throws ColorScaleException
 
 final public int[] lookup(final double v)
 {
+  if (scaling == Scaling.Quantile) {
+    // Lookup the sub-scale for the value, then call it's lookup
+    for (int q = 0; q < quantiles.length; q++) {
+      if (v < quantiles[q]) {
+        return quantileSubScales[q].lookup(v);
+      }
+    }
+    return quantileSubScales[quantileSubScales.length-1].lookup(v);
+  }
   if (Double.isNaN(v) || FloatUtils.isEqual(v, transparent))
   {
     return getNullColor();
@@ -785,7 +817,7 @@ public void setScaleRange(final double min, final double max)
 {
   this.min = min;
   this.max = max;
-  if (scaling != Scaling.Modulo)
+  if (scaling != Scaling.Modulo && scaling != Scaling.Quantile)
   {
     scaling = Scaling.MinMax;
   }
@@ -793,28 +825,182 @@ public void setScaleRange(final double min, final double max)
   buildCache();
 }
 
+public void setScaleRangeWithQuantiles(final double min, final double max, final double[] quantiles)
+{
+  this.min = min;
+  this.max = max;
+  cache = null;
+  if (quantiles == null) {
+    this.quantiles = null;
+  }
+  else {
+    this.quantiles = Arrays.copyOf(quantiles, quantiles.length);
+  }
+  buildCache();
+}
+
 protected void buildCache()
 {
   cache = new int[CACHE_SIZE][4];
 
-  if (scaling == Scaling.Absolute)
-  {
+  if (scaling == Scaling.Absolute) {
     min = firstKey();
     max = lastKey();
   }
-
-  for (int i = 0; i < CACHE_SIZE; i++)
-  {
-    final double v = min + (max - min) * ((double) i / (double) (CACHE_SIZE - 1));
-    if (interpolate)
-    {
-      interpolateValue(v, cache[i]);
-    }
-    else
-    {
-      absoluteValue(v, cache[i]);
+  else if (scaling == Scaling.Quantile) {
+    // If there are no quantiles for the image, then revert to an Absolute scale
+    if (this.quantiles == null || this.quantiles.length < 1) {
+      // Revert to interpolated Absolute scale.
+      scaling = Scaling.Absolute;
+      interpolate = true;
+      // Update the color entries with actual values
+      Iterator<Color> iter = values().iterator();
+      Color[] colors = new Color[size()];
+      int i = 0;
+      while (iter.hasNext()) {
+        colors[i] = iter.next();
+        i++;
+      }
+      // Remove the existing entries fromthe color map and rewrite them with
+      // new key values to accommodate the use of MinMax.
+      super.clear();
+      super.put(min, colors[0]);
+      super.put(max, colors[colors.length-1]);
+      for (int index = 1; index < colors.length-1; index++) {
+        double value = (double)index / (double)(colors.length - 2);
+        super.put(value, colors[index]);
+        index++;
+      }
     }
   }
+
+  if (scaling == Scaling.Quantile) {
+    // The color scale is initially configured with only the defined color
+    // ramp "anchor" colors. Now compute a color for each quantile value
+    // within that ramp. At this point, we know we have at least 2 color "anchors"
+    // and 1 quantile value.
+    Iterator<Color> iter = values().iterator();
+    Color[] colors = new Color[size()];
+    int i = 0;
+    while (iter.hasNext()) {
+      colors[i] = iter.next();
+      i++;
+    }
+    // Clear only the TreeMap entries, not all of the setting for this ColorScale
+//    super.clear();
+
+    Color[] quantileColors = new Color[quantiles.length + 2];
+    quantileColors[0] = colors[0];
+    quantileColors[quantileColors.length-1] = colors[colors.length-1];
+    boolean allQuantilesHaveColors = false;
+    // When there are more than two colors in the color ramp, we need to assign
+    // each of the colors (besides the first and last) to a quantile value. For
+    // example if there are three total colors in the ramp, then the second color
+    // should be assigned to the median quantile.
+    if (colors.length > 2) {
+      // First assign each defined color to a quantile
+      // We will need to define a color for each data bin (the quantile values
+      // are the "breaks" between bins).
+      if (colors.length - 2 < quantiles.length + 1) {
+        // There are fewer defined colors in the color ramp than there are data
+        // bins. Map each color to the appropriate data bin.
+        float colorFraction = 1.f / (float) (colors.length - 1);
+        for (int c = 1; c < colors.length - 1; c++) {
+          int qIndex = (int) ((float) (quantiles.length - 1) * colorFraction) * c;
+          quantileColors[qIndex + 1] = colors[c];
+        }
+      }
+      else {
+        // There are at least as many colors as there are data bins. Map a subset
+        // of the colors to the data bins.
+        float colorsPerQuantileBin = (float)(colors.length - 2) / (float)(quantiles.length + 1);
+        for (int q = 1; q <= quantiles.length; q++) {
+          int index = (int) Math.round(colorsPerQuantileBin * q);
+          quantileColors[q] = colors[index];
+        }
+        allQuantilesHaveColors = true;
+      }
+    }
+
+    if (!allQuantilesHaveColors) {
+      // Now that all of the colors of the color ramp have been assigned to quantile
+      // values, we need to interpolate colors to assign to the remaining quantile values.
+      int lastAssignedQuantile = 0; // a color is always assigned to min
+      for (int q = 1; q < quantileColors.length; q++) {
+        if (quantileColors[q] != null) {
+          // Found a quantile that already has a color
+          Color color1 = quantileColors[lastAssignedQuantile];
+          Color color2 = quantileColors[q];
+          int numSlots = q - lastAssignedQuantile - 1;
+          // If there is one open slot, that color should be halfway between
+          // color1 and color2. If there are two slots, then each slot color should
+          // be 1/3 of the way between color1 and color2, etc... (hence adding 1
+          // in the slotFactor computation).
+          float slotFactor = 1.0f / ((float)numSlots + 1);
+          for (int slot = 1; slot <= numSlots; slot++) {
+            quantileColors[lastAssignedQuantile + slot] = new Color(
+                    interpolateValue(color1.getRed(), color2.getRed(), slotFactor * slot),
+                    interpolateValue(color1.getGreen(), color2.getGreen(), slotFactor * slot),
+                    interpolateValue(color1.getBlue(), color2.getBlue(), slotFactor * slot),
+                    interpolateValue(color1.getAlpha(), color2.getAlpha(), slotFactor * slot));
+          }
+          lastAssignedQuantile = q;
+        }
+      }
+    }
+
+    // The underlying implementation of quantile coloring is to use an interpolated
+    // Absolute color scale for each quantile, since we already have the code that
+    // handles interpolating the color for individual values. We just store sub-color
+    // scales for each quantile, and when the "lookup" method is called, we can quickly
+    // determine which sub-color scale handles the value and then call its "lookup".
+    quantileSubScales = new ColorScale[quantiles.length + 1];
+    int subCacheSize = CACHE_SIZE / quantileSubScales.length;
+    // The first color is for the min value through the first quantile value
+    ColorScale qcs = new ColorScale();
+    qcs.setScaling(Scaling.Absolute);
+    qcs.CACHE_SIZE = subCacheSize;
+    qcs.setInterpolate(true);
+    qcs.put(min, quantileColors[0]);
+    qcs.put(quantiles[0], quantileColors[1]);
+    quantileSubScales[0] = qcs;
+
+    for (int q = 0; q < quantiles.length - 1; q++) {
+      qcs = new ColorScale();
+      qcs.setScaling(Scaling.Absolute);
+      qcs.CACHE_SIZE = subCacheSize;
+      qcs.setInterpolate(true);
+      qcs.put(quantiles[q], quantileColors[q+1]);
+      qcs.put(quantiles[q+1], quantileColors[q+2]);
+      quantileSubScales[q+1] = qcs;
+    }
+    // The last color is for the last quantile value through the max value
+    qcs = new ColorScale();
+    qcs.setScaling(Scaling.Absolute);
+    qcs.CACHE_SIZE = subCacheSize;
+    qcs.setInterpolate(true);
+    qcs.put(quantiles[quantiles.length-1], quantileColors[quantileColors.length-2]);
+    qcs.put(max, quantileColors[quantileColors.length-1]);
+    quantileSubScales[quantileSubScales.length-1] = qcs;
+  }
+  else {
+    for (int i = 0; i < CACHE_SIZE; i++) {
+      final double v = min + (max - min) * ((double) i / (double) (CACHE_SIZE - 1));
+      if (interpolate) {
+        interpolateColor(v, cache[i]);
+      } else {
+        absoluteColor(v, cache[i]);
+      }
+    }
+  }
+}
+
+private int interpolateValue(int v1, int v2, float factor)
+{
+  if (v1 == v2) {
+    return v1;
+  }
+  return (v1 + (int)(factor * (v2 - v1)));
 }
 
 /**
@@ -823,12 +1009,13 @@ protected void buildCache()
  * @param v
  * @param color
  */
-final private void absoluteValue(final double v, final int[] color)
+final private void absoluteColor(final double v, final int[] color)
 {
   final double search;
   switch (scaling)
   {
   case Absolute:
+  case Quantile:
     search = v;
     break;
   case MinMax:
@@ -867,12 +1054,13 @@ final private void absoluteValue(final double v, final int[] color)
  * @param color
  * @return
  */
-final private void interpolateValue(final double v, final int[] color)
+final private void interpolateColor(final double v, final int[] color)
 {
   final double search;
   switch (scaling)
   {
   case Absolute:
+  case Quantile:
     search = v;
     break;
   case MinMax:
@@ -924,7 +1112,7 @@ final private void interpolateValue(final double v, final int[] color)
 
 public enum Scaling
 {
-  Absolute, MinMax, Modulo
+  Absolute, MinMax, Modulo, Quantile
 }
 
 public static class BadSourceException extends ColorScaleException

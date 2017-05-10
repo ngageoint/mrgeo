@@ -19,10 +19,7 @@ package org.mrgeo.mapalgebra;
 import junit.framework.Assert;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.Defs;
 import org.mrgeo.core.MrGeoConstants;
@@ -162,6 +159,12 @@ public void setup()
       .setProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, testUtils.getInputHdfs().toUri().toString());
   MrGeoProperties.getInstance()
       .setProperty(MrGeoConstants.MRGEO_HDFS_VECTOR, testUtils.getInputHdfs().toUri().toString());
+}
+
+@After
+public void teardown()
+{
+  MrGeoProperties.resetProperties();
 }
 
 @Test

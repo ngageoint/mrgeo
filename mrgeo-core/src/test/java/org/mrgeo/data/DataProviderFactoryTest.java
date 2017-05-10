@@ -36,8 +36,6 @@ import org.mrgeo.utils.HadoopUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 
 @SuppressWarnings("all") // test code, not included in production
@@ -49,9 +47,9 @@ private static String test_tsv;
 private static String test_tsv_filename = "test1.tsv";
 private static String test_tsv_columns_filename = test_tsv_filename + ".columns";
 private static String test_tsv_input = Defs.INPUT + test_tsv_filename;
-Map<String, String> oldConfValues = null;
-Map<String, String> oldPropValues = null;
-Map<String, String> oldMrGeoValues = null;
+//Map<String, String> oldConfValues = null;
+//Map<String, String> oldPropValues = null;
+//Map<String, String> oldMrGeoValues = null;
 private ProviderProperties providerProperties;
 
 @BeforeClass
@@ -617,17 +615,17 @@ public void testPreferredProviderFromDefault() throws Exception
 private void setupPreferred(Configuration conf, String confVal,
     String mrgeoVal, String defMrgeoVal)
 {
-
+  MrGeoProperties.resetProperties();
   if (conf != null)
   {
-    oldConfValues = new HashMap<>();
-
-    oldConfValues.put(DataProviderFactory.PREFERRED_ADHOC_PROVIDER_NAME,
-        conf.get(DataProviderFactory.PREFERRED_ADHOC_PROVIDER_NAME, null));
-    oldConfValues.put(DataProviderFactory.PREFERRED_MRSIMAGE_PROVIDER_NAME,
-        conf.get(DataProviderFactory.PREFERRED_MRSIMAGE_PROVIDER_NAME, null));
-    oldConfValues.put(DataProviderFactory.PREFERRED_VECTOR_PROVIDER_NAME,
-        conf.get(DataProviderFactory.PREFERRED_VECTOR_PROVIDER_NAME, null));
+//    oldConfValues = new HashMap<>();
+//
+//    oldConfValues.put(DataProviderFactory.PREFERRED_ADHOC_PROVIDER_NAME,
+//        conf.get(DataProviderFactory.PREFERRED_ADHOC_PROVIDER_NAME, null));
+//    oldConfValues.put(DataProviderFactory.PREFERRED_MRSIMAGE_PROVIDER_NAME,
+//        conf.get(DataProviderFactory.PREFERRED_MRSIMAGE_PROVIDER_NAME, null));
+//    oldConfValues.put(DataProviderFactory.PREFERRED_VECTOR_PROVIDER_NAME,
+//        conf.get(DataProviderFactory.PREFERRED_VECTOR_PROVIDER_NAME, null));
 
     if (confVal == null)
     {
@@ -645,16 +643,16 @@ private void setupPreferred(Configuration conf, String confVal,
 
   Properties mp = MrGeoProperties.getInstance();
 
-  oldMrGeoValues = new HashMap<>();
-
-  oldMrGeoValues.put(DataProviderFactory.PREFERRED_ADHOC_PROPERTYNAME,
-      mp.getProperty(DataProviderFactory.PREFERRED_ADHOC_PROPERTYNAME, null));
-  oldMrGeoValues.put(DataProviderFactory.PREFERRED_MRSIMAGE_PROPERTYNAME,
-      mp.getProperty(DataProviderFactory.PREFERRED_MRSIMAGE_PROPERTYNAME, null));
-  oldMrGeoValues.put(DataProviderFactory.PREFERRED_VECTOR_PROPERTYNAME,
-      mp.getProperty(DataProviderFactory.PREFERRED_VECTOR_PROPERTYNAME, null));
-  oldMrGeoValues.put(DataProviderFactory.PREFERRED_PROPERTYNAME,
-      mp.getProperty(DataProviderFactory.PREFERRED_PROPERTYNAME, null));
+//  oldMrGeoValues = new HashMap<>();
+//
+//  oldMrGeoValues.put(DataProviderFactory.PREFERRED_ADHOC_PROPERTYNAME,
+//      mp.getProperty(DataProviderFactory.PREFERRED_ADHOC_PROPERTYNAME, null));
+//  oldMrGeoValues.put(DataProviderFactory.PREFERRED_MRSIMAGE_PROPERTYNAME,
+//      mp.getProperty(DataProviderFactory.PREFERRED_MRSIMAGE_PROPERTYNAME, null));
+//  oldMrGeoValues.put(DataProviderFactory.PREFERRED_VECTOR_PROPERTYNAME,
+//      mp.getProperty(DataProviderFactory.PREFERRED_VECTOR_PROPERTYNAME, null));
+//  oldMrGeoValues.put(DataProviderFactory.PREFERRED_PROPERTYNAME,
+//      mp.getProperty(DataProviderFactory.PREFERRED_PROPERTYNAME, null));
 
   if (mrgeoVal == null)
   {
@@ -682,36 +680,37 @@ private void setupPreferred(Configuration conf, String confVal,
 
 private void teardownPreferred(Configuration conf)
 {
-  if (conf != null && oldConfValues != null)
-  {
-    for (Map.Entry<String, String> val : oldConfValues.entrySet())
-    {
-      if (val.getValue() == null)
-      {
-        conf.unset(val.getKey());
-      }
-      else
-      {
-        conf.set(val.getKey(), val.getValue());
-      }
-    }
-  }
-
-  if (oldMrGeoValues != null)
-  {
-    Properties mp = MrGeoProperties.getInstance();
-    for (Map.Entry<String, String> val : oldMrGeoValues.entrySet())
-    {
-      if (val.getValue() == null)
-      {
-        mp.remove(val.getKey());
-      }
-      else
-      {
-        mp.setProperty(val.getKey(), val.getValue());
-      }
-    }
-  }
+  MrGeoProperties.resetProperties();
+//  if (conf != null && oldConfValues != null)
+//  {
+//    for (Map.Entry<String, String> val : oldConfValues.entrySet())
+//    {
+//      if (val.getValue() == null)
+//      {
+//        conf.unset(val.getKey());
+//      }
+//      else
+//      {
+//        conf.set(val.getKey(), val.getValue());
+//      }
+//    }
+//  }
+//
+//  if (oldMrGeoValues != null)
+//  {
+//    Properties mp = MrGeoProperties.getInstance();
+//    for (Map.Entry<String, String> val : oldMrGeoValues.entrySet())
+//    {
+//      if (val.getValue() == null)
+//      {
+//        mp.remove(val.getKey());
+//      }
+//      else
+//      {
+//        mp.setProperty(val.getKey(), val.getValue());
+//      }
+//    }
+//  }
 }
 
 }

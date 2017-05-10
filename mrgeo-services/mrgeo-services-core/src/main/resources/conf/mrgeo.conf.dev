@@ -74,7 +74,7 @@ shuffle.fraction=0.5
 # Either hadoop.params with -libjars and the path to <giraph-with-dependencies>,
 # or zooservers pointing to existing zookeeper host/port(s) need to be set
 #zooservers=host1:port1,host2:port2,host3:port3
-hadoop.params=-libjars /home/<user>/.m2/repository/org/apache/giraph/giraph-core/1.0.0/giraph-core-1.0.0.jar
+#hadoop.params=-libjars /home/<user>/.m2/repository/org/apache/giraph/giraph-core/1.0.0/giraph-core-1.0.0.jar
 
 # Modify this to match your server config. You may need to change the port, etc.  Do not remove
 # the trailing forward slash.
