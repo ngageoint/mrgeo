@@ -102,6 +102,7 @@ class MrGeoYarnDriver {
     args += "--jar"
     args += driverJar
 
+
     // if dynamic allocation is _not_ enabled, we need to set the num-executors
     if (!conf.getBoolean("spark.dynamicAllocation.enabled", defaultValue = false)) {
       //val executors = conf.get("spark.executor.instances", "2").toInt
@@ -110,7 +111,7 @@ class MrGeoYarnDriver {
       conf.set("spark.executor.instances", job.executors.toString)
       conf.set("spark.executor.cores", job.cores.toString)
       args += "--num-executors"
-      //args += executors.toString
+
       args += job.executors.toString
     }
     args += "--executor-cores"
@@ -118,9 +119,10 @@ class MrGeoYarnDriver {
 
     // spark.executor.memory is the total memory available to spark,
     // --executor-memory is the memory per executor.  Go figure...
-    conf.set("spark.executor.memory", SparkUtils.kbtohuman(job.memoryKb, "m"))
-    args += "--executor-memory"
-    args += SparkUtils.kbtohuman(job.executorMemKb, "m")
+    //conf.set("spark.executor.memory", SparkUtils.kbtohuman(job.memoryKb, "m"))
+    conf.set("spark.executor.memory", SparkUtils.kbtohuman(job.executorMemKb, "m"))
+    //args += "--executor-memory"
+    //args += SparkUtils.kbtohuman(job.executorMemKb, "m")
 
     args += "--driver-cores"
     args += "1"
