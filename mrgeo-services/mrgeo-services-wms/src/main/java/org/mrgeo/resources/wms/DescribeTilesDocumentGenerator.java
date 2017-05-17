@@ -164,7 +164,6 @@ private void addLayersToDescribeTiles(Element dt, Version version,
         ColorScale[] scales = ColorScaleManager.getColorScaleList();
         for (ColorScale scale : scales)
         {
-          System.out.println(scale.getName());
           XmlUtils.createTextElement2(styles, "Value", scale.getName());
         }
       }
