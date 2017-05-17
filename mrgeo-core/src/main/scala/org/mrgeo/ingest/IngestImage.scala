@@ -507,149 +507,149 @@ object IngestImage extends MrGeoDriver with Externalizable {
 
     // open the image
     try {
-      val src = GDALUtils.open(image)
+      var src = GDALUtils.open(image)
 
       if (src != null) {
+        val datatype = src.GetRasterBand(1).getDataType
+        val datasize = gdal.GetDataTypeSize(datatype) / 8
+
+        val bands = src.GetRasterCount()
+        actualNoData = Array.ofDim[Double](bands)
+        // The number of nodata values has to match the number of bands in the source image or
+        // there can be only one nodata value in which case it will be used for all the bands
+        if (nodata.length == 1) {
+          for (i <- 0 until bands) {
+            actualNoData(i) = nodata(0)
+          }
+        }
+        else if (nodata.length < bands) {
+          throw new Exception(f"There are too few nodata values (${
+            nodata.length
+          }) compared to the number of bands in $image%s ($bands%d)")
+        }
+        else {
+          log.warn(f"There are more nodata values (${nodata.length}) than bands ($bands) in $image%s")
+          for (i <- 0 until bands) {
+            actualNoData(i) = nodata(i)
+          }
+        }
+
+        // force the nodata values...
+        for (i <- 1 to bands) {
+          val band = src.GetRasterBand(i)
+          band.SetNoDataValue(actualNoData(i - 1))
+        }
+
+        val imageBounds = GDALUtils.getBounds(src)
+        val tiles = TMSUtils.boundsToTile(imageBounds, zoom, tilesize)
+        val tileBounds = TMSUtils.tileBounds(imageBounds, zoom, tilesize)
+
+        val w = tiles.width() * tilesize
+        val h = tiles.height() * tilesize
+
+        val res = TMSUtils.resolution(zoom, tilesize)
+
+        //val scaledsize = w * h * bands * datasize
+
+        if (log.isDebugEnabled) {
+          logDebug("Image info:  " + image)
+          logDebug("  bands:  " + bands)
+          logDebug("  data type:  " + datatype)
+          logDebug("  width:  " + src.getRasterXSize)
+          logDebug("  height:  " + src.getRasterYSize)
+          logDebug("  bounds:  " + imageBounds)
+          logDebug("  tiles:  " + tiles)
+          logDebug("  tile width:  " + w)
+          logDebug("  tile height:  " + h)
+        }
+
+        val scaled = GDALUtils.createEmptyDiskBasedRaster(src, w.toInt, h.toInt)
+
+        if (scaled == null) {
+          throw new java.lang.OutOfMemoryError(
+            s"Not enough system memory available to create a memory-based image of size $w x $h with $bands bands for reprojecting $image to WGS84 at zoom $zoom")
+        }
+
         try {
-          val datatype = src.GetRasterBand(1).getDataType
-          val datasize = gdal.GetDataTypeSize(datatype) / 8
+          val xform = Array.ofDim[Double](6)
 
-          val bands = src.GetRasterCount()
-          actualNoData = Array.ofDim[Double](bands)
-          // The number of nodata values has to match the number of bands in the source image or
-          // there can be only one nodata value in which case it will be used for all the bands
-          if (nodata.length == 1) {
-            for (i <- 0 until bands) {
-              actualNoData(i) = nodata(0)
+          xform(0) = tileBounds.w /* top left x */
+          xform(1) = res /* w-e pixel resolution */
+          xform(2) = 0 /* 0 */
+          xform(3) = tileBounds.n /* top left y */
+          xform(4) = 0 /* 0 */
+          xform(5) = -res /* n-s pixel resolution (negative value) */
+
+          scaled.SetGeoTransform(xform)
+          scaled.SetProjection(GDALUtils.EPSG4326)
+
+
+          val resample =
+            if (categorical) {
+              // use gdalconstConstants.GRA_Mode for categorical, which may not exist in earlier versions of gdal,
+              // in which case we will use GRA_NearestNeighbour
+              try {
+                val mode = classOf[gdalconstConstants].getDeclaredField("GRA_Mode")
+                mode.getInt()
+              }
+              catch {
+                case _:RuntimeException | _:Exception => gdalconstConstants.GRA_NearestNeighbour
+              }
             }
-          }
-          else if (nodata.length < bands) {
-            throw new Exception(f"There are too few nodata values (${
-              nodata.length
-            }) compared to the number of bands in $image%s ($bands%d)")
-          }
-          else {
-            log.warn(f"There are more nodata values (${nodata.length}) than bands ($bands) in $image%s")
-            for (i <- 0 until bands) {
-              actualNoData(i) = nodata(i)
+            else {
+              gdalconstConstants.GRA_Bilinear
             }
-          }
-
-          // force the nodata values...
-          for (i <- 1 to bands) {
-            val band = src.GetRasterBand(i)
-            band.SetNoDataValue(actualNoData(i - 1))
-          }
-
-          val imageBounds = GDALUtils.getBounds(src)
-          val tiles = TMSUtils.boundsToTile(imageBounds, zoom, tilesize)
-          val tileBounds = TMSUtils.tileBounds(imageBounds, zoom, tilesize)
-
-          val w = tiles.width() * tilesize
-          val h = tiles.height() * tilesize
-
-          val res = TMSUtils.resolution(zoom, tilesize)
-
-          //val scaledsize = w * h * bands * datasize
-
-          if (log.isDebugEnabled) {
-            logDebug("Image info:  " + image)
-            logDebug("  bands:  " + bands)
-            logDebug("  data type:  " + datatype)
-            logDebug("  width:  " + src.getRasterXSize)
-            logDebug("  height:  " + src.getRasterYSize)
-            logDebug("  bounds:  " + imageBounds)
-            logDebug("  tiles:  " + tiles)
-            logDebug("  tile width:  " + w)
-            logDebug("  tile height:  " + h)
-          }
-
-          val scaled = GDALUtils.createEmptyDiskBasedRaster(src, w.toInt, h.toInt)
-
-          if (scaled == null) {
-            throw new java.lang.OutOfMemoryError(
-              s"Not enough system memory available to create a memory-based image of size $w x $h with $bands bands for reprojecting $image to WGS84 at zoom $zoom")
-          }
 
           try {
-            val xform = Array.ofDim[Double](6)
-
-            xform(0) = tileBounds.w /* top left x */
-            xform(1) = res /* w-e pixel resolution */
-            xform(2) = 0 /* 0 */
-            xform(3) = tileBounds.n /* top left y */
-            xform(4) = 0 /* 0 */
-            xform(5) = -res /* n-s pixel resolution (negative value) */
-
-            scaled.SetGeoTransform(xform)
-            scaled.SetProjection(GDALUtils.EPSG4326)
-
-
-            val resample =
-              if (categorical) {
-                // use gdalconstConstants.GRA_Mode for categorical, which may not exist in earlier versions of gdal,
-                // in which case we will use GRA_NearestNeighbour
-                try {
-                  val mode = classOf[gdalconstConstants].getDeclaredField("GRA_Mode")
-                  mode.getInt()
-                }
-                catch {
-                  case _:RuntimeException | _:Exception => gdalconstConstants.GRA_NearestNeighbour
-                }
-              }
-              else {
-                gdalconstConstants.GRA_Bilinear
-              }
-
             gdal.ReprojectImage(src, scaled, src.GetProjection(), GDALUtils.EPSG4326, resample)
-
-            //    val time = System.currentTimeMillis() - start
-            //    println("scale: " + time)
-
-            //    val band = scaled.GetRasterBand(1)
-            //    val minmax = Array.ofDim[Double](2)
-            //    band.ComputeRasterMinMax(minmax, 0)
-
-            //GDALUtils.saveRaster(scaled, "/data/export/scaled.tif")
-
-            var dty:Int = 0
-            while (dty < tiles.height.toInt) {
-              var dtx:Int = 0
-              while (dtx < tiles.width.toInt) {
-
-                val tx:Long = dtx + tiles.w
-                val ty:Long = tiles.n - dty
-
-                val x:Int = dtx * tilesize
-                val y:Int = dty * tilesize
-
-                //val start = System.currentTimeMillis()
-                val raster = MrGeoRaster.fromDataset(scaled, x, y, tilesize, tilesize)
-
-                val writable = RasterWritable.toWritable(raster)
-
-                // save the tile...
-                //        GDALUtils.saveRaster(RasterWritable.toRaster(writable),
-                //          "/data/export/tiles/tile-" + ty + "-" + tx, tx, ty, zoom, tilesize, GDALUtils.getnodata(scaled))
-
-                result.append((new TileIdWritable(TMSUtils.tileid(tx, ty, zoom)), writable))
-
-
-                //val time = System.currentTimeMillis() - start
-                //println(tx + ", " + ty + ", " + time)
-                dtx += 1
-              }
-              dty += 1
-            }
           }
           finally {
-            GDALUtils.delete(scaled)
+            // close the image
+            GDALUtils.close(src)
+            src = null;
           }
 
+          //    val time = System.currentTimeMillis() - start
+          //    println("scale: " + time)
+
+          //    val band = scaled.GetRasterBand(1)
+          //    val minmax = Array.ofDim[Double](2)
+          //    band.ComputeRasterMinMax(minmax, 0)
+
+          //GDALUtils.saveRaster(scaled, "/data/export/scaled.tif")
+
+          var dty:Int = 0
+          while (dty < tiles.height.toInt) {
+            var dtx:Int = 0
+            while (dtx < tiles.width.toInt) {
+
+              val tx:Long = dtx + tiles.w
+              val ty:Long = tiles.n - dty
+
+              val x:Int = dtx * tilesize
+              val y:Int = dty * tilesize
+
+              //val start = System.currentTimeMillis()
+              val raster = MrGeoRaster.fromDataset(scaled, x, y, tilesize, tilesize)
+
+              val writable = RasterWritable.toWritable(raster)
+
+              // save the tile...
+              //        GDALUtils.saveRaster(RasterWritable.toRaster(writable),
+              //          "/data/export/tiles/tile-" + ty + "-" + tx, tx, ty, zoom, tilesize, GDALUtils.getnodata(scaled))
+
+              result.append((new TileIdWritable(TMSUtils.tileid(tx, ty, zoom)), writable))
+
+
+              //val time = System.currentTimeMillis() - start
+              //println(tx + ", " + ty + ", " + time)
+              dtx += 1
+            }
+            dty += 1
+          }
         }
         finally {
-          // close the image
-          GDALUtils.close(src)
+          GDALUtils.delete(scaled)
         }
       }
       else {
