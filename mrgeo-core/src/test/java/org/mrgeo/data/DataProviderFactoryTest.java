@@ -601,13 +601,16 @@ public void testPreferredProviderFromDefMrGeoProp() throws Exception
 public void testPreferredProviderFromDefault() throws Exception
 {
   String hdfs = "hdfs";
+  String pg = "pg";
 
   setupPreferred(conf, null, null, null);
   DataProviderFactory.initialize(conf);
 
   Assert.assertEquals("Bad adhoc preferred provider!", hdfs, DataProviderFactory.preferredAdHocProviderName);
   Assert.assertEquals("Bad image preferred provider!", hdfs, DataProviderFactory.preferredImageProviderName);
-  Assert.assertEquals("Bad vector preferred provider!", hdfs, DataProviderFactory.preferredVectorProviderName);
+  Assert.assertNotNull("Expected a default vector preferred provider", DataProviderFactory.preferredVectorProviderName);
+  boolean vectorMatch = (DataProviderFactory.preferredVectorProviderName.equals(hdfs) || DataProviderFactory.preferredVectorProviderName.equals(pg));
+  Assert.assertTrue("Bad vector preferred provider!", vectorMatch);
 
   teardownPreferred(conf);
 }

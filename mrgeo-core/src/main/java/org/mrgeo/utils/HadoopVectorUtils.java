@@ -24,7 +24,6 @@ import org.apache.hadoop.util.GenericOptionsParser;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.image.MrsPyramidMetadata;
-import org.mrgeo.mapalgebra.vector.PgQueryInputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -325,15 +324,6 @@ public static void setupLocalRunner(final Configuration config) throws IOExcepti
   config.setInt("mapreduce.local.reduce.tasks.maximum", 1);
 }
 
-
-public static void setupPgQueryInputFormat(final Job job, final String username,
-    final String password, final String dbconnection)
-{
-  final Configuration conf = job.getConfiguration();
-  conf.set(PgQueryInputFormat.USERNAME, username);
-  conf.set(PgQueryInputFormat.PASSWORD, password);
-  conf.set(PgQueryInputFormat.DBCONNECTION, dbconnection);
-}
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled
 private static void loadJobContextClass()
