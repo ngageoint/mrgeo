@@ -53,7 +53,7 @@ public class PgVectorDataProvider extends VectorDataProvider
   @Override
   public VectorMetadataReader getMetadataReader()
   {
-    return null;
+    return new PgVectorMetadataReader(this);
   }
 
   @Override
@@ -120,6 +120,11 @@ public class PgVectorDataProvider extends VectorDataProvider
   public void move(String toResource) throws IOException
   {
     // Not yet implemented
+  }
+
+  PgDbSettings parseResourceName() throws IOException
+  {
+    return parseResourceName(getResourceName());
   }
 
   /**

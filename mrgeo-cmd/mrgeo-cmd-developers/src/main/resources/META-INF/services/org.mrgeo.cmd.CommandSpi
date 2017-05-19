@@ -20,3 +20,4 @@ org.mrgeo.cmd.printsplitfile.PrintSplitFileSpi
 org.mrgeo.cmd.showconfiguration.ShowConfigurationSpi
 org.mrgeo.cmd.stats.CalculateStatsSpi
 org.mrgeo.cmd.colorscale.AddColorscaleSpi
+org.mrgeo.cmd.vectorinfo.VectorInfoSpi

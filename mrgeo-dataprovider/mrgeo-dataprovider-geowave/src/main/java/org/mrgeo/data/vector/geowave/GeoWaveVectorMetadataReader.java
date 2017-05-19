@@ -23,7 +23,7 @@ import java.io.IOException;
 
 public class GeoWaveVectorMetadataReader implements VectorMetadataReader
 {
-private static Logger log = LoggerFactory.getLogger(VectorMetadataReader.class);
+private static Logger log = LoggerFactory.getLogger(GeoWaveVectorMetadataReader.class);
 private VectorMetadata metadata;
 private GeoWaveVectorDataProvider dataProvider;
 private FeatureDataAdapter adapter;
@@ -69,7 +69,6 @@ public VectorMetadata read() throws IOException
 @Override
 public VectorMetadata reload() throws IOException
 {
-  // TODO Auto-generated method stub.
   // For MrsImage, this method was used to keep existing instances of
   // metadata updated with the current values after a new metadata is
   // written. There might be an easier way to accomplish that? The writer
