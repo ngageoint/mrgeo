@@ -203,7 +203,6 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     val splitfeaturescnt = splitfeatures.count()
     val maxSize = sizeAccumulator.value
     log.info("Max geometry serialized size is " + maxSize)
-    println("Max geometry serialized size is " + maxSize)
     // The divide by 2 is not scientific. It simply doubles the number of partitions
     // which, during testing, significatnly improved performance.
     //val geomsPerPartition = Integer.MAX_VALUE / maxSize / 8
@@ -215,9 +214,7 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     val geomsPerPartition = blocksize / maxSize
 
     log.info("Can fit " + geomsPerPartition + " geometries in a partition")
-    println("Can fit " + geomsPerPartition + " geometries in a partition")
     val splitpartitions = (splitfeaturescnt / geomsPerPartition).toInt + 1
-    println("Using " + splitpartitions + " partitions for raw vectors")
     log.info("Using " + splitpartitions + " partitions for RasterizeVector")
 
 
@@ -242,7 +239,6 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     // The divide by 2 is not scientific. It simply doubles the number of partitions
     // which, during testing, significatnly improved performance.
     val partitions = (count / geomsPerPartition).toInt + 1
-    println("Using " + partitions + " partitions for tile/vector pairs")
     log.info("Using " + partitions + " partitions for RasterizeVector")
 
     tilefeatures.repartition(partitions)

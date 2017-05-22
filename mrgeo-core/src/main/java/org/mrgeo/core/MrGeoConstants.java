@@ -114,6 +114,11 @@ public static final String MRGEO_PROTECTION_LEVEL = "protectionLevel";
 public static final String MRGEO_WCS_CAPABILITIES_CACHE = "wcs.capabilities.cache";
 public static final String MRGEO_WCS_CAPABILITIES_REFRESH = "wcs.capabilities.refresh";
 
+/*
+ * Postgres keys
+ */
+public static final String MRGEO_POSTGRES_PARTITION_RECORDS = "mrgeo.postgres.partition.records";
+
 /**
  * The default constructor for the class is private.  Additionally,
  * nothing can instantiate this class.
