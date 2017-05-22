@@ -59,28 +59,42 @@ public class PgVectorMetadataReader implements VectorMetadataReader
           for (int c=1; c < dbMetadata.getColumnCount(); c++) {
             metadata.addAttribute(dbMetadata.getColumnLabel(c));
           }
-
-          Bounds bounds = null;
-          WKTReader wktReader = new WKTReader();
-          while (rs.next()) {
-            String wkt = rs.getString(dbSettings.getGeomColumnLabel());
+        }
+      }
+      // Now get the minimum bounding rectangle
+      String mbrQuery = dbSettings.getMBRQuery();
+      if (mbrQuery == null || mbrQuery.isEmpty()) {
+        // Look for the first occurrence of SELECT ... FROM and replace it with
+        // SELECT ST_AsText(ST_Extent(geom)) FROM. Make sure to match case insensitively,
+        // but the non-replaced portion of the string must retain its case (hence the
+        // use of (?i) to inline the case insensitive match).
+        mbrQuery = dbSettings.getQuery().replaceFirst("(?i)SELECT .* FROM",
+                "SELECT ST_AsText(ST_Extent(" + dbSettings.getGeomColumnLabel() + ")) FROM");
+      }
+      try (Statement st = conn.prepareStatement(mbrQuery,
+              ResultSet.TYPE_FORWARD_ONLY,
+              ResultSet.CONCUR_READ_ONLY)) {
+        try (ResultSet rs = ((PreparedStatement) st).executeQuery()) {
+          if (rs.next()) {
+            String mbrWkt = rs.getString(1);
+            WKTReader wktReader = new WKTReader();
+            Geometry geom = null;
             try {
-              Geometry geom = GeometryFactory.fromJTS(wktReader.read(wkt));
-              Bounds geomBounds = geom.getBounds();
-              if (bounds == null) {
-                bounds = geomBounds;
+              geom = GeometryFactory.fromJTS(wktReader.read(mbrWkt));
+              if (geom != null) {
+                Bounds mbr = geom.getBounds();
+                metadata.setBounds(mbr);
               }
               else {
-                bounds = bounds.expand(geomBounds);
+                log.warn("Unable to convert WKT returned from Postgres to MrGeo geometry: " + mbrWkt);
               }
             } catch (ParseException e) {
-              log.warn("Unable to convert WKT to geometry from " + wkt);
+              log.warn("Unable to parse WKT returned form Postgres: " + mbrWkt);
             }
           }
-          metadata.setBounds(bounds);
-          return metadata;
         }
       }
     }
+    return metadata;
   }
 }

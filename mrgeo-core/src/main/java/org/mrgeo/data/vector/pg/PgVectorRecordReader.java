@@ -77,19 +77,19 @@ public class PgVectorRecordReader extends RecordReader<FeatureIdWritable, Geomet
     }
     try {
       if (rs.next()) {
-        String wkt = rs.getString(dbSettings.getGeomColumnLabel());
+        String wkt = rs.getString(dbSettings.getWktColumnLabel());
         try {
           currGeom = GeometryFactory.fromJTS(wktReader.read(wkt));
           for (int c=1; c <= columnCount; c++) {
             String columnLabel = columnLabels[c-1];
-            if (!columnLabel.equals(dbSettings.getGeomColumnLabel())) {
+            if (!columnLabel.equals(dbSettings.getWktColumnLabel())) {
               currGeom.setAttribute(columnLabel, rs.getString(c));
             }
           }
           currIndex++;
           return true;
         } catch (ParseException e) {
-          throw new IOException("Unable to parse WKT from column " + dbSettings.getGeomColumnLabel() + " with value " + wkt);
+          throw new IOException("Unable to parse WKT from column " + dbSettings.getWktColumnLabel() + " with value " + wkt);
         }
       }
     }

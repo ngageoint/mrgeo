@@ -176,12 +176,26 @@ public class PgVectorDataProvider extends VectorDataProvider
       countQuery = settings.get("countQuery");
     }
 
-    String geomColumnLabel;
+    String mbrQuery = null;
+    if (settings.containsKey("mbrQuery")) {
+      mbrQuery = settings.get("mbrQuery");
+    }
+
+    String geomColumnLabel = null;
     if (settings.containsKey("geometryField")) {
       geomColumnLabel = settings.get("geometryField");
     }
+
+    String wktColumnLabel;
+    if (settings.containsKey("wktField")) {
+      wktColumnLabel = settings.get("wktField");
+    }
     else {
-      throw new IOException("Missing expected geometryField setting");
+      throw new IOException("Missing expected wktField setting");
+    }
+
+    if (mbrQuery == null && geomColumnLabel == null) {
+      throw new IOException("You must specify either mbrQuery or geometryField");
     }
 
     String ssl;
@@ -192,6 +206,6 @@ public class PgVectorDataProvider extends VectorDataProvider
       throw new IOException("Missing expected ssl setting");
     }
     return new PgDbSettings(url, username, password, query, countQuery,
-            geomColumnLabel, ssl);
+            mbrQuery, geomColumnLabel, wktColumnLabel, ssl);
   }
 }
