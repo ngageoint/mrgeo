@@ -952,6 +952,12 @@ private static VectorDataProvider getVectorDataProvider(final String name,
     {
       throw (DataProviderNotFound) e.getCause();
     }
+    // We need to report other exceptions that come up because the problem is
+    // not just that the data provider is not found.
+    if (e.getCause() != null) {
+      log.error(e.getCause().getMessage() +
+              " - Unable to load the vector data source " + name);
+    }
     throw new DataProviderNotFound(e);
   }
 }
