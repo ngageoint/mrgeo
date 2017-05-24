@@ -144,6 +144,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     }
     val frictionMeta = inputFriction.metadata() getOrElse
                        (throw new IOException("Can't load metadata! Ouch! " + inputFriction.getClass.getName))
+    val frictionNoDatas = frictionMeta.getDefaultValuesFloat
 
     val zoom = frictionZoom match {
       case Some(z) =>
@@ -209,7 +210,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
 
     // Create a hash map lookup where the key is the tile id and the value is
     // the set of source (starting) pixels in that tile.
-    val startPts = mutable.Map.empty[Long, mutable.Set[Pixel]]
+    val startPts = mutable.Map.empty[Long, mutable.Set[(Pixel, Point)]]
 
     sourcePointsRDD.map(startGeom => {
       if (startGeom == null || startGeom._2 == null || !startGeom._2.isInstanceOf[Point]) {
@@ -223,10 +224,10 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
 
       val startPixel = TMSUtils.latLonToTilePixelUL(startPt.getY.toFloat, startPt.getX.toFloat, tile.tx, tile.ty,
         zoom, tilesize)
-      (startTileId, startPixel)
+      (startTileId, (startPixel, startPt))
     }).collect().foreach(pixel => {
       if (!startPts.contains(pixel._1)) {
-        startPts.put(pixel._1, mutable.Set.empty[Pixel])
+        startPts.put(pixel._1, mutable.Set.empty[(Pixel, Point)])
       }
       startPts.get(pixel._1).get += pixel._2
     })
@@ -259,7 +260,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
 
 
     var costs = makeRasters(repartitioned)
-    var changes = buildInitialPoints(costs, startPts, context, pixelSizeMeters)
+    var changes = buildInitialPoints(costs, frictionNoDatas, startPts, context, pixelSizeMeters)
 
     // Force the RDD to materialize
     costs.count()
@@ -300,7 +301,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
           val raster = RasterWritable.toMrGeoRaster(tile._2)
 
 //          val t1 = System.currentTimeMillis()
-          processTile(tileid, raster, tileChanges, changesAccum, zoom, pixelSizeMeters, tileBounds)
+          processTile(tileid, raster, frictionNoDatas, tileChanges, changesAccum, zoom, pixelSizeMeters, tileBounds)
 //          logError("Time for processTile on " + tileid + " is " + (System.currentTimeMillis() - t1))
 
           (tile._1, RasterWritable.toWritable(raster))
@@ -411,8 +412,18 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
       Math.min(trExpanded.getLat, imageBounds.n))
   }
 
+  def isNoData(value: Float, nodataValue: Float): Boolean = {
+    if (nodataValue.isNaN) {
+      return value.isNaN;
+    }
+    else {
+      return value == nodataValue;
+    }
+  }
+
   def processTile(tileid:Long,
                   raster:MrGeoRaster,
+                  frictionNoData: Array[Float],
                   changes:List[CostPoint],
                   changesAccum:Accumulator[NeighborChangedPoints],
                   zoom:Int,
@@ -466,23 +477,25 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
       !newcost.isNaN && (oldcost.isNaN || newcost < (oldcost - 1e-7)) // Allow for floating point math inaccuracy
     }
 
-    def calculateCostPoint(px:Int, py:Int, direction:Int, cost:Float) = {
+    def calculateCostPoint(px:Int, py:Int, direction:Int, cost:Float): Option[CostPoint] = {
       val (diag, dist) = direction match {
         case UP | LEFT | DOWN | RIGHT => (false, pixelsize)
         case _ => (true, pixelsizediag)
       }
 
-      val friction = if (multiband) {
-        raster.getPixelFloat(px, py, neighborData(direction).multibandNdx)
-      }
-      else {
-        raster.getPixelFloat(px, py, 0)
-      }
       val pixelcost = if (multiband) {
-        friction * dist
+        val f = raster.getPixelFloat(px, py, neighborData(direction).multibandNdx)
+        if (isNoData(f, frictionNoData(neighborData(direction).multibandNdx))) {
+          return None
+        }
+        f * dist
       }
       else {
-        friction * dist * 0.5f
+        val f = raster.getPixelFloat(px, py, 0)
+        if (isNoData(f, frictionNoData(0))) {
+          return None
+        }
+        f * dist * 0.5f
       }
 
       var x = px + neighborData(direction).dx
@@ -501,7 +514,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
         y = height - y
       }
 
-      new CostPoint(x.toShort, y.toShort, cost, pixelcost, diag)
+      Some(new CostPoint(x.toShort, y.toShort, cost, pixelcost, diag))
     }
 
 
@@ -536,20 +549,28 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
 
       // in the single band friction, the edge point (point.pixelCost) has 1/2 the total cost,
       // calculate the rest.  Add the other part...
-      if (!multiband) {
-        val friction = raster.getPixelFloat(pt.px, pt.py, 0)
-        pt.pixelCost += (friction * (if (pt.diagonal) {
-          pixelsizediag
+      if (multiband) {
+        val newCost = pt.cost + pt.pixelCost
+
+        if (isSmallerMaxCost(newCost, currentCost)) {
+          queue.add(pt)
         }
-        else {
-          pixelsize
-        }) * 0.5f)
       }
+      else {
+        val friction = raster.getPixelFloat(pt.px, pt.py, 0)
+        if (!isNoData(friction, frictionNoData(0))) {
+          pt.pixelCost += (friction * (if (pt.diagonal) {
+            pixelsizediag
+          }
+          else {
+            pixelsize
+          }) * 0.5f)
+          val newCost = pt.cost + pt.pixelCost
 
-      val newCost = pt.cost + pt.pixelCost
-
-      if (isSmallerMaxCost(newCost, currentCost)) {
-        queue.add(pt)
+          if (isSmallerMaxCost(newCost, currentCost)) {
+            queue.add(pt)
+          }
+        }
       }
     })
 
@@ -622,43 +643,58 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
             // compute the new cost to the neighbor
             val friction = if (multiband) {
               // multiband friction
-              raster.getPixelFloat(point.px, point.py, direction.multibandNdx)
+              val f = raster.getPixelFloat(point.px, point.py, direction.multibandNdx)
+              if (isNoData(f, frictionNoData(direction.multibandNdx))) {
+                None
+              }
+              else {
+                Some(f)
+              }
             }
             else {
-              (raster.getPixelFloat(point.px, point.py, 0) +
-               raster.getPixelFloat(pxNeighbor, pyNeighbor, 0)) * 0.5f
+              val neighborFriction = raster.getPixelFloat(pxNeighbor, pyNeighbor, 0)
+              if (isNoData(neighborFriction, frictionNoData(0))) {
+                None
+              }
+              else {
+                Some((raster.getPixelFloat(point.px, point.py, 0) +
+                  neighborFriction) * 0.5f)
+              }
             }
 
-            if (!friction.isNaN) {
-              val currentNeighborCost = raster.getPixelFloat(pxNeighbor, pyNeighbor, costBand)
-              val pixelCost = friction * direction.dist
-              val neighborCost = newCost + pixelCost
+            friction match {
+              case Some(f) => {
+                val currentNeighborCost = raster.getPixelFloat(pxNeighbor, pyNeighbor, costBand)
+                val pixelCost = f * direction.dist
+                val neighborCost = newCost + pixelCost
 
-              if (isSmallerMaxCost(neighborCost, currentNeighborCost)) {
-                // the costpoint contains the current friction and cost to get to the neighbor
-                val neighborPoint = {
-                  if (costPointPool.isEmpty) {
-//                    newCount += 1
-                    new CostPoint(pxNeighbor, pyNeighbor, newCost, pixelCost)
+                if (isSmallerMaxCost(neighborCost, currentNeighborCost)) {
+                  // the costpoint contains the current friction and cost to get to the neighbor
+                  val neighborPoint = {
+                    if (costPointPool.isEmpty) {
+                      //                    newCount += 1
+                      new CostPoint(pxNeighbor, pyNeighbor, newCost, pixelCost)
+                    }
+                    else {
+                      //                    reuseCount += 1
+                      val cp = costPointPool.dequeue()
+                      cp.px = pxNeighbor
+                      cp.py = pyNeighbor
+                      cp.cost = newCost
+                      cp.pixelCost = pixelCost
+                      cp.diagonal = false
+                      cp
+                    }
                   }
-                  else {
-//                    reuseCount += 1
-                    val cp = costPointPool.dequeue()
-                    cp.px = pxNeighbor
-                    cp.py = pyNeighbor
-                    cp.cost = newCost
-                    cp.pixelCost = pixelCost
-                    cp.diagonal = false
-                    cp
-                  }
+
+                  t0 = System.nanoTime()
+
+                  queue.add(neighborPoint)
+
+                  totalEnqueue = totalEnqueue + (System.nanoTime() - t0)
                 }
-
-                t0 = System.nanoTime()
-
-                queue.add(neighborPoint)
-
-                totalEnqueue = totalEnqueue + (System.nanoTime() - t0)
               }
+              case None => // do nothing
             }
           }
           neighbor += 1
@@ -687,7 +723,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
       val currentTopCost = raster.getPixelFloat(px, 0, costBand)
       val oldTopCost = origTopEdgeValues(px)
 
-      if (isSmaller(currentTopCost, oldTopCost)) {
+      if (isSmaller(currentTopComst, oldTopCost)) {
 
         // look at the top of the tile for changes (ignore if top of image)
         if (tile.ty < tileBounds.n) {
@@ -697,19 +733,34 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
 
           // if leftmost pixel (corner, x = 0), so the left goes to the upper left tile
           if (px == 0) {
-            edgePoints.add(neighborTileIds(UP_LEFT), l)
+            l match {
+              case Some(lval) => edgePoints.add(neighborTileIds(UP_LEFT), lval)
+              case None => // do nothing
+            }
           }
           else {
-            edgePoints.add(neighborTileIds(UP), l)
+            l match {
+              case Some(lval) => edgePoints.add(neighborTileIds(UP), lval)
+              case None => // do nothing
+            }
           }
-          edgePoints.add(neighborTileIds(UP), c)
+          c match {
+            case Some(cval) => edgePoints.add(neighborTileIds(UP), cval)
+            case None => // do nothing
+          }
 
           // if rightmost pixel (corner, x = width -1), so the right goes to the upper right tile
           if (px == width - 1) {
-            edgePoints.add(neighborTileIds(UP_RIGHT), r)
+            r match {
+              case Some(rval) => edgePoints.add(neighborTileIds(UP_RIGHT), rval)
+              case None => // do nothing
+            }
           }
           else {
-            edgePoints.add(neighborTileIds(UP), r)
+            r match {
+              case Some(rval) => edgePoints.add(neighborTileIds(UP), rval)
+              case None => // do nothing
+            }
           }
         }
       }
@@ -726,19 +777,34 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
 
           // if leftmost pixel (corner, x = 0), so the left goes to the lower left tile
           if (px == 0) {
-            edgePoints.add(neighborTileIds(DOWN_LEFT), l)
+            l match {
+              case Some(lval) => edgePoints.add(neighborTileIds(DOWN_LEFT), lval)
+              case None => // do nothing
+            }
           }
           else {
-            edgePoints.add(neighborTileIds(DOWN), l)
+            l match {
+              case Some(lval) => edgePoints.add(neighborTileIds(DOWN), lval)
+              case None => // do nothing
+            }
           }
-          edgePoints.add(neighborTileIds(DOWN), c)
+          c match {
+            case Some(cval) => edgePoints.add(neighborTileIds(DOWN), cval)
+            case None => // do nothing
+          }
 
           // if rightmost pixel (corner, x = width -1), so the right goes to the lower right tile
           if (px == width - 1) {
-            edgePoints.add(neighborTileIds(DOWN_RIGHT), r)
+            r match {
+              case Some(rval) => edgePoints.add(neighborTileIds(DOWN_RIGHT), rval)
+              case None => // do nothing
+            }
           }
           else {
-            edgePoints.add(neighborTileIds(DOWN), r)
+            r match {
+              case Some(rval) => edgePoints.add(neighborTileIds(DOWN), rval)
+              case None => // do nothing
+            }
           }
         }
       }
@@ -759,12 +825,21 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
           val b = calculateCostPoint(0, py, DOWN_LEFT, currentLeftCost)
 
           if (py != 0) {
-            edgePoints.add(neighborTileIds(LEFT), t)
+            t match {
+              case Some(tval) => edgePoints.add(neighborTileIds(LEFT), tval)
+              case None => // do nothing
+            }
           }
-          edgePoints.add(neighborTileIds(LEFT), c)
+          c match {
+            case Some(cval) => edgePoints.add(neighborTileIds(LEFT), cval)
+            case None => // do nothing
+          }
 
           if (py != height - 1) {
-            edgePoints.add(neighborTileIds(LEFT), b)
+            b match {
+              case Some(bval) => edgePoints.add(neighborTileIds(LEFT), bval)
+              case None => // do nothing
+            }
           }
         }
       }
@@ -780,12 +855,21 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
           val b = calculateCostPoint(width - 1, py, DOWN_RIGHT, currentRightCost)
 
           if (py != 0) {
-            edgePoints.add(neighborTileIds(RIGHT), t)
+            t match {
+              case Some(tval) => edgePoints.add(neighborTileIds(RIGHT), tval)
+              case None => // do nothing
+            }
           }
-          edgePoints.add(neighborTileIds(RIGHT), c)
+          c match {
+            case Some(cval) => edgePoints.add(neighborTileIds(RIGHT), cval)
+            case None => // do nothing
+          }
 
           if (py != height - 1) {
-            edgePoints.add(neighborTileIds(RIGHT), b)
+            b match {
+              case Some(bval) => edgePoints.add(neighborTileIds(RIGHT), bval)
+              case None => // do nothing
+            }
           }
         }
       }
@@ -820,7 +904,8 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
   }
 
   def buildInitialPoints(frictionRDD:RDD[(TileIdWritable, RasterWritable)],
-                         startingPts:mutable.Map[Long, mutable.Set[Pixel]],
+                         nodataValues: Array[Float],
+                         startingPts:mutable.Map[Long, mutable.Set[(Pixel, Point)]],
                          context:SparkContext, pixelsize:Float) = {
 
     val initialChangesAccum = context.accumulator(new NeighborChangedPoints)(NeighborChangesAccumulator)
@@ -854,18 +939,26 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
         val pointsInTile = startingPts.get(tileid).get
 
         val costPoints = new ListBuffer[CostPoint]()
-        for (startPixel <- pointsInTile) {
-          val pixelcost = if (raster.bands() > 2) {
-            0.0f
+        for (startPair <- pointsInTile) {
+          val startPixel = startPair._1
+          if (raster.bands() > 2) {
+            // starting pixel has no initial cost and no friction to get to that point
+            logInfo("Start tile " + tileid + " and point " + startPixel.px + ", " + startPixel.py)
+            costPoints += new CostPoint(startPixel.px.toShort, startPixel.py.toShort, 0.0f, 0.0f)
           }
           else {
             // add a negative 1/2 friction, so the start point cost calculatation will be zero
-            -raster.getPixelFloat(startPixel.px.toInt, startPixel.py.toInt, 0) * pixelsize * 0.5f
+            val startPixelFriction = raster.getPixelFloat(startPixel.px.toInt, startPixel.py.toInt, 0)
+            if (!isNoData(startPixelFriction, nodataValues(0))) {
+              val pixelcost = -startPixelFriction * pixelsize * 0.5f
+              // starting pixel has no initial cost and no friction to get to that point
+              logInfo("Start tile " + tileid + " and point " + startPixel.px + ", " + startPixel.py)
+              costPoints += new CostPoint(startPixel.px.toShort, startPixel.py.toShort, 0.0f, pixelcost)
+            }
+            else {
+              log.warn("Skipping initial point " + startPair._2.toString() + " which is on a nodata friction cell")
+            }
           }
-
-          // starting pixel has no initial cost and no friction to get to that point
-          logInfo("Start tile " + tileid + " and point " + startPixel.px + ", " + startPixel.py)
-          costPoints += new CostPoint(startPixel.px.toShort, startPixel.py.toShort, 0.0f, pixelcost)
         }
         val ncp = new NeighborChangedPoints
         ncp.addPoints(tileid, costPoints.toList)
