@@ -723,7 +723,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
       val currentTopCost = raster.getPixelFloat(px, 0, costBand)
       val oldTopCost = origTopEdgeValues(px)
 
-      if (isSmaller(currentTopComst, oldTopCost)) {
+      if (isSmaller(currentTopCost, oldTopCost)) {
 
         // look at the top of the tile for changes (ignore if top of image)
         if (tile.ty < tileBounds.n) {
