@@ -77,8 +77,12 @@ class MrsPyramidMapOp private[raster](dataprovider:MrsImageDataProvider)
     zoomForRDD.get
   }
 
+  override def getZoomLevel(): Int = {
+    metadata().getOrElse(throw new IOException("Unable to get metadata for the raster")).getMaxZoomLevel
+  }
+
   override def metadata():Option[MrsPyramidMetadata] = {
-    load()
+    loadMetadata()
     getBounds match {
       case Some(b) =>
         val meta = super.metadata()
@@ -108,35 +112,48 @@ class MrsPyramidMapOp private[raster](dataprovider:MrsImageDataProvider)
     }
   }
 
-  private def load(zoom:Int = -1) = {
+  private def loadMetadata(): Unit =
+  {
+    // If we haven't loaded anything yet
+    super.metadata() match {
+      case None => {
+        val md = dataprovider.getMetadataReader.read()
+        metadata(md)
+      }
+      case _ => // do nothing, metadata was already loaded
+    }
+  }
+
+  private def load(zoom:Int = -1): Unit = {
 
     if (context == null) {
       throw new IOException("Error creating RasterRDD, can not create an RDD without a SparkContext")
     }
 
+    loadMetadata()
+    val meta = metadata().getOrElse(throw new IOException("Error getting metadata for " + dataprovider.getResourceName))
     // If we haven't loaded anything yet
     if (rasterRDD.isEmpty || zoomForRDD.isEmpty || maxZoomForRDD.isEmpty) {
-      val data = if (zoom <= 0) {
+      val rdd = if (zoom <= 0) {
         getBounds match {
-          case Some(b) => SparkUtils.loadMrsPyramidAndMetadata(dataprovider, b, context())
-          case None => SparkUtils.loadMrsPyramidAndMetadata(dataprovider, context())
+          case Some(b) => SparkUtils.loadMrsPyramid(dataprovider, meta.getMaxZoomLevel, b, context())
+          case None => SparkUtils.loadMrsPyramid(dataprovider, meta.getMaxZoomLevel, context())
         }
       }
       else {
         getBounds match {
-          case Some(b) => SparkUtils.loadMrsPyramidAndMetadata(dataprovider, zoom, b, context())
-          case None => SparkUtils.loadMrsPyramidAndMetadata(dataprovider, zoom, context())
+          case Some(b) => SparkUtils.loadMrsPyramid(dataprovider, zoom, b, context())
+          case None => SparkUtils.loadMrsPyramid(dataprovider, zoom, context())
         }
       }
 
-      metadata(data._2)
-      rasterRDD = Some(data._1)
-      maxZoomForRDD = Some(data._2.getMaxZoomLevel)
+      rasterRDD = Some(rdd)
+      maxZoomForRDD = Some(meta.getMaxZoomLevel)
       zoomForRDD = Some(if (zoom > 0) {
         zoom
       }
       else {
-        data._2.getMaxZoomLevel
+        meta.getMaxZoomLevel
       })
     }
     // if we sent in a zoom and it is different than the current loaded one
