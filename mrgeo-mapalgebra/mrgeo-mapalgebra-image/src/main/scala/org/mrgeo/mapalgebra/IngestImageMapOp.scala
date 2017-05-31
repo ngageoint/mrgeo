@@ -85,6 +85,10 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
     true
   }
 
+  override def getZoomLevel(): Int = {
+    zoom
+  }
+
   override def execute(context:SparkContext):Boolean = {
 
     val inputfiles = inputs.getOrElse(throw new IOException("Inputs not set"))

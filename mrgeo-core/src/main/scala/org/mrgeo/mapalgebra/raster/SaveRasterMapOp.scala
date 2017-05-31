@@ -68,6 +68,10 @@ class SaveRasterMapOp extends RasterMapOp with Externalizable {
     true
   }
 
+  override def getZoomLevel(): Int = {
+    return input.getOrElse(throw new IOException("Unable to get zoom level from input raster")).getZoomLevel()
+  }
+
   override def teardown(job:JobArguments, conf:SparkConf):Boolean = true
 
   override def readExternal(in:ObjectInput):Unit = {}

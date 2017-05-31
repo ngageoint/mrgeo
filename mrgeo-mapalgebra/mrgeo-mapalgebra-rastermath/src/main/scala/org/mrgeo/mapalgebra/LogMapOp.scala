@@ -46,6 +46,10 @@ class LogMapOp extends RasterMapOp with Externalizable {
 
   override def rdd():Option[RasterRDD] = rasterRDD
 
+  override def getZoomLevel(): Int = {
+    inputMapOp.getOrElse(throw new IOException("No raster input specified")).getZoomLevel()
+  }
+
   override def execute(context:SparkContext):Boolean = {
     val input:RasterMapOp = inputMapOp getOrElse (throw new IOException("Input MapOp not valid!"))
 

@@ -29,6 +29,7 @@ import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.{MrsPyramidMapOp, RasterMapOp}
 import org.mrgeo.utils.SparkUtils
 
+import scala.collection.mutable
 import scala.util.Sorting
 
 object StatisticsMapOp extends MapOpRegistrar {
@@ -93,12 +94,11 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
 
   override def rdd():Option[RasterRDD] = rasterRDD
 
-  override def execute(context:SparkContext):Boolean = {
-
-    val mapopbuilder = Array.newBuilder[RasterMapOp]
-    val nodatabuilder = Array.newBuilder[Double]
-
-    var zoom = 0
+  private def getLayerMapOps(mapopbuilder: mutable.ArrayBuilder[RasterMapOp],
+                             nodatabuilder: mutable.ArrayBuilder[Double],
+                             context: SparkContext) =
+  {
+    var zoom: Option[Int] = None
     var tilesize = -1
     var layers:Option[Array[String]] = None
     if (inputs.isDefined) {
@@ -109,10 +109,15 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
               mapopbuilder += raster
 
               val meta = raster.metadata() getOrElse
-                         (throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName))
+                (throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName))
 
-              if (zoom <= 0 || zoom > meta.getMaxZoomLevel) {
-                zoom = meta.getMaxZoomLevel
+              zoom match {
+                case Some(z) => {
+                  if (z != meta.getMaxZoomLevel) {
+                    throw new IOException("Mismatched zoom levels in stats inputs")
+                  }
+                }
+                case None => zoom = Some(meta.getMaxZoomLevel)
               }
 
               if (tilesize < 0) {
@@ -140,10 +145,15 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
                 mapopbuilder += raster
 
                 val meta = raster.metadata() getOrElse
-                           (throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName))
+                  (throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName))
 
-                if (zoom <= 0 || zoom > meta.getMaxZoomLevel) {
-                  zoom = meta.getMaxZoomLevel
+                zoom match {
+                  case Some(z) => {
+                    if (z != meta.getMaxZoomLevel) {
+                      throw new IOException("Mismatched zoom levels in stats inputs")
+                    }
+                  }
+                  case None => zoom = Some(meta.getMaxZoomLevel)
                 }
                 if (tilesize < 0) {
                   tilesize = meta.getTilesize
@@ -155,7 +165,26 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
           }
       }
     }
+    zoom match {
+      case Some(z) => (z, tilesize)
+      case None => throw new IOException("No inputs to the stats operation")
+    }
+  }
 
+  override def getZoomLevel(): Int = {
+    val mapopbuilder = Array.newBuilder[RasterMapOp]
+    val nodatabuilder = Array.newBuilder[Double]
+
+    val (zoom, _) = getLayerMapOps(mapopbuilder, nodatabuilder, context())
+    zoom
+  }
+
+  override def execute(context:SparkContext):Boolean = {
+
+    val mapopbuilder = Array.newBuilder[RasterMapOp]
+    val nodatabuilder = Array.newBuilder[Double]
+
+    val (zoom, tilesize) = getLayerMapOps(mapopbuilder, nodatabuilder, context)
     val nodatas = nodatabuilder.result()
 
     val pyramids = mapopbuilder.result()

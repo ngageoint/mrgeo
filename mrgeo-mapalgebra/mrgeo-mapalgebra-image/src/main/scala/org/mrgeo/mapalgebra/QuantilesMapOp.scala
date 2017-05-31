@@ -89,6 +89,10 @@ class QuantilesMapOp extends RasterMapOp with Externalizable {
     )
   }
 
+  override def getZoomLevel(): Int = {
+    inputMapOp.getOrElse(throw new IOException("No raster input specified")).getZoomLevel()
+  }
+
   @SuppressFBWarnings(value = Array("RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"),
     justification = "implicits - false positivie")
   override def execute(context:SparkContext):Boolean = {
