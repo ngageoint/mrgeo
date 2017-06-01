@@ -83,7 +83,7 @@ def _exceptionhook(ex_cls, ex, tb, method_name=None):
                 code = _vectormapop_code[method]
                 cls = 'VectorMapOp'
             elif _mapop_code.has_key(method):
-                code = _rastermapop_code[method]
+                code = _mapop_code[method]
                 cls = 'MapOp'
             else:
                 pass
@@ -188,8 +188,7 @@ def generate(mrgeo, gateway, gateway_client):
                             setattr(VectorMapOp, method_name, code.compile(method_name).get(method_name))
                 if procCodes is not None:
                     for method_name, code in procCodes.items():
-                        pass
-                        # print(code.generate())
+                        _mapop_code[method_name] = code
                         setattr(mrgeo, method_name, code.compile(method_name).get(method_name))
 
     _initialized = True
@@ -337,9 +336,16 @@ def _generate_procedural_method_code(gateway, client, mapop, name, signatures, i
     _generate_run(generator, instance, is_export)
     # print(code)
 
+
     code = generator.generate()
+
+    if name == 'rasterizevector':
+        print(code)
+
     code = code.replace("self", self_method)
 
+    if name == 'rasterizevector':
+        print(code)
     generator.begin()
     for line in code.split("\n"):
         generator.write(line)

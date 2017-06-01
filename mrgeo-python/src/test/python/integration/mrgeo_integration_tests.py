@@ -51,6 +51,11 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
         result = roads.rasterizevector("MASK", "12z")
         self.compareraster(result, self.name)
 
+    def test_rasterize_vector_mrgeo(self):
+        roads = self.mrgeo.load_vector("AmbulatoryPt.shp")
+        result = self.mrgeo.rasterizevector(roads, "MASK", "12z")
+        self.compareraster(result, self.name)
+
     def test_add(self):
         add = self.allones + self.allhundreds
         self.compareraster(add, self.name)
