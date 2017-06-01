@@ -1,5 +1,7 @@
 package org.mrgeo.mapalgebra.utils
 
+import java.io.IOException
+
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.raster.{MrGeoRaster, RasterWritable}
@@ -80,10 +82,13 @@ class RasterMapOpBuilder private(var context:SparkContext, numPartitions:Int = 1
     rasterMapOp
   }
 
-  private class RasterMapOp(
-                               wrappedRDD:RDD[(TileIdWritable, RasterWritable)]) extends org.mrgeo.mapalgebra.raster.RasterMapOp {
+  private class RasterMapOp(wrappedRDD:RDD[(TileIdWritable, RasterWritable)]) extends org.mrgeo.mapalgebra.raster.RasterMapOp {
     override def rdd() = {
       Some(RasterRDD(this.wrappedRDD))
+    }
+
+    override def getZoomLevel(): Int = {
+      zoomLevel
     }
 
     // Noop these since this op exists only to wrap data, not to manipulate it.

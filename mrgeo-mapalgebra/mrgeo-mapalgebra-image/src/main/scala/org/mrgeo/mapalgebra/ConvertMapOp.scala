@@ -203,6 +203,10 @@ class ConvertMapOp extends RasterMapOp with Externalizable {
     rasterRDD
   }
 
+  override def getZoomLevel(): Int = {
+    inputMapOp.getOrElse(throw new IOException("No raster input specified")).getZoomLevel()
+  }
+
   override def execute(context:SparkContext):Boolean = {
     val input:RasterMapOp = inputMapOp getOrElse (throw new IOException("Input MapOp not valid!"))
     val tt = toType getOrElse (throw new IOException("toType not valid!"))

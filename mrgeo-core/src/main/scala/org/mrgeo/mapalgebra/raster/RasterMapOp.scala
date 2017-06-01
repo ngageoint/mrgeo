@@ -113,11 +113,20 @@ abstract class RasterMapOp extends MapOp {
     }
   }
 
-  def metadata():Option[MrsPyramidMetadata] = Option(meta)
+  def metadata():Option[MrsPyramidMetadata] = {
+    if (meta == null) {
+      None
+    }
+    else {
+      Option(meta)
+    }
+  }
 
   def metadata(meta:MrsPyramidMetadata) = {
     this.meta = meta
   }
+
+  def getZoomLevel(): Int
 
   def save(output:String, providerProperties:ProviderProperties, context:SparkContext) = {
     rdd() match {

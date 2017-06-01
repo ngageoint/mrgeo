@@ -50,6 +50,30 @@ class MosaicMapOp extends RasterMapOp with Externalizable {
 
   override def rdd():Option[RasterRDD] = rasterRDD
 
+  override def getZoomLevel(): Int = {
+    var zoom: Option[Int] = None
+    inputs.foreach(input=> {
+      input match {
+        case Some(rmo) => {
+          val mapOpZoom = rmo.getZoomLevel()
+          zoom match {
+            case Some(z) => {
+              if (z != mapOpZoom) {
+                throw new IOException("Input zoom levels do not match for " +
+                  this.getClass.getName)
+              }
+            }
+            case None => zoom = Some(mapOpZoom)
+          }
+        }
+      }
+    })
+    zoom match {
+      case Some(z) => z
+      case None => throw new IOException("No raster input specified")
+    }
+  }
+
   @SuppressFBWarnings(value = Array("RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"),
     justification = "tileIdOrdering() - false positivie")
   override def execute(context:SparkContext):Boolean = {

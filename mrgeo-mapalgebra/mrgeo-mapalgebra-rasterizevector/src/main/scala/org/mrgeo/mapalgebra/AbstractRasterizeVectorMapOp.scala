@@ -94,6 +94,10 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
     }
   }
 
+  override def getZoomLevel(): Int = {
+    zoom
+  }
+
   override def execute(context:SparkContext):Boolean = {
     val vectorRDD:VectorRDD = vectorMapOp.getOrElse(throw new IOException("Missing vector input")).
         rdd().getOrElse(throw new IOException("Missing vector RDD"))

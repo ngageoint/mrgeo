@@ -34,6 +34,10 @@ abstract class RawUnaryMathMapOp extends RasterMapOp with Externalizable {
 
   override def teardown(job:JobArguments, conf:SparkConf):Boolean = true
 
+  override def getZoomLevel(): Int = {
+    input.getOrElse(throw new IOException("No raster input specified")).getZoomLevel()
+  }
+
   override def execute(context:SparkContext):Boolean = {
 
     // our metadata is the same as the raster
