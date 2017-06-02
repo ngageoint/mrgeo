@@ -1,5 +1,6 @@
 ﻿# -*- coding: utf-8 -*-
 
+import sys
 from pymrgeo import MrGeo
 
 if __name__ == "__main__":
@@ -15,6 +16,12 @@ if __name__ == "__main__":
     mrgeo.start()
 
     ones = mrgeo.load_image("all-ones-save")
+
+    meta = ones.metadata()
+
+    print(meta)
+
+    sys.exit(-1)
 
     # test error handling
     # foo = 1 / 0

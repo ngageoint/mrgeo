@@ -336,16 +336,9 @@ def _generate_procedural_method_code(gateway, client, mapop, name, signatures, i
     _generate_run(generator, instance, is_export)
     # print(code)
 
-
     code = generator.generate()
-
-    if name == 'rasterizevector':
-        print(code)
-
     code = code.replace("self", self_method)
 
-    if name == 'rasterizevector':
-        print(code)
     generator.begin()
     for line in code.split("\n"):
         generator.write(line)
