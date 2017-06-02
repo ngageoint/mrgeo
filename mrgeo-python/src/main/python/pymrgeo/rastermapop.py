@@ -1,7 +1,7 @@
 import copy
 import json
 
-from py4j.java_gateway import JavaClass, java_import
+from py4j.java_gateway import java_import
 from pymrgeo.instance import is_instance_of as iio
 
 class RasterMapOp(object):
@@ -35,9 +35,10 @@ class RasterMapOp(object):
         java_import(jvm, "org.mrgeo.mapalgebra.raster.RasterMapOp")
         java_import(jvm, "org.mrgeo.image.MrsPyramidMetadata")
 
-        meta = self.mapop.metadata().getOrElse(None)
-        if meta is None:
+        if self.mapop.metadata().isEmpty():
             return None
+
+        meta = self.mapop.metadata().get()
 
         java_import(jvm, "com.fasterxml.jackson.databind.ObjectMapper")
 
