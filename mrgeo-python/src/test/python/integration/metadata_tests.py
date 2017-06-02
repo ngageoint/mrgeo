@@ -5,6 +5,7 @@ import mrgeotest
 
 class MrGeoMetadataTests(mrgeotest.MrGeoTests):
     toblertiny = None
+    roads = None
 
     @classmethod
     def setUpClass(cls):
@@ -25,6 +26,9 @@ class MrGeoMetadataTests(mrgeotest.MrGeoTests):
 
         if self.toblertiny is None:
             self.toblertiny = self.mrgeo.load_image("tobler-raw-tiny")
+
+        if self.roads is None:
+            self.roads = self.mrgeo.load_vector("AmbulatoryPt.shp")
 
     def test_load_raster_metadata(self):
         meta = self.toblertiny.metadata()
@@ -124,5 +128,11 @@ class MrGeoMetadataTests(mrgeotest.MrGeoTests):
         self.assertAlmostEqual(stats['mean'], 0.8273760278752889, 5, "stats mean is different")
         self.assertAlmostEqual(stats['sum'], 433783.32290267944, 5, "stats sum is different")
         self.assertEqual(stats['count'], 524288, "stats count is different")
+
+    def test_load_vector_metadata(self):
+        meta = self.roads.metadata()
+
+        self.assertIsNone(meta, "Vector metadata should be None until it is completely implemented")
+
 
 
