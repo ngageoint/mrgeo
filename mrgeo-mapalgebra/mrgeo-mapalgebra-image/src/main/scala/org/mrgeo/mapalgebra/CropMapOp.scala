@@ -73,6 +73,11 @@ class CropMapOp extends RasterMapOp with Externalizable {
 
   override def setup(job:JobArguments, conf:SparkConf):Boolean = true
 
+  override def getZoomLevel(): Int = {
+    val input:RasterMapOp = inputMapOp getOrElse (throw new IOException("Input MapOp not valid!"))
+    requestedZoom.getOrElse(input.getZoomLevel)
+  }
+
   override def execute(context:SparkContext):Boolean = {
 
     val input:RasterMapOp = inputMapOp getOrElse (throw new IOException("Input MapOp not valid!"))

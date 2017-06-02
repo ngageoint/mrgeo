@@ -160,6 +160,10 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
     }
   }
 
+  override def getZoomLevel(): Int = {
+    zoom.getOrElse(raster.getOrElse(throw new IOException("No raster input specified")).getZoomLevel())
+  }
+
   override def execute(context:SparkContext):Boolean = {
 
     val input:RasterMapOp = raster getOrElse (throw new IOException("Input MapOp not valid!"))

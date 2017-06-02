@@ -43,6 +43,32 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
 
   override def teardown(job:JobArguments, conf:SparkConf):Boolean = true
 
+  override def getZoomLevel(): Int = {
+    varA match {
+      case Some(a) => {
+        val azoom = a.getZoomLevel()
+        varB match {
+          case Some(b) => {
+            if (azoom != b.getZoomLevel()) {
+              throw new IOException("Zoom levels do not match for " +
+                this.getClass.getName)
+            }
+            azoom
+          }
+          case None => azoom
+        }
+      }
+      case None => {
+        varB match {
+          case Some(b) => b.getZoomLevel()
+          case None => throw new IOException(
+            "No inputs from which to get the zoom level for " +
+              this.getClass.getName)
+        }
+      }
+    }
+  }
+
   override def execute(context:SparkContext):Boolean = {
     rasterRDD =
         if (constA.isDefined) {

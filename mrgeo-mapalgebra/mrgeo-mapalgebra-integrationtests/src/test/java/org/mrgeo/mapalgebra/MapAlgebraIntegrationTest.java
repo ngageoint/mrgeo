@@ -148,7 +148,7 @@ public static void init() throws IOException
   smallElevation = new Path("file://" + file.getAbsolutePath()).toString();
 
   file = new File(greece);
-  greece = new Path("file://" + file.getAbsolutePath()).toString();
+  greece = new Path(/*"file://" + */ file.getAbsolutePath()).toString();
 
 }
 
@@ -183,6 +183,59 @@ public void add() throws Exception
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String.format("[%s] + [%s]", allones, allones));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void zoomTest1() throws Exception
+{
+  String ma = "[%s] + zoom([%s], 5)";
+  try {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+            TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+            String.format(ma, allones, allones));
+    Assert.fail("Expected to get an IOException about mismatched zoom levels");
+  }
+  catch(IOException e) {
+    Assert.assertTrue("Unexpected IOException: " + e.getMessage(),
+            e.getMessage().startsWith("Zoom levels do not match"));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void zoomTest2() throws Exception
+{
+  // Test the mosaic because of how it gets the zoom levels for its children
+  String ma = String.format("mosaic(zoom([%s], 5), [%s])", allones, allhundreds);
+  try {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+            TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+            ma);
+    Assert.fail("Expected to get an IOException about mismatched zoom levels");
+  }
+  catch(IOException e) {
+    Assert.assertTrue("Unexpected IOException: " + e.getMessage(),
+            e.getMessage().startsWith("Input zoom levels do not match"));
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void zoomTest3() throws Exception
+{
+  // Test the con because of how it gets the zoom levels for its children
+  String ma = String.format("con([%s], zoom([%s], 5), [%s])", allones, alltwos, allhundreds);
+  try {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+            TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
+            ma);
+    Assert.fail("Expected to get an IOException about mismatched zoom levels");
+  }
+  catch(IOException e) {
+    Assert.assertTrue("Unexpected IOException: " + e.getMessage(),
+            e.getMessage().startsWith("Input zoom levels do not match"));
   }
 }
 

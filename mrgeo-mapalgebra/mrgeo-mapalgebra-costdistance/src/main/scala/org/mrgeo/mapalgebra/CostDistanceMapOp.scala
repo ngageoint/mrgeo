@@ -121,6 +121,10 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
 
   override def teardown(job:JobArguments, conf:SparkConf):Boolean = true
 
+  override def getZoomLevel(): Int = {
+    frictionZoom.getOrElse(friction.getOrElse(throw new IOException("Raster input was not specified")).getZoomLevel())
+  }
+
   override def execute(context:SparkContext):Boolean = {
     val t0 = System.nanoTime()
 

@@ -267,10 +267,35 @@ class MapAlgebra() extends MrGeoJob with Externalizable {
     lines.result().foreach(line => {
       val node = parser.parse(line)
       buildMapOps(node)
+      // Verifying that the zoom levels match throughout the map op tree.
+      getZoomLevel(node)
       nodes += node
     })
-
     nodes.result()
+  }
+
+  // This function throws an IOException if any node within
+  // the tree finds that its children do not have matching zoom
+  // levels.
+  private def getZoomLevel(node: ParserNode): Option[Int] =
+  {
+    node match {
+      case pfn: ParserFunctionNode => {
+        val mapOp = pfn.getMapOp
+        mapOp match {
+          case rmo: RasterMapOp => Some(rmo.getZoomLevel())
+          case _ => None
+        }
+      }
+      case pvn: ParserVariableNode => {
+        val resolvedNode = MapOp.decodeVariable(pvn, findVariable)
+        resolvedNode match {
+          case Some(valueNode) => getZoomLevel(valueNode)
+          case None => None
+        }
+      }
+      case _ => None
+    }
   }
 
   private def cleanExpression(expression:String):String = {

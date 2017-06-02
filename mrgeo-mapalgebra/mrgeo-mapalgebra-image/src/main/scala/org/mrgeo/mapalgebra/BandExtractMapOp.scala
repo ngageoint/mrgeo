@@ -47,6 +47,10 @@ class BandExtractMapOp extends RasterMapOp with Externalizable {
 
   override def rdd():Option[RasterRDD] = rasterRDD
 
+  override def getZoomLevel(): Int = {
+    input.getOrElse(throw new IOException("No raster input specified")).getZoomLevel()
+  }
+
   @SuppressFBWarnings(value = Array("RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"),
     justification = "tileIdOrdering() - false positivie")
   override def execute(context:SparkContext):Boolean = {
