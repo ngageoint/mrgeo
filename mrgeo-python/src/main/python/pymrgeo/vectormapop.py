@@ -1,5 +1,7 @@
 import copy
+import json
 
+from py4j.java_gateway import java_import
 from pymrgeo.instance import is_instance_of as iio
 
 
@@ -36,4 +38,28 @@ class VectorMapOp(object):
             new_resource = copy.copy(self)
             new_resource.mapop = op
             return new_resource
-        return None
+        return
+
+    def metadata(self):
+        if self.mapop is None:
+            return None
+
+        jvm = self.gateway.jvm
+
+        java_import(jvm, "org.mrgeo.mapalgebra.vector.VectorMapOp")
+        java_import(jvm, "org.mrgeo.data.vector.VectorMetadata")
+
+        if self.mapop.metadata().isEmpty():
+            return None
+
+        meta = self.mapop.metadata().get()
+
+        java_import(jvm, "com.fasterxml.jackson.databind.ObjectMapper")
+
+        mapper = jvm.com.fasterxml.jackson.databind.ObjectMapper()
+        jsonstr = mapper.writeValueAsString(meta)
+
+        print(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(meta))
+
+        return json.loads(jsonstr)
+

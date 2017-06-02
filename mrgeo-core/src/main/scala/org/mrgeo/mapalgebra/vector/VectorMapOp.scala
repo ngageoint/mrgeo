@@ -18,7 +18,7 @@ package org.mrgeo.mapalgebra.vector
 import org.apache.spark.SparkContext
 import org.mrgeo.data.DataProviderFactory.AccessMode
 import org.mrgeo.data.rdd.VectorRDD
-import org.mrgeo.data.vector.VectorDataProvider
+import org.mrgeo.data.vector.{VectorDataProvider, VectorMetadata}
 import org.mrgeo.data.{DataProviderFactory, ProviderProperties}
 import org.mrgeo.mapalgebra.MapOp
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserFunctionNode, ParserNode, ParserVariableNode}
@@ -78,13 +78,22 @@ object VectorMapOp {
 
 abstract class VectorMapOp extends MapOp {
 
-  //  private var meta:VectorMetadata = null
-
-
+  private var meta:VectorMetadata = null
   def rdd():Option[VectorRDD]
 
-  //  def metadata():Option[VectorMetadata] =  Option(meta)
-  //  def metadata(meta:VectorMetadata) = { this.meta = meta}
+  def metadata():Option[VectorMetadata] = {
+    log.warn("Vector Metadata has not been implemented yet!  It will always be None (null)!")
+    if (meta == null) {
+      None
+    }
+    else {
+      Option(meta)
+    }
+  }
+
+  def metadata(meta:VectorMetadata) = {
+    this.meta = meta
+  }
 
   def save(output:String, providerProperties:ProviderProperties, context:SparkContext) = {
     rdd() match {
