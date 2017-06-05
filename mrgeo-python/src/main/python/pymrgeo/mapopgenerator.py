@@ -75,7 +75,7 @@ def _exceptionhook(ex_cls, ex, tb, method_name=None):
         srccode = st[3]
         cls = None
         code = None
-        if file == '<string>':
+        if file == method + '.py':
             if _rastermapop_code.has_key(method):
                 code = _rastermapop_code[method]
                 cls = 'RasterMapOp'
@@ -92,9 +92,9 @@ def _exceptionhook(ex_cls, ex, tb, method_name=None):
             print('  File <' + cls + '.internal>, line ' +
                   str(line) + ', in ' + cls + '.' + method.strip(), file=sys.stderr)
 
-            code = code.split("\n")
+            srccode = code.generate().split('\n')
             cnt = 1
-            for c in code:
+            for c in srccode:
                 if cnt == line:
                     print('==> ' + c + ' <==', file=sys.stderr)
                 else:
@@ -103,7 +103,7 @@ def _exceptionhook(ex_cls, ex, tb, method_name=None):
         else:
             print('  File "' + file.strip() + '", line ' +
                   str(line) + ', in ' + method.strip(), file=sys.stderr)
-            print('    ' + srccode.strip(), file=sys.stderr)
+            print('    ' + srccode.strip() if srccode else "<unknown file>", file=sys.stderr)
 
             print(''.join(traceback.format_tb(tb)))
             print('{0}: {1}'.format(ex_cls, ex))
@@ -173,7 +173,7 @@ def generate(mrgeo, gateway, gateway_client):
 
                 if ooCodes is not None:
                     for method_name, code in ooCodes.items():
-                        # if method_name == "add":
+                        # if method_name == "rasterizevector":
                         #    print(code.generate())
 
                         if instance == 'RasterMapOp':
@@ -188,6 +188,9 @@ def generate(mrgeo, gateway, gateway_client):
                             setattr(VectorMapOp, method_name, code.compile(method_name).get(method_name))
                 if procCodes is not None:
                     for method_name, code in procCodes.items():
+                        if method_name == "rasterizevector":
+                           print(code.generate())
+
                         _mapop_code[method_name] = code
                         setattr(mrgeo, method_name, code.compile(method_name).get(method_name))
 
@@ -582,22 +585,26 @@ def _method_name(type_name, var_name, default_value):
             iftest = " (" + var_name + " is None or" + phrase + ")"
         else:
             iftest = phrase
-        call_name = "str(" + var_name + ")"
+        # call_name = "str(" + var_name + ")"
+        call_name = "str(" + var_name + ") if (" + var_name + " is not None) else None"
         excepttest = "not" + iftest
         accessor = ""
     elif type_name == "double" or type_name == "float":
         iftest = " isinstance(" + var_name + ", (int, long, float))"
-        call_name = "float(" + var_name + ")"
+        # call_name = "float(" + var_name + ")"
+        call_name = "float(" + var_name + ") if (" + var_name + " is not None) else None"
         excepttest = "not" + iftest
         accessor = ""
     elif type_name == "long":
         iftest = " isinstance(" + var_name + ", (int, long, float))"
-        call_name = "long(" + var_name + ")"
+        # call_name = "long(" + var_name + ")"
+        call_name = "long(" + var_name + ") if (" + var_name + " is not None) else None"
         excepttest = "not" + iftest
         accessor = ""
     elif type_name == "int" or type_name == "Short" or type_name == "Char":
         iftest = " isinstance(" + var_name + ", (int, long, float))"
-        call_name = "int(" + var_name + ")"
+        # call_name = "int(" + var_name + ")"
+        call_name = "int(" + var_name + ") if (" + var_name + " is not None) else None"
         excepttest = "not" + iftest
         accessor = ""
     elif type_name == "boolean":
