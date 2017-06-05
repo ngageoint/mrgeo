@@ -50,8 +50,6 @@ object RasterizeVectorMapOp extends MapOpRegistrar {
   def create(vector:VectorMapOp, aggregator:String, cellsize:String, column:String = null) = {
     new RasterizeVectorMapOp(Some(vector), aggregator, cellsize, column, null.asInstanceOf[String])
   }
-
-  //vec
 }
 
 
