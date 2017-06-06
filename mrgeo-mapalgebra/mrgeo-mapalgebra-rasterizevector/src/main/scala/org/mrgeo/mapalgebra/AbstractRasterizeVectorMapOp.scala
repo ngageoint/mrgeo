@@ -289,9 +289,28 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
       Some(column)
     }
 
-    if (aggregationType != VectorPainter.AggregationType.SUM && this.column.isEmpty) {
-      throw new ParserException("A column name must not be specified with " + aggregationType)
+    // All the arguments have been parsed, now validate the column based on the aggregation type
+    aggregationType match {
+      case VectorPainter.AggregationType.MASK | VectorPainter.AggregationType.MASK2 =>
+        if (!this.column.isEmpty) {
+          throw new ParserException("A column name must not be specified with MASK or MASK2")
+        }
+      case VectorPainter.AggregationType.SUM => {
+        // SUM can be used with or without a column name being specified. If used
+        // with a column name, it sums the values of that column for all features
+        // that intersects that pixel. Without the column, it sums the number of
+        // features that intersects the pixel.
+      }
+      case _ =>
+        // All other aggregation types require a column name
+        if (column.isEmpty) {
+          throw new ParserException("A column name must be specified with " + aggregationType)
+        }
     }
+
+//    if (aggregationType != VectorPainter.AggregationType.SUM && this.column.isEmpty) {
+//      throw new ParserException("A column name must not be specified with " + aggregationType)
+//    }
 
     bounds match {
       case Left(b) => {
