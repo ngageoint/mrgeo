@@ -20,6 +20,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import junit.framework.Assert;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.hadoop.conf.Configuration;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -34,6 +35,7 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.image.MrsPyramidMetadata.Classification;
 import org.mrgeo.junit.UnitTest;
+import org.mrgeo.utils.HadoopUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -47,6 +49,7 @@ public class AccumuloMrsImageDataProviderFactoryTest
 private static String junk = "junk";
 private static String badTable = "badTable";
 private static Connector conn = null;
+private Configuration conf;
 private File file;
 private String originalFileStr;
 private String originalMeta;
@@ -66,6 +69,7 @@ public static void setup()
 public void init() throws Exception
 {
 
+  conf = HadoopUtils.createConfiguration();
   providerProperties = new ProviderProperties();
 //    conn = AccumuloConnector.getMockConnector(AccumuloDefs.INSTANCE, AccumuloDefs.USER, AccumuloDefs.PASSWORDBLANK);
   conn = AccumuloConnector.getConnector();
@@ -149,13 +153,13 @@ public void testCreateMrsImageDataProvider() throws Exception
 {
 
   String name = "bar";
-  MrsImageDataProvider provider = factory.createMrsImageDataProvider(name, providerProperties);
+  MrsImageDataProvider provider = factory.createMrsImageDataProvider(name, conf, providerProperties);
   Assert.assertNotNull("Provider not created!", provider);
   Assert.assertEquals("Name not set properly!", name, provider.getResourceName());
 
   String name2 = "foo";
   String name3 = MrGeoAccumuloConstants.MRGEO_ACC_PREFIX + name2;
-  MrsImageDataProvider provider2 = factory.createMrsImageDataProvider(name3, providerProperties);
+  MrsImageDataProvider provider2 = factory.createMrsImageDataProvider(name3, conf, providerProperties);
   Assert.assertNotNull("Provider not created!", provider2);
   Assert.assertEquals("Name not set properly!", name2, provider2.getResourceName());
 
@@ -166,7 +170,7 @@ public void testCreateMrsImageDataProvider() throws Exception
 public void testCanOpen() throws Exception
 {
   String ds = MrGeoAccumuloConstants.MRGEO_ACC_PREFIX + junk;
-  Assert.assertTrue("Can not open image!", factory.canOpen(ds, providerProperties));
+  Assert.assertTrue("Can not open image!", factory.canOpen(ds, conf, providerProperties));
 } // end testCanOpen
 
 
@@ -174,7 +178,7 @@ public void testCanOpen() throws Exception
 @Category(UnitTest.class)
 public void testCanOpenMissing() throws Exception
 {
-  Assert.assertFalse("Can not open image!", factory.canOpen("missing", providerProperties));
+  Assert.assertFalse("Can not open image!", factory.canOpen("missing", conf, providerProperties));
 } // end testCanOpenMissing
 
 
@@ -183,7 +187,7 @@ public void testCanOpenMissing() throws Exception
 public void testCanOpenBadUri() throws Exception
 {
   String bad = "abcd:bad-name";
-  Assert.assertFalse("", factory.canOpen(bad, providerProperties));
+  Assert.assertFalse("", factory.canOpen(bad, conf, providerProperties));
 } // end testCanOpenBadUri
 
 
@@ -191,7 +195,7 @@ public void testCanOpenBadUri() throws Exception
 @Category(UnitTest.class)
 public void testCanOpenNull() throws Exception
 {
-  factory.canOpen(null, providerProperties);
+  factory.canOpen(null, conf, providerProperties);
 } // end testCanOpenNull
 
 
@@ -199,7 +203,7 @@ public void testCanOpenNull() throws Exception
 @Category(UnitTest.class)
 public void testExists() throws Exception
 {
-  Assert.assertTrue("Can not open file!", factory.exists(junk, providerProperties));
+  Assert.assertTrue("Can not open file!", factory.exists(junk, conf, providerProperties));
 } // end testExists
 
 

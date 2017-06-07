@@ -50,7 +50,7 @@ public interface AdHocDataProviderFactory
  *
  * @return
  */
-public boolean isValid();
+public boolean isValid(final Configuration conf);
 
 /**
  * This method is called once when DataProviderFactory finds this factory.
@@ -107,7 +107,8 @@ public void setConfiguration(Map<String, String> properties);
  * @return
  */
 public AdHocDataProvider createAdHocDataProvider(final String name,
-    final ProviderProperties providerProperties) throws IOException;
+                                                 final Configuration conf,
+                                                 final ProviderProperties providerProperties) throws IOException;
 
 /**
  * Give back an ad hoc data provider for a resource that is named by this method.
@@ -118,13 +119,14 @@ public AdHocDataProvider createAdHocDataProvider(final String name,
  * @return
  */
 public AdHocDataProvider createAdHocDataProvider(
-    final ProviderProperties providerProperties) throws IOException;
+        final Configuration conf,
+        final ProviderProperties providerProperties) throws IOException;
 
-public boolean canOpen(final String name, final ProviderProperties providerProperties) throws IOException;
+public boolean canOpen(final String name, final Configuration conf, final ProviderProperties providerProperties) throws IOException;
 
-public boolean canWrite(final String name, final ProviderProperties providerProperties) throws IOException;
+public boolean canWrite(final String name, final Configuration conf, final ProviderProperties providerProperties) throws IOException;
 
-public boolean exists(final String name, final ProviderProperties providerProperties) throws IOException;
+public boolean exists(final String name, final Configuration conf, final ProviderProperties providerProperties) throws IOException;
 
-public void delete(final String name, final ProviderProperties providerProperties) throws IOException;
+public void delete(final String name, final Configuration conf, final ProviderProperties providerProperties) throws IOException;
 }

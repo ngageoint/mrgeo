@@ -119,23 +119,29 @@ public static String findMrGeoConf() throws IOException
   if (conf == null)
   {
     String home = System.getenv(MrGeoConstants.MRGEO_HOME);
-    File dir = new File(home, MrGeoConstants.MRGEO_HOME_CONF_DIR);
+    if (home != null) {
+      File dir = new File(home, MrGeoConstants.MRGEO_HOME_CONF_DIR);
 
-    if (dir.exists())
-    {
-      log.error(MrGeoConstants.MRGEO_HOME + " environment variable has been deprecated.  " +
-          "Use " + MrGeoConstants.MRGEO_CONF_DIR + " and " + MrGeoConstants.MRGEO_COMMON_HOME + " instead");
-      conf = dir.getCanonicalPath();
+      if (dir.exists()) {
+        log.error(MrGeoConstants.MRGEO_HOME + " environment variable has been deprecated.  " +
+                "Use " + MrGeoConstants.MRGEO_CONF_DIR + " and " + MrGeoConstants.MRGEO_COMMON_HOME + " instead");
+        conf = dir.getCanonicalPath();
+      }
     }
   }
 
-  File file = new File(conf, MrGeoConstants.MRGEO_CONF);
-  if (file.exists())
-  {
-    return file.getCanonicalPath();
+  if (conf == null) {
+    conf = System.getProperty(MrGeoConstants.MRGEO_CONF_DIR);
+  }
+  if (conf != null) {
+    File file = new File(conf, MrGeoConstants.MRGEO_CONF);
+    if (file.exists()) {
+      return file.getCanonicalPath();
+    }
+    throw new IOException(MrGeoConstants.MRGEO_CONF_DIR + " not set, or can not find " + file.getCanonicalPath());
   }
 
-  throw new IOException(MrGeoConstants.MRGEO_CONF_DIR + " not set, or can not find " + file.getCanonicalPath());
+  throw new IOException(MrGeoConstants.MRGEO_CONF_DIR + " not set");
 }
 
 /**

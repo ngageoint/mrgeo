@@ -33,6 +33,7 @@ import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.raster.MrGeoRaster;
+import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImageException;
 import org.mrgeo.image.MrsPyramid;
@@ -447,6 +448,9 @@ private boolean saveSingleTile(final String output, final String pyramidName, fi
   catch (IOException e)
   {
     log.error("Exception thrown", e);
+  }
+  catch(TileNotFoundException e) {
+    // skip missing tile.
   }
   return false;
 }

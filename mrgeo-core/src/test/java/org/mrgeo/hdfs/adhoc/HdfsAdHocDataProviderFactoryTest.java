@@ -69,7 +69,7 @@ public void testGetPrefix() throws Exception
 @Category(UnitTest.class)
 public void testCreateAdHocDataProvider2() throws Exception
 {
-  provider = factory.createAdHocDataProvider(providerProperties);
+  provider = factory.createAdHocDataProvider(conf, providerProperties);
   Assert.assertEquals("Created wrong provider type", HdfsAdHocDataProvider.class, provider.getClass());
 
 }
@@ -79,7 +79,7 @@ public void testCreateAdHocDataProvider2() throws Exception
 public void testCreateAdHocDataProviderName2() throws Exception
 {
   String name = "foo";
-  provider = factory.createAdHocDataProvider(name, providerProperties);
+  provider = factory.createAdHocDataProvider(name, conf, providerProperties);
   Assert.assertEquals("Created wrong provider type", HdfsAdHocDataProvider.class, provider.getClass());
 
   Path path = new Path(provider.getResourceName());
@@ -90,30 +90,30 @@ public void testCreateAdHocDataProviderName2() throws Exception
 @Category(UnitTest.class)
 public void testCanOpen() throws Exception
 {
-  provider = factory.createAdHocDataProvider(providerProperties);
+  provider = factory.createAdHocDataProvider(conf, providerProperties);
   String name = provider.getResourceName();
 
   OutputStream outputStream = provider.add();
   outputStream.close();
 
-  Assert.assertTrue("Should be able to open!", factory.canOpen(name, providerProperties));
+  Assert.assertTrue("Should be able to open!", factory.canOpen(name, conf, providerProperties));
 }
 
 @Test
 @Category(UnitTest.class)
 public void testCanOpenNothingWritten() throws Exception
 {
-  provider = factory.createAdHocDataProvider(providerProperties);
+  provider = factory.createAdHocDataProvider(conf, providerProperties);
   String name = provider.getResourceName();
 
-  Assert.assertFalse("Should not be able to open!", factory.canOpen(name, providerProperties));
+  Assert.assertFalse("Should not be able to open!", factory.canOpen(name, conf, providerProperties));
 }
 
 @Test
 @Category(UnitTest.class)
 public void testCanOpenMissing() throws Exception
 {
-  Assert.assertFalse("Should not be able to open!", factory.canOpen("foo", providerProperties));
+  Assert.assertFalse("Should not be able to open!", factory.canOpen("foo", conf, providerProperties));
 }
 
 @Test
@@ -121,42 +121,42 @@ public void testCanOpenMissing() throws Exception
 public void testCanWrite() throws Exception
 {
   // always returns true for now
-  Assert.assertTrue("Should be able to write!", factory.canWrite("foo", providerProperties));
+  Assert.assertTrue("Should be able to write!", factory.canWrite("foo", conf, providerProperties));
 }
 
 @Test
 @Category(UnitTest.class)
 public void testExists() throws Exception
 {
-  provider = factory.createAdHocDataProvider(providerProperties);
+  provider = factory.createAdHocDataProvider(conf, providerProperties);
   // need to make sure there is something added
   OutputStream stream = provider.add();
   stream.close();
 
-  Assert.assertTrue("Name should exist!", factory.exists(provider.getResourceName(), providerProperties));
+  Assert.assertTrue("Name should exist!", factory.exists(provider.getResourceName(), conf, providerProperties));
 }
 
 @Test
 @Category(UnitTest.class)
 public void testExistsNothingWritten() throws Exception
 {
-  provider = factory.createAdHocDataProvider(providerProperties);
+  provider = factory.createAdHocDataProvider(conf, providerProperties);
 
-  Assert.assertFalse("Name should not exist!", factory.exists(provider.getResourceName(), providerProperties));
+  Assert.assertFalse("Name should not exist!", factory.exists(provider.getResourceName(), conf, providerProperties));
 }
 
 @Test
 @Category(UnitTest.class)
 public void testExistsMissing() throws Exception
 {
-  Assert.assertFalse("Name should not exist!", factory.exists("foo", providerProperties));
+  Assert.assertFalse("Name should not exist!", factory.exists("foo", conf, providerProperties));
 }
 
 @Test
 @Category(UnitTest.class)
 public void testDeleteNamed() throws Exception
 {
-  provider = factory.createAdHocDataProvider(providerProperties);
+  provider = factory.createAdHocDataProvider(conf, providerProperties);
   Assert.assertFalse("Directory should not exist", HadoopFileUtils.exists(provider.getResourceName()));
 
   // need to make sure there is something added, so the directories are actually created...
@@ -165,7 +165,7 @@ public void testDeleteNamed() throws Exception
 
   Assert.assertTrue("Directory should  exist", HadoopFileUtils.exists(provider.getResourceName()));
 
-  factory.delete(provider.getResourceName(), providerProperties);
+  factory.delete(provider.getResourceName(), conf, providerProperties);
 
   Assert.assertFalse("Directory should not exist", HadoopFileUtils.exists(provider.getResourceName()));
 }
@@ -174,10 +174,10 @@ public void testDeleteNamed() throws Exception
 @Category(UnitTest.class)
 public void testDeleteNamedNoData() throws Exception
 {
-  provider = factory.createAdHocDataProvider(providerProperties);
+  provider = factory.createAdHocDataProvider(conf, providerProperties);
   Assert.assertFalse("Directory should not exist", HadoopFileUtils.exists(provider.getResourceName()));
 
-  factory.delete(provider.getResourceName(), providerProperties);
+  factory.delete(provider.getResourceName(), conf, providerProperties);
 
   Assert.assertFalse("Directory should not exist", HadoopFileUtils.exists(provider.getResourceName()));
 
@@ -191,7 +191,7 @@ public void testDeleteNamedMissing() throws Exception
 
   Assert.assertFalse("Directory should not exist", HadoopFileUtils.exists(name));
 
-  factory.delete(name, providerProperties);
+  factory.delete(name, conf, providerProperties);
 
   Assert.assertFalse("Directory should not exist", HadoopFileUtils.exists(name));
 
