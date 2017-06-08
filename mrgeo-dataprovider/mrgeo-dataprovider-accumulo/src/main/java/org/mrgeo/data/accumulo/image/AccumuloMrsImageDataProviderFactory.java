@@ -155,17 +155,19 @@ public void setConfiguration(Map<String, String> properties)
 }
 
 @Override
-public MrsImageDataProvider createTempMrsImageDataProvider(ProviderProperties providerProperties) throws IOException
+public MrsImageDataProvider createTempMrsImageDataProvider(final Configuration conf,
+                                                           ProviderProperties providerProperties) throws IOException
 {
-  return createMrsImageDataProvider(HadoopUtils.createRandomString(40), providerProperties);
+  return createMrsImageDataProvider(HadoopUtils.createRandomString(40), conf, providerProperties);
 }
 
 /**
  * This is in the context of setting up a job or WMS/WTS queries.
  */
 @Override
-public MrsImageDataProvider createMrsImageDataProvider(String input,
-    final ProviderProperties providerProperties)
+public MrsImageDataProvider createMrsImageDataProvider(final String input,
+                                                       final Configuration conf,
+                                                       final ProviderProperties providerProperties)
 {
   // set the table name
   table = input;
@@ -182,7 +184,9 @@ public MrsImageDataProvider createMrsImageDataProvider(String input,
 
 
 @Override
-public boolean canOpen(String input, final ProviderProperties providerProperties)
+public boolean canOpen(final String input,
+                       final Configuration conf,
+                       final ProviderProperties providerProperties)
 {
   //TODO: work through the idea of empty and image tables
 
@@ -243,7 +247,8 @@ public boolean canOpen(String input, final ProviderProperties providerProperties
  * @returns array of table names
  */
 @Override
-public String[] listImages(final ProviderProperties providerProperties) throws IOException
+public String[] listImages(final Configuration conf,
+                           final ProviderProperties providerProperties) throws IOException
 {
   Properties oldProviderProperties = AccumuloUtils.providerPropertiesToProperties(providerProperties);
   ADPF_ImageToTable = AccumuloUtils.getGeoTables(oldProviderProperties);
@@ -260,7 +265,9 @@ public String[] listImages(final ProviderProperties providerProperties) throws I
 
 
 @Override
-public boolean canWrite(String input, final ProviderProperties providerProperties) throws IOException
+public boolean canWrite(final String input,
+                        final Configuration conf,
+                        final ProviderProperties providerProperties) throws IOException
 {
   String t = input;
   if (input.startsWith(MrGeoAccumuloConstants.MRGEO_ACC_PREFIX))
@@ -290,7 +297,9 @@ public boolean canWrite(String input, final ProviderProperties providerPropertie
 
 
 @Override
-public boolean exists(String input, final ProviderProperties providerProperties) throws IOException
+public boolean exists(final String input,
+                      final Configuration conf,
+                      final ProviderProperties providerProperties) throws IOException
 {
 
   Properties oldProviderProperties = AccumuloUtils.providerPropertiesToProperties(providerProperties);
@@ -342,7 +351,9 @@ public boolean exists(String input, final ProviderProperties providerProperties)
 
 
 @Override
-public void delete(String name, final ProviderProperties providerProperties) throws IOException
+public void delete(final String name,
+                   final Configuration conf,
+                   final ProviderProperties providerProperties) throws IOException
 {
   AccumuloConnector.deleteTable(name);
   return;

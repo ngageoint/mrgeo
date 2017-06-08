@@ -48,22 +48,6 @@ public boolean isValid(final Configuration conf);
  */
 public void initialize(Configuration conf) throws DataProviderException;
 
-/**
- * This function is called by MrGeo so that providers can make sure they have
- * the necessary information to be used within MrGeo. For example, if login
- * or connection data must be configured properly in order for this provider
- * to work properly, that should be verified within this function. If this
- * function returns false, the provider will not be used within MrGeo.
- * <p>
- * This particular signature is invoked by MrGeo when providers are needed
- * outside the context of a map/reduce task, for example while setting up
- * a map/reduce job before running it, or any time a provider is used outside
- * of map.reduce altogether. In this case, the provider should look for its
- * configuration on the server side (e.g. in MrGeoProperties if those settings
- * are configured in mrgeo.conf).
- */
-public boolean isValid();
-
 public String getPrefix();
 
 /**
@@ -103,19 +87,25 @@ public void setConfiguration(Map<String, String> properties);
 
 public VectorDataProvider createVectorDataProvider(final String prefix,
     final String input,
+    final Configuration conf,
     final ProviderProperties providerProperties);
 
-public String[] listVectors(final ProviderProperties providerProperties) throws IOException;
+public String[] listVectors(final Configuration conf,
+                            final ProviderProperties providerProperties) throws IOException;
 
 public boolean canOpen(final String input,
-    final ProviderProperties providerProperties) throws IOException;
+                       final Configuration conf,
+                       final ProviderProperties providerProperties) throws IOException;
 
 public boolean canWrite(final String input,
-    final ProviderProperties providerProperties) throws IOException;
+                        final Configuration conf,
+                        final ProviderProperties providerProperties) throws IOException;
 
 public boolean exists(final String name,
-    final ProviderProperties providerProperties) throws IOException;
+                      final Configuration conf,
+                      final ProviderProperties providerProperties) throws IOException;
 
 public void delete(final String name,
-    final ProviderProperties providerProperties) throws IOException;
+                   final Configuration conf,
+                   final ProviderProperties providerProperties) throws IOException;
 }

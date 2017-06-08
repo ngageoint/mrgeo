@@ -25,19 +25,8 @@ import java.util.Map;
 
 public class HdfsAdHocDataProviderFactory implements AdHocDataProviderFactory
 {
-private static Configuration conf = null;
-
-private static Configuration getConf()
-{
-  if (conf == null)
-  {
-    throw new IllegalArgumentException("The configuration was not initialized");
-  }
-  return conf;
-}
-
 @Override
-public boolean isValid()
+public boolean isValid(final Configuration conf)
 {
   return true;
 }
@@ -46,10 +35,6 @@ public boolean isValid()
 @SuppressWarnings("squid:S2696") // need to keep the conf static, but want to only set it with the object.  yuck!
 public void initialize(Configuration config)
 {
-  if (conf == null)
-  {
-    conf = config;
-  }
 }
 
 @Override
@@ -70,39 +55,49 @@ public void setConfiguration(Map<String, String> properties)
 }
 
 @Override
-public AdHocDataProvider createAdHocDataProvider(String name,
-    final ProviderProperties providerProperties) throws IOException
+public AdHocDataProvider createAdHocDataProvider(final String name,
+                                                 final Configuration conf,
+                                                 final ProviderProperties providerProperties) throws IOException
 {
-  return new HdfsAdHocDataProvider(getConf(), name, providerProperties);
+  return new HdfsAdHocDataProvider(conf, name, providerProperties);
 }
 
 @Override
-public AdHocDataProvider createAdHocDataProvider(final ProviderProperties providerProperties) throws IOException
+public AdHocDataProvider createAdHocDataProvider(final Configuration conf,
+                                                 final ProviderProperties providerProperties) throws IOException
 {
-  return new HdfsAdHocDataProvider(getConf(), providerProperties);
+  return new HdfsAdHocDataProvider(conf, providerProperties);
 }
 
 @Override
-public boolean canOpen(final String name, final ProviderProperties providerProperties) throws IOException
+public boolean canOpen(final String name,
+                       final Configuration conf,
+                       final ProviderProperties providerProperties) throws IOException
 {
-  return HdfsAdHocDataProvider.canOpen(getConf(), name, providerProperties);
+  return HdfsAdHocDataProvider.canOpen(conf, name, providerProperties);
 }
 
 @Override
-public boolean canWrite(final String name, final ProviderProperties providerProperties) throws IOException
+public boolean canWrite(final String name,
+                        final Configuration conf,
+                        final ProviderProperties providerProperties) throws IOException
 {
-  return HdfsAdHocDataProvider.canWrite(name, getConf(), providerProperties);
+  return HdfsAdHocDataProvider.canWrite(name, conf, providerProperties);
 }
 
 @Override
-public boolean exists(String name, final ProviderProperties providerProperties) throws IOException
+public boolean exists(final String name,
+                      final Configuration conf,
+                      final ProviderProperties providerProperties) throws IOException
 {
-  return HdfsAdHocDataProvider.exists(getConf(), name, providerProperties);
+  return HdfsAdHocDataProvider.exists(conf, name, providerProperties);
 }
 
 @Override
-public void delete(String name, final ProviderProperties providerProperties) throws IOException
+public void delete(final String name,
+                   final Configuration conf,
+                   final ProviderProperties providerProperties) throws IOException
 {
-  HdfsAdHocDataProvider.delete(getConf(), name, null);
+  HdfsAdHocDataProvider.delete(conf, name, null);
 }
 }

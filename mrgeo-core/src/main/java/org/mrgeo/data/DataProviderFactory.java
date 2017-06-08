@@ -367,11 +367,12 @@ public static AdHocDataProvider getAdHocDataProvider(final String name,
  */
 public static String[] listImages(final ProviderProperties providerProperties) throws IOException
 {
-  initialize(getBasicConfig());
+  Configuration conf = getBasicConfig();
+  initialize(conf);
   List<String> results = new ArrayList<String>();
   for (final MrsImageDataProviderFactory factory : mrsImageProviderFactories.values())
   {
-    String[] images = factory.listImages(providerProperties);
+    String[] images = factory.listImages(conf, providerProperties);
     if (images != null && images.length > 0)
     {
       results.addAll(Arrays.asList(images));
@@ -390,11 +391,12 @@ public static String[] listImages(final ProviderProperties providerProperties) t
  */
 public static String[] listVectors(final ProviderProperties providerProperties) throws IOException
 {
-  initialize(getBasicConfig());
+  Configuration conf = getBasicConfig();
+  initialize(conf);
   List<String> results = new ArrayList<String>();
   for (final VectorDataProviderFactory factory : vectorProviderFactories.values())
   {
-    String[] vectors = factory.listVectors(providerProperties);
+    String[] vectors = factory.listVectors(conf, providerProperties);
     if (vectors != null && vectors.length > 0)
     {
       results.addAll(Arrays.asList(vectors));
@@ -642,7 +644,7 @@ protected synchronized static void initialize(final Configuration conf) throws D
       {
         dp.setConfiguration(configSettings);
       }
-      if (dp.isValid())
+      if (dp.isValid(conf))
       {
         log.info("Found ad hoc data provider factory " + dp.getClass().getName());
         adHocProviderFactories.put(dp.getPrefix(), dp);
@@ -720,7 +722,7 @@ protected synchronized static void initialize(final Configuration conf) throws D
         {
           dp.setConfiguration(configSettings);
         }
-        if (dp.isValid())
+        if (dp.isValid(conf))
         {
           if (debugEnabled)
           {
@@ -799,7 +801,7 @@ private static AdHocDataProvider createAdHocDataProvider(final Configuration con
     AdHocDataProvider provider;
     try
     {
-      provider = factory.createAdHocDataProvider(props);
+      provider = factory.createAdHocDataProvider(conf, props);
     }
     catch (IOException e)
     {
@@ -868,7 +870,7 @@ private static MrsImageDataProvider createTempMrsImageDataProvider(final Configu
     MrsImageDataProvider provider;
     try
     {
-      provider = factory.createTempMrsImageDataProvider(providerProperties);
+      provider = factory.createTempMrsImageDataProvider(conf, providerProperties);
     }
     catch (IOException e)
     {
@@ -1118,9 +1120,9 @@ private static class AdHocLoader implements Callable<AdHocDataProvider>
     {
       if (factory != null)
       {
-        if (factory.canOpen(name, props))
+        if (factory.canOpen(name, conf, props))
         {
-          return factory.createAdHocDataProvider(name, props);
+          return factory.createAdHocDataProvider(name, conf, props);
         }
         else
         {
@@ -1133,25 +1135,25 @@ private static class AdHocLoader implements Callable<AdHocDataProvider>
     {
       if (factory != null)
       {
-        if (factory.exists(name, props))
+        if (factory.exists(name, conf, props))
         {
-          factory.delete(name, props);
+          factory.delete(name, conf, props);
         }
-        return factory.createAdHocDataProvider(name, props);
+        return factory.createAdHocDataProvider(name, conf, props);
       }
-      return getPreferredProvider().createAdHocDataProvider(name, props);
+      return getPreferredProvider().createAdHocDataProvider(name, conf, props);
     }
     else
     {
       if (factory != null)
       {
-        if (factory.canWrite(name, props))
+        if (factory.canWrite(name, conf, props))
         {
-          return factory.createAdHocDataProvider(name, props);
+          return factory.createAdHocDataProvider(name, conf, props);
         }
         throw new DataProviderNotFound("Unable to find an ad hoc data provider for " + name);
       }
-      return getPreferredProvider().createAdHocDataProvider(name, props);
+      return getPreferredProvider().createAdHocDataProvider(name, conf, props);
     }
 
   }
@@ -1177,7 +1179,7 @@ private static class AdHocLoader implements Callable<AdHocDataProvider>
     }
     for (final AdHocDataProviderFactory factory : adHocProviderFactories.values())
     {
-      if (factory.exists(name, props))
+      if (factory.exists(name, conf, props))
       {
         return factory;
       }
@@ -1224,9 +1226,9 @@ private static class MrsImageLoader implements Callable<MrsImageDataProvider>
     {
       if (factory != null)
       {
-        if (factory.canOpen(name, props))
+        if (factory.canOpen(name, conf, props))
         {
-          return factory.createMrsImageDataProvider(name, props);
+          return factory.createMrsImageDataProvider(name, conf, props);
         }
         else
         {
@@ -1239,25 +1241,25 @@ private static class MrsImageLoader implements Callable<MrsImageDataProvider>
     {
       if (factory != null)
       {
-        if (factory.exists(name, props))
+        if (factory.exists(name, conf, props))
         {
-          factory.delete(name, props);
+          factory.delete(name, conf, props);
         }
-        return factory.createMrsImageDataProvider(name, props);
+        return factory.createMrsImageDataProvider(name, conf, props);
       }
-      return getPreferredProvider().createMrsImageDataProvider(name, props);
+      return getPreferredProvider().createMrsImageDataProvider(name, conf, props);
     }
     else
     {
       if (factory != null)
       {
-        if (factory.canWrite(name, props))
+        if (factory.canWrite(name, conf, props))
         {
-          return factory.createMrsImageDataProvider(name, props);
+          return factory.createMrsImageDataProvider(name, conf, props);
         }
         throw new DataProviderNotFound("Unable to find a MrsImage data provider for " + name);
       }
-      return getPreferredProvider().createMrsImageDataProvider(name, props);
+      return getPreferredProvider().createMrsImageDataProvider(name, conf, props);
     }
   }
 
@@ -1293,7 +1295,7 @@ private static class MrsImageLoader implements Callable<MrsImageDataProvider>
     }
     for (final MrsImageDataProviderFactory factory : mrsImageProviderFactories.values())
     {
-      if (factory.exists(name, props))
+      if (factory.exists(name, conf, props))
       {
         if (log.isDebugEnabled())
         {
@@ -1363,13 +1365,13 @@ private static class VectorLoader implements Callable<VectorDataProvider>
         {
           log.debug("For vector " + name + ", found factory: " + factory.getClass().getName());
         }
-        if (factory.canOpen(name, props))
+        if (factory.canOpen(name, conf, props))
         {
           if (log.isDebugEnabled())
           {
             log.debug("Factory " + factory.getClass().getName() + " is able to open vector " + name);
           }
-          return factory.createVectorDataProvider(prefix, name, props);
+          return factory.createVectorDataProvider(prefix, name, conf, props);
         }
         else
         {
@@ -1402,21 +1404,21 @@ private static class VectorLoader implements Callable<VectorDataProvider>
     {
       if (factory != null)
       {
-        if (factory.exists(name, props))
+        if (factory.exists(name, conf, props))
         {
-          factory.delete(name, props);
+          factory.delete(name, conf, props);
         }
-        return factory.createVectorDataProvider(prefix, name, props);
+        return factory.createVectorDataProvider(prefix, name, conf, props);
       }
-      return getPreferredProvider().createVectorDataProvider(prefix, name, props);
+      return getPreferredProvider().createVectorDataProvider(prefix, name, conf, props);
     }
     else
     {
       if (factory != null)
       {
-        if (factory.canWrite(name, props))
+        if (factory.canWrite(name, conf, props))
         {
-          return factory.createVectorDataProvider(prefix, name, props);
+          return factory.createVectorDataProvider(prefix, name, conf, props);
         }
         String msg = "Unable to find a vector data provider for " + name + " using prefix " + prefix;
         if (log.isDebugEnabled())
@@ -1432,7 +1434,7 @@ private static class VectorLoader implements Callable<VectorDataProvider>
         }
         throw new DataProviderNotFound(msg);
       }
-      return getPreferredProvider().createVectorDataProvider(prefix, name, props);
+      return getPreferredProvider().createVectorDataProvider(prefix, name, conf, props);
     }
   }
 
@@ -1471,7 +1473,7 @@ private static class VectorLoader implements Callable<VectorDataProvider>
       {
         log.debug("Checking factory: " + factory.getClass().getName());
       }
-      if (factory.exists(name, props))
+      if (factory.exists(name, conf, props))
       {
         if (debugEnabled)
         {

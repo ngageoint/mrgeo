@@ -115,7 +115,7 @@ public static boolean canWrite(final Configuration conf, String input,
   return false;
 }
 
-static Path getBasePath(final Configuration conf)
+public static Path getBasePath(final Configuration conf)
 {
   String basePathKey = "hdfs." + MrGeoConstants.MRGEO_HDFS_IMAGE;
   Path basePath = null;
