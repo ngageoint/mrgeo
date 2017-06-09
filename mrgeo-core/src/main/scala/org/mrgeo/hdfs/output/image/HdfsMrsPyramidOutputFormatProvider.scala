@@ -24,6 +24,7 @@ import org.apache.hadoop.io.{SequenceFile, Writable, WritableComparable}
 import org.apache.hadoop.mapreduce.lib.output.{FileOutputFormat, SequenceFileOutputFormat}
 import org.apache.hadoop.mapreduce.{Job, OutputFormat}
 import org.apache.spark.rdd.PairRDDFunctions
+import org.mrgeo.core.MrGeoConstants
 import org.mrgeo.data.DataProviderException
 import org.mrgeo.data.image.{ImageOutputFormatContext, MrsImageOutputFormatProvider}
 import org.mrgeo.data.rdd.RasterRDD
@@ -94,6 +95,8 @@ class HdfsMrsPyramidOutputFormatProvider(context:ImageOutputFormatContext) exten
       // add every tile to the index
       conf.set("io.map.index.interval", "1")
 
+      val strBasePath = HdfsMrsImageDataProvider.getBasePath(conf).toString();
+      conf.set("hdfs." + MrGeoConstants.MRGEO_HDFS_IMAGE, strBasePath);
       Job.getInstance(super.setupOutput(conf)).getConfiguration
     }
     catch {

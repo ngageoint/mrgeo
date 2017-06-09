@@ -188,9 +188,6 @@ def generate(mrgeo, gateway, gateway_client):
                             setattr(VectorMapOp, method_name, code.compile(method_name).get(method_name))
                 if procCodes is not None:
                     for method_name, code in procCodes.items():
-                        if method_name == "rasterizevector":
-                           print(code.generate())
-
                         _mapop_code[method_name] = code
                         setattr(mrgeo, method_name, code.compile(method_name).get(method_name))
 

@@ -82,7 +82,7 @@ public void teardown(Job job) throws DataProviderException
 private void setupConfig(Job job) throws DataProviderException
 {
   Configuration conf = job.getConfiguration();
-  String strBasePath = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, "/mrgeo/images");
+  String strBasePath = HdfsMrsImageDataProvider.getBasePath(conf).toString();
   conf.set("hdfs." + MrGeoConstants.MRGEO_HDFS_IMAGE, strBasePath);
 
   String input = context.getInput();
