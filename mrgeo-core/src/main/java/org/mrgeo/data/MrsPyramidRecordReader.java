@@ -137,7 +137,7 @@ private RecordReader<TileIdWritable, RasterWritable> createRecordReader(
   {
     recordReader.initialize(initializeWithSplit, context);
   }
-  catch (Exception e)
+  catch (InterruptedException e)
   {
     throw new IOException(e);
   }

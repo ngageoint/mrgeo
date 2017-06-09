@@ -26,17 +26,6 @@ import java.util.Map;
 
 public class PgVectorDataProviderFactory implements VectorDataProviderFactory
 {
-  static Configuration conf;
-
-  private static Configuration getConf()
-  {
-    if (conf == null)
-    {
-      throw new IllegalArgumentException("The configuration was not initialized");
-    }
-    return conf;
-  }
-
   @Override
   public boolean isValid(Configuration conf)
   {
@@ -46,15 +35,6 @@ public class PgVectorDataProviderFactory implements VectorDataProviderFactory
   @Override
   public void initialize(Configuration config) throws DataProviderException
   {
-    if (conf == null)
-    {
-      conf = config;
-    }
-  }
-
-  @Override
-  public boolean isValid() {
-    return true;
   }
 
   @Override
@@ -79,15 +59,17 @@ public class PgVectorDataProviderFactory implements VectorDataProviderFactory
 
   @Override
   public VectorDataProvider createVectorDataProvider(
-          String prefix,
-          String input,
-          ProviderProperties providerProperties)
+          final String prefix,
+          final String input,
+          final Configuration conf,
+          final ProviderProperties providerProperties)
   {
-    return new PgVectorDataProvider(getConf(), prefix, input, providerProperties);
+    return new PgVectorDataProvider(conf, prefix, input, providerProperties);
   }
 
   @Override
-  public String[] listVectors(ProviderProperties providerProperties) throws IOException
+  public String[] listVectors(final Configuration conf,
+                              final ProviderProperties providerProperties) throws IOException
   {
     // We cannot give results for this method because all of the connection
     // information is contained in the resource name. So it is assumed that
@@ -97,16 +79,17 @@ public class PgVectorDataProviderFactory implements VectorDataProviderFactory
 
   @Override
   public boolean canOpen(
-          String input,
-          ProviderProperties providerProperties) throws IOException
+          final String input,final Configuration conf,
+          final ProviderProperties providerProperties) throws IOException
   {
     return PgVectorDataProvider.canOpen(input, providerProperties);
   }
 
   @Override
   public boolean canWrite(
-          String input,
-          ProviderProperties providerProperties) throws IOException
+          final String input,
+          final Configuration conf,
+          final ProviderProperties providerProperties) throws IOException
   {
     // We do not write vector data to Postgres yet
     return false;
@@ -114,14 +97,17 @@ public class PgVectorDataProviderFactory implements VectorDataProviderFactory
 
   @Override
   public boolean exists(
-          String name,
-          ProviderProperties providerProperties) throws IOException
+          final String name,
+          final Configuration conf,
+          final ProviderProperties providerProperties) throws IOException
   {
     return false;
   }
 
   @Override
-  public void delete(String name, ProviderProperties providerProperties) throws IOException
+  public void delete(final String name,
+                     final Configuration conf,
+                     final ProviderProperties providerProperties) throws IOException
   {
     throw new IOException("Cannot delete Postgres vector sources");
   }

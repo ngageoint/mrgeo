@@ -32,17 +32,6 @@ import java.util.Map;
 
 public class HdfsMrsImageDataProviderFactory implements MrsImageDataProviderFactory
 {
-private static Configuration conf;
-
-private static Configuration getConf()
-{
-  if (conf == null)
-  {
-    throw new IllegalArgumentException("The configuration was not initialized");
-  }
-  return conf;
-}
-
 @Override
 public boolean isValid()
 {
@@ -53,10 +42,6 @@ public boolean isValid()
 @SuppressWarnings("squid:S2696") // need to keep the conf static, but want to only set it with the object.  yuck!
 public void initialize(Configuration config)
 {
-  if (conf == null)
-  {
-    conf = config;
-  }
 }
 
 @Override
@@ -78,55 +63,62 @@ public void setConfiguration(Map<String, String> properties)
 
 @Override
 public MrsImageDataProvider createMrsImageDataProvider(final String input,
+    final Configuration conf,
     final ProviderProperties providerProperties)
 {
-  return new HdfsMrsImageDataProvider(getConf(), input, providerProperties);
+  return new HdfsMrsImageDataProvider(conf, input, providerProperties);
 }
 
 @Override
-public MrsImageDataProvider createTempMrsImageDataProvider(final ProviderProperties providerProperties)
+public MrsImageDataProvider createTempMrsImageDataProvider(final Configuration conf, final ProviderProperties providerProperties)
     throws IOException
 {
-  return createMrsImageDataProvider(HadoopFileUtils.createUniqueTmpPath().toUri().toString(), providerProperties);
+  return createMrsImageDataProvider(HadoopFileUtils.createUniqueTmpPath().toUri().toString(),
+          conf, providerProperties);
 }
 
 @Override
 public boolean canOpen(final String input,
-    final ProviderProperties providerProperties) throws IOException
+                       final Configuration conf,
+                       final ProviderProperties providerProperties) throws IOException
 {
-  return HdfsMrsImageDataProvider.canOpen(getConf(), input, providerProperties);
+  return HdfsMrsImageDataProvider.canOpen(conf, input, providerProperties);
 }
 
 @Override
 public boolean canWrite(final String input,
-    final ProviderProperties providerProperties) throws IOException
+                        final Configuration conf,
+                        final ProviderProperties providerProperties) throws IOException
 {
-  return HdfsMrsImageDataProvider.canWrite(getConf(), input, providerProperties);
+  return HdfsMrsImageDataProvider.canWrite(conf, input, providerProperties);
 }
 
 @Override
-public String[] listImages(final ProviderProperties providerProperties) throws IOException
+public String[] listImages(final Configuration conf,
+                           final ProviderProperties providerProperties) throws IOException
 {
   // TODO: Extract user name and authorizations from providerProperties
   // and pass them along.
-  Path usePath = getBasePath();
-  return listImages(getConf(), usePath, "", new String[0], providerProperties);
+  Path usePath = getBasePath(conf);
+  return listImages(conf, usePath, "", new String[0], providerProperties);
 }
 
 @Override
 public boolean exists(final String input,
-    final ProviderProperties providerProperties) throws IOException
+                      final Configuration conf,
+                      final ProviderProperties providerProperties) throws IOException
 {
-  return HdfsMrsImageDataProvider.exists(getConf(), input, providerProperties);
+  return HdfsMrsImageDataProvider.exists(conf, input, providerProperties);
 }
 
 @Override
 public void delete(final String name,
-    final ProviderProperties providerProperties) throws IOException
+                   final Configuration conf,
+                   final ProviderProperties providerProperties) throws IOException
 {
-  if (exists(name, providerProperties))
+  if (exists(name, conf, providerProperties))
   {
-    HdfsMrsImageDataProvider.delete(getConf(), name, providerProperties);
+    HdfsMrsImageDataProvider.delete(conf, name, providerProperties);
   }
 }
 
@@ -141,7 +133,7 @@ private String[] listImages(final Configuration conf, Path usePath, String userN
     List<String> results = new ArrayList<String>(fileStatuses.length);
     for (FileStatus status : fileStatuses)
     {
-      if (canOpen(status.getPath().toString(), providerProperties))
+      if (canOpen(status.getPath().toString(), conf, providerProperties))
       {
         results.add(status.getPath().getName());
       }
@@ -152,9 +144,9 @@ private String[] listImages(final Configuration conf, Path usePath, String userN
   return new String[0];
 }
 
-private Path getBasePath()
+private Path getBasePath(final Configuration conf)
 {
-  return HdfsMrsImageDataProvider.getBasePath(getConf());
+  return HdfsMrsImageDataProvider.getBasePath(conf);
 }
 
 private static class OnlyDirectoriesFilter implements PathFilter
