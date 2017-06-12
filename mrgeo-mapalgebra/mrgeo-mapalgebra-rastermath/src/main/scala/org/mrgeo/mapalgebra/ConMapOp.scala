@@ -379,7 +379,7 @@ class ConMapOp extends RasterMapOp with Externalizable {
   private[mapalgebra] def this(test:RasterMapOp, positive:Double, negative:Double) = {
     this()
 
-    inputs = Array.ofDim[RasterMapOp](2)
+    inputs = Array.ofDim[RasterMapOp](1)
     inputs(0) = test
 
     rddMap.put(0, 0)

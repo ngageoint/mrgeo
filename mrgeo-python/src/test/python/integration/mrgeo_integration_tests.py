@@ -244,3 +244,27 @@ class MrGeoIntegrationTests(mrgeotest.MrGeoTests):
         destPoints = self.mrgeo.create_points([65.087, 30.194, 65.283, 29.939])
         lcp = destPoints.leastcostpath(cd)
         self.comparevector(lcp, self.name)
+
+    def test_con1(self):
+        c = self.allones.isnodata().con(positiveConst=0, negativeRaster=self.allones)
+        self.compareraster(c, self.name)
+
+    def test_con1Alt(self):
+        c = self.mrgeo.con(test=self.allones.isnodata(), positiveConst=0, negativeRaster=self.allones)
+        self.compareraster(c, self.name)
+
+    def test_con2(self):
+        c = self.allones.isnodata().con(positiveConst=0, negativeConst=2)
+        self.compareraster(c, self.name)
+
+    def test_con2Alt(self):
+        c = self.mrgeo.con(test=self.allones.isnodata(), positiveConst=0, negativeConst=2)
+        self.compareraster(c, self.name)
+
+    def test_con3(self):
+        c = self.allones.isnodata().con(positiveRaster=self.allhundreds, negativeRaster=self.allones)
+        self.compareraster(c, self.name)
+
+    def test_con3Alt(self):
+        c = self.mrgeo.con(test=self.allones.isnodata(), positiveRaster=self.allhundreds, negativeRaster=self.allones)
+        self.compareraster(c, self.name)

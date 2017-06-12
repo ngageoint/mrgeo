@@ -4,8 +4,8 @@ import sys
 from pymrgeo import MrGeo
 
 if __name__ == "__main__":
-    mrgeo = MrGeo()  # forked mrgeo
-    # mrgeo = MrGeo(host="localhost", port=12345)  # already running, remote mrgeo
+    # mrgeo = MrGeo()  # forked mrgeo
+    mrgeo = MrGeo(host="localhost", port=12345)  # already running, remote mrgeo
 
     # sys.exit(1)
 
@@ -17,15 +17,19 @@ if __name__ == "__main__":
 
     ones = mrgeo.load_image("all-ones-save")
 
-    meta = ones.metadata()
+    #c = ones.isnodata().con(positiveConst=0, negativeRaster=ones)
+    #c.export("/data/export/con-inline", singleFile=True)
 
-    print(meta)
+    #c = mrgeo.con(test=ones.isnodata(), positiveConst=0, negativeRaster=ones)
+    c = mrgeo.con(test=ones.isnodata(), positiveConst=0, negativeConst=2)
+    c.export("/data/export/con-mrgeo", singleFile=True)
 
-    sys.exit(-1)
+    # meta = ones.metadata()
+
 
     # test error handling
     # foo = 1 / 0
-    sl = ones.slope()
+    # sl = ones.slope()
     # RasterMapOp.slope(ones, 1)
 
     # hundreds = mrgeo.load_image("all-hundreds")
