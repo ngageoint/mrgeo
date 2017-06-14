@@ -4,25 +4,30 @@ import sys
 from pymrgeo import MrGeo
 
 if __name__ == "__main__":
-    # mrgeo = MrGeo()  # forked mrgeo
-    mrgeo = MrGeo(host="localhost", port=12345)  # already running, remote mrgeo
+    mrgeo = MrGeo()  # forked mrgeo
+    # mrgeo = MrGeo(host="localhost", port=12345)  # already running, remote mrgeo
 
     # sys.exit(1)
 
-    mrgeo.usedebug()
+    # mrgeo.usedebug()
 
     # images = mrgeo.list_images()
 
     mrgeo.start()
 
-    ones = mrgeo.load_image("all-ones-save")
+    ones = mrgeo.ingest_image(name="gis-data/aster-30m-xsmall")
+    # ones.save("aster-small-python-test")
+
+    ones.export("/data/export/aster-small-python-test", singleFile=True)
+
+    # ones = mrgeo.load_image("all-ones-save")
 
     #c = ones.isnodata().con(positiveConst=0, negativeRaster=ones)
     #c.export("/data/export/con-inline", singleFile=True)
 
     #c = mrgeo.con(test=ones.isnodata(), positiveConst=0, negativeRaster=ones)
-    c = mrgeo.con(test=ones.isnodata(), positiveConst=0, negativeConst=2)
-    c.export("/data/export/con-mrgeo", singleFile=True)
+    # c = mrgeo.con(test=ones.isnodata(), positiveConst=0, negativeConst=2)
+    # c.export("/data/export/con-mrgeo", singleFile=True)
 
     # meta = ones.metadata()
 
