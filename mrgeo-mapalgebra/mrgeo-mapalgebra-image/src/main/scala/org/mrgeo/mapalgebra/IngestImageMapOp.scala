@@ -20,12 +20,14 @@ import java.io._
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.data.rdd.RasterRDD
+import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.ingest.{IngestImage, IngestInputProcessor}
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.utils.tms.TMSUtils
+import scala.collection.JavaConversions._
 
 object IngestImageMapOp extends MapOpRegistrar {
 
@@ -38,10 +40,10 @@ object IngestImageMapOp extends MapOpRegistrar {
   // call MrGeo.ingest_image(). Define createMapOp methods instead so that MrGeo.ingest_image
   // can call those methods.
 
-  def createMapOp(input:String, zoom:Int, skip_preprocessing:Boolean, nodataOverride:Array[Double],
+  def createMapOp(inputs:Array[String], zoom:Int, skip_preprocessing:Boolean, nodataOverride:java.util.ArrayList[Double],
                   categorical:Boolean, skip_category_load:Boolean, protectionLevel:String):MapOp = {
     if (nodataOverride == null) {
-      new IngestImageMapOp(input, Some(zoom), None, Some(skip_preprocessing), Some(categorical),
+      new IngestImageMapOp(inputs, Some(zoom), None, Some(skip_preprocessing), Some(categorical),
         Some(skip_category_load), protectionLevel)
     }
     else {
@@ -49,7 +51,7 @@ object IngestImageMapOp extends MapOpRegistrar {
       nodataOverride.zipWithIndex.foreach(U => {
         ndo(U._2) = U._1
       })
-      new IngestImageMapOp(input, Some(zoom), Some(ndo), Some(skip_preprocessing), Some(categorical),
+      new IngestImageMapOp(inputs, Some(zoom), Some(ndo), Some(skip_preprocessing), Some(categorical),
         Some(skip_category_load), protectionLevel)
     }
   }
@@ -91,6 +93,14 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
 
   override def execute(context:SparkContext):Boolean = {
 
+    val cpDir = context.getCheckpointDir
+    cpDir match {
+      case Some(ctxdir) => // nothing to do
+      case None => {
+        val checkpointDir = HadoopFileUtils.createJobTmp(context.hadoopConfiguration).toString
+        context.setCheckpointDir(checkpointDir)
+      }
+    }
     val inputfiles = inputs.getOrElse(throw new IOException("Inputs not set"))
     val iip = new IngestInputProcessor(context.hadoopConfiguration,
       nodataOverride match {
@@ -161,7 +171,7 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
 
     val in = Array.ofDim[String](1)
     in(0) = MapOp.decodeString(node.getChild(0), variables)
-        .getOrElse(throw new ParserException("Missing required input"))
+      .getOrElse(throw new ParserException("Missing required input"))
     this.inputs = Some(in)
 
     if (node.getNumChildren >= 2) {
