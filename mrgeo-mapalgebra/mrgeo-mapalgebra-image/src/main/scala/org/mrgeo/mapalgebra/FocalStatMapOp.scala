@@ -293,6 +293,8 @@ class FocalStatMapOp extends RawFocalMapOp with Externalizable {
     this()
     inputMapOp = raster
     this.stat = stat
+    this.neighborhoodSize = neighborhoodSize
+    this.ignoreNoData = ignoreNoData
     init
   }
 

@@ -28,6 +28,8 @@ import org.mrgeo.utils.GDALUtils;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.Pixel;
 import org.mrgeo.utils.tms.TMSUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
@@ -38,6 +40,7 @@ import java.nio.*;
 
 public abstract class MrGeoRaster implements Serializable
 {
+private static Logger log = LoggerFactory.getLogger(MrGeoRaster.class);
 final static int HEADER_LEN = 12;
 // data offset: byte (VERSION) + int (width) + int (height) + short (bands) + byte (datatype)
 private final static int VERSION_OFFSET = 0;    // start
@@ -209,7 +212,8 @@ public static MrGeoRaster fromDataset(final Dataset dataset, final int x, final 
 
     if (success != gdalconstConstants.CE_None)
     {
-      System.out.println("Failed reading raster. gdal error: " + success);
+      String lastErr = gdal.GetLastErrorMsg();
+      log.warn("Failed reading raster. gdal error: " + success + ": " + lastErr + " (This may be a result of the threading problem in GDAL)");
     }
     //GDALUtils.swapBytes(data, gdaltype);
 
