@@ -750,6 +750,11 @@ object GDALUtils extends Logging {
     }
 
     val copy:Dataset = driver.CreateCopy(file, ds, 1, moreoptions)
+    if (copy == null) {
+      val msg = "Unable to create raster " + file + ". Error message from GDAL is: " + gdal.GetLastErrorMsg()
+      log.error(msg)
+      throw new IOException(msg)
+    }
 
     // add the bounds, if sent in.  Reproject if needed
     val xform:Array[Double] = new Array[Double](6)
