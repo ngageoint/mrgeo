@@ -62,7 +62,7 @@ class ZoomMapOp extends RasterMapOp with Externalizable
               meta.getDefaultValues,
               bounds = meta.getBounds,
               calcStats = false))
-            true
+            return true
           }
           case _ => throw new IOException("Can only pass a direct image data source to zoom")
         }
