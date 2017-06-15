@@ -29,8 +29,8 @@ object ZoomMapOp extends MapOpRegistrar {
     Array[String]("zoom")
   }
 
-  def create(raster:RasterMapOp, band:Int = 1) =
-    new ZoomMapOp(Some(raster), band)
+  def create(raster:RasterMapOp, zoom:Int = 1) =
+    new ZoomMapOp(Some(raster), zoom)
 
   override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new ZoomMapOp(node, variables)
