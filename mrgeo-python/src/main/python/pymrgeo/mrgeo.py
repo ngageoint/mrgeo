@@ -237,17 +237,35 @@ class MrGeo(object):
 
         return RasterMapOp(mapop=mapop, gateway=self.gateway, context=self.sparkContext, job=self._job)
 
-    def ingest_image(self, name, zoom=-1, skip_preprocessing=False, nodata_override=None,
-                     categorical=False, skip_category_load=False, protection_level=""):
+    def ingest_image(self, *names, **kwargs):
         if not self._started:
-            print("ERROR:  You must call start() before ingest_image()")
+            print("ERROR:  You must call start() before ingest_images()")
             sys.stdout.flush()
             return None
 
         jvm = self._get_jvm()
         job = self._get_job()
 
-        mapop = jvm.IngestImageMapOp.createMapOp(name, zoom, skip_preprocessing, nodata_override,
+        zoom = kwargs.pop('zoom', -1)
+        skip_preprocessing = kwargs.pop('skip_preprocessing', False)
+        nodata_override = kwargs.pop('nodata_override', None)
+        categorical = kwargs.pop('categorical', False)
+        skip_category_load = kwargs.pop('skip_category_load', False)
+        protection_level = kwargs.pop('protection_level', '')
+
+        elements = []
+        for arg in names:
+            if isinstance(arg, list):
+                for a in arg:
+                    elements.append(a)
+            else:
+                elements.append(arg)
+        array = self.gateway.new_array(self.gateway.jvm.String, len(elements))
+        cnt = 0
+        for element in elements:
+            array[cnt] = element
+            cnt += 1
+        mapop = jvm.IngestImageMapOp.createMapOp(array, zoom, skip_preprocessing, nodata_override,
                                                  categorical, skip_category_load, protection_level)
 
         if (mapop.setup(job, self.sparkContext.getConf()) and
