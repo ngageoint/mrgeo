@@ -283,13 +283,20 @@ public MrsImage getHighestResImage() throws IOException
 @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST_OF_RETURN_VALUE", justification = "We _are_ checking!")
 public MrsImage getImage(final int level) throws IOException
 {
-  try
-  {
+  try {
     Optional<MrsImage> o = imageCache.get(level);
 
     //      System.out.println("get image: " + metadata.getPyramid() + "/" + level +
     //        " (" + (o.isPresent() ? "found" : "null") + ")");
-    return o.isPresent() ? o.get() : null;
+    if (o.isPresent()) {
+      return o.get();
+    }
+    else if (level <= getMaximumLevel()) {
+      return null;
+    }
+    else {
+      throw new IOException("Requested zoom level " + level + " is greater than the max zoom level for the image " + getMaximumLevel());
+    }
   }
   catch (final ExecutionException e)
   {

@@ -15,6 +15,10 @@
 
 package org.mrgeo.data.raster;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.mrgeo.utils.tms.Bounds;
+import org.mrgeo.utils.tms.TMSUtils;
+
 import java.awt.*;
 import java.awt.color.ColorSpace;
 import java.awt.image.*;
@@ -58,6 +62,46 @@ public static ColorModel createColorModel(final Raster raster)
   return null;
 }
 
+
+public static class RasterSize
+{
+  private int widthInPixels;
+  private int heightInPixels;
+  private int zoom;
+
+  public RasterSize(int widthInPixels, int heightInPixels, int zoom)
+  {
+    this.widthInPixels = widthInPixels;
+    this.heightInPixels = heightInPixels;
+    this.zoom = zoom;
+  }
+
+  public int getWidthInPixels() { return widthInPixels; }
+  public int getHeightInPixels() { return heightInPixels; }
+  public int getZoom() { return zoom; }
+}
+
+public static RasterSize getMaxPixelsForSize(int sizeInKb,
+                                             Bounds bounds,
+                                             int bytesPerPixelPerBand,
+                                             int bands,
+                                             int tilesize)
+{
+  long sizeInBytes = (long)(1024) * (long)sizeInKb;
+  long totalPixels = sizeInBytes / ((long)bytesPerPixelPerBand * (long)bands);
+  double wToH = bounds.width() / bounds.height();
+  // Given:
+  //   1. totalPixels = heightInPx * widthInPixels
+  //   2. widthInPx = heightInPx * wToH
+  // Conclusion:
+  //   totalPixels = heightInPx * (heightInPx * wToH)
+  //   => heightInPx = sqrt(totalPixels / wToH)
+  int heightInPx = (int)Math.sqrt(totalPixels / wToH);
+  int widthInPx = (int)(heightInPx * wToH);
+  double resolution = bounds.height() / (double)heightInPx;
+  int zoom = TMSUtils.zoomForPixelSize(resolution, tilesize);
+  return new RasterSize(widthInPx, heightInPx, zoom);
+}
 
 public static WritableRaster createEmptyRaster(final int width, final int height,
     final int bands, final int datatype,
