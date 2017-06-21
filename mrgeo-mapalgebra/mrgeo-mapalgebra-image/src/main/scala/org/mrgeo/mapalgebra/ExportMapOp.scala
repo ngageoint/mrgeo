@@ -19,8 +19,10 @@ import java.io._
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.{SparkConf, SparkContext}
-import org.gdal.gdal.Dataset
-import org.mrgeo.data.raster.RasterWritable
+import org.mrgeo.colorscale.applier.{ColorScaleApplier, JpegColorScaleApplier, PngColorScaleApplier}
+import org.mrgeo.colorscale.{ColorScale, ColorScaleManager}
+import org.mrgeo.core.MrGeoConstants
+import org.mrgeo.data.raster.{MrGeoRaster, RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.image.MrsPyramidMetadata
@@ -48,12 +50,14 @@ object ExportMapOp extends MapOpRegistrar {
     Array[String]("export")
   }
 
-  def create(raster:RasterMapOp, name:String, singleFile:Boolean = false, zoom:Int = -1, numTiles:Int = -1,
+  def create(raster:RasterMapOp, name:String, singleFile:Boolean = false,
+             zoom:Int = -1, maxSize:String = "", numTiles:Int = -1,
              mosaic:Int = -1, format:String = "tif", randomTiles:Boolean = false,
              tms:Boolean = false, colorscale:String = "", tileids:String = "",
              bounds:String = "", allLevels:Boolean = false, overridenodata:Double = Double.NegativeInfinity):MapOp = {
 
-    new ExportMapOp(Some(raster), name, zoom, numTiles, mosaic, format, randomTiles, singleFile,
+    new ExportMapOp(Some(raster), name, zoom, maxSize, numTiles,
+      mosaic, format, randomTiles, singleFile,
       tms, colorscale, tileids, bounds, allLevels, overridenodata)
   }
 
@@ -74,6 +78,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
   private var name:String = null
   private var numTiles:Option[Int] = None
   private var zoom:Option[Int] = None
+  private var maxSizeInKb:Option[Int] = None
   private var mosaic:Option[Int] = None
   private var format:Option[String] = None
   private var randomtile:Boolean = false
@@ -85,9 +90,12 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
   private var alllevels:Boolean = false
   private var overridenodata:Option[Double] = None
 
-  private var mergedimage:Option[Dataset] = None
+  private var mergedimage:Option[MrGeoRaster] = None
+  private var mergedbounds: Option[Bounds] = None
+  private var mergednodata: Option[Array[Double]] = None
 
-  def this(raster:Option[RasterMapOp], name:String, zoom:Int, numTiles:Int, mosaic:Int, format:String,
+  def this(raster:Option[RasterMapOp], name:String, zoom:Int, maxSize: String, numTiles:Int,
+           mosaic:Int, format:String,
            randomTiles:Boolean, singleFile:Boolean, tms:Boolean, colorscale:String, tileids:String,
            bounds:String, allLevels:Boolean, overridenodata:Double = Double.NegativeInfinity) = {
     this()
@@ -96,6 +104,12 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
     this.name = name
     this.zoom = if (zoom > 0) {
       Some(zoom)
+    }
+    else {
+      None
+    }
+    this.maxSizeInKb = if (maxSize != null && maxSize.length > 0) {
+      Some(SparkUtils.humantokb(maxSize))
     }
     else {
       None
@@ -153,12 +167,12 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
 
   override def rdd():Option[RasterRDD] = rasterRDD
 
-  def image():Dataset = {
-    mergedimage match {
-      case Some(d) => d
-      case None => null
-    }
-  }
+//  def image():Dataset = {
+//    mergedimage match {
+//      case Some(d) => d
+//      case None => null
+//    }
+//  }
 
   override def getZoomLevel(): Int = {
     zoom.getOrElse(raster.getOrElse(throw new IOException("No raster input specified")).getZoomLevel())
@@ -171,9 +185,46 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
     val meta = input.metadata() getOrElse
                (throw new IOException("Can't load metadata! Ouch! " + input.getClass.getName))
 
-    if (zoom.isEmpty) {
-      zoom = Some(meta.getMaxZoomLevel)
+    val applier: Option[ColorScaleApplier] =
+      if (colorscale.isDefined || !"tif".equals(format.getOrElse(""))) {
+          format match {
+            case Some(fmt) => fmt match {
+              case "jpg" | "jpeg" => Some(new JpegColorScaleApplier)
+              case _ => Some(new PngColorScaleApplier) // png, tif, etc...
+            }
+            case None => Some(new PngColorScaleApplier)
+          }
+      }
+      else {
+        None
+      }
+
+    val bnds = bounds.getOrElse(meta.getBounds)
+    maxSizeInKb match {
+      case Some(mis) => {
+        if (zoom.isDefined) {
+          log.warn("The zoom level will be re-computed based on the maximum image size")
+        }
+        if (!singlefile) {
+          throw new IOException("The maxSize argument only applies when outputting a single image")
+        }
+        val (bytesPerPixelPerBand, bands) = applier match {
+          case Some(a) => {
+            (a.getBytesPerPixelPerBand(), a.getBands(raster.get.toRaster()))
+          }
+          case None => (raster.get.toRaster().bytesPerPixel(), 1)
+        }
+        val rasterSize = RasterUtils.getMaxPixelsForSize(mis, bnds,
+          bytesPerPixelPerBand, bands, meta.getTilesize)
+        zoom = Some(math.min(rasterSize.getZoom, meta.getMaxZoomLevel))
+      }
+      case None => {
+        if (zoom.isEmpty) {
+          zoom = Some(meta.getMaxZoomLevel)
+        }
+      }
     }
+    println("Exporting " + meta.getPyramid + " at zoom level " + zoom.get)
 
     do {
       val rdd =
@@ -182,7 +233,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
       val tiles = calculateTiles(meta)
 
       if (singlefile) {
-        saveImage(rdd, tiles, meta, reformat = false)
+        saveImage(rdd, tiles, meta, applier, bnds, reformat = false)
       }
       else if (mosaic.isDefined) {
         tiles.foreach(start => {
@@ -194,12 +245,12 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
               mosaiced += TMSUtils.tileid(tx, ty, zoom.get)
             }
           }
-          saveImage(rdd, mosaiced.result().toSet, meta)
+          saveImage(rdd, mosaiced.result().toSet, meta, applier, bnds)
         })
       }
       else {
         tiles.foreach(tile => {
-          saveImage(rdd, Array[Long](tile).toSet, meta)
+          saveImage(rdd, Array[Long](tile).toSet, meta, applier, bnds)
         })
       }
       zoom = Some(zoom.get - 1)
@@ -211,7 +262,8 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
 
     if (ExportMapOp.inMemoryTestPath != null) {
       val output = makeOutputName(ExportMapOp.inMemoryTestPath, format.get, 0, 0, 0, reformat = false)
-      GDALUtils.saveRaster(mergedimage.get, output, null, meta.getDefaultValueDouble(0), format.get)
+      GDALUtils.saveRaster(mergedimage.get.toDataset(mergedbounds.get, mergednodata.get),
+        output, null, meta.getDefaultValueDouble(0), format.get)
     }
     true
   }
@@ -297,15 +349,15 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
       }
     }
 
-    // Check for optional format string
+    // Check for optional tileids string
     if (node.getNumChildren > 10) {
       MapOp.decodeString(node.getChild(10), variables) match {
-        case Some(s) => tileids = Some(s.split(",").map(_.toLong).toSeq)
+        case Some(s) => tileids = if (s.length > 0) Some(s.split(",").map(_.toLong).toSeq) else None
         case _ =>
       }
     }
 
-    // Check for optional format string
+    // Check for optional bounds string
     if (node.getNumChildren > 11) {
       MapOp.decodeString(node.getChild(11), variables) match {
         case Some(s) => bounds = if (s.length > 0) Some(Bounds.fromCommaString(s)) else None
@@ -313,10 +365,20 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
       }
     }
 
-    // Check for optional single file flag
+    // Check for optional all zoom levels flag
     if (node.getNumChildren > 12) {
       MapOp.decodeBoolean(node.getChild(12), variables) match {
         case Some(b) => alllevels = b
+        case _ =>
+      }
+    }
+
+    // Check for optional max image size
+    if (node.getNumChildren > 13) {
+      MapOp.decodeString(node.getChild(13), variables) match {
+        case Some(strMaxSize) => {
+          maxSizeInKb = Some(SparkUtils.humantokb(strMaxSize))
+        }
         case _ =>
       }
     }
@@ -332,7 +394,11 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
 
   }
 
-  private def saveImage(rdd:RasterRDD, tiles:Set[Long], meta:MrsPyramidMetadata, reformat:Boolean = true) = {
+  private def saveImage(rdd:RasterRDD, tiles:Set[Long],
+                        meta:MrsPyramidMetadata,
+                        applier:Option[ColorScaleApplier],
+                        bnds:Bounds,
+                        reformat:Boolean = true) = {
     implicit val tileIdOrdering = new Ordering[TileIdWritable] {
       override def compare(x:TileIdWritable, y:TileIdWritable):Int = x.compareTo(y)
     }
@@ -396,16 +462,75 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
         nd(x) = overridenodata.get
       }
     }
-    val bnds = SparkUtils.calculateBounds(RasterRDD(replaced), zoom.get, meta.getTilesize)
+
+//    val bnds = SparkUtils.calculateBounds(RasterRDD(replaced), useZoom, meta.getTilesize)
     val image = SparkUtils.mergeTiles(RasterRDD(replaced), zoom.get, meta.getTilesize, nd)
 
+    // Load the optionally specified color scale
+    var cs: Option[ColorScale] = colorscale match {
+      case Some(csname) => {
+        if (!csname.isEmpty) {
+          try {
+            Some(ColorScaleManager.fromName(csname))
+          }
+          catch {
+            case e: ColorScale.ColorScaleException => throw new IOException("Invalid color scale name: " + csname)
+          }
+        }
+        else {
+          None
+        }
+      }
+      case None => None
+    }
+    val rasterToSave: MrGeoRaster =
+      cs match {
+        case Some(c) => colorRaster(applier.get, meta, image, c, zoom.get)
+        case None => {
+          if (!"tif".equals(format.get)) {
+            val csDefaultName = meta.getTag(MrGeoConstants.MRGEO_DEFAULT_COLORSCALE)
+            if (csDefaultName != null && !csDefaultName.isEmpty) {
+              var csDefault:ColorScale = null;
+              try {
+                csDefault = ColorScaleManager.fromName(csDefaultName)
+              }
+              catch {
+                case e: ColorScale.ColorScaleException => throw new IOException("Image's default color scale is invalid: " + csDefaultName)
+              }
+              if (csDefault == null) {
+                throw new IOException("Cannot load default color scale: " + csDefaultName)
+              }
+              cs = Some(csDefault)
+            }
+            else {
+              cs = Some(ColorScale.createDefaultGrayScale())
+            }
+            colorRaster(applier.get, meta, image, cs.get, zoom.get)
+          }
+          else {
+            image
+          }
+        }
+      }
     if (name == ExportMapOp.IN_MEMORY) {
-      mergedimage = Some(image.toDataset(bnds, nd))
+      mergedimage = Some(rasterToSave)
+      mergedbounds = Some(bnds)
+      mergednodata = Some(nd)
     }
     else {
       val output = makeOutputName(name, format.get, replaced.keys.min().get(), zoom.get, meta.getTilesize, reformat)
-      GDALUtils.saveRaster(image.toDataset(bnds, nd), output, bnds, nd(0), format.get)
+      GDALUtils.saveRaster(rasterToSave.toDataset(bnds, nd), output, bnds, nd(0), format.get)
     }
+  }
+
+  private def colorRaster(applier: ColorScaleApplier,
+                          metadata: MrsPyramidMetadata,
+                          raster: MrGeoRaster,
+                          colorscale: ColorScale,
+                          zoom: Int): MrGeoRaster =
+  {
+    applier.applyColorScale(raster, colorscale, metadata.getExtrema(zoom),
+      metadata.getDefaultValues, metadata.getQuantiles)
   }
 
   private def calculateTiles(meta:MrsPyramidMetadata):Set[Long] = {
