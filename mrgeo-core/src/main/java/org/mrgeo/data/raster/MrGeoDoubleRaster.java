@@ -114,7 +114,7 @@ public void setPixel(int x, int y, int band, double pixel)
 }
 
 @Override
-int bytesPerPixel()
+public int bytesPerPixel()
 {
   return BYTES_PER_PIXEL;
 }
