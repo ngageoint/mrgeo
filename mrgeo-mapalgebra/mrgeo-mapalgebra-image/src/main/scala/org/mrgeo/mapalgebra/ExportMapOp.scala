@@ -210,7 +210,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
         }
         val (bytesPerPixelPerBand, bands) = applier match {
           case Some(a) => {
-            (a.getBytesPerPixelPerBand(), a.getBands(raster.get.toRaster()))
+            (a.getBytesPerPixelPerBand(), a.getBands(meta.getBands))
           }
           case None => (raster.get.toRaster().bytesPerPixel(), 1)
         }
