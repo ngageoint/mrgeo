@@ -217,9 +217,9 @@ public int run(CommandLine line, Configuration conf,
       if (maxSizeInKb > 0) {
         // Compute the zoom level required to keep the output image smaller
         // than the specified max size.
-        MrGeoRaster raster = pyramid.getHighestResImage().getRaster();
-        int bytesPerPixelPerBand = (applier != null) ? applier.getBytesPerPixelPerBand() : raster.bytesPerPixel();
-        int bands = (applier != null) ? applier.getBands(raster) : 1;
+        MrGeoRaster rasterForAnyTile = pyramid.getHighestResImage().getAnyTile();
+        int bytesPerPixelPerBand = (applier != null) ? applier.getBytesPerPixelPerBand() : rasterForAnyTile.bytesPerPixel();
+        int bands = (applier != null) ? applier.getBands(pyramid.getMetadata().getBands()) : 1;
         Bounds b = (useBounds) ? bounds : pyramid.getBounds();
         int maxZoom = pyramid.getMaximumLevel();
         zoomlevel = RasterUtils.getMaxPixelsForSize(maxSizeInKb, b,
@@ -346,6 +346,10 @@ public String getUsage() { return "export <options> <input>"; }
 @Override
 public void addOptions(Options options)
 {
+  final Option maxImageSize = new Option("ms", "maxsize", true, "Maximum size of output image (in kb)");
+  maxImageSize.setRequired(false);
+  options.addOption(maxImageSize);
+
   final Option output = new Option("o", "output", true, "Output directory");
   output.setRequired(true);
   options.addOption(output);
@@ -381,10 +385,6 @@ public void addOptions(Options options)
   final Option color = new Option("cs", "colorscale", true, "Color scale to apply");
   color.setRequired(false);
   options.addOption(color);
-
-  final Option maxImageSize = new Option("ms", "maxsize", true, "Maximum size of output image (in kb)");
-  maxImageSize.setRequired(false);
-  options.addOption(maxImageSize);
 
   final Option tileIds = new Option("t", "tileids", true,
       "A comma separated list of tile ID's to export");
