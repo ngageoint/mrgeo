@@ -37,7 +37,7 @@ public MrGeoRaster applyColorScale(final MrGeoRaster raster, ColorScale colorSca
 {
   try
   {
-    MrGeoRaster colored = MrGeoRaster.createEmptyRaster(raster.width(), raster.height(), getBands(raster), DataBuffer.TYPE_BYTE);
+    MrGeoRaster colored = MrGeoRaster.createEmptyRaster(raster.width(), raster.height(), getBands(raster.bands()), DataBuffer.TYPE_BYTE);
     colored.fill(RasterUtils.getDefaultNoDataForType(DataBuffer.TYPE_BYTE));
 
     setupExtrema(colorScale, extrema, defaultValues[0],
@@ -59,7 +59,7 @@ public int getBytesPerPixelPerBand()
 }
 
 @Override
-public int getBands(final MrGeoRaster raster)
+public int getBands(final int sourceBands)
 {
   return 3;
 }

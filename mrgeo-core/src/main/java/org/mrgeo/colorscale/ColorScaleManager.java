@@ -46,6 +46,7 @@ static
   }
   catch (ColorScale.ColorScaleException e)
   {
+    log.error("Unable to initialize color scales", e);
     throw new RuntimeException("Error initializing ColorScaleManager", e);
   }
 }
