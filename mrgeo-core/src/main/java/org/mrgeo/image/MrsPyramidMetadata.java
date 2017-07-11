@@ -814,13 +814,8 @@ public LongRectangle getOrCreateTileBounds(final int zoomlevel)
     return imageData[zoomlevel].tileBounds;
   }
 
-  LongRectangle tilebounds = getTileBounds(zoomlevel);
-  if (tilebounds == null)
-  {
-    TileBounds tb = TMSUtils.boundsToTile(bounds, zoomlevel, tilesize);
-    tilebounds = new LongRectangle(tb.w, tb.s, tb.e, tb.n);
-  }
-  return tilebounds;
+  TileBounds tb = TMSUtils.boundsToTile(bounds, zoomlevel, tilesize);
+  return new LongRectangle(tb.w, tb.s, tb.e, tb.n);
 }
 
 public LongRectangle getOrCreatePixelBounds(final int zoomlevel)

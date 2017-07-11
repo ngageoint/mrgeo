@@ -33,15 +33,13 @@ import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.raster.MrGeoRaster;
+import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImageException;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.MrsPyramidMetadata;
-import org.mrgeo.utils.FileUtils;
-import org.mrgeo.utils.GDALJavaUtils;
-import org.mrgeo.utils.HadoopUtils;
-import org.mrgeo.utils.LongRectangle;
+import org.mrgeo.utils.*;
 import org.mrgeo.utils.logging.LoggingUtils;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.TMSUtils;
@@ -73,6 +71,7 @@ private boolean useBounds = false;
 private Set<Long> tileset = null;
 private ColorScale colorscale = null;
 private boolean useTMS;
+private int maxSizeInKb = -1;
 
 @Override
 @SuppressWarnings("squid:S1166") // Exception caught and handled
@@ -137,6 +136,11 @@ public int run(CommandLine line, Configuration conf,
       colorscale = ColorScaleManager.fromName(line.getOptionValue("cs"));
     }
 
+    if (line.hasOption("ms"))
+    {
+      maxSizeInKb = SparkUtils.humantokb(line.getOptionValue("ms"));
+    }
+
     boolean useTileSet = line.hasOption("t");
     if (useTileSet)
     {
@@ -168,9 +172,11 @@ public int run(CommandLine line, Configuration conf,
 //        FileUtils.createDir(new File(outputbase));
 //      }
 
+    if (maxSizeInKb > 0 && !singleImage) {
+      throw new ParseException("maxsize can only be specified along with single");
+    }
     for (final String arg : line.getArgs())
     {
-      // The input can be either an image or a vector.
       MrsPyramid imagePyramid;
       MrsPyramid pyramid = null;
       String pyramidName = "";
@@ -189,9 +195,39 @@ public int run(CommandLine line, Configuration conf,
 
       if (imagePyramid == null)
       {
-        throw new ParseException("Specified input must be either an image or a vector");
+        throw new ParseException("Specified input must be an image");
       }
-      if (zoomlevel <= 0)
+
+      MrsPyramidMetadata meta = pyramid.getMetadata();
+      ColorScaleApplier applier = null;
+      if (colorscale != null || !"tif".equalsIgnoreCase(format)) {
+        switch (format) {
+          case "jpg":
+          case "jpeg":
+            applier = new JpegColorScaleApplier();
+            break;
+          case "tif":
+          case "png":
+          default:
+            applier = new PngColorScaleApplier();
+            break;
+        }
+      }
+
+      if (maxSizeInKb > 0) {
+        // Compute the zoom level required to keep the output image smaller
+        // than the specified max size.
+        MrGeoRaster rasterForAnyTile = pyramid.getHighestResImage().getAnyTile();
+        int bytesPerPixelPerBand = (applier != null) ? applier.getBytesPerPixelPerBand() : rasterForAnyTile.bytesPerPixel();
+        int bands = (applier != null) ? applier.getBands(pyramid.getMetadata().getBands()) : 1;
+        Bounds b = (useBounds) ? bounds : pyramid.getBounds();
+        int maxZoom = pyramid.getMaximumLevel();
+        zoomlevel = RasterUtils.getMaxPixelsForSize(maxSizeInKb, b,
+                bytesPerPixelPerBand, bands, meta.getTilesize()).getZoom();
+        zoomlevel = Math.min(zoomlevel, maxZoom);
+        System.out.println("Exporting image at zoom level " + zoomlevel);
+      }
+      else if (zoomlevel <= 0)
       {
         zoomlevel = pyramid.getMaximumLevel();
       }
@@ -240,8 +276,9 @@ public int run(CommandLine line, Configuration conf,
             {
               ob += "-" + zoomlevel;
             }
-            saveMultipleTiles(ob, pyramidName, format,
-                image, ArrayUtils.toPrimitive(tiles.toArray(new Long[tiles.size()])), providerProperties);
+            saveMultipleTiles(ob, pyramidName, format, image, applier,
+                    ArrayUtils.toPrimitive(tiles.toArray(new Long[tiles.size()])),
+                    providerProperties);
           }
           else if (mosaicTiles && mosaicTileCount > 0)
           {
@@ -267,15 +304,17 @@ public int run(CommandLine line, Configuration conf,
               }
 //                final String mosaicOutput = output + "/" + t.ty + "-" + t.tx + "-" +
 //                    TMSUtils.tileid(t.tx, t.ty, zoomlevel);
-              saveMultipleTiles(outputbase, pyramidName, format, image,
-                  ArrayUtils.toPrimitive(tilesToMosaic.toArray(new Long[tilesToMosaic.size()])), providerProperties);
+              saveMultipleTiles(outputbase, pyramidName, format, image, applier,
+                      ArrayUtils.toPrimitive(tilesToMosaic.toArray(new Long[tilesToMosaic.size()])),
+                      providerProperties);
             }
           }
           else
           {
             for (final Long tileid : tiles)
             {
-              saveSingleTile(outputbase, pyramidName, image, format, tileid, zoomlevel, tilesize, providerProperties);
+              saveSingleTile(outputbase, pyramidName, image, applier, format,
+                      tileid, zoomlevel, tilesize, providerProperties);
             }
           }
         }
@@ -307,6 +346,10 @@ public String getUsage() { return "export <options> <input>"; }
 @Override
 public void addOptions(Options options)
 {
+  final Option maxImageSize = new Option("ms", "maxsize", true, "Maximum size of output image (in kb)");
+  maxImageSize.setRequired(false);
+  options.addOption(maxImageSize);
+
   final Option output = new Option("o", "output", true, "Output directory");
   output.setRequired(true);
   options.addOption(output);
@@ -386,8 +429,61 @@ private Bounds parseBounds(String boundsOption)
   return new Bounds(w, s, e, n);
 }
 
+private MrGeoRaster colorRaster(MrGeoRaster raster,
+                                MrsPyramidMetadata metadata,
+                                ColorScaleApplier applier,
+                                final int zoom,
+                                final String pyramidName,
+                                final String format,
+                                final ProviderProperties providerProperties) throws IOException
+{
+  if (colorscale != null || !"tif".equals(format))
+  {
+    if (colorscale == null) {
+      MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(pyramidName,
+              DataProviderFactory.AccessMode.READ, providerProperties);
+      MrsPyramidMetadata meta = dp.getMetadataReader().read();
+
+      String csname = meta.getTag(MrGeoConstants.MRGEO_DEFAULT_COLORSCALE);
+      if (csname != null)
+      {
+        try
+        {
+          colorscale = ColorScaleManager.fromName(csname);
+        }
+        catch (ColorScale.ColorScaleException ignored)
+        {
+        }
+        if (colorscale == null)
+        {
+          throw new IOException("Can not load default style: "  + csname);
+        }
+      }
+      else
+      {
+        colorscale = ColorScale.createDefaultGrayScale();
+      }
+
+    }
+    try
+    {
+      raster = applier.applyColorScale(raster,
+              colorscale,
+              metadata.getExtrema(zoom),
+              metadata.getDefaultValues(),
+              metadata.getQuantiles());
+    }
+    catch (Exception e)
+    {
+      log.error("Exception thrown", e);
+    }
+  }
+  return raster;
+}
+
 private boolean saveSingleTile(final String output, final String pyramidName, final MrsImage image,
-    String format, final long tileid, final int zoom, int tilesize, ProviderProperties providerProperties)
+    ColorScaleApplier applier, String format, final long tileid,
+    final int zoom, int tilesize, ProviderProperties providerProperties)
 {
   try
   {
@@ -403,37 +499,7 @@ private boolean saveSingleTile(final String output, final String pyramidName, fi
     {
       String out = makeOutputName(output, pyramidName, format, tileid, zoom, tilesize, true);
 
-      if (colorscale != null || !format.equals("tif"))
-      {
-        if (colorscale == null) {
-          MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(pyramidName,
-              DataProviderFactory.AccessMode.READ, providerProperties);
-          MrsPyramidMetadata meta = dp.getMetadataReader().read();
-
-          String csname = meta.getTag(MrGeoConstants.MRGEO_DEFAULT_COLORSCALE);
-          if (csname != null)
-          {
-            try
-            {
-              colorscale = ColorScaleManager.fromName(csname);
-            }
-            catch (ColorScale.ColorScaleException ignored)
-            {
-            }
-            if (colorscale == null)
-            {
-              throw new IOException("Can not load default style: "  + csname);
-            }
-          }
-          else
-          {
-            colorscale = ColorScale.createDefaultGrayScale();
-          }
-
-        }
-        raster = colorRaster(image, format, raster);
-      }
-
+      raster = colorRaster(raster, metadata, applier, zoom, pyramidName, format, providerProperties);
       Bounds bnds = TMSUtils.tileBounds(t.tx, t.ty, image.getZoomlevel(), metadata.getTilesize());
       GDALJavaUtils.saveRasterTile(raster.toDataset(bnds, metadata.getDefaultValues()),
           out, t.tx, t.ty, image.getZoomlevel(), metadata.getDefaultValue(0), format);
@@ -455,37 +521,10 @@ private boolean saveSingleTile(final String output, final String pyramidName, fi
   return false;
 }
 
-private MrGeoRaster colorRaster(MrsImage image, String format, MrGeoRaster raster)
-{
-  final ColorScaleApplier applier;
-  switch (format)
-  {
-  case "jpg":
-  case "jpeg":
-    applier = new JpegColorScaleApplier();
-    break;
-  case "tif":
-  case "png":
-  default:
-    applier = new PngColorScaleApplier();
-    break;
-  }
-
-  try
-  {
-    raster = applier.applyColorScale(raster, colorscale, image.getExtrema(),
-            image.getMetadata().getDefaultValues(), image.getMetadata().getQuantiles());
-  }
-  catch (Exception e)
-  {
-    log.error("Exception thrown", e);
-  }
-
-  return raster;
-}
-
-private boolean saveMultipleTiles(String output, String pyramidName, String format,
-    final MrsImage image, final long[] tiles, ProviderProperties providerProperties)
+private boolean saveMultipleTiles(String output, String pyramidName,
+                                  String format, final MrsImage image,
+                                  ColorScaleApplier applier,
+                                  final long[] tiles, ProviderProperties providerProperties)
 {
   try
   {
@@ -534,39 +573,7 @@ private boolean saveMultipleTiles(String output, String pyramidName, String form
       throw new MrsImageException("Error, could not load any tiles");
     }
     String out = makeOutputName(output, pyramidName, format, minId, zoomlevel, tilesize, false);
-
-    if (colorscale != null || !format.equals("tif"))
-    {
-      if (colorscale == null) {
-        MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(pyramidName,
-            DataProviderFactory.AccessMode.READ, providerProperties);
-        MrsPyramidMetadata meta = dp.getMetadataReader().read();
-
-        String csname = meta.getTag(MrGeoConstants.MRGEO_DEFAULT_COLORSCALE);
-        if (csname != null)
-        {
-          try
-          {
-            colorscale = ColorScaleManager.fromName(csname);
-          }
-          catch (ColorScale.ColorScaleException ignored)
-          {
-          }
-          if (colorscale == null)
-          {
-            throw new IOException("Can not load default style: "  + csname);
-          }
-        }
-        else
-        {
-          colorscale = ColorScale.createDefaultGrayScale();
-        }
-
-      }
-
-      raster = colorRaster(image, format, raster);
-    }
-
+    raster = colorRaster(raster, metadata, applier, zoomlevel, pyramidName, format, providerProperties);
     GDALJavaUtils
         .saveRaster(raster.toDataset(imageBounds, metadata.getDefaultValues()), out, null, metadata.getDefaultValue(0),
             format);

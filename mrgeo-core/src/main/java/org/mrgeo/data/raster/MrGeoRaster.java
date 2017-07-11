@@ -1004,7 +1004,7 @@ final int[] calculateByteRangeOffset(final int startx, final int starty, final i
       ((endy * width + endx) + (endband * bandoffset)) * bpp + dataoffset};
 }
 
-abstract int bytesPerPixel();
+public abstract int bytesPerPixel();
 
 public static class MrGeoRasterException extends IOException
 {
