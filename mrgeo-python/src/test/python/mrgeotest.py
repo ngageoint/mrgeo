@@ -173,6 +173,7 @@ class MrGeoTests(TestCase):
         # print(cls.classname + " setup")
 
         cls.mrgeo = MrGeo()
+        # cls.mrgeo = MrGeo(host="localhost", port=12345)  # already running, remote mrgeo
 
         jvm = cls.mrgeo._get_jvm()
         java_import(jvm, "org.apache.hadoop.conf.Configuration")

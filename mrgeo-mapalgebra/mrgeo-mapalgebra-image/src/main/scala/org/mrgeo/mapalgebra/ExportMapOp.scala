@@ -19,6 +19,7 @@ import java.io._
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.{SparkConf, SparkContext}
+import org.gdal.gdal.Dataset
 import org.mrgeo.colorscale.applier.{ColorScaleApplier, JpegColorScaleApplier, PngColorScaleApplier}
 import org.mrgeo.colorscale.{ColorScale, ColorScaleManager}
 import org.mrgeo.core.MrGeoConstants
@@ -44,7 +45,7 @@ object ExportMapOp extends MapOpRegistrar {
   private val ID:String = "$ID"
   private val LAT:String = "$LAT"
   private val LON:String = "$LON"
-  var inMemoryTestPath:String = null
+  var inMemoryTestPath:String = _
 
   override def register:Array[String] = {
     Array[String]("export")
@@ -75,7 +76,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
   private var rasterRDD:Option[RasterRDD] = None
   private var raster:Option[RasterMapOp] = None
 
-  private var name:String = null
+  private var name:String = _
   private var numTiles:Option[Int] = None
   private var zoom:Option[Int] = None
   private var maxSizeInKb:Option[Int] = None
@@ -167,12 +168,12 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
 
   override def rdd():Option[RasterRDD] = rasterRDD
 
-//  def image():Dataset = {
-//    mergedimage match {
-//      case Some(d) => d
-//      case None => null
-//    }
-//  }
+  def image():Dataset = {
+    mergedimage match {
+      case Some(d) => d.toDataset(mergedbounds.get, mergednodata.get)
+      case None => null
+    }
+  }
 
   override def getZoomLevel(): Int = {
     zoom.getOrElse(raster.getOrElse(throw new IOException("No raster input specified")).getZoomLevel())
@@ -199,9 +200,8 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
         None
       }
 
-    val bnds = bounds.getOrElse(meta.getBounds)
     maxSizeInKb match {
-      case Some(mis) => {
+      case Some(mis) =>
         if (zoom.isDefined) {
           log.warn("The zoom level will be re-computed based on the maximum image size")
         }
@@ -209,22 +209,22 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
           throw new IOException("The maxSize argument only applies when outputting a single image")
         }
         val (bytesPerPixelPerBand, bands) = applier match {
-          case Some(a) => {
-            (a.getBytesPerPixelPerBand(), a.getBands(meta.getBands))
-          }
+          case Some(a) =>
+            (a.getBytesPerPixelPerBand, a.getBands(meta.getBands))
           case None => (raster.get.toRaster().bytesPerPixel(), 1)
         }
-        val rasterSize = RasterUtils.getMaxPixelsForSize(mis, bnds,
+        val rasterSize = RasterUtils.getMaxPixelsForSize(mis, bounds.getOrElse(meta.getBounds),
           bytesPerPixelPerBand, bands, meta.getTilesize)
         zoom = Some(math.min(rasterSize.getZoom, meta.getMaxZoomLevel))
-      }
-      case None => {
+      case None =>
         if (zoom.isEmpty) {
           zoom = Some(meta.getMaxZoomLevel)
         }
-      }
     }
-    println("Exporting " + meta.getPyramid + " at zoom level " + zoom.get)
+
+    val bnds = TMSUtils.tileBounds(bounds.getOrElse(meta.getBounds), zoom.get, meta.getTilesize)
+
+    // println("Exporting " + meta.getPyramid + " at zoom level " + zoom.get)
 
     do {
       val rdd =
@@ -272,9 +272,9 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
 
   override def teardown(job:JobArguments, conf:SparkConf) = true
 
-  override def readExternal(in:ObjectInput) = {}
+  override def readExternal(in:ObjectInput):Unit = {}
 
-  override def writeExternal(out:ObjectOutput) = {}
+  override def writeExternal(out:ObjectOutput):Unit = {}
 
   private[mapalgebra] def this(node:ParserNode, variables:String => Option[ParserNode]) = {
     this()
@@ -376,9 +376,8 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
     // Check for optional max image size
     if (node.getNumChildren > 13) {
       MapOp.decodeString(node.getChild(13), variables) match {
-        case Some(strMaxSize) => {
+        case Some(strMaxSize) =>
           maxSizeInKb = Some(SparkUtils.humantokb(strMaxSize))
-        }
         case _ =>
       }
     }
@@ -463,39 +462,38 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
       }
     }
 
-//    val bnds = SparkUtils.calculateBounds(RasterRDD(replaced), useZoom, meta.getTilesize)
+    // val bnds = SparkUtils.calculateBounds(RasterRDD(replaced), zoom.get, meta.getTilesize)
     val image = SparkUtils.mergeTiles(RasterRDD(replaced), zoom.get, meta.getTilesize, nd)
 
     // Load the optionally specified color scale
     var cs: Option[ColorScale] = colorscale match {
-      case Some(csname) => {
+      case Some(csname) =>
         if (!csname.isEmpty) {
           try {
             Some(ColorScaleManager.fromName(csname))
           }
           catch {
-            case e: ColorScale.ColorScaleException => throw new IOException("Invalid color scale name: " + csname)
+            case _: ColorScale.ColorScaleException => throw new IOException("Invalid color scale name: " + csname)
           }
         }
         else {
           None
         }
-      }
       case None => None
     }
     val rasterToSave: MrGeoRaster =
       cs match {
         case Some(c) => colorRaster(applier.get, meta, image, c, zoom.get)
-        case None => {
+        case None =>
           if (!"tif".equals(format.get)) {
             val csDefaultName = meta.getTag(MrGeoConstants.MRGEO_DEFAULT_COLORSCALE)
             if (csDefaultName != null && !csDefaultName.isEmpty) {
-              var csDefault:ColorScale = null;
+              var csDefault:ColorScale = null
               try {
                 csDefault = ColorScaleManager.fromName(csDefaultName)
               }
               catch {
-                case e: ColorScale.ColorScaleException => throw new IOException("Image's default color scale is invalid: " + csDefaultName)
+                case _: ColorScale.ColorScaleException => throw new IOException("Image's default color scale is invalid: " + csDefaultName)
               }
               if (csDefault == null) {
                 throw new IOException("Cannot load default color scale: " + csDefaultName)
@@ -510,7 +508,6 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
           else {
             image
           }
-        }
       }
     if (name == ExportMapOp.IN_MEMORY) {
       mergedimage = Some(rasterToSave)
@@ -557,7 +554,7 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
       }
     }
     else if (randomtile && numTiles.isDefined) {
-      for (i <- 0 until numTiles.get) {
+      for (_ <- 0 until numTiles.get) {
         val tx = tilebounds.getMinX +
                  (Math.random() * (tilebounds.getMaxX - tilebounds.getMinX)).toLong
         val ty = tilebounds.getMinY +
