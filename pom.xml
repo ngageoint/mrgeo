@@ -2807,6 +2807,11 @@
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-dataprovider-postgis</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-dataprovider-distribution</artifactId>
         <version>${project.version}</version>
       </dependency>

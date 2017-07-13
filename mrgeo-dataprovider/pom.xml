@@ -37,6 +37,12 @@
         <module>mrgeo-dataprovider-geowave</module>
       </modules>
     </profile>
+    <profile>
+      <id>include-postgis</id>
+      <modules>
+        <module>mrgeo-dataprovider-postgis</module>
+      </modules>
+    </profile>
   </profiles>
   <licenses>
     <license>

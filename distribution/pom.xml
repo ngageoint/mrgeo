@@ -208,6 +208,15 @@
       </dependencies>
     </profile>
     <profile>
+      <id>include-postgis</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.mrgeo</groupId>
+          <artifactId>mrgeo-dataprovider-postgis</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
       <id>include-war</id>
       <modules>
         <module>distribution-war</module>
