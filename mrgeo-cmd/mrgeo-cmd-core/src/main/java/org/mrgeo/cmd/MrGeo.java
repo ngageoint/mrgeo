@@ -71,7 +71,7 @@ public static void main(String[] args)
  *
  * @return Options The generic {@link Options} for all commands.
  */
-public static Options createOptions()
+static Options createOptions()
 {
   Options result = new Options();
 
@@ -88,7 +88,7 @@ public static Options createOptions()
 /**
  * Print generic usage to std out.
  */
-private static void usage(Options options)
+private static void general_usage(Options options)
 {
   System.out.println("Usage: mrgeo COMMAND");
   System.out.println("       where command is one of:");
@@ -102,12 +102,20 @@ private static void usage(Options options)
   for (Map.Entry<String, CommandSpi> cmd : commands.entrySet())
   {
     String name = cmd.getKey();
-    System.out.println("  " +
+    System.out.println("          " +
         StringUtils.rightPad(name, maxLen + 2) + cmd.getValue().getDescription());
   }
 
   System.out.println("Generic options supported are:");
   new HelpFormatter().printHelp("command <options>", options);
+}
+
+/**
+ * Print generic usage to std out.
+ */
+private static void specific_usage(Command cmd, Options options)
+{
+  new HelpFormatter().printHelp("mrgeo " + cmd.getUsage(), options);
 }
 
 /**
@@ -144,24 +152,24 @@ public int run(String[] args) throws IOException
   Options options = createOptions();
   if (args.length == 0)
   {
-    usage(options);
+    general_usage(options);
     return -1;
   }
 
   String cmdStr = args[0];
-  if (cmdStr.equals("-h")) {
+
+  if (cmdStr.equals("-h") || cmdStr.equals("--help")) {
     // If the user provided the -h switch, then the exit code should be 0
-    usage(options);
+    general_usage(options);
     return 0;
   }
 
   CommandSpi spi = commands.get(cmdStr);
-  Command cmd = null;
+  Command cmd;
   if (spi == null) {
-    int ret = 0;
     System.out.println("Command not found: " + cmdStr);
     System.out.println();
-    usage(options);
+    general_usage(options);
     return -1;
   }
   else {
@@ -184,25 +192,31 @@ public int run(String[] args) throws IOException
   }
   catch (ParseException e)
   {
+    if (args.length > 1)
+    {
+      for (String help: args)
+      {
+        if (help.equals("-h") || help.equals("--help"))
+        {
+          specific_usage(cmd, options);
+        }
+      }
+      return 0;
+    }
+
     System.out.println(e.getMessage());
-    usage(options);
+    specific_usage(cmd, options);
     return -1;
   }
 
   // Process the command-line arguments
-  if (line == null)
+  if (line.hasOption("h"))
   {
-    usage(options);
+    specific_usage(cmd, options);
     return 0;
   }
   else
   {
-    if (line.hasOption("h"))
-    {
-      new HelpFormatter().printHelp(cmd.getUsage(), options);
-      return 0;
-    }
-
     if (line.hasOption("np"))
     {
       MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_AUTOPERSISTANCE, "false");
@@ -256,7 +270,7 @@ public int run(String[] args) throws IOException
       ret = -1;
     }
 
-    usage(options);
+    general_usage(options);
     return ret;
   }
 
@@ -276,7 +290,7 @@ public static class ExtendedGnuParser extends GnuParser
 
   private boolean ignoreUnrecognizedOption;
 
-  public ExtendedGnuParser(final boolean ignoreUnrecognizedOption)
+  ExtendedGnuParser(final boolean ignoreUnrecognizedOption)
   {
     this.ignoreUnrecognizedOption = ignoreUnrecognizedOption;
   }
