@@ -15,13 +15,21 @@ if __name__ == "__main__":
 
     mrgeo.start()
 
-    ones = mrgeo.ingest_image(name="gis-data/aster-30m-xsmall")
+    # ones = mrgeo.ingest_image(name="gis-data/aster-30m-xsmall")
     # ones.save("aster-small-python-test")
 
-    ones.export("/data/export/aster-small-python-test", singleFile=True)
+    # ones.export("/data/export/aster-small-python-test", singleFile=True)
 
-    # ones = mrgeo.load_image("all-ones-save")
+    ones = mrgeo.load_image("all-ones-save")
 
+    rdd = ones.rdd()
+    print(rdd)
+
+    list = rdd.collect()
+    print(list)
+
+    for tile in list:
+        print(tile)
     #c = ones.isnodata().con(positiveConst=0, negativeRaster=ones)
     #c.export("/data/export/con-inline", singleFile=True)
 
