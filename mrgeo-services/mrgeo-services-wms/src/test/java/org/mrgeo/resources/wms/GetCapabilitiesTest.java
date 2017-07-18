@@ -23,6 +23,7 @@ import org.mrgeo.test.TestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
 /*
@@ -172,4 +173,35 @@ public void testGetCapabilitiesGreaterThan140() throws Exception
 
   processXMLResponse(response, "GetCapabilities-1-4-0.xml");
 }
+
+@Test
+@Category(IntegrationTest.class)
+public void testGetCapabilitiesProxy() throws Exception
+{
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getcapabilities")
+      .queryParam("VERSION", "1.1.1")
+      .request()
+      .header("X-Forwarded-For", "www.foo.bar")
+      .get();
+
+  processXMLResponse(response, "GetCapabilities-1-1-1-Proxy.xml");
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void testGetCapabilitiesProxyPort() throws Exception
+{
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getcapabilities")
+      .queryParam("VERSION", "1.1.1")
+      .request()
+      .header("X-Forwarded-For", "www.foo.bar:1234")
+      .get();
+
+  processXMLResponse(response, "GetCapabilities-1-1-1-ProxyPort.xml");
+}
+
 }

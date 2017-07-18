@@ -1,9 +1,9 @@
-<WMT_MS_Capabilities xmlns="http://www.opengis.net/wms" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" updateSequence="0" version="1.3.0" xsi:schemaLocation="http://www.opengis.net/wms http://schemas.opengis.net/wms/1.3.0/capabilities_1_3_0.xsd">
+<WMT_MS_Capabilities updateSequence="0" version="1.1.1">
   <Service>
     <Name>OGC:WMS</Name>
     <Title>MrGeo Web Map Service</Title>
     <Abstract>MrGeo Web Map Service</Abstract>
-    <OnlineResource>http://localhost:9998/wms</OnlineResource>
+    <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms" xlink:type="simple"/>
     <Fees>none</Fees>
     <AccessConstraints>none</AccessConstraints>
   </Service>
@@ -14,10 +14,10 @@
         <DCPType>
           <HTTP>
             <Get>
-              <OnlineResource>http://localhost:9998/wms?REQUEST=GetCapabilities&amp;VERSION=1.3.0&amp;SERVICE=WMS</OnlineResource>
+              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetCapabilities&amp;VERSION=1.1.1&amp;SERVICE=WMS" xlink:type="simple"/>
             </Get>
             <Post>
-              <OnlineResource>http://localhost:9998/wms?REQUEST=GetCapabilities&amp;VERSION=1.3.0&amp;SERVICE=WMS</OnlineResource>
+              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetCapabilities&amp;VERSION=1.1.1&amp;SERVICE=WMS" xlink:type="simple"/>
             </Post>
           </HTTP>
         </DCPType>
@@ -33,10 +33,10 @@
         <DCPType>
           <HTTP>
             <Get>
-              <OnlineResource>http://localhost:9998/wms?REQUEST=GetMap&amp;VERSION=1.3.0&amp;SERVICE=WMS</OnlineResource>
+              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetMap&amp;VERSION=1.1.1&amp;SERVICE=WMS" xlink:type="simple"/>
             </Get>
             <Post>
-              <OnlineResource>http://localhost:9998/wms?REQUEST=GetMap&amp;VERSION=1.3.0&amp;SERVICE=WMS</OnlineResource>
+              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetMap&amp;VERSION=1.1.1&amp;SERVICE=WMS" xlink:type="simple"/>
             </Post>
           </HTTP>
         </DCPType>
@@ -52,10 +52,10 @@
         <DCPType>
           <HTTP>
             <Get>
-              <OnlineResource>http://localhost:9998/wms?REQUEST=GetMosaic&amp;VERSION=1.3.0&amp;SERVICE=WMS</OnlineResource>
+              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetMosaic&amp;VERSION=1.1.1&amp;SERVICE=WMS" xlink:type="simple"/>
             </Get>
             <Post>
-              <OnlineResource>http://localhost:9998/wms?REQUEST=GetMosaic&amp;VERSION=1.3.0&amp;SERVICE=WMS</OnlineResource>
+              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetMosaic&amp;VERSION=1.1.1&amp;SERVICE=WMS" xlink:type="simple"/>
             </Post>
           </HTTP>
         </DCPType>
@@ -72,22 +72,7 @@
       <Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1">
         <Title>IslandsElevation-v2</Title>
         <Name>IslandsElevation-v2</Name>
-        <MinScaleDenominator>272989.3867327723</MinScaleDenominator>
-        <CRS>EPSG:4326</CRS>
-        <CRS>CRS:84</CRS>
-        <EX_GeographicBoundingBox>
-          <westBoundLongitude>161.25</westBoundLongitude>
-          <eastBoundLongitude>162.5</eastBoundLongitude>
-          <southBoundLatitude>-11.0</southBoundLatitude>
-          <northBoundLatitude>-10.083333333333334</northBoundLatitude>
-        </EX_GeographicBoundingBox>
-        <BoundingBox>
-          <CRS>EPSG:4326</CRS>
-          <minx>161.25</minx>
-          <maxx>162.5</maxx>
-          <miny>-11.0</miny>
-          <maxy>-10.083333333333334</maxy>
-        </BoundingBox>
+        <SRS>EPSG:4326</SRS>
         <LatLonBoundingBox maxx="162.5" maxy="-10.083333333333334" minx="161.25" miny="-11.0"/>
         <BoundingBox>
           <SRS>EPSG:4326</SRS>
@@ -113,22 +98,7 @@
       <Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1">
         <Title>IslandsElevation-v2-color-scale</Title>
         <Name>IslandsElevation-v2-color-scale</Name>
-        <MinScaleDenominator>272989.3867327723</MinScaleDenominator>
-        <CRS>EPSG:4326</CRS>
-        <CRS>CRS:84</CRS>
-        <EX_GeographicBoundingBox>
-          <westBoundLongitude>161.25</westBoundLongitude>
-          <eastBoundLongitude>162.5</eastBoundLongitude>
-          <southBoundLatitude>-11.0</southBoundLatitude>
-          <northBoundLatitude>-10.083333333333334</northBoundLatitude>
-        </EX_GeographicBoundingBox>
-        <BoundingBox>
-          <CRS>EPSG:4326</CRS>
-          <minx>161.25</minx>
-          <maxx>162.5</maxx>
-          <miny>-11.0</miny>
-          <maxy>-10.083333333333334</maxy>
-        </BoundingBox>
+        <SRS>EPSG:4326</SRS>
         <LatLonBoundingBox maxx="162.5" maxy="-10.083333333333334" minx="161.25" miny="-11.0"/>
         <BoundingBox>
           <SRS>EPSG:4326</SRS>
@@ -154,22 +124,7 @@
       <Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1">
         <Title>IslandsElevation-v2-no-pyramid</Title>
         <Name>IslandsElevation-v2-no-pyramid</Name>
-        <MinScaleDenominator>272989.3867327723</MinScaleDenominator>
-        <CRS>EPSG:4326</CRS>
-        <CRS>CRS:84</CRS>
-        <EX_GeographicBoundingBox>
-          <westBoundLongitude>161.25</westBoundLongitude>
-          <eastBoundLongitude>162.5</eastBoundLongitude>
-          <southBoundLatitude>-11.0</southBoundLatitude>
-          <northBoundLatitude>-10.083333333333334</northBoundLatitude>
-        </EX_GeographicBoundingBox>
-        <BoundingBox>
-          <CRS>EPSG:4326</CRS>
-          <minx>161.25</minx>
-          <maxx>162.5</maxx>
-          <miny>-11.0</miny>
-          <maxy>-10.083333333333334</maxy>
-        </BoundingBox>
+        <SRS>EPSG:4326</SRS>
         <LatLonBoundingBox maxx="162.5" maxy="-10.083333333333334" minx="161.25" miny="-11.0"/>
         <BoundingBox>
           <SRS>EPSG:4326</SRS>
@@ -195,22 +150,7 @@
       <Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1">
         <Title>IslandsElevation-v2-no-pyramid-extra-metadata</Title>
         <Name>IslandsElevation-v2-no-pyramid-extra-metadata</Name>
-        <MinScaleDenominator>272989.3867327723</MinScaleDenominator>
-        <CRS>EPSG:4326</CRS>
-        <CRS>CRS:84</CRS>
-        <EX_GeographicBoundingBox>
-          <westBoundLongitude>161.25</westBoundLongitude>
-          <eastBoundLongitude>162.5</eastBoundLongitude>
-          <southBoundLatitude>-11.0</southBoundLatitude>
-          <northBoundLatitude>-10.083333333333334</northBoundLatitude>
-        </EX_GeographicBoundingBox>
-        <BoundingBox>
-          <CRS>EPSG:4326</CRS>
-          <minx>161.25</minx>
-          <maxx>162.5</maxx>
-          <miny>-11.0</miny>
-          <maxy>-10.083333333333334</maxy>
-        </BoundingBox>
+        <SRS>EPSG:4326</SRS>
         <LatLonBoundingBox maxx="162.5" maxy="-10.083333333333334" minx="161.25" miny="-11.0"/>
         <BoundingBox>
           <SRS>EPSG:4326</SRS>
@@ -236,22 +176,7 @@
       <Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1">
         <Title>IslandsElevation-v2-no-stats</Title>
         <Name>IslandsElevation-v2-no-stats</Name>
-        <MinScaleDenominator>272989.3867327723</MinScaleDenominator>
-        <CRS>EPSG:4326</CRS>
-        <CRS>CRS:84</CRS>
-        <EX_GeographicBoundingBox>
-          <westBoundLongitude>161.25</westBoundLongitude>
-          <eastBoundLongitude>162.5</eastBoundLongitude>
-          <southBoundLatitude>-11.0</southBoundLatitude>
-          <northBoundLatitude>-10.083333333333334</northBoundLatitude>
-        </EX_GeographicBoundingBox>
-        <BoundingBox>
-          <CRS>EPSG:4326</CRS>
-          <minx>161.25</minx>
-          <maxx>162.5</maxx>
-          <miny>-11.0</miny>
-          <maxy>-10.083333333333334</maxy>
-        </BoundingBox>
+        <SRS>EPSG:4326</SRS>
         <LatLonBoundingBox maxx="162.5" maxy="-10.083333333333334" minx="161.25" miny="-11.0"/>
         <BoundingBox>
           <SRS>EPSG:4326</SRS>
@@ -277,22 +202,7 @@
       <Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1">
         <Title>cost-distance</Title>
         <Name>cost-distance</Name>
-        <MinScaleDenominator>68247.34668319307</MinScaleDenominator>
-        <CRS>EPSG:4326</CRS>
-        <CRS>CRS:84</CRS>
-        <EX_GeographicBoundingBox>
-          <westBoundLongitude>69.08203125</westBoundLongitude>
-          <eastBoundLongitude>69.43359375</eastBoundLongitude>
-          <southBoundLatitude>34.8046875</southBoundLatitude>
-          <northBoundLatitude>35.068359375</northBoundLatitude>
-        </EX_GeographicBoundingBox>
-        <BoundingBox>
-          <CRS>EPSG:4326</CRS>
-          <minx>69.08203125</minx>
-          <maxx>69.43359375</maxx>
-          <miny>34.8046875</miny>
-          <maxy>35.068359375</maxy>
-        </BoundingBox>
+        <SRS>EPSG:4326</SRS>
         <LatLonBoundingBox maxx="69.43359375" maxy="35.068359375" minx="69.08203125" miny="34.8046875"/>
         <BoundingBox>
           <SRS>EPSG:4326</SRS>
@@ -318,22 +228,7 @@
       <Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1">
         <Title>cost-distance-shift-2</Title>
         <Name>cost-distance-shift-2</Name>
-        <MinScaleDenominator>272989.3867327723</MinScaleDenominator>
-        <CRS>EPSG:4326</CRS>
-        <CRS>CRS:84</CRS>
-        <EX_GeographicBoundingBox>
-          <westBoundLongitude>-112.5</westBoundLongitude>
-          <eastBoundLongitude>-111.4453125</eastBoundLongitude>
-          <southBoundLatitude>35.5078125</southBoundLatitude>
-          <northBoundLatitude>36.5625</northBoundLatitude>
-        </EX_GeographicBoundingBox>
-        <BoundingBox>
-          <CRS>EPSG:4326</CRS>
-          <minx>-112.5</minx>
-          <maxx>-111.4453125</maxx>
-          <miny>35.5078125</miny>
-          <maxy>36.5625</maxy>
-        </BoundingBox>
+        <SRS>EPSG:4326</SRS>
         <LatLonBoundingBox maxx="-111.4453125" maxy="36.5625" minx="-112.5" miny="35.5078125"/>
         <BoundingBox>
           <SRS>EPSG:4326</SRS>
@@ -359,22 +254,7 @@
       <Layer cascaded="0" fixedHeight="0" fixedWidth="0" noSubsets="0" opaque="0" queryable="1">
         <Title>small-3band</Title>
         <Name>small-3band</Name>
-        <MinScaleDenominator>68247.34668319307</MinScaleDenominator>
-        <CRS>EPSG:4326</CRS>
-        <CRS>CRS:84</CRS>
-        <EX_GeographicBoundingBox>
-          <westBoundLongitude>8.173999786376953</westBoundLongitude>
-          <eastBoundLongitude>8.525390625</eastBoundLongitude>
-          <southBoundLatitude>54.84443664550781</southBoundLatitude>
-          <northBoundLatitude>55.107421875</northBoundLatitude>
-        </EX_GeographicBoundingBox>
-        <BoundingBox>
-          <CRS>EPSG:4326</CRS>
-          <minx>8.173999786376953</minx>
-          <maxx>8.525390625</maxx>
-          <miny>54.84443664550781</miny>
-          <maxy>55.107421875</maxy>
-        </BoundingBox>
+        <SRS>EPSG:4326</SRS>
         <LatLonBoundingBox maxx="8.525390625" maxy="55.107421875" minx="8.173999786376953" miny="54.84443664550781"/>
         <BoundingBox>
           <SRS>EPSG:4326</SRS>
