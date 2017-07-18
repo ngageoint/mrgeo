@@ -81,8 +81,7 @@ public void testHasCommand() throws Exception
   final String stdout = output.toString();
 
   // verify the testcommand is in the list...
-  Assert.assertTrue("Missing test command", stdout.contains("\n  testcommand  command for junit tests\n"));
-
+  Assert.assertTrue("Missing test command", stdout.contains("testcommand  command for junit tests"));
 }
 
 @Test()
