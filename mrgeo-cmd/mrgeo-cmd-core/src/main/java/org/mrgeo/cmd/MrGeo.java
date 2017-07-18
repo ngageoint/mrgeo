@@ -199,9 +199,9 @@ public int run(String[] args) throws IOException
         if (help.equals("-h") || help.equals("--help"))
         {
           specific_usage(cmd, options);
+          return 0;
         }
       }
-      return 0;
     }
 
     System.out.println(e.getMessage());
