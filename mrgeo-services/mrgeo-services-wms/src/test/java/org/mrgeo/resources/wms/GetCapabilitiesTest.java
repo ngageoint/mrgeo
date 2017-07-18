@@ -191,6 +191,21 @@ public void testGetCapabilitiesProxy() throws Exception
 
 @Test
 @Category(IntegrationTest.class)
+public void testGetCapabilitiesProxyLowercase() throws Exception
+{
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getcapabilities")
+      .queryParam("VERSION", "1.1.1")
+      .request()
+      .header("x-forwarded-for", "www.foo.bar")
+      .get();
+
+  processXMLResponse(response, "GetCapabilities-1-1-1-Proxy.xml");
+}
+
+@Test
+@Category(IntegrationTest.class)
 public void testGetCapabilitiesProxyPort() throws Exception
 {
   Response response = target("wms")
