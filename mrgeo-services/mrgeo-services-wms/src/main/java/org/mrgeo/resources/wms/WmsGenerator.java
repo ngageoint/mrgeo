@@ -194,18 +194,6 @@ private boolean paramExists(MultivaluedMap<String, String> allParams,
   return false;
 }
 
-private String getActualQueryParamName(MultivaluedMap<String, String> allParams,
-    String paramName)
-{
-  for (String key : allParams.keySet())
-  {
-    if (key.equalsIgnoreCase(paramName))
-    {
-      return key;
-    }
-  }
-  return null;
-}
 
 /**
  * Returns the int value for the specified paramName case-insensitively. If
