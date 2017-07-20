@@ -16,7 +16,7 @@ public class KeyValueHelper
 private static final Logger logger = LoggerFactory.getLogger(KeyValueHelper.class);
 
 // Index of current key
-private int index = 0;
+private int index;
 private Class keyClass;
 private Class valueClass;
 private Writable[] keys;

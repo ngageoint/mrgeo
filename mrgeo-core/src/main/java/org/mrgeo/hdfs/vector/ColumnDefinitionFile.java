@@ -41,7 +41,7 @@ public class ColumnDefinitionFile
 {
 Vector<Column> columns = new Vector<>();
 
-boolean firstLineHeader = false;
+boolean firstLineHeader;
 
 public ColumnDefinitionFile()
 {

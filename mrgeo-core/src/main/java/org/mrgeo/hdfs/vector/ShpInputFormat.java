@@ -163,7 +163,7 @@ static public class ShpRecordReader extends RecordReader<FeatureIdWritable, Geom
   private ShapefileGeometryCollection gc;
   private int start;
   private FeatureIdWritable key = new FeatureIdWritable();
-  private Geometry value = null;
+  private Geometry value;
 
   ShpRecordReader()
   {

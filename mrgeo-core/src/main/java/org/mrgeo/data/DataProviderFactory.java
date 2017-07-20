@@ -96,9 +96,9 @@ private final static String PREFIX_CHAR = ":"; // use ":" for the prefix delimit
 private final static int PROVIDER_CACHE_SIZE = 50;
 private final static int PROVIDER_CACHE_EXPIRE = 10; // minutes
 static Logger log = LoggerFactory.getLogger(DataProviderFactory.class);
-static String preferredAdHocProviderName = null;
-static String preferredImageProviderName = null;
-static String preferredVectorProviderName = null;
+static String preferredAdHocProviderName;
+static String preferredImageProviderName;
+static String preferredVectorProviderName;
 private static Configuration basicConf;
 private static Map<String, String> configSettings;
 private static Cache<String, AdHocDataProvider> adHocProviderCache = CacheBuilder

@@ -44,7 +44,7 @@ private int zoom;
 private GeometryPainter rasterPainter;
 private Composite composite;
 private WritableRaster raster;
-private GeometryPainter totalPainter = null;
+private GeometryPainter totalPainter;
 private WritableRaster totalRaster;
 
 /**

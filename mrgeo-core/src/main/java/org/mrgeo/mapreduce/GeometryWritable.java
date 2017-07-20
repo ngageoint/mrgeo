@@ -36,7 +36,7 @@ private static final String CHAR_ENCODING = "UTF8";
 
 // This is exposed for performance reasons. Be sure you understand all the
 // implications before you change the value.
-public Geometry geometry = null;
+public Geometry geometry;
 
 public GeometryWritable()
 {

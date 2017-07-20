@@ -26,7 +26,7 @@ import java.io.IOException;
 public class ShpPolygonZ implements ShpData
 {
 protected JPolygonZ[] p;
-private ESRILayer parent = null;
+private ESRILayer parent;
 
 /**
  * Creates new ShpPolygon

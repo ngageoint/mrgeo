@@ -29,11 +29,11 @@ import java.io.RandomAccessFile;
  */
 public class ShpFile
 {
-protected ShpData data = null;
+protected ShpData data;
 //protected String fileName = null;
-protected Header header = null;
-private SeekableDataInput in = null;
-private ShxFile index = null;
+protected Header header;
+private SeekableDataInput in;
+private ShxFile index;
 private ESRILayer parent;
 
 /**

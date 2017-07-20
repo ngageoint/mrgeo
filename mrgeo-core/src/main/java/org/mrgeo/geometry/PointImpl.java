@@ -36,7 +36,7 @@ double x;
 double y;
 double z;
 
-boolean hash = false;
+boolean hash;
 long geohash;
 
 PointImpl(Map<String, String> attributes)

@@ -28,10 +28,10 @@ private final Configuration configuration;
 private int zoomLevel;
 private int tileSize;
 private String boundsString;
-private boolean compressOutput = false;
-private String outputCompressionType = null;
-private String outputCompressionCodec = null;
-private String outputFilePath = null;
+private boolean compressOutput;
+private String outputCompressionType;
+private String outputCompressionCodec;
+private String outputFilePath;
 
 public ConfigurationBuilder()
 {

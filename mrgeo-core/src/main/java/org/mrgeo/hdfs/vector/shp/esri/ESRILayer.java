@@ -39,13 +39,13 @@ import java.io.*;
  */
 public class ESRILayer
 {
-protected ShxFile index = null;
+protected ShxFile index;
 @SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD", justification = "used in subclasses")
-protected String mode = null; // RAF mode
-protected ShpFile shape = null;
-protected DbaseFile table = null;
+protected String mode; // RAF mode
+protected ShpFile shape;
+protected DbaseFile table;
 private double maxScale = Long.MAX_VALUE;
-private double minScale = 0;
+private double minScale;
 private String projection = "";
 private boolean visible = true;
 

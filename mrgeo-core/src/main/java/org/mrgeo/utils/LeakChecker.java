@@ -21,7 +21,7 @@ import java.util.Map;
 
 public class LeakChecker
 {
-private static LeakChecker checker = null;
+private static LeakChecker checker;
 
 private final Map<Integer, String> leaks = Collections
     .synchronizedMap(new HashMap<Integer, String>());

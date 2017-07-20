@@ -25,15 +25,15 @@ import java.io.IOException;
 public class ShxFile
 {
 public final static int DEFAULT_CACHE_SIZE = 500;
-protected boolean cachemode = false; // cache mode indicator flag
+protected boolean cachemode; // cache mode indicator flag
 protected int cachepos; // cache position (inclusive); dynamic access only
 protected int cachesize; // size of cache - represents all rows if not dynamic
-protected int[] contentLength = null;
-protected Header header = null;
-protected boolean modData = false;
-protected int[] offset = null;
+protected int[] contentLength;
+protected Header header;
+protected boolean modData;
+protected int[] offset;
 protected int recordCount;
-private SeekableDataInput in = null;
+private SeekableDataInput in;
 
 /**
  * Opens a SHX file as read-only. Made private for clarity's sake.

@@ -43,7 +43,7 @@ public class HdfsMrsPyramidMetadataReader implements MrsPyramidMetadataReader
 {
 private static final Logger log = LoggerFactory.getLogger(HdfsMrsPyramidMetadataReader.class);
 private final HdfsMrsImageDataProvider dataProvider;
-private MrsPyramidMetadata metadata = null;
+private MrsPyramidMetadata metadata;
 private Configuration conf;
 //private final MrsPyramidMetadataReaderContext context;
 

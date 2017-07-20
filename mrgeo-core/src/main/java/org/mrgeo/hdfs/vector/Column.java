@@ -28,11 +28,11 @@ public class Column implements Writable
 {
 @SuppressWarnings("unused")
 private static final Logger log = LoggerFactory.getLogger(Column.class);
-private long count = 0;
+private long count;
 private double max = -Double.MAX_VALUE;
 private double min = Double.MAX_VALUE;
-private String name = null;
-private double sum = 0.0;
+private String name;
+private double sum;
 private double quartile1 = Double.MAX_VALUE;
 private double quartile2 = Double.MAX_VALUE;
 private double quartile3 = Double.MAX_VALUE;

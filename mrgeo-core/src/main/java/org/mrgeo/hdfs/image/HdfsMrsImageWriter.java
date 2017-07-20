@@ -35,7 +35,7 @@ class HdfsMrsImageWriter implements MrsImageWriter
 final private HdfsMrsImageDataProvider provider;
 final private MrsPyramidWriterContext context;
 
-private MapFile.Writer writer = null;
+private MapFile.Writer writer;
 
 
 // image = path to mapfile directory- e.g., /hdfs/path/to/mapfile (will contain data and index

@@ -52,9 +52,9 @@ public class DependencyLoader
 private static final Logger log = LoggerFactory.getLogger(DependencyLoader.class);
 private static final String CLASSPATH_FILES = "mapred.job.classpath.files";
 
-private static boolean printedMrGeoHomeWarning = false;
+private static boolean printedMrGeoHomeWarning;
 
-private static boolean printMissingDependencies = false;
+private static boolean printMissingDependencies;
 private static Set<String> missingDependencyList = new HashSet<>();
 
 public static boolean getPrintMissingDependencies()
@@ -151,7 +151,7 @@ public static String[] getAndCopyDependencies(final String[] clazzes, Configurat
     conf = HadoopUtils.createConfiguration();
   }
 
-  String[] qualified = new String[]{};
+  String[] qualified = {};
   for (String clazz : clazzes)
   {
     qualified = ArrayUtils.addAll(qualified, getAndCopyDependencies(clazz, conf));
@@ -840,7 +840,7 @@ private static class Dependency
   public String type;
   public String scope;
   public String classifier;
-  public boolean master = false;
+  public boolean master;
 
   @Override
   public String toString()

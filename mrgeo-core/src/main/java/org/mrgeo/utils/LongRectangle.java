@@ -32,7 +32,7 @@ private static final long serialVersionUID = 1L;
 
 private long minX, minY;
 private long maxX, maxY;
-private boolean set = false;
+private boolean set;
 
 public LongRectangle()
 {

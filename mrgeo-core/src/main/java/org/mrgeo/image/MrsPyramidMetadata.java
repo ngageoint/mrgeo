@@ -66,12 +66,12 @@ protected int tilesize; // tile width/height, in pixels
 protected int maxZoomLevel; // maximum zoom level (minimum pixel size)
 protected Map<String, String> tags = new HashMap<>(); // freeform k,v pairs of tags
 protected String protectionLevel = "";
-private ImageMetadata[] imageData = null; // data specific to a single
+private ImageMetadata[] imageData; // data specific to a single
 
 /*
  * end globals section
  */
-private int bands = 0; // number of bands in the image
+private int bands; // number of bands in the image
 private double[][] quantiles; // quantiles computed in each band for the entire image pyramid
 
 /*
@@ -971,10 +971,10 @@ public static class TileMetadata implements Serializable
   private static final long serialVersionUID = 1L;
 
   // tile bounds (min tx, min ty, max tx, max ty)
-  public LongRectangle tileBounds = null;
+  public LongRectangle tileBounds;
 
   // hdfs path or accumulo table for the image min, max, mean pixel values
-  public String name = null;
+  public String name;
 
   // basic constructor
   public TileMetadata()
@@ -1004,10 +1004,10 @@ public static class ImageMetadata extends MrsPyramidMetadata.TileMetadata
   private static final long serialVersionUID = 1L;
 
   // pixel bounds of the image (0, 0, width, height)
-  public LongRectangle pixelBounds = null;
+  public LongRectangle pixelBounds;
 
   // statistics of the image
-  public ImageStats[] stats = null;
+  public ImageStats[] stats;
 
   // basic constructor
   public ImageMetadata()

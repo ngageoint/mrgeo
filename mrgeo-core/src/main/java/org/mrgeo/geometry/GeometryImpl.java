@@ -30,7 +30,7 @@ public abstract class GeometryImpl implements WritableGeometry
 {
 Map<String, String> attributes = new HashMap<>();
 
-Bounds bounds = null;
+Bounds bounds;
 
 public static Class[] getClasses()
 {

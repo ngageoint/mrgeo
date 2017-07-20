@@ -45,8 +45,8 @@ public class HadoopVectorUtils
 private static final Logger log = LoggerFactory.getLogger(HadoopVectorUtils.class);
 private static Random random = new Random(System.currentTimeMillis());
 
-private static Constructor<?> taskAttempt = null;
-private static Constructor<?> jobContext = null;
+private static Constructor<?> taskAttempt;
+private static Constructor<?> jobContext;
 
 static
 {

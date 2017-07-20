@@ -29,7 +29,7 @@ public class PolygonImpl extends GeometryImpl implements WritablePolygon
 {
 private static final long serialVersionUID = 1L;
 
-WritableLinearRing exteriorRing = null;
+WritableLinearRing exteriorRing;
 List<WritableLinearRing> interiorRings = new ArrayList<>();
 
 PolygonImpl()

@@ -23,7 +23,7 @@ public final static String PENDING = "Pending";
 public final static String RUNNING = "Running";
 public final static String CANCELLED = "Cancelled";
 
-TaskDetails taskDetails = null;
+TaskDetails taskDetails;
 long _jobId;
 String _name;
 String _status;

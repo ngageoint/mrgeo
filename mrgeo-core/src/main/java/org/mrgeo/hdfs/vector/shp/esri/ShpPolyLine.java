@@ -26,7 +26,7 @@ import java.io.IOException;
 public class ShpPolyLine implements ShpData
 {
 protected JPolyLine[] p;
-private ESRILayer parent = null;
+private ESRILayer parent;
 
 /**
  * Creates new ShpLine

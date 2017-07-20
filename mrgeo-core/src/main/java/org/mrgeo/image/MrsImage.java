@@ -52,8 +52,8 @@ private static final Logger log = LoggerFactory.getLogger(MrsImage.class);
 //protected ColorModel colorModel = null;
 //protected SampleModel sampleModel = null;
 //protected String measurement = "Ratio"; // not sure what this is for...
-private MrsImageReader reader = null; // The MrsImageReader for fetching the tiles
-private MrsPyramidMetadata metadata = null; // image metadata
+private MrsImageReader reader; // The MrsImageReader for fetching the tiles
+private MrsPyramidMetadata metadata; // image metadata
 
 private int zoomlevel = -1; // current zoom level of this image
 private int tilesize = -1; // size of a tile (here for convenience, it is in the metadata)

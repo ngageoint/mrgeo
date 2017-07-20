@@ -36,7 +36,7 @@ private TileIdWritable key;
 private RasterWritable value;
 private long startTileId;
 private long endTileId;
-private long recordCount = 0;
+private long recordCount;
 private boolean more = true;
 
 // Factory for creating instances of SequenceFile.Reader

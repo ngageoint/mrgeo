@@ -46,8 +46,8 @@ private String currLine;
 private boolean currLineAvailable;
 private DelimitedParser delimitedParser;
 private DelimitedReaderVisitor visitor;
-private boolean stopReading = false;
-private long featureId = 0L;
+private boolean stopReading;
+private long featureId;
 private boolean firstLine = true;
 
 public DelimitedReader(LineProducer lineProducer, DelimitedParser delimitedParser)

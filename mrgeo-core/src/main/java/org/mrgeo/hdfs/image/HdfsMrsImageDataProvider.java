@@ -46,8 +46,8 @@ public class HdfsMrsImageDataProvider extends MrsImageDataProvider
 public final static String METADATA = "metadata";
 private static Logger log = LoggerFactory.getLogger(HdfsMrsImageDataProvider.class);
 private Configuration conf;
-private HdfsMrsPyramidMetadataReader metaReader = null;
-private HdfsMrsPyramidMetadataWriter metaWriter = null;
+private HdfsMrsPyramidMetadataReader metaReader;
+private HdfsMrsPyramidMetadataWriter metaWriter;
 private Path resourcePath;
 
 public HdfsMrsImageDataProvider(final Configuration conf,

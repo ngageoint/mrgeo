@@ -25,7 +25,7 @@ import java.io.IOException;
 public class ShpPointZ implements ShpData
 {
 protected JPointZ[] p;
-private ESRILayer parent = null;
+private ESRILayer parent;
 
 /**
  * Creates new ShpPoint

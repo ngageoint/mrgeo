@@ -74,14 +74,14 @@ static public class CsvRecordWriter extends RecordWriter<FeatureIdWritable, Geom
   //Vector<String> columns = new Vector<String>();
   PrintWriter writer;
   boolean first = true;
-  boolean writeHeader = false;
+  boolean writeHeader;
   boolean writeGeometry = true;
   private OutputStream externalColumnsOutput;
-  private OutputStream output = null;
+  private OutputStream output;
   private Path columnsOutputPath;
   private char encapsulator = '\"';
   private char delimiter = ',';
-  private Path _outputPath = null;
+  private Path _outputPath;
   private List<String> attributes;
 
   public CsvRecordWriter(Path columnsOutput, Path output) throws IOException

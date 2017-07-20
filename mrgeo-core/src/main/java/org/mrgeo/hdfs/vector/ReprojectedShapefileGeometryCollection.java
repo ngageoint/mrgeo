@@ -83,7 +83,7 @@ private void readObject(final ObjectInputStream is) throws ClassNotFoundExceptio
 static class LocalIterator implements Iterator<WritableGeometry>
 {
   private final ReprojectedShapefileGeometryCollection parent;
-  private int currentIndex = 0;
+  private int currentIndex;
 
   public LocalIterator(final ReprojectedShapefileGeometryCollection parent)
   {
