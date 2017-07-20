@@ -15,7 +15,9 @@
 
 package org.mrgeo.colorscale;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.mrgeo.utils.FloatUtils;
 import org.mrgeo.utils.XmlUtils;
@@ -50,14 +52,13 @@ import java.util.*;
  */
 public class ColorScale extends TreeMap<Double, Color>
 {
-  private static final Logger log = LoggerFactory.getLogger(ColorScale.class);
+private static final Logger log = LoggerFactory.getLogger(ColorScale.class);
 private static final long serialVersionUID = 1L;
 private int CACHE_SIZE = 1024;
 private static final int A = 3;
 private static final int B = 2;
 private static final int G = 1;
 private static final int R = 0;
-private static final Object lock = new Object();
 private static ColorScale _colorScale;
 private static ColorScale _grayScale;
 private int[][] cache;
@@ -598,12 +599,16 @@ public void fromJSON(InputStream stream) throws ColorScaleException
 }
 
 // load color scale from json
+@SuppressFBWarnings(value = "SIC_INNER_SHOULD_BE_STATIC_ANON", justification = "TypeReference<> is for Jackson")
 public void fromJSON(String json) throws ColorScaleException
 {
   try
   {
     ObjectMapper mapper = new ObjectMapper();
-    Map<String, Object> colorScaleMap = (Map<String, Object>)mapper.readValue(json, Map.class);
+    TypeReference<Map<String, Object>> typeRef = new TypeReference<Map<String, Object>>(){};
+
+    Map<String, Object> colorScaleMap = mapper.readValue(json, typeRef);
+
     String scalingStr = (String) colorScaleMap.get("Scaling");
     if (scalingStr != null)
     {
@@ -619,26 +624,31 @@ public void fromJSON(String json) throws ColorScaleException
     String forceStr = (String) colorScaleMap.get("ForceValuesIntoRange");
     forceValuesIntoRange = ("1").equals(forceStr) || ("true").equalsIgnoreCase(forceStr);
 
-    Map<String, String> nullColorMap = (Map<String, String>) colorScaleMap.get("NullColor");
-    String nullColorStr = nullColorMap.get("color");
-    if (nullColorStr != null)
+    Map<?,?> nullColorMap = (Map<?,?>) colorScaleMap.get("NullColor");
+
+    if (nullColorMap != null)
     {
-      parseColor(nullColorStr, nullColorMap.get("opacity"), nullColor);
+      String nullColorStr = (String) nullColorMap.get("color");
+      if (nullColorStr != null)
+      {
+        parseColor(nullColorStr, (String) nullColorMap.get("opacity"), nullColor);
+      }
     }
 
-    ArrayList<Map<String, String>> colorsList = (ArrayList<Map<String, String>>) colorScaleMap
-        .get("Colors");
+    ArrayList<?> colorsList = (ArrayList<?>) colorScaleMap.get("Colors");
     if (colorsList != null)
     {
-      for (Map<String, String> color : colorsList)
+      for (Object obj : colorsList)
       {
+        Map<?,?> color = (Map<?, ?>) obj;
+
         int[] colorArr = new int[4];
-        String colorStr = color.get("color");
-        String valueStr = color.get("value");
+        String colorStr = (String) color.get("color");
+        String valueStr = (String) color.get("value");
         Double value = Double.valueOf(valueStr);
         if (colorStr != null)
         {
-          parseColor(colorStr, color.get("opacity"), colorArr);
+          parseColor(colorStr, (String) color.get("opacity"), colorArr);
           put(value, colorArr);
         }
       }
@@ -935,10 +945,10 @@ protected void buildCache()
           float slotFactor = 1.0f / ((float)numSlots + 1);
           for (int slot = 1; slot <= numSlots; slot++) {
             quantileColors[lastAssignedQuantile + slot] = new Color(
-                    interpolateValue(color1.getRed(), color2.getRed(), slotFactor * slot),
-                    interpolateValue(color1.getGreen(), color2.getGreen(), slotFactor * slot),
-                    interpolateValue(color1.getBlue(), color2.getBlue(), slotFactor * slot),
-                    interpolateValue(color1.getAlpha(), color2.getAlpha(), slotFactor * slot));
+                interpolateValue(color1.getRed(), color2.getRed(), slotFactor * slot),
+                interpolateValue(color1.getGreen(), color2.getGreen(), slotFactor * slot),
+                interpolateValue(color1.getBlue(), color2.getBlue(), slotFactor * slot),
+                interpolateValue(color1.getAlpha(), color2.getAlpha(), slotFactor * slot));
           }
           lastAssignedQuantile = q;
         }
@@ -1002,8 +1012,6 @@ private int interpolateValue(int v1, int v2, float factor)
 /**
  * Find the color band that this value falls in and assign that color.
  *
- * @param v
- * @param color
  */
 private void absoluteColor(double v, int[] color)
 {
@@ -1046,9 +1054,6 @@ private void absoluteColor(double v, int[] color)
 /**
  * Interpolate the color value for the given scalar value. The result is placed in color.
  *
- * @param v
- * @param color
- * @return
  */
 private void interpolateColor(double v, int[] color)
 {
