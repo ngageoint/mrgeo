@@ -15,7 +15,6 @@
 
 package org.mrgeo.hdfs.image;
 
-import org.apache.hadoop.io.MapFile;
 import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.raster.RasterWritable;

@@ -1,6 +1,5 @@
 package org.mrgeo.hdfs.utils;
 
-import org.apache.hadoop.io.MapFile;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.mrgeo.data.tile.TileIdWritable;

@@ -340,7 +340,7 @@ protected void finalize()
     {
       shpFile.close();
     }
-    catch (IOException e)
+    catch (IOException ignored)
     {
     }
   }

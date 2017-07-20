@@ -6,7 +6,6 @@ import org.mrgeo.image.MrsPyramidMetadata;
 
 import java.io.IOException;
 
-import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Mockito.*;
 
 /**

@@ -15,7 +15,6 @@
 
 package org.mrgeo.data.raster;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.TMSUtils;
 
