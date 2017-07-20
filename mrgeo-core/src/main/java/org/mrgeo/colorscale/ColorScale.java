@@ -626,31 +626,25 @@ public void fromJSON(String json) throws ColorScaleException
 
     Map<?,?> nullColorMap = (Map<?,?>) colorScaleMap.get("NullColor");
 
-    if (nullColorMap != null)
+    String nullColorStr = (String) nullColorMap.get("color");
+    if (nullColorStr != null)
     {
-      String nullColorStr = (String) nullColorMap.get("color");
-      if (nullColorStr != null)
-      {
-        parseColor(nullColorStr, (String) nullColorMap.get("opacity"), nullColor);
-      }
+      parseColor(nullColorStr, (String) nullColorMap.get("opacity"), nullColor);
     }
 
     ArrayList<?> colorsList = (ArrayList<?>) colorScaleMap.get("Colors");
-    if (colorsList != null)
+    for (Object obj : colorsList)
     {
-      for (Object obj : colorsList)
-      {
-        Map<?,?> color = (Map<?, ?>) obj;
+      Map<?,?> color = (Map<?, ?>) obj;
 
-        int[] colorArr = new int[4];
-        String colorStr = (String) color.get("color");
-        String valueStr = (String) color.get("value");
-        Double value = Double.valueOf(valueStr);
-        if (colorStr != null)
-        {
-          parseColor(colorStr, (String) color.get("opacity"), colorArr);
-          put(value, colorArr);
-        }
+      int[] colorArr = new int[4];
+      String colorStr = (String) color.get("color");
+      String valueStr = (String) color.get("value");
+      Double value = Double.valueOf(valueStr);
+      if (colorStr != null)
+      {
+        parseColor(colorStr, (String) color.get("opacity"), colorArr);
+        put(value, colorArr);
       }
     }
   }
