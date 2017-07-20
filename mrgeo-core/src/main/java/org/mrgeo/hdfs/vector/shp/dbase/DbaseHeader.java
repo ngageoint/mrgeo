@@ -120,10 +120,10 @@ public synchronized void insertField(DbaseField field, int position)
 }
 
 
-public synchronized Vector<DbaseField> getFieldsCopy()
-{
-  return (Vector<DbaseField>) fields.clone();
-}
+//public synchronized Vector<DbaseField> getFieldsCopy()
+//{
+//  return (Vector<DbaseField>) fields.clone();
+//}
 
 public synchronized void save(RandomAccessFile os) throws IOException
 {

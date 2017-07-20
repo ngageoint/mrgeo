@@ -797,21 +797,17 @@ private static AdHocDataProvider createAdHocDataProvider(Configuration conf,
     ProviderProperties props) throws DataProviderNotFound, DataProviderException
 {
   initialize(conf);
-  for (AdHocDataProviderFactory factory : adHocProviderFactories.values())
+  AdHocDataProviderFactory factory =  adHocProviderFactories.values().iterator().next();
+  try
   {
-    AdHocDataProvider provider;
-    try
-    {
-      provider = factory.createAdHocDataProvider(conf, props);
-    }
-    catch (IOException e)
-    {
-      throw new DataProviderException("Can not create ad hoc data provider", e);
-    }
+    AdHocDataProvider provider = factory.createAdHocDataProvider(conf, props);
     adHocProviderCache.put(provider.getResourceName(), provider);
     return provider;
   }
-  throw new DataProviderNotFound("Unable to find an ad hoc data provider for ");
+  catch (IOException e)
+  {
+    throw new DataProviderException("Can not create ad hoc data provider", e);
+  }
 }
 
 @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST_OF_RETURN_VALUE", justification = "No, it's not.")
@@ -864,25 +860,18 @@ private static String getResourceCacheKey(String resourceName,
 private static MrsImageDataProvider createTempMrsImageDataProvider(Configuration conf,
     ProviderProperties providerProperties) throws DataProviderNotFound, DataProviderException
 {
-
   initialize(conf);
-  for (MrsImageDataProviderFactory factory : mrsImageProviderFactories.values())
+  MrsImageDataProviderFactory factory  = mrsImageProviderFactories.values().iterator().next();
+  try
   {
-    MrsImageDataProvider provider;
-    try
-    {
-      provider = factory.createTempMrsImageDataProvider(conf, providerProperties);
-    }
-    catch (IOException e)
-    {
-      throw new DataProviderException("Can not create temporary mrs image data provider", e);
-    }
-
+    MrsImageDataProvider provider = factory.createTempMrsImageDataProvider(conf, providerProperties);
     mrsImageProviderCache.put(provider.getResourceName(), provider);
     return provider;
   }
-
-  throw new DataProviderException("Can not create temporary mrs image data provider");
+  catch (IOException e)
+  {
+    throw new DataProviderException("Can not create temporary mrs image data provider", e);
+  }
 }
 
 @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST_OF_RETURN_VALUE", justification = "We _are_ checking!")
@@ -959,7 +948,7 @@ private static VectorDataProvider getVectorDataProvider(String name,
     // not just that the data provider is not found.
     if (e.getCause() != null) {
       log.error(e.getCause().getMessage() +
-              " - Unable to load the vector data source " + name);
+          " - Unable to load the vector data source " + name);
     }
     throw new DataProviderNotFound(e);
   }
@@ -971,14 +960,11 @@ private static void findPreferredProvider(Configuration conf)
   // no preferred provider, use the 1st one...
   if (preferredAdHocProviderName == null)
   {
-    for (AdHocDataProviderFactory factory : adHocProviderFactories.values())
-    {
-      preferredAdHocProviderName = factory.getPrefix();
+    AdHocDataProviderFactory factory = adHocProviderFactories.values().iterator().next();
+    preferredAdHocProviderName = factory.getPrefix();
 
-      setValue(preferredAdHocProviderName, conf, PREFERRED_ADHOC_PROVIDER_NAME, PREFERRED_ADHOC_PROPERTYNAME);
-      log.info("Making {} preferred ad hoc provider ", preferredAdHocProviderName);
-      break;
-    }
+    setValue(preferredAdHocProviderName, conf, PREFERRED_ADHOC_PROVIDER_NAME, PREFERRED_ADHOC_PROPERTYNAME);
+    log.info("Making {} preferred ad hoc provider ", preferredAdHocProviderName);
   }
   else
   {
@@ -989,35 +975,27 @@ private static void findPreferredProvider(Configuration conf)
   // no preferred provider, use the 1st one...
   if (preferredImageProviderName == null)
   {
-    for (MrsImageDataProviderFactory factory : mrsImageProviderFactories.values())
-    {
-      preferredImageProviderName = factory.getPrefix();
-      setValue(preferredImageProviderName, conf, PREFERRED_MRSIMAGE_PROVIDER_NAME, PREFERRED_MRSIMAGE_PROPERTYNAME);
+    MrsImageDataProviderFactory factory = mrsImageProviderFactories.values().iterator().next();
+    preferredImageProviderName = factory.getPrefix();
+    setValue(preferredImageProviderName, conf, PREFERRED_MRSIMAGE_PROVIDER_NAME, PREFERRED_MRSIMAGE_PROPERTYNAME);
 
-      log.info("Making {} preferred image provider ", preferredImageProviderName);
-
-      break;
-    }
+    log.info("Making {} preferred image provider ", preferredImageProviderName);
   }
   else
   {
     log.debug("Using preferred image provider " + preferredImageProviderName);
   }
 
-
   preferredVectorProviderName = findValue(conf, PREFERRED_VECTOR_PROVIDER_NAME, PREFERRED_VECTOR_PROPERTYNAME);
   // no preferred provider, use the 1st one...
   if (preferredVectorProviderName == null)
   {
-    for (VectorDataProviderFactory factory : vectorProviderFactories.values())
-    {
-      preferredVectorProviderName = factory.getPrefix();
-      setValue(preferredVectorProviderName, conf, PREFERRED_VECTOR_PROVIDER_NAME, PREFERRED_VECTOR_PROPERTYNAME);
+    VectorDataProviderFactory factory =  vectorProviderFactories.values().iterator().next();
+    preferredVectorProviderName = factory.getPrefix();
+    setValue(preferredVectorProviderName, conf, PREFERRED_VECTOR_PROVIDER_NAME, PREFERRED_VECTOR_PROPERTYNAME);
 
-      log.info("Making {} preferred vector provider ", preferredVectorProviderName);
+    log.info("Making {} preferred vector provider ", preferredVectorProviderName);
 
-      break;
-    }
   }
   else
   {
@@ -1087,306 +1065,340 @@ public enum AccessMode
 
 private static class AdHocLoader implements Callable<AdHocDataProvider>
 {
-  private String prefix;
-  private String name;
-  private AccessMode accessMode;
-  private Configuration conf;
-  private ProviderProperties props;
+private String prefix;
+private String name;
+private AccessMode accessMode;
+private Configuration conf;
+private ProviderProperties props;
 
-  public AdHocLoader(String name,
-      AccessMode accessMode,
-      Configuration conf,
-      ProviderProperties props)
+public AdHocLoader(String name,
+    AccessMode accessMode,
+    Configuration conf,
+    ProviderProperties props)
+{
+  this.conf = conf;
+  this.props = props;
+  prefix = getPrefix(name);
+  if (prefix != null)
   {
-    this.conf = conf;
-    this.props = props;
-    prefix = getPrefix(name);
-    if (prefix != null)
-    {
-      this.name = name.substring(prefix.length() + PREFIX_CHAR.length());
-    }
-    else
-    {
-      this.name = name;
-    }
-    this.accessMode = accessMode;
+    this.name = name.substring(prefix.length() + PREFIX_CHAR.length());
   }
-
-  @Override
-  public AdHocDataProvider call() throws Exception
+  else
   {
-    initialize(conf);
-    AdHocDataProviderFactory factory = findFactory();
-    if (accessMode == AccessMode.READ)
+    this.name = name;
+  }
+  this.accessMode = accessMode;
+}
+
+@Override
+public AdHocDataProvider call() throws Exception
+{
+  initialize(conf);
+  AdHocDataProviderFactory factory = findFactory();
+  if (accessMode == AccessMode.READ)
+  {
+    if (factory != null)
     {
-      if (factory != null)
+      if (factory.canOpen(name, conf, props))
       {
-        if (factory.canOpen(name, conf, props))
-        {
-          return factory.createAdHocDataProvider(name, conf, props);
-        }
-        else
-        {
-          log.info("Could not open " + name + " using factory " + factory.getClass().getName());
-        }
-      }
-      throw new DataProviderNotFound("Unable to find an ad hoc data provider for " + name);
-    }
-    else if (accessMode == AccessMode.OVERWRITE)
-    {
-      if (factory != null)
-      {
-        if (factory.exists(name, conf, props))
-        {
-          factory.delete(name, conf, props);
-        }
         return factory.createAdHocDataProvider(name, conf, props);
       }
-      return getPreferredProvider().createAdHocDataProvider(name, conf, props);
-    }
-    else
-    {
-      if (factory != null)
+      else
       {
-        if (factory.canWrite(name, conf, props))
-        {
-          return factory.createAdHocDataProvider(name, conf, props);
-        }
-        throw new DataProviderNotFound("Unable to find an ad hoc data provider for " + name);
-      }
-      return getPreferredProvider().createAdHocDataProvider(name, conf, props);
-    }
-
-  }
-
-  private AdHocDataProviderFactory getPreferredProvider() throws DataProviderNotFound
-  {
-    if (adHocProviderFactories.containsKey(preferredAdHocProviderName))
-    {
-      return adHocProviderFactories.get(preferredAdHocProviderName);
-    }
-
-    throw new DataProviderNotFound("No ad hoc data providers found ");
-  }
-
-  private AdHocDataProviderFactory findFactory() throws IOException
-  {
-    if (prefix != null)
-    {
-      if (adHocProviderFactories.containsKey(prefix))
-      {
-        return adHocProviderFactories.get(prefix);
+        log.info("Could not open " + name + " using factory " + factory.getClass().getName());
       }
     }
-    for (AdHocDataProviderFactory factory : adHocProviderFactories.values())
+    throw new DataProviderNotFound("Unable to find an ad hoc data provider for " + name);
+  }
+  else if (accessMode == AccessMode.OVERWRITE)
+  {
+    if (factory != null)
     {
       if (factory.exists(name, conf, props))
       {
-        return factory;
+        factory.delete(name, conf, props);
       }
-      log.debug("resource cache load: " + name);
+      return factory.createAdHocDataProvider(name, conf, props);
     }
-
-    return null;
+    return getPreferredProvider().createAdHocDataProvider(name, conf, props);
   }
+  else
+  {
+    if (factory != null)
+    {
+      if (factory.canWrite(name, conf, props))
+      {
+        return factory.createAdHocDataProvider(name, conf, props);
+      }
+      throw new DataProviderNotFound("Unable to find an ad hoc data provider for " + name);
+    }
+    return getPreferredProvider().createAdHocDataProvider(name, conf, props);
+  }
+
+}
+
+private AdHocDataProviderFactory getPreferredProvider() throws DataProviderNotFound
+{
+  if (adHocProviderFactories.containsKey(preferredAdHocProviderName))
+  {
+    return adHocProviderFactories.get(preferredAdHocProviderName);
+  }
+
+  throw new DataProviderNotFound("No ad hoc data providers found ");
+}
+
+private AdHocDataProviderFactory findFactory() throws IOException
+{
+  if (prefix != null)
+  {
+    if (adHocProviderFactories.containsKey(prefix))
+    {
+      return adHocProviderFactories.get(prefix);
+    }
+  }
+  for (AdHocDataProviderFactory factory : adHocProviderFactories.values())
+  {
+    if (factory.exists(name, conf, props))
+    {
+      return factory;
+    }
+    log.debug("resource cache load: " + name);
+  }
+
+  return null;
+}
 }
 
 private static class MrsImageLoader implements Callable<MrsImageDataProvider>
 {
-  private String prefix;
-  private String name;
-  private AccessMode accessMode;
-  private Configuration conf;
-  private ProviderProperties props;
+private String prefix;
+private String name;
+private AccessMode accessMode;
+private Configuration conf;
+private ProviderProperties props;
 
-  public MrsImageLoader(String name,
-      AccessMode accessMode,
-      Configuration conf,
-      ProviderProperties props)
+public MrsImageLoader(String name,
+    AccessMode accessMode,
+    Configuration conf,
+    ProviderProperties props)
+{
+  this.conf = conf;
+  this.props = props;
+  prefix = getPrefix(name);
+  if (prefix != null)
   {
-    this.conf = conf;
-    this.props = props;
-    prefix = getPrefix(name);
-    if (prefix != null)
-    {
-      this.name = name.substring(prefix.length() + PREFIX_CHAR.length());
-    }
-    else
-    {
-      this.name = name;
-    }
-    this.accessMode = accessMode;
+    this.name = name.substring(prefix.length() + PREFIX_CHAR.length());
   }
-
-  @Override
-  public MrsImageDataProvider call() throws Exception
+  else
   {
-    initialize(conf);
-    MrsImageDataProviderFactory factory = findFactory();
-    if (accessMode == AccessMode.READ)
+    this.name = name;
+  }
+  this.accessMode = accessMode;
+}
+
+@Override
+public MrsImageDataProvider call() throws Exception
+{
+  initialize(conf);
+  MrsImageDataProviderFactory factory = findFactory();
+  if (accessMode == AccessMode.READ)
+  {
+    if (factory != null)
     {
-      if (factory != null)
+      if (factory.canOpen(name, conf, props))
       {
-        if (factory.canOpen(name, conf, props))
-        {
-          return factory.createMrsImageDataProvider(name, conf, props);
-        }
-        else
-        {
-          log.warn("Could not open " + name + " using factory " + factory.getClass().getName());
-        }
-      }
-      throw new DataProviderNotFound("Unable to find a MrsImage data provider for " + name);
-    }
-    else if (accessMode == AccessMode.OVERWRITE)
-    {
-      if (factory != null)
-      {
-        if (factory.exists(name, conf, props))
-        {
-          factory.delete(name, conf, props);
-        }
         return factory.createMrsImageDataProvider(name, conf, props);
-      }
-      return getPreferredProvider().createMrsImageDataProvider(name, conf, props);
-    }
-    else
-    {
-      if (factory != null)
-      {
-        if (factory.canWrite(name, conf, props))
-        {
-          return factory.createMrsImageDataProvider(name, conf, props);
-        }
-        throw new DataProviderNotFound("Unable to find a MrsImage data provider for " + name);
-      }
-      return getPreferredProvider().createMrsImageDataProvider(name, conf, props);
-    }
-  }
-
-  private MrsImageDataProviderFactory getPreferredProvider() throws DataProviderNotFound
-  {
-    if (mrsImageProviderFactories.containsKey(preferredImageProviderName))
-    {
-      return mrsImageProviderFactories.get(preferredImageProviderName);
-    }
-
-    throw new DataProviderNotFound("No MrsImage data providers found ");
-  }
-
-  private MrsImageDataProviderFactory findFactory() throws IOException
-  {
-    if (prefix != null)
-    {
-      if (mrsImageProviderFactories.containsKey(prefix))
-      {
-        if (log.isDebugEnabled())
-        {
-          log.debug("returning " + mrsImageProviderFactories.get(prefix).getClass().getName());
-        }
-        return mrsImageProviderFactories.get(prefix);
       }
       else
       {
-        if (log.isInfoEnabled())
-        {
-          log.info("No image data provider matches prefix " + prefix);
-        }
+        log.warn("Could not open " + name + " using factory " + factory.getClass().getName());
       }
     }
-    for (MrsImageDataProviderFactory factory : mrsImageProviderFactories.values())
+    throw new DataProviderNotFound("Unable to find a MrsImage data provider for " + name);
+  }
+  else if (accessMode == AccessMode.OVERWRITE)
+  {
+    if (factory != null)
     {
       if (factory.exists(name, conf, props))
       {
-        if (log.isDebugEnabled())
-        {
-          log.debug("Returning provider " + factory.getClass().getName() + " for image " + name);
-        }
-        return factory;
+        factory.delete(name, conf, props);
       }
-      else
+      return factory.createMrsImageDataProvider(name, conf, props);
+    }
+    return getPreferredProvider().createMrsImageDataProvider(name, conf, props);
+  }
+  else
+  {
+    if (factory != null)
+    {
+      if (factory.canWrite(name, conf, props))
       {
-        if (log.isInfoEnabled())
-        {
-          log.info("Image " + name + " does not exist for provider " + factory.getClass().getName());
-        }
+        return factory.createMrsImageDataProvider(name, conf, props);
+      }
+      throw new DataProviderNotFound("Unable to find a MrsImage data provider for " + name);
+    }
+    return getPreferredProvider().createMrsImageDataProvider(name, conf, props);
+  }
+}
+
+private MrsImageDataProviderFactory getPreferredProvider() throws DataProviderNotFound
+{
+  if (mrsImageProviderFactories.containsKey(preferredImageProviderName))
+  {
+    return mrsImageProviderFactories.get(preferredImageProviderName);
+  }
+
+  throw new DataProviderNotFound("No MrsImage data providers found ");
+}
+
+private MrsImageDataProviderFactory findFactory() throws IOException
+{
+  if (prefix != null)
+  {
+    if (mrsImageProviderFactories.containsKey(prefix))
+    {
+      if (log.isDebugEnabled())
+      {
+        log.debug("returning " + mrsImageProviderFactories.get(prefix).getClass().getName());
+      }
+      return mrsImageProviderFactories.get(prefix);
+    }
+    else
+    {
+      if (log.isInfoEnabled())
+      {
+        log.info("No image data provider matches prefix " + prefix);
       }
     }
-
-    return null;
   }
+  for (MrsImageDataProviderFactory factory : mrsImageProviderFactories.values())
+  {
+    if (factory.exists(name, conf, props))
+    {
+      if (log.isDebugEnabled())
+      {
+        log.debug("Returning provider " + factory.getClass().getName() + " for image " + name);
+      }
+      return factory;
+    }
+    else
+    {
+      if (log.isInfoEnabled())
+      {
+        log.info("Image " + name + " does not exist for provider " + factory.getClass().getName());
+      }
+    }
+  }
+
+  return null;
+}
 
 }
 
 private static class VectorLoader implements Callable<VectorDataProvider>
 {
-  private String name;
-  private String prefix;
-  private AccessMode accessMode;
-  private Configuration conf;
-  private ProviderProperties props;
+private String name;
+private String prefix;
+private AccessMode accessMode;
+private Configuration conf;
+private ProviderProperties props;
 
-  public VectorLoader(String name,
-      AccessMode accessMode,
-      Configuration conf,
-      ProviderProperties props)
+public VectorLoader(String name,
+    AccessMode accessMode,
+    Configuration conf,
+    ProviderProperties props)
+{
+  this.conf = conf;
+  if (conf == null && props == null)
   {
-    this.conf = conf;
-    if (conf == null && props == null)
-    {
-      this.props = new ProviderProperties();
-    }
-    else
-    {
-      this.props = props;
-    }
-    prefix = getPrefix(name);
-    if (prefix != null)
-    {
-      this.name = name.substring(prefix.length() + PREFIX_CHAR.length());
-    }
-    else
-    {
-      this.name = name;
-    }
-    this.accessMode = accessMode;
+    this.props = new ProviderProperties();
   }
-
-  @Override
-  public VectorDataProvider call() throws Exception
+  else
   {
-    initialize(conf);
+    this.props = props;
+  }
+  prefix = getPrefix(name);
+  if (prefix != null)
+  {
+    this.name = name.substring(prefix.length() + PREFIX_CHAR.length());
+  }
+  else
+  {
+    this.name = name;
+  }
+  this.accessMode = accessMode;
+}
 
-    VectorDataProviderFactory factory = findFactory();
-    if (accessMode == AccessMode.READ)
+@Override
+public VectorDataProvider call() throws Exception
+{
+  initialize(conf);
+
+  VectorDataProviderFactory factory = findFactory();
+  if (accessMode == AccessMode.READ)
+  {
+    if (factory != null)
     {
-      if (factory != null)
+      if (log.isDebugEnabled())
+      {
+        log.debug("For vector " + name + ", found factory: " + factory.getClass().getName());
+      }
+      if (factory.canOpen(name, conf, props))
       {
         if (log.isDebugEnabled())
         {
-          log.debug("For vector " + name + ", found factory: " + factory.getClass().getName());
+          log.debug("Factory " + factory.getClass().getName() + " is able to open vector " + name);
         }
-        if (factory.canOpen(name, conf, props))
-        {
-          if (log.isDebugEnabled())
-          {
-            log.debug("Factory " + factory.getClass().getName() + " is able to open vector " + name);
-          }
-          return factory.createVectorDataProvider(prefix, name, conf, props);
-        }
-        else
-        {
-          if (log.isInfoEnabled())
-          {
-            log.info("Unable to open vector " + name + " with data provider " + factory.getClass().getName());
-          }
-        }
+        return factory.createVectorDataProvider(prefix, name, conf, props);
       }
       else
       {
-        log.info("Unable to find a data provider to use for vector " + name);
+        if (log.isInfoEnabled())
+        {
+          log.info("Unable to open vector " + name + " with data provider " + factory.getClass().getName());
+        }
       }
-      // Log some useful debug information
+    }
+    else
+    {
+      log.info("Unable to find a data provider to use for vector " + name);
+    }
+    // Log some useful debug information
+    String msg = "Unable to find a vector data provider for " + name + " using prefix " + prefix;
+    if (log.isDebugEnabled())
+    {
+      log.debug(msg);
+      log.debug("Available vector provider factories: " + vectorProviderFactories.size());
+      for (VectorDataProviderFactory f : vectorProviderFactories.values())
+      {
+        log.debug(f.getPrefix() + " using " + f.getClass().getName());
+      }
+      String cp = System.getProperty("java.class.path");
+      log.debug("java.class.path=" + cp);
+    }
+    throw new DataProviderNotFound(msg);
+  }
+  else if (accessMode == AccessMode.OVERWRITE)
+  {
+    if (factory != null)
+    {
+      if (factory.exists(name, conf, props))
+      {
+        factory.delete(name, conf, props);
+      }
+      return factory.createVectorDataProvider(prefix, name, conf, props);
+    }
+    return getPreferredProvider().createVectorDataProvider(prefix, name, conf, props);
+  }
+  else
+  {
+    if (factory != null)
+    {
+      if (factory.canWrite(name, conf, props))
+      {
+        return factory.createVectorDataProvider(prefix, name, conf, props);
+      }
       String msg = "Unable to find a vector data provider for " + name + " using prefix " + prefix;
       if (log.isDebugEnabled())
       {
@@ -1401,97 +1413,63 @@ private static class VectorLoader implements Callable<VectorDataProvider>
       }
       throw new DataProviderNotFound(msg);
     }
-    else if (accessMode == AccessMode.OVERWRITE)
-    {
-      if (factory != null)
-      {
-        if (factory.exists(name, conf, props))
-        {
-          factory.delete(name, conf, props);
-        }
-        return factory.createVectorDataProvider(prefix, name, conf, props);
-      }
-      return getPreferredProvider().createVectorDataProvider(prefix, name, conf, props);
-    }
-    else
-    {
-      if (factory != null)
-      {
-        if (factory.canWrite(name, conf, props))
-        {
-          return factory.createVectorDataProvider(prefix, name, conf, props);
-        }
-        String msg = "Unable to find a vector data provider for " + name + " using prefix " + prefix;
-        if (log.isDebugEnabled())
-        {
-          log.debug(msg);
-          log.debug("Available vector provider factories: " + vectorProviderFactories.size());
-          for (VectorDataProviderFactory f : vectorProviderFactories.values())
-          {
-            log.debug(f.getPrefix() + " using " + f.getClass().getName());
-          }
-          String cp = System.getProperty("java.class.path");
-          log.debug("java.class.path=" + cp);
-        }
-        throw new DataProviderNotFound(msg);
-      }
-      return getPreferredProvider().createVectorDataProvider(prefix, name, conf, props);
-    }
+    return getPreferredProvider().createVectorDataProvider(prefix, name, conf, props);
+  }
+}
+
+private VectorDataProviderFactory getPreferredProvider() throws DataProviderNotFound
+{
+  if (vectorProviderFactories.containsKey(preferredVectorProviderName))
+  {
+    return vectorProviderFactories.get(preferredVectorProviderName);
   }
 
-  private VectorDataProviderFactory getPreferredProvider() throws DataProviderNotFound
-  {
-    if (vectorProviderFactories.containsKey(preferredVectorProviderName))
-    {
-      return vectorProviderFactories.get(preferredVectorProviderName);
-    }
+  throw new DataProviderNotFound("No vector data providers found ");
+}
 
-    throw new DataProviderNotFound("No vector data providers found ");
+private VectorDataProviderFactory findFactory() throws IOException
+{
+  boolean debugEnabled = log.isDebugEnabled();
+  if (debugEnabled)
+  {
+    log.debug("Looking for factory for prefix: " + ((prefix != null) ? prefix : "null") + " and name " + name);
+    log.debug("Vector factory count = " + vectorProviderFactories.size());
   }
-
-  private VectorDataProviderFactory findFactory() throws IOException
+  if (prefix != null)
   {
-    boolean debugEnabled = log.isDebugEnabled();
-    if (debugEnabled)
-    {
-      log.debug("Looking for factory for prefix: " + ((prefix != null) ? prefix : "null") + " and name " + name);
-      log.debug("Vector factory count = " + vectorProviderFactories.size());
-    }
-    if (prefix != null)
-    {
-      if (vectorProviderFactories.containsKey(prefix))
-      {
-        if (debugEnabled)
-        {
-          log.debug("Returning factory from prefix cache: " + vectorProviderFactories.get(prefix).getClass().getName());
-        }
-        return vectorProviderFactories.get(prefix);
-      }
-    }
-    for (VectorDataProviderFactory factory : vectorProviderFactories.values())
+    if (vectorProviderFactories.containsKey(prefix))
     {
       if (debugEnabled)
       {
-        log.debug("Checking factory: " + factory.getClass().getName());
+        log.debug("Returning factory from prefix cache: " + vectorProviderFactories.get(prefix).getClass().getName());
       }
-      if (factory.exists(name, conf, props))
-      {
-        if (debugEnabled)
-        {
-          log.debug("Returning factory from provider properties: " + factory.getClass().getName());
-        }
-        return factory;
-      }
+      return vectorProviderFactories.get(prefix);
+    }
+  }
+  for (VectorDataProviderFactory factory : vectorProviderFactories.values())
+  {
+    if (debugEnabled)
+    {
+      log.debug("Checking factory: " + factory.getClass().getName());
+    }
+    if (factory.exists(name, conf, props))
+    {
       if (debugEnabled)
       {
-        log.debug("resource cache load: " + name);
+        log.debug("Returning factory from provider properties: " + factory.getClass().getName());
       }
+      return factory;
     }
     if (debugEnabled)
     {
-      log.debug("Returning null factory");
+      log.debug("resource cache load: " + name);
     }
-    return null;
   }
+  if (debugEnabled)
+  {
+    log.debug("Returning null factory");
+  }
+  return null;
+}
 }
 }

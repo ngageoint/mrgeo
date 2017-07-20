@@ -47,7 +47,7 @@ public static String toWkt(Geometry g)
 public static String toWkt(GeometryCollection gc)
 {
   StringBuffer result;
-  if (gc.isValid() == false)
+  if (!gc.isValid())
   {
     result = new StringBuffer("GEOMETRYCOLLECTION EMPTY");
   }
@@ -119,7 +119,7 @@ public static String toWkt(GeometryCollection gc)
 public static String toWkt(LineString ls)
 {
   StringBuffer result;
-  if (ls.isValid() == false)
+  if (!ls.isValid())
   {
     result = new StringBuffer("LINESTRING EMPTY");
   }
@@ -140,7 +140,7 @@ public static String toWkt(Point p)
 public static String toWkt(Polygon p)
 {
   StringBuffer result;
-  if (p.isValid() == false)
+  if (!p.isValid())
   {
     result = new StringBuffer("POLYGON EMPTY");
   }

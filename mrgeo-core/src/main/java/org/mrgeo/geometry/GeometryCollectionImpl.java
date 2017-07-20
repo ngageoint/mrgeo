@@ -90,7 +90,7 @@ public boolean isValid()
   boolean result = geometries.size() > 0;
   for (WritableGeometry g : geometries)
   {
-    if (g.isValid() == false)
+    if (!g.isValid())
     {
       result = false;
     }

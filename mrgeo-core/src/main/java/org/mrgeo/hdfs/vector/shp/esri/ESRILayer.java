@@ -99,7 +99,7 @@ public static ESRILayer open(String fileName) throws FormatException, IOExceptio
   RandomAccessFile shpRaf = new RandomAccessFile(fileName, "r");
   RandomAccessFile dbfRaf = new RandomAccessFile(fileBase + ".dbf", "r");
   FileInputStream prjIs = null;
-  if (new File(fileBase + ".prj").exists() == true)
+  if (new File(fileBase + ".prj").exists())
   {
     prjIs = new FileInputStream(fileBase + ".prj");
   }

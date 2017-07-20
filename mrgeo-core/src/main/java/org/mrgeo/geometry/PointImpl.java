@@ -182,7 +182,7 @@ public void setZ(double z)
 @Override
 public boolean isValid()
 {
-  return Double.isNaN(x) == false && Double.isNaN(y) == false && Double.isNaN(z) == false;
+  return !Double.isNaN(x) && !Double.isNaN(y) && !Double.isNaN(z);
 }
 
 @Override

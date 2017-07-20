@@ -320,7 +320,7 @@ public static void delete(Configuration conf, Path path) throws IOException
   if (fs.exists(path))
   {
     log.info("Deleting path " + path);
-    if (fs.delete(path, true) == false)
+    if (!fs.delete(path, true))
     {
       throw new IOException("Error deleting directory " + path);
     }
@@ -577,7 +577,7 @@ public static void moveChildDirectories(Configuration conf, Path srcParent,
       {
         fs.delete(target, true);
       }
-      if (fs.rename(srcPath, targetParent) == false)
+      if (!fs.rename(srcPath, targetParent))
       {
         String msg = MessageFormat.format(
             "Error moving temporary file {0} to output path {1}.", srcPath.toString(), target

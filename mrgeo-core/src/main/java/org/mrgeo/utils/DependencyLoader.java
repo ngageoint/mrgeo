@@ -184,10 +184,8 @@ public static String getMasterJar(Class<?> clazz) throws IOException
         Set<Dependency> master = new HashSet<>();
         master.add(d);
 
-        for (File m : getJarsFromProperties(master, !developmentMode))
-        {
-          return m.getCanonicalPath();
-        }
+        File m  = getJarsFromProperties(master, !developmentMode).iterator().next();
+        return m.getCanonicalPath();
       }
     }
   }

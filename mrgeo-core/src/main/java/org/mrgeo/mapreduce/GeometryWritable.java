@@ -209,7 +209,7 @@ private WritableGeometry readGeometry(DataInput in) throws IOException
     throw new IllegalArgumentException("Unsupported geometry type");
   }
 
-  if (result.isValid() == false)
+  if (!result.isValid())
   {
     System.out.println("invalid geom");
   }
