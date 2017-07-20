@@ -29,9 +29,9 @@ public class GeometryCollectionImpl extends GeometryImpl implements WritableGeom
 {
 private static final long serialVersionUID = 1L;
 
-List<WritableGeometry> geometries = new ArrayList<WritableGeometry>();
+List<WritableGeometry> geometries = new ArrayList<>();
 
-List<String> roles = new ArrayList<String>();
+List<String> roles = new ArrayList<>();
 
 GeometryCollectionImpl()
 {

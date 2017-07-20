@@ -192,16 +192,12 @@ public long calculateTileCount()
         {
           if (dirFile.getPath().getName().equals("index"))
           {
-            SequenceFile.Reader index = new SequenceFile.Reader(fs, dirFile.getPath(), conf);
-            try
+            try (SequenceFile.Reader index = new SequenceFile.Reader(fs, dirFile.getPath(), conf))
             {
               while (index.nextRawKey(key) >= 0)
               {
                 count++;
               }
-            }
-            finally {
-              index.close();
             }
           }
         }

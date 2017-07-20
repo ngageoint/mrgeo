@@ -163,7 +163,7 @@ public static ProviderProperties loadProviderPropertiesFromConfig(Configuration 
   // Tell each data provider to load their config settings from the Configuration.
   // This is the inverse operation to saveProviderPropertiesToConfig.
   Iterator<Map.Entry<String, String>> iter = conf.iterator();
-  Map<String, String> configSettings = new HashMap<String, String>();
+  Map<String, String> configSettings = new HashMap<>();
   int prefixLen = DATA_PROVIDER_CONFIG_PREFIX.length();
   while (iter.hasNext())
   {
@@ -177,7 +177,7 @@ public static ProviderProperties loadProviderPropertiesFromConfig(Configuration 
   setConfigurationForProviders(configSettings);
 
   String userName = conf.get(PROVIDER_PROPERTY_USER_NAME, "");
-  List<String> roles = new ArrayList<String>();
+  List<String> roles = new ArrayList<>();
   String strRoles = conf.get(PROVIDER_PROPERTY_USER_ROLES, "");
   if (strRoles != null && !strRoles.isEmpty())
   {
@@ -192,7 +192,7 @@ public static ProviderProperties loadProviderPropertiesFromConfig(Configuration 
 
 public static Map<String, String> getConfigurationFromProviders()
 {
-  Map<String, String> result = new HashMap<String, String>();
+  Map<String, String> result = new HashMap<>();
   try
   {
     initialize(getBasicConfig());
@@ -369,7 +369,7 @@ public static String[] listImages(final ProviderProperties providerProperties) t
 {
   Configuration conf = getBasicConfig();
   initialize(conf);
-  List<String> results = new ArrayList<String>();
+  List<String> results = new ArrayList<>();
   for (final MrsImageDataProviderFactory factory : mrsImageProviderFactories.values())
   {
     String[] images = factory.listImages(conf, providerProperties);
@@ -393,7 +393,7 @@ public static String[] listVectors(final ProviderProperties providerProperties) 
 {
   Configuration conf = getBasicConfig();
   initialize(conf);
-  List<String> results = new ArrayList<String>();
+  List<String> results = new ArrayList<>();
   for (final VectorDataProviderFactory factory : vectorProviderFactories.values())
   {
     String[] vectors = factory.listVectors(conf, providerProperties);
@@ -600,7 +600,7 @@ public static Set<String> getDependencies() throws IOException
 {
   log.debug("Getting dependencies for all providers");
   initialize(getBasicConfig());
-  Set<String> dependencies = new HashSet<String>();
+  Set<String> dependencies = new HashSet<>();
   if (adHocProviderFactories != null)
   {
     for (final AdHocDataProviderFactory dp : adHocProviderFactories.values())
@@ -634,7 +634,7 @@ protected synchronized static void initialize(final Configuration conf) throws D
   if (adHocProviderFactories == null)
   {
     log.info("Initializing ad hoc provider factories");
-    adHocProviderFactories = new HashMap<String, AdHocDataProviderFactory>();
+    adHocProviderFactories = new HashMap<>();
     // Find the mrsImageProviders
     final ServiceLoader<AdHocDataProviderFactory> dataProviderLoader = ServiceLoader
         .load(AdHocDataProviderFactory.class);
@@ -662,7 +662,7 @@ protected synchronized static void initialize(final Configuration conf) throws D
   {
     log.info("Initializing image provider factories");
 
-    mrsImageProviderFactories = new HashMap<String, MrsImageDataProviderFactory>();
+    mrsImageProviderFactories = new HashMap<>();
 
     // Find the mrsImageProviders
     final ServiceLoader<MrsImageDataProviderFactory> dataProviderLoader = ServiceLoader
@@ -699,7 +699,7 @@ protected synchronized static void initialize(final Configuration conf) throws D
     log.info("Initializing vector provider factories");
 
     boolean debugEnabled = log.isDebugEnabled();
-    vectorProviderFactories = new HashMap<String, VectorDataProviderFactory>();
+    vectorProviderFactories = new HashMap<>();
 
     if (debugEnabled)
     {

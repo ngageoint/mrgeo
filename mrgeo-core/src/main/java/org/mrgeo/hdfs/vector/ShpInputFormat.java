@@ -78,7 +78,7 @@ public List<InputSplit> getSplits(JobContext context) throws IOException, Interr
       numSplits = (int) Math.ceil((double) gc.size() / (double) MIN_FEATURES_PER_SPLIT);
     }
 
-    List<InputSplit> result = new LinkedList<InputSplit>();
+    List<InputSplit> result = new LinkedList<>();
 
     for (int i = 0; i < numSplits; i++)
     {

@@ -78,7 +78,7 @@ public String[] listVectors(final Configuration conf,
   FileStatus[] fileStatuses = fs.listStatus(usePath);
   if (fileStatuses != null)
   {
-    List<String> results = new ArrayList<String>(fileStatuses.length);
+    List<String> results = new ArrayList<>(fileStatuses.length);
     for (FileStatus status : fileStatuses)
     {
       if (canOpen(status.getPath().toString(), conf, providerProperties))

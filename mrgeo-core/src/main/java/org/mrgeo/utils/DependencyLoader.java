@@ -89,7 +89,7 @@ public static Set<String> getDependencies(final Class<?> clazz) throws IOExcepti
 {
   Set<File> files = findDependencies(clazz);
 
-  Set<String> deps = new HashSet<String>();
+  Set<String> deps = new HashSet<>();
   for (File f : files)
   {
     deps.add(f.getCanonicalPath());
@@ -180,7 +180,7 @@ public static String getMasterJar(final Class<?> clazz) throws IOException
     {
       if (d.master)
       {
-        Set<Dependency> master = new HashSet<Dependency>();
+        Set<Dependency> master = new HashSet<>();
         master.add(d);
 
         for (File m : getJarsFromProperties(master, !developmentMode))
@@ -198,7 +198,7 @@ public static Set<String> getUnqualifiedDependencies(final Class<?> clazz) throw
 {
   Set<File> files = findDependencies(clazz);
 
-  Set<String> deps = new HashSet<String>();
+  Set<String> deps = new HashSet<>();
   for (File f : files)
   {
     deps.add(f.getName());
@@ -253,7 +253,7 @@ public static void addDependencies(final Configuration conf, final Class<?> claz
     {
       if (d.master)
       {
-        Set<Dependency> master = new HashSet<Dependency>();
+        Set<Dependency> master = new HashSet<>();
         master.add(d);
 
         for (File m : getJarsFromProperties(master, !developmentMode))
@@ -283,7 +283,7 @@ private static Set<File> findDependencies(Class<?> clazz) throws IOException
   else
   {
     // properties not found... all we can do is load from the classpath
-    files = new HashSet<File>();
+    files = new HashSet<>();
     String cpstr = System.getProperty("java.class.path");
     for (String env : cpstr.split(":"))
     {
@@ -296,7 +296,7 @@ private static Set<File> findDependencies(Class<?> clazz) throws IOException
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File comes from classpath")
 private static Set<File> findFilesInClasspath(String base) throws IOException
 {
-  Set<File> files = new HashSet<File>();
+  Set<File> files = new HashSet<>();
   File f = new File(base);
   if (f.exists())
   {
@@ -327,7 +327,7 @@ private static Set<String> getClasspath(Configuration conf)
 {
   String cp = conf.get(CLASSPATH_FILES, "");
   String[] entries = cp.split(System.getProperty("path.separator"));
-  Set<String> results = new HashSet<String>(entries.length);
+  Set<String> results = new HashSet<>(entries.length);
   if (entries.length > 0)
   {
     for (String entry : entries)
@@ -343,7 +343,7 @@ private static Set<File> getJarsFromProperties(Set<Dependency> dependencies,
     throws IOException
 {
   // now build a list of jars to search for
-  Set<String> jars = new HashSet<String>();
+  Set<String> jars = new HashSet<>();
 
   for (Dependency dep : dependencies)
   {
@@ -366,14 +366,14 @@ private static String makeJarFromDependency(Dependency dep)
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File comes from classpath")
 private static Set<File> findJarsInClasspath(final Set<String> jars, boolean recurseDirectories) throws IOException
 {
-  Set<File> paths = new HashSet<File>();
+  Set<File> paths = new HashSet<>();
 
   if (jars.size() == 0)
   {
     return paths;
   }
 
-  Set<String> filesLeft = new HashSet<String>(jars);
+  Set<String> filesLeft = new HashSet<>(jars);
 
 
   // add the system classpath, including the cwd
@@ -711,7 +711,7 @@ private static Set<Dependency> loadDependenciesByReflection(Class<?> clazz) thro
 
 private static Set<Dependency> readDependencies(InputStream is) throws IOException
 {
-  Set<Dependency> deps = new HashSet<Dependency>();
+  Set<Dependency> deps = new HashSet<>();
 
   BufferedReader reader = new BufferedReader(new InputStreamReader(is));
 

@@ -358,14 +358,9 @@ private void load(Path path) throws IOException
     SeekableHdfsInput shp = new SeekableHdfsInput(path);
     SeekableHdfsInput shx = new SeekableHdfsInput(new Path(baseName + ".shx"));
     SeekableHdfsInput dbf = new SeekableHdfsInput(new Path(baseName + ".dbf"));
-    FSDataInputStream prj = fs.open(new Path(baseName + ".prj"));
-    try
+    try (FSDataInputStream prj = fs.open(new Path(baseName + ".prj")))
     {
       shpFile = ESRILayer.open(shp, shx, dbf, prj);
-    }
-    finally
-    {
-      prj.close();
     }
   }
   catch (FormatException e)

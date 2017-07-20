@@ -29,7 +29,7 @@ public static void saveRaster(Dataset dataset, String filename)
 {
   GDALUtils.saveRaster(
       dataset,
-      new Left<String, OutputStream>(filename),
+      new Left<>(filename),
       null,
       Double.NEGATIVE_INFINITY,
       "GTiff",
@@ -41,7 +41,7 @@ public static void saveRaster(Dataset dataset, String filename, String format)
 {
   GDALUtils.saveRaster(
       dataset,
-      new Left<String, OutputStream>(filename),
+      new Left<>(filename),
       null,
       Double.NEGATIVE_INFINITY,
       format,
@@ -53,7 +53,7 @@ public static void saveRaster(Dataset dataset, String filename, double nodata)
 {
   GDALUtils.saveRaster(
       dataset,
-      new Left<String, OutputStream>(filename),
+      new Left<>(filename),
       null,
       nodata,
       "GTiff",
@@ -65,7 +65,7 @@ public static void saveRaster(Dataset dataset, String filename, double nodata, S
 {
   GDALUtils.saveRaster(
       dataset,
-      new Left<String, OutputStream>(filename),
+      new Left<>(filename),
       null,
       nodata,
       format,
@@ -77,7 +77,7 @@ public static void saveRaster(Dataset dataset, String filename, String[] options
 {
   GDALUtils.saveRaster(
       dataset,
-      new Left<String, OutputStream>(filename),
+      new Left<>(filename),
       null,
       Double.NEGATIVE_INFINITY,
       "GTiff",
@@ -89,7 +89,7 @@ public static void saveRaster(Dataset dataset, String filename, String format, S
 {
   GDALUtils.saveRaster(
       dataset,
-      new Left<String, OutputStream>(filename),
+      new Left<>(filename),
       null,
       Double.NEGATIVE_INFINITY,
       format,
@@ -101,7 +101,7 @@ public static void saveRaster(Dataset dataset, String filename, double nodata, S
 {
   GDALUtils.saveRaster(
       dataset,
-      new Left<String, OutputStream>(filename),
+      new Left<>(filename),
       null,
       nodata,
       "GTiff",
@@ -113,7 +113,7 @@ public static void saveRaster(Dataset dataset, String filename, double nodata, S
 {
   GDALUtils.saveRaster(
       dataset,
-      new Left<String, OutputStream>(filename),
+      new Left<>(filename),
       null,
       nodata,
       format,
@@ -126,7 +126,7 @@ public static void saveRaster(Dataset dataset, OutputStream stream)
 {
   GDALUtils.saveRaster(
       dataset,
-      new Right<String, OutputStream>(stream),
+      new Right<>(stream),
       null,
       Double.NEGATIVE_INFINITY,
       "GTiff",
@@ -138,7 +138,7 @@ public static void saveRaster(Dataset dataset, OutputStream stream, String forma
 {
   GDALUtils.saveRaster(
       dataset,
-      new Right<String, OutputStream>(stream),
+      new Right<>(stream),
       null,
       Double.NEGATIVE_INFINITY,
       format,
@@ -150,7 +150,7 @@ public static void saveRaster(Dataset dataset, OutputStream stream, double nodat
 {
   GDALUtils.saveRaster(
       dataset,
-      new Right<String, OutputStream>(stream),
+      new Right<>(stream),
       null,
       nodata,
       "GTiff",
@@ -162,7 +162,7 @@ public static void saveRaster(Dataset dataset, OutputStream stream, double nodat
 {
   GDALUtils.saveRaster(
       dataset,
-      new Right<String, OutputStream>(stream),
+      new Right<>(stream),
       null,
       nodata,
       format,
@@ -174,7 +174,7 @@ public static void saveRaster(Dataset dataset, OutputStream stream, String[] opt
 {
   GDALUtils.saveRaster(
       dataset,
-      new Right<String, OutputStream>(stream),
+      new Right<>(stream),
       null,
       Double.NEGATIVE_INFINITY,
       "GTiff",
@@ -186,7 +186,7 @@ public static void saveRaster(Dataset dataset, OutputStream stream, String forma
 {
   GDALUtils.saveRaster(
       dataset,
-      new Right<String, OutputStream>(stream),
+      new Right<>(stream),
       null,
       Double.NEGATIVE_INFINITY,
       format,
@@ -198,7 +198,7 @@ public static void saveRaster(Dataset dataset, OutputStream stream, double nodat
 {
   GDALUtils.saveRaster(
       dataset,
-      new Right<String, OutputStream>(stream),
+      new Right<>(stream),
       null,
       nodata,
       "GTiff",
@@ -210,7 +210,7 @@ public static void saveRaster(Dataset dataset, OutputStream stream, double nodat
 {
   GDALUtils.saveRaster(
       dataset,
-      new Right<String, OutputStream>(stream),
+      new Right<>(stream),
       null,
       nodata,
       format,
@@ -223,7 +223,7 @@ public static void saveRasterTile(Dataset dataset, String filename, long tx, lon
 {
   GDALUtils.saveRasterTile(
       dataset,
-      new Left<String, OutputStream>(filename),
+      new Left<>(filename),
       tx, ty, zoom,
       Double.NEGATIVE_INFINITY,
       "GTiff",
@@ -235,7 +235,7 @@ public static void saveRasterTile(Dataset dataset, String filename, long tx, lon
 {
   GDALUtils.saveRasterTile(
       dataset,
-      new Left<String, OutputStream>(filename),
+      new Left<>(filename),
       tx, ty, zoom,
       Double.NEGATIVE_INFINITY,
       format,
@@ -247,7 +247,7 @@ public static void saveRasterTile(Dataset dataset, String filename, long tx, lon
 {
   GDALUtils.saveRasterTile(
       dataset,
-      new Left<String, OutputStream>(filename),
+      new Left<>(filename),
       tx, ty, zoom,
       nodata,
       "GTiff",
@@ -260,7 +260,7 @@ public static void saveRasterTile(Dataset dataset, String filename, long tx, lon
 {
   GDALUtils.saveRasterTile(
       dataset,
-      new Left<String, OutputStream>(filename),
+      new Left<>(filename),
       tx, ty, zoom,
       nodata,
       format,
@@ -272,7 +272,7 @@ public static void saveRasterTile(Dataset dataset, String filename, long tx, lon
 {
   GDALUtils.saveRasterTile(
       dataset,
-      new Left<String, OutputStream>(filename),
+      new Left<>(filename),
       tx, ty, zoom,
       Double.NEGATIVE_INFINITY,
       "GTiff",
@@ -285,7 +285,7 @@ public static void saveRasterTile(Dataset dataset, String filename, long tx, lon
 {
   GDALUtils.saveRasterTile(
       dataset,
-      new Left<String, OutputStream>(filename),
+      new Left<>(filename),
       tx, ty, zoom,
       Double.NEGATIVE_INFINITY,
       format,
@@ -298,7 +298,7 @@ public static void saveRasterTile(Dataset dataset, String filename, long tx, lon
 {
   GDALUtils.saveRasterTile(
       dataset,
-      new Left<String, OutputStream>(filename),
+      new Left<>(filename),
       tx, ty, zoom,
       nodata,
       "GTiff",
@@ -311,7 +311,7 @@ public static void saveRasterTile(Dataset dataset, String filename, long tx, lon
 {
   GDALUtils.saveRasterTile(
       dataset,
-      new Left<String, OutputStream>(filename),
+      new Left<>(filename),
       tx, ty, zoom,
       nodata,
       format,
@@ -323,7 +323,7 @@ public static void saveRasterTile(Dataset dataset, OutputStream stream, long tx,
 {
   GDALUtils.saveRasterTile(
       dataset,
-      new Right<String, OutputStream>(stream),
+      new Right<>(stream),
       tx, ty, zoom,
       Double.NEGATIVE_INFINITY,
       "GTiff",
@@ -335,7 +335,7 @@ public static void saveRasterTile(Dataset dataset, OutputStream stream, long tx,
 {
   GDALUtils.saveRasterTile(
       dataset,
-      new Right<String, OutputStream>(stream),
+      new Right<>(stream),
       tx, ty, zoom,
       Double.NEGATIVE_INFINITY,
       format,
@@ -347,7 +347,7 @@ public static void saveRasterTile(Dataset dataset, OutputStream stream, long tx,
 {
   GDALUtils.saveRasterTile(
       dataset,
-      new Right<String, OutputStream>(stream),
+      new Right<>(stream),
       tx, ty, zoom,
       nodata,
       "GTiff",
@@ -360,7 +360,7 @@ public static void saveRasterTile(Dataset dataset, OutputStream stream, long tx,
 {
   GDALUtils.saveRasterTile(
       dataset,
-      new Right<String, OutputStream>(stream),
+      new Right<>(stream),
       tx, ty, zoom,
       nodata,
       format,
@@ -372,7 +372,7 @@ public static void saveRasterTile(Dataset dataset, OutputStream stream, long tx,
 {
   GDALUtils.saveRasterTile(
       dataset,
-      new Right<String, OutputStream>(stream),
+      new Right<>(stream),
       tx, ty, zoom,
       Double.NEGATIVE_INFINITY,
       "GTiff",
@@ -385,7 +385,7 @@ public static void saveRasterTile(Dataset dataset, OutputStream stream, long tx,
 {
   GDALUtils.saveRasterTile(
       dataset,
-      new Right<String, OutputStream>(stream),
+      new Right<>(stream),
       tx, ty, zoom,
       Double.NEGATIVE_INFINITY,
       format,
@@ -398,7 +398,7 @@ public static void saveRasterTile(Dataset dataset, OutputStream stream, long tx,
 {
   GDALUtils.saveRasterTile(
       dataset,
-      new Right<String, OutputStream>(stream),
+      new Right<>(stream),
       tx, ty, zoom,
       nodata,
       "GTiff",
@@ -411,7 +411,7 @@ public static void saveRasterTile(Dataset dataset, OutputStream stream, long tx,
 {
   GDALUtils.saveRasterTile(
       dataset,
-      new Right<String, OutputStream>(stream),
+      new Right<>(stream),
       tx, ty, zoom,
       nodata,
       format,
@@ -424,7 +424,7 @@ public static void saveRaster(Dataset dataset, String filename, Bounds bounds)
 {
   GDALUtils.saveRaster(
       dataset,
-      new Left<String, OutputStream>(filename),
+      new Left<>(filename),
       bounds,
       Double.NEGATIVE_INFINITY,
       "GTiff",
@@ -436,7 +436,7 @@ public static void saveRaster(Dataset dataset, String filename, Bounds bounds, S
 {
   GDALUtils.saveRaster(
       dataset,
-      new Left<String, OutputStream>(filename),
+      new Left<>(filename),
       bounds,
       Double.NEGATIVE_INFINITY,
       format,
@@ -448,7 +448,7 @@ public static void saveRaster(Dataset dataset, String filename, Bounds bounds, d
 {
   GDALUtils.saveRaster(
       dataset,
-      new Left<String, OutputStream>(filename),
+      new Left<>(filename),
       bounds,
       nodata,
       "GTiff",
@@ -460,7 +460,7 @@ public static void saveRaster(Dataset dataset, String filename, Bounds bounds, d
 {
   GDALUtils.saveRaster(
       dataset,
-      new Left<String, OutputStream>(filename),
+      new Left<>(filename),
       bounds,
       nodata,
       format,
@@ -472,7 +472,7 @@ public static void saveRaster(Dataset dataset, String filename, Bounds bounds, S
 {
   GDALUtils.saveRaster(
       dataset,
-      new Left<String, OutputStream>(filename),
+      new Left<>(filename),
       bounds,
       Double.NEGATIVE_INFINITY,
       "GTiff",
@@ -484,7 +484,7 @@ public static void saveRaster(Dataset dataset, String filename, Bounds bounds, S
 {
   GDALUtils.saveRaster(
       dataset,
-      new Left<String, OutputStream>(filename),
+      new Left<>(filename),
       bounds,
       Double.NEGATIVE_INFINITY,
       format,
@@ -496,7 +496,7 @@ public static void saveRaster(Dataset dataset, String filename, Bounds bounds, d
 {
   GDALUtils.saveRaster(
       dataset,
-      new Left<String, OutputStream>(filename),
+      new Left<>(filename),
       bounds,
       nodata,
       "GTiff",
@@ -509,7 +509,7 @@ public static void saveRaster(Dataset dataset, String filename, Bounds bounds, d
 {
   GDALUtils.saveRaster(
       dataset,
-      new Left<String, OutputStream>(filename),
+      new Left<>(filename),
       bounds,
       nodata,
       format,
@@ -522,7 +522,7 @@ public static void saveRaster(Dataset dataset, OutputStream stream, Bounds bound
 {
   GDALUtils.saveRaster(
       dataset,
-      new Right<String, OutputStream>(stream),
+      new Right<>(stream),
       bounds,
       Double.NEGATIVE_INFINITY,
       "GTiff",
@@ -534,7 +534,7 @@ public static void saveRaster(Dataset dataset, OutputStream stream, Bounds bound
 {
   GDALUtils.saveRaster(
       dataset,
-      new Right<String, OutputStream>(stream),
+      new Right<>(stream),
       bounds,
       Double.NEGATIVE_INFINITY,
       format,
@@ -546,7 +546,7 @@ public static void saveRaster(Dataset dataset, OutputStream stream, Bounds bound
 {
   GDALUtils.saveRaster(
       dataset,
-      new Right<String, OutputStream>(stream),
+      new Right<>(stream),
       bounds,
       nodata,
       "GTiff",
@@ -558,7 +558,7 @@ public static void saveRaster(Dataset dataset, OutputStream stream, Bounds bound
 {
   GDALUtils.saveRaster(
       dataset,
-      new Right<String, OutputStream>(stream),
+      new Right<>(stream),
       bounds,
       nodata,
       format,
@@ -570,7 +570,7 @@ public static void saveRaster(Dataset dataset, OutputStream stream, Bounds bound
 {
   GDALUtils.saveRaster(
       dataset,
-      new Right<String, OutputStream>(stream),
+      new Right<>(stream),
       bounds,
       Double.NEGATIVE_INFINITY,
       "GTiff",
@@ -582,7 +582,7 @@ public static void saveRaster(Dataset dataset, OutputStream stream, Bounds bound
 {
   GDALUtils.saveRaster(
       dataset,
-      new Right<String, OutputStream>(stream),
+      new Right<>(stream),
       bounds,
       Double.NEGATIVE_INFINITY,
       format,
@@ -594,7 +594,7 @@ public static void saveRaster(Dataset dataset, OutputStream stream, Bounds bound
 {
   GDALUtils.saveRaster(
       dataset,
-      new Right<String, OutputStream>(stream),
+      new Right<>(stream),
       bounds,
       nodata,
       "GTiff",
@@ -607,7 +607,7 @@ public static void saveRaster(Dataset dataset, OutputStream stream, Bounds bound
 {
   GDALUtils.saveRaster(
       dataset,
-      new Right<String, OutputStream>(stream),
+      new Right<>(stream),
       bounds,
       nodata,
       format,

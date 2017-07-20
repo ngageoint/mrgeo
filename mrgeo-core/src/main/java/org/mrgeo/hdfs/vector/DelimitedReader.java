@@ -65,7 +65,7 @@ public DelimitedReader(LineProducer lineProducer, DelimitedParser delimitedParse
 
 static String[] split(String line, char delimiter, char encapsulator)
 {
-  ArrayList<String> result = new ArrayList<String>();
+  ArrayList<String> result = new ArrayList<>();
 
   StringBuilder buf = new StringBuilder();
 

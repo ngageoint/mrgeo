@@ -67,7 +67,7 @@ protected VectorInputFormatContext()
 public static VectorInputFormatContext load(final Configuration conf)
 {
   VectorInputFormatContext context = new VectorInputFormatContext();
-  context.inputs = new HashSet<String>();
+  context.inputs = new HashSet<>();
   context.featureCount = conf.getLong(FEATURE_COUNT_KEY, -1L);
   context.minFeaturesPerSplit = conf.getInt(MIN_FEATURES_PER_SPLIT_KEY, -1);
   int inputsCount = conf.getInt(INPUTS_COUNT, 0);

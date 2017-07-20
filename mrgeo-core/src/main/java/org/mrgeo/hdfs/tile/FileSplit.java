@@ -63,7 +63,7 @@ public void generateSplits(long[] startIds, long[] endIds, String[] names)
 
 public void generateSplits(Path parent, Configuration conf) throws IOException
 {
-  List<FileSplitInfo> list = new ArrayList<FileSplitInfo>();
+  List<FileSplitInfo> list = new ArrayList<>();
 
   // get a Hadoop file system handle
   final FileSystem fs = getFileSystem(parent);
@@ -266,7 +266,7 @@ protected OutputStream getOutputStream(Path path) throws IOException
 private void readSplits(Scanner reader)
 {
   int count = Integer.parseInt(reader.nextLine());
-  List<FileSplitInfo> splitsList = new ArrayList<FileSplitInfo>(count);
+  List<FileSplitInfo> splitsList = new ArrayList<>(count);
 
   for (int i = 0; i < count; i++)
   {

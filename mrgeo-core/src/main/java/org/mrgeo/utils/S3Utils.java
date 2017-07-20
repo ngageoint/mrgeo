@@ -660,7 +660,7 @@ public class S3Utils
     File useCacheDir = getCacheDir();
     java.nio.file.Path startPath = Paths.get(useCacheDir.getAbsolutePath());
     // Scan all entries and sort by last access time.
-    List<MrGeoImageEntry> imageList = new ArrayList<MrGeoImageEntry>(500);
+    List<MrGeoImageEntry> imageList = new ArrayList<>(500);
     MrGeoImageCollection images = new MrGeoImageCollection(imageList);
     Files.walkFileTree(startPath, new MrGeoImageCacheFileVisitor(images));
     // Sort in ascending order by lastAccess then descending order by size.
@@ -693,7 +693,7 @@ public class S3Utils
         }
         Iterator<MrGeoImageEntry> iter = imageList.iterator();
         long deleteCount = 0L;
-        Map<String, Integer> tileSizes = new HashMap<String, Integer>();
+        Map<String, Integer> tileSizes = new HashMap<>();
         while (iter.hasNext()) {
           MrGeoImageEntry entry = iter.next();
           boolean deleteFile = false;
@@ -771,9 +771,7 @@ public class S3Utils
                   deleteFile = bbox.intersects(tb);
                   hasKey = indexReader.next(key);
                 }
-              } catch (IllegalAccessException e) {
-                log.error("Unable to check the bounds of " + indexPath.toString(), e);
-              } catch (InstantiationException e) {
+              } catch (IllegalAccessException | InstantiationException e) {
                 log.error("Unable to check the bounds of " + indexPath.toString(), e);
               }
             }

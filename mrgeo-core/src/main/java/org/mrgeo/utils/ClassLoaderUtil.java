@@ -96,7 +96,7 @@ public static Collection<String> getMostJars()
 
 public static List<URL> getChildResources(String path) throws IOException, ClassNotFoundException
 {
-  List<URL> result = new LinkedList<URL>();
+  List<URL> result = new LinkedList<>();
 
   ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
   Enumeration<URL> p = classLoader.getResources(path);
@@ -128,7 +128,7 @@ public static List<URL> getChildResources(String path) throws IOException, Class
 
 public static List<URL> loadVfs(URL resource) throws IOException
 {
-  List<URL> result = new LinkedList<URL>();
+  List<URL> result = new LinkedList<>();
 
   try
   {
@@ -155,7 +155,7 @@ public static List<URL> loadJar(String path, URL resource) throws IOException
   JarURLConnection conn = (JarURLConnection) resource.openConnection();
   JarFile jarFile = conn.getJarFile();
   Enumeration<JarEntry> entries = jarFile.entries();
-  List<URL> result = new LinkedList<URL>();
+  List<URL> result = new LinkedList<>();
 
   String p = path;
   if (!p.endsWith("/"))
@@ -181,7 +181,7 @@ public static List<URL> loadJar(String path, URL resource) throws IOException
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "filename comes from classloader")
 public static List<URL> loadDirectory(String filePath) throws IOException
 {
-  List<URL> result = new LinkedList<URL>();
+  List<URL> result = new LinkedList<>();
   File directory = new File(filePath);
   if (!directory.isDirectory())
   {

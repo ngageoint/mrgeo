@@ -89,9 +89,8 @@ private static String getResponse(HttpResponse response, ContentType expectedCon
     ClientProtocolException
 {
   StringBuilder sbJson = new StringBuilder();
-  BufferedReader in = new BufferedReader(new InputStreamReader(
-      getResponseContent(response, expectedContentType)));
-  try
+  try (BufferedReader in = new BufferedReader(new InputStreamReader(
+      getResponseContent(response, expectedContentType))))
   {
 
     String inputLine;
@@ -101,10 +100,6 @@ private static String getResponse(HttpResponse response, ContentType expectedCon
     }
     in.close();
     return sbJson.toString();
-  }
-  finally
-  {
-    in.close();
   }
 }
 

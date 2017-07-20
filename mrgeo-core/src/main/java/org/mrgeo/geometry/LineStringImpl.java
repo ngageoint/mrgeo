@@ -131,7 +131,7 @@ public Point getPoint(int i)
 @Override
 public Vector<Point> getPoints()
 {
-  Vector<Point> result = new Vector<Point>();
+  Vector<Point> result = new Vector<>();
   for (Point p : points)
   {
     result.add(p);

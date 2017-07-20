@@ -41,7 +41,7 @@ public class HdfsAdHocDataProvider extends AdHocDataProvider
  * provider was constructed with. Internal code should *always* call initializeFiles() prior to
  * accessing this data member.
  */
-private final List<Path> files = new java.util.concurrent.CopyOnWriteArrayList<Path>();
+private final List<Path> files = new java.util.concurrent.CopyOnWriteArrayList<>();
 private Configuration conf;
 private Path resourcePath;
 

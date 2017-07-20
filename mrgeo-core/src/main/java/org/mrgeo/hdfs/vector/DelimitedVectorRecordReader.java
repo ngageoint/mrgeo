@@ -50,7 +50,7 @@ public static DelimitedParser getDelimitedParser(String input, Configuration con
     delimiter = '\t';
   }
   Path columnsPath = new Path(input + ".columns");
-  List<String> attributeNames = new ArrayList<String>();
+  List<String> attributeNames = new ArrayList<>();
   int xCol = -1;
   int yCol = -1;
   int geometryCol = -1;

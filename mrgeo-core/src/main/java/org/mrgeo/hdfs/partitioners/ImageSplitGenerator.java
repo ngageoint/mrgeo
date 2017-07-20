@@ -96,7 +96,7 @@ private static int computeIncrement(final LongRectangle tileBounds,
 @Override
 public SplitInfo[] getSplits()
 {
-  List<FileSplit.FileSplitInfo> splits = new ArrayList<FileSplit.FileSplitInfo>();
+  List<FileSplit.FileSplitInfo> splits = new ArrayList<>();
 
   // If increment < 0, then that means no splits are required because all of
   // the tiles will fit in a single block.
@@ -127,7 +127,7 @@ public SplitInfo[] getSplits()
 public SplitInfo[] getPartitions()
 {
   List<PartitionerSplit.PartitionerSplitInfo> splits =
-      new ArrayList<PartitionerSplit.PartitionerSplitInfo>();
+      new ArrayList<>();
 
   // If increment < 0, then that means no splits are required because all of
   // the tiles will fit in a single block.

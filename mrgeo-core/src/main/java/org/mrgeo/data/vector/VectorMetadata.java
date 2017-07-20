@@ -23,7 +23,7 @@ import java.util.List;
 
 public class VectorMetadata
 {
-private List<String> attributes = new ArrayList<String>();
+private List<String> attributes = new ArrayList<>();
 private Bounds bounds;
 
 public VectorMetadata()

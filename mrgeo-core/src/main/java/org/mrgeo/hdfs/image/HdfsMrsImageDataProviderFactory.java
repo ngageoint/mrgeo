@@ -130,7 +130,7 @@ private String[] listImages(final Configuration conf, Path usePath, String userN
   FileStatus[] fileStatuses = fs.listStatus(usePath, new OnlyDirectoriesFilter(fs));
   if (fileStatuses != null)
   {
-    List<String> results = new ArrayList<String>(fileStatuses.length);
+    List<String> results = new ArrayList<>(fileStatuses.length);
     for (FileStatus status : fileStatuses)
     {
       if (canOpen(status.getPath().toString(), conf, providerProperties))

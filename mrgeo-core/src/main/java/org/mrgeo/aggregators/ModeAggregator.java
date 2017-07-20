@@ -34,7 +34,7 @@ public class ModeAggregator implements Aggregator
 @Override
 public double aggregate(double[] values, double nodata)
 {
-  HashMap<Double, Integer> freqs = new HashMap<Double, Integer>();
+  HashMap<Double, Integer> freqs = new HashMap<>();
 
   for (double val : values)
   {
@@ -64,7 +64,7 @@ public double aggregate(double[] values, double nodata)
 @Override
 public float aggregate(float[] values, float nodata)
 {
-  HashMap<Float, Integer> freqs = new HashMap<Float, Integer>();
+  HashMap<Float, Integer> freqs = new HashMap<>();
 
   for (float val : values)
   {
@@ -94,7 +94,7 @@ public float aggregate(float[] values, float nodata)
 @Override
 public int aggregate(int[] values, int nodata)
 {
-  HashMap<Integer, Integer> freqs = new HashMap<Integer, Integer>();
+  HashMap<Integer, Integer> freqs = new HashMap<>();
 
   for (int val : values)
   {

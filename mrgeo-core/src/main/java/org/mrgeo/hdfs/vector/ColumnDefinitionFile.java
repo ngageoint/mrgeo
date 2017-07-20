@@ -39,7 +39,7 @@ import java.util.Vector;
 
 public class ColumnDefinitionFile
 {
-Vector<Column> columns = new Vector<Column>();
+Vector<Column> columns = new Vector<>();
 
 boolean firstLineHeader = false;
 
@@ -101,7 +101,7 @@ public Vector<Column> getColumns()
 
 public void setColumns(Collection<Column> columns)
 {
-  this.columns = new Vector<Column>();
+  this.columns = new Vector<>();
   this.columns.addAll(columns);
 }
 

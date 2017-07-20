@@ -690,13 +690,13 @@ private static long copyFileFromS3(AmazonS3 s3Client, URI uri, File localFile,
     throw new IOException(e);
   }
 
-  InputStream objectData = object.getObjectContent();
-  try {
+  try (InputStream objectData = object.getObjectContent())
+  {
     long byteCount = org.apache.commons.io.IOUtils.copyLarge(objectData, fos);
     return byteCount;
   }
-  finally {
-    objectData.close();
+  finally
+  {
     log.debug("Length of local " + localFile.getAbsolutePath() + " is " + localFile.length());
   }
 }
@@ -878,14 +878,11 @@ public static class MapFileReaderWrapper
               // acts as the lock file for both and we don't want to release the lock until
               // all the files are copied.
               FileUtils.forceMkdir(tmpDataFile.getParentFile());
-              FileOutputStream fosData = new FileOutputStream(tmpDataFile);
-              try {
+              try (FileOutputStream fosData = new FileOutputStream(tmpDataFile))
+              {
                 long dataSize = copyFileFromS3(s3Client, dataUri, tmpDataFile, fosData);
                 log.debug("Copied data from " + dataUri.toString() + " to " +
-                        tmpDataFile.getAbsolutePath() + ": " + dataSize);
-              }
-              finally {
-                fosData.close();
+                    tmpDataFile.getAbsolutePath() + ": " + dataSize);
               }
               long indexSize = copyFileFromS3(s3Client, indexUri, tmpIndexFile,
                       cacheEntry.getPrimaryFileOutputStream());

@@ -100,7 +100,7 @@ public static String toString(final Map<?, ?> tokens)
 
 public static <T extends Enum<T>> List<String> enumToStringList(Class<T> enumType)
 {
-  List<String> values = new ArrayList<String>();
+  List<String> values = new ArrayList<>();
   for (T c : enumType.getEnumConstants())
   {
     values.add(c.name());

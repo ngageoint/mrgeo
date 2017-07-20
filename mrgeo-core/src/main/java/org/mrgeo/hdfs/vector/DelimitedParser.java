@@ -79,7 +79,7 @@ public DelimitedParser(List<String> attributeNames, int xCol, int yCol,
 
 static String[] split(String line, char delimiter, char encapsulator)
 {
-  ArrayList<String> result = new ArrayList<String>();
+  ArrayList<String> result = new ArrayList<>();
 
   StringBuilder buf = new StringBuilder();
 
@@ -314,7 +314,7 @@ public void readExternal(ObjectInput in) throws IOException, ClassNotFoundExcept
   boolean hasAttributes = in.readBoolean();
   if (hasAttributes)
   {
-    attributeNames = new ArrayList<String>();
+    attributeNames = new ArrayList<>();
     int count = in.readInt();
     for (int i = 0; i < count; i++)
     {
