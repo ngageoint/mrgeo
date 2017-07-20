@@ -115,14 +115,7 @@ static public class CsvRecordWriter extends RecordWriter<FeatureIdWritable, Geom
   // This constructor is used when only one CsvRecordWriter is being used to
   public CsvRecordWriter(OutputStream columnsOutput, OutputStream output)
   {
-    if (System.getProperty("mrgeo.profile", "false").compareToIgnoreCase("true") == 0)
-    {
-      profile = true;
-    }
-    else
-    {
-      profile = false;
-    }
+    profile = System.getProperty("mrgeo.profile", "false").compareToIgnoreCase("true") == 0;
 
     externalColumnsOutput = columnsOutput;
     init(null, output);

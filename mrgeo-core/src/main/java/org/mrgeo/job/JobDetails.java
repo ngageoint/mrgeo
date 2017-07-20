@@ -148,13 +148,9 @@ public void setMessage(String msg)
 
 public boolean isFinished()
 {
-  if (_status.equals(COMPLETE) ||
+  return _status.equals(COMPLETE) ||
       _status.equals(FAILED) ||
-      _status.equals(CANCELLED))
-  {
-    return true;
-  }
-  return false;
+      _status.equals(CANCELLED);
 }
 
 public long addTask(String taskName)

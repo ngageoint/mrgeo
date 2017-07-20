@@ -213,11 +213,7 @@ public boolean intersects(JExtent other)
 
 public boolean isSelected()
 {
-  if (status == SELECTED)
-  {
-    return true;
-  }
-  return false;
+  return status == SELECTED;
 }
 
 public void setSelected(boolean flag)

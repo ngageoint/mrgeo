@@ -46,11 +46,7 @@ public static boolean contains(JShape shp1, JShape shp2)
     case JShape.POINT:
       JPoint p1 = (JPoint) shp1;
       JPoint p2 = (JPoint) shp2;
-      if (p1.equals(p2))
-      {
-        return true;
-      }
-      return false;
+      return p1.equals(p2);
     default:
       return false;
     }
@@ -62,11 +58,7 @@ public static boolean contains(JShape shp1, JShape shp2)
     case JShape.POINT:
       JPolygon poly = (JPolygon) shp1;
       JPoint p2 = (JPoint) shp2;
-      if (poly.contains(p2.getCoord()))
-      {
-        return true;
-      }
-      return false;
+      return poly.contains(p2.getCoord());
     default:
       throw new InternalError("Contains algorithm not implemented for shape types!");
     }

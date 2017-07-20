@@ -75,14 +75,7 @@ boolean splitOverlapsTileBounds(Tile splitStartTile,
   }
   else if (yDelta == 0)
   {
-    if (splitEndTile.tx < cropBounds.w || splitStartTile.tx > cropBounds.e)
-    {
-      intersect = false;
-    }
-    else
-    {
-      intersect = true;
-    }
+    intersect = splitEndTile.tx >= cropBounds.w && splitStartTile.tx <= cropBounds.e;
   }
   else
   {
