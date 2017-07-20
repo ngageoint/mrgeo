@@ -192,7 +192,7 @@ private ParserNode convertToMrGeoNode(JexlNode node)
   {
     ParserConstantNode cn = new ParserConstantNode();
     cn.setNativeNode(node);
-    cn.setValue(Boolean.valueOf(true));
+    cn.setValue(Boolean.TRUE);
     cn.setName(cn.getValue().toString());
     n = cn;
   }
@@ -200,7 +200,7 @@ private ParserNode convertToMrGeoNode(JexlNode node)
   {
     ParserConstantNode cn = new ParserConstantNode();
     cn.setNativeNode(node);
-    cn.setValue(Boolean.valueOf(false));
+    cn.setValue(Boolean.FALSE);
     cn.setName(cn.getValue().toString());
     n = cn;
   }

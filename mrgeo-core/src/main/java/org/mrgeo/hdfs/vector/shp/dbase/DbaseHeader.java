@@ -141,10 +141,9 @@ public synchronized void save(RandomAccessFile os) throws IOException
   // write core
   os.write(header, 0, 32);
   // field headers
-  for (int j = 0; j < fields.size(); j++)
+  for (DbaseField field : fields)
   {
     header = new byte[32];
-    DbaseField field = fields.get(j);
     // set field header
     Convert.setString(header, 0, 11, field.name);
     header[11] = (byte) field.type;
@@ -230,9 +229,8 @@ protected synchronized void load(SeekableDataInput is) throws IOException, Dbase
 protected synchronized int update()
 {
   recordLength = 1; // deleted/un-deleted flag is a byte, so we start with 1!
-  for (int j = 0; j < fields.size(); j++)
+  for (DbaseField field : fields)
   {
-    DbaseField field = fields.get(j);
     field.offset = recordLength;
     recordLength += field.length;
   }

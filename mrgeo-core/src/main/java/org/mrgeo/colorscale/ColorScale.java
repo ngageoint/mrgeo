@@ -202,7 +202,7 @@ private static void parseColor(final String colorStr, final String opacityStr, f
   }
   else if (colors.length == 1) {
     // Allows colors to be specified in hex as #0F0F0F for example
-    int c = Integer.decode(colors[0]).intValue();
+    int c = Integer.decode(colors[0]);
     color[0] = (c & 0xFF0000) >> 16;
     color[1] = (c & 0x00FF00) >> 8;
     color[2] = (c & 0x0000FF);
@@ -1097,8 +1097,8 @@ final private void interpolateColor(final double v, final int[] color)
   }
   else
   {
-    final double diff = upper.getKey().doubleValue() - lower.getKey().doubleValue();
-    final double lw = 1.0 - ((search - lower.getKey().doubleValue()) / diff);
+    final double diff = upper.getKey() - lower.getKey();
+    final double lw = 1.0 - ((search - lower.getKey()) / diff);
     final double uw = 1.0 - lw;
 
     final Color lc = lower.getValue();

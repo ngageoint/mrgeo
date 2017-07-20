@@ -107,11 +107,11 @@ public void addData(List v, boolean clear)
       data.clear();
     }
   }
-  for (int i = 0; i < v.size(); i++)
+  for (Object o : v)
   {
     try
     {
-      addData((Serializable) v.get(i));
+      addData((Serializable) o);
     }
     catch (Exception e)
     {

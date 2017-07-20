@@ -156,7 +156,7 @@ public void set(final WritableGeometry g)
 @Override
 public String toString()
 {
-  final StringBuffer result = new StringBuffer();
+  final StringBuilder result = new StringBuilder();
   result.append("[ ");
   final Map<String, String> attr = geometry.getAllAttributes();
   for (final String key : geometry.getAllAttributes().keySet())

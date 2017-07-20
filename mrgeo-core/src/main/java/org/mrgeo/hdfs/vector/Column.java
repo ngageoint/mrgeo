@@ -261,7 +261,7 @@ public void readFields(DataInput in) throws IOException
 @Override
 public String toString()
 {
-  StringBuffer result = new StringBuffer();
+  StringBuilder result = new StringBuilder();
   result.append("Name: " + name + "%n");
   result.append("Type: " + type.toString() + "%n");
   result.append(String.format("  count: %d%n", count));

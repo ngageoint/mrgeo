@@ -244,12 +244,12 @@ static public class CsvRecordWriter extends RecordWriter<FeatureIdWritable, Geom
         writer.print("GEOMETRY");
         delim = "" + delimiter;
       }
-      for (int i = 0; i < attributes.size(); i++)
+      for (String attribute : attributes)
       {
         writer.print(delim);
         delim = "" + delimiter;
 
-        writeCell(attributes.get(i));
+        writeCell(attribute);
       }
 
       writer.println("");

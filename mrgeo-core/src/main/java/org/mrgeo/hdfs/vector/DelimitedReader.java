@@ -67,7 +67,7 @@ static String[] split(String line, char delimiter, char encapsulator)
 {
   ArrayList<String> result = new ArrayList<String>();
 
-  StringBuffer buf = new StringBuffer();
+  StringBuilder buf = new StringBuilder();
 
   for (int i = 0; i < line.length(); i++)
   {

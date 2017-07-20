@@ -33,11 +33,11 @@ public double aggregate(double[] values, double nodata)
 {
   double sum = 0;
   int count = 0;
-  for (int i = 0; i < values.length; i++)
+  for (double value : values)
   {
-    if (FloatUtils.isNotNodata(values[i], nodata))
+    if (FloatUtils.isNotNodata(value, nodata))
     {
-      sum += values[i];
+      sum += value;
       count++;
     }
   }
@@ -49,11 +49,11 @@ public float aggregate(float[] values, float nodata)
 {
   float sum = 0;
   int count = 0;
-  for (int i = 0; i < values.length; i++)
+  for (float value : values)
   {
-    if (FloatUtils.isNotNodata(values[i], nodata))
+    if (FloatUtils.isNotNodata(value, nodata))
     {
-      sum += values[i];
+      sum += value;
       count++;
     }
   }
@@ -65,11 +65,11 @@ public byte aggregate(byte[] values, byte nodata)
 {
   int sum = 0;
   int count = 0;
-  for (int i = 0; i < values.length; i++)
+  for (byte value : values)
   {
-    if (values[i] != nodata)
+    if (value != nodata)
     {
-      sum += values[i];
+      sum += value;
       count++;
     }
   }
@@ -81,11 +81,11 @@ public short aggregate(short[] values, short nodata)
 {
   int sum = 0;
   int count = 0;
-  for (int i = 0; i < values.length; i++)
+  for (short value : values)
   {
-    if (values[i] != nodata)
+    if (value != nodata)
     {
-      sum += values[i];
+      sum += value;
       count++;
     }
   }
@@ -97,11 +97,11 @@ public int aggregate(int[] values, int nodata)
 {
   int sum = 0;
   int count = 0;
-  for (int i = 0; i < values.length; i++)
+  for (int value : values)
   {
-    if (values[i] != nodata)
+    if (value != nodata)
     {
-      sum += values[i];
+      sum += value;
       count++;
     }
   }

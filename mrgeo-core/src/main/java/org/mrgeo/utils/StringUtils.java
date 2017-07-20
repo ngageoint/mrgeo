@@ -33,7 +33,7 @@ public class StringUtils
  */
 public static String join(final double[] tokens, final String delimiter)
 {
-  StringBuffer buffer = new StringBuffer(String.valueOf(tokens[0]));
+  StringBuilder buffer = new StringBuilder(String.valueOf(tokens[0]));
   for (int i = 1; i < tokens.length; i++)
   {
     buffer.append(delimiter).append(String.valueOf(tokens[i]));
@@ -43,7 +43,7 @@ public static String join(final double[] tokens, final String delimiter)
 
 public static String join(final int[] tokens, final String delimiter)
 {
-  StringBuffer buffer = new StringBuffer(String.valueOf(tokens[0]));
+  StringBuilder buffer = new StringBuilder(String.valueOf(tokens[0]));
   for (int i = 1; i < tokens.length; i++)
   {
     buffer.append(delimiter).append(String.valueOf(tokens[i]));
@@ -53,7 +53,7 @@ public static String join(final int[] tokens, final String delimiter)
 
 public static <T> String join(final T[] tokens, final String delimiter)
 {
-  StringBuffer buffer = new StringBuffer(tokens[0].toString());
+  StringBuilder buffer = new StringBuilder(tokens[0].toString());
   for (int i = 1; i < tokens.length; i++)
   {
     buffer.append(delimiter).append(String.valueOf(tokens[i]));
@@ -78,7 +78,7 @@ public static String join(final Iterable<? extends Object> tokens, final String 
 
 public static String repeat(String s, int times)
 {
-  StringBuffer buf = new StringBuffer();
+  StringBuilder buf = new StringBuilder();
   for (int i = 0; i < times; i++)
   {
     buf.append(s);

@@ -289,7 +289,7 @@ public double getArea()
     area = tempArea;
   }
 
-  return area.doubleValue();
+  return area;
 }
 
 public Coord getCentroid()
