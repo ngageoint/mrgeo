@@ -23,7 +23,6 @@ private static final long serialVersionUID = 1L;
 
 public DataProviderNotFound()
 {
-  super();
 }
 
 public DataProviderNotFound(String msg)

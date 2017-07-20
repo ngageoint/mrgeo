@@ -265,7 +265,7 @@ public MrGeoRaster get(TileIdWritable key)
         readerWrapper.getReader().get(key, val);
       }
       catch(java.io.EOFException e) {
-        log.error("Got EOF exception trying to read " + readerWrapper.toString());
+        log.error("Got EOF exception trying to read " + readerWrapper);
       }
       if (getWritableSize(val) > 0)
       {

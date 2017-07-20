@@ -105,8 +105,8 @@ public List<InputSplit> getSplits(JobContext context) throws IOException, Interr
                 priorSplit.getStart() + priorSplit.getLength(),
                 lastFileSplit.getLength() + 1,
                 lastFileSplit.getLocations());
-            log.info("Replacing split: " + lastFileSplit.toString());
-            log.info("  With split: " + replacement.toString());
+            log.info("Replacing split: " + lastFileSplit);
+            log.info("  With split: " + replacement);
             splits.set(lastFileIndex, replacement);
           }
         }

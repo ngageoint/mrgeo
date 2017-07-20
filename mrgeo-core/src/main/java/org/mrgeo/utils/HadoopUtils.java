@@ -211,7 +211,7 @@ public static String createUniqueJobName(String baseName)
   // create a new unique job name
   String now = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss").format(new Date());
 
-  String jobName = baseName + "_" + now + "_" + UUID.randomUUID().toString();
+  String jobName = baseName + "_" + now + "_" + UUID.randomUUID();
 
   return jobName;
 }

@@ -23,7 +23,6 @@ private static final long serialVersionUID = 1L;
 
 public DataProviderException()
 {
-  super();
 }
 
 public DataProviderException(String msg)

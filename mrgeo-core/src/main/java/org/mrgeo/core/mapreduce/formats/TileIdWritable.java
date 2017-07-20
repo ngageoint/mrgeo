@@ -31,7 +31,6 @@ private static final long serialVersionUID = 1L;
 
 public TileIdWritable()
 {
-  super();
 }
 
 public TileIdWritable(long value)

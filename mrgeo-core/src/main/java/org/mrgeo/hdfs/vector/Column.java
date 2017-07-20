@@ -263,7 +263,7 @@ public String toString()
 {
   StringBuilder result = new StringBuilder();
   result.append("Name: " + name + "%n");
-  result.append("Type: " + type.toString() + "%n");
+  result.append("Type: " + type + "%n");
   result.append(String.format("  count: %d%n", count));
   if (type == FactorType.Numeric)
   {

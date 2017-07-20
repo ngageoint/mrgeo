@@ -109,7 +109,7 @@ public void paint(Geometry g)
   }
   else
   {
-    throw new IllegalArgumentException("Geometry type not implemented " + g.getClass().toString());
+    throw new IllegalArgumentException("Geometry type not implemented " + g.getClass());
   }
 }
 

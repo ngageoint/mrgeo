@@ -132,7 +132,6 @@ private static MrGeoRaster convertFromV2(byte[] data) throws MrGeoRasterExceptio
     throw new NotImplementedException("MultiPixelPackedSampleModel not implemented yet");
   case COMPONENT:
   case PIXELINTERLEAVED:
-  {
     if (bands == 1)
     {
       if (srclen < raster.datasize())
@@ -196,7 +195,6 @@ private static MrGeoRaster convertFromV2(byte[] data) throws MrGeoRasterExceptio
       }
     }
     break;
-  }
   case SINGLEPIXELPACKED:
     throw new NotImplementedException("SinglePixelPackedSampleModel not implemented yet");
   default:

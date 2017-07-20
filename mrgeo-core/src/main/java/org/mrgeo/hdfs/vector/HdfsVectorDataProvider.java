@@ -120,7 +120,7 @@ public static void delete(Configuration conf, String input,
     if (isSourceDelimited(p, false, conf))
     {
       HadoopFileUtils.delete(conf, p);
-      Path columns = new Path(p.toString() + ".columns");
+      Path columns = new Path(p + ".columns");
       if (HadoopFileUtils.exists(conf, columns))
       {
         HadoopFileUtils.delete(conf, columns);

@@ -177,7 +177,6 @@ public static class SplitException extends IOException
 
   public SplitException()
   {
-    super();
   }
 
   public SplitException(String message)
@@ -222,7 +221,6 @@ public static class SplitNotFoundException extends IOException
 {
   public SplitNotFoundException()
   {
-    super();
   }
 
   public SplitNotFoundException(String message)

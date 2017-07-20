@@ -453,7 +453,7 @@ static com.vividsolutions.jts.geom.Geometry intersect(
     catch (TopologyException e1)
     {
       log.error(
-          "JTS Topology problem: clip area: " + jtsClip.toString() + " geom: " + jtsGeom.toString() + " message: " +
+          "JTS Topology problem: clip area: " + jtsClip + " geom: " + jtsGeom + " message: " +
               e1.getMessage());
       log.error("Exception thrown", e1);
 

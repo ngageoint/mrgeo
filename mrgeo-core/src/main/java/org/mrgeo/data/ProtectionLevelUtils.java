@@ -76,7 +76,6 @@ public static class ProtectionLevelException extends IOException
 
   public ProtectionLevelException()
   {
-    super();
   }
 
   public ProtectionLevelException(String msg)

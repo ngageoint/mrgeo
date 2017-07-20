@@ -127,10 +127,10 @@ public String findSplitFile(Path parent) throws IOException
   }
   catch (IOException e)
   {
-    throw new IOException("Error opening split file: " + file.toString(), e);
+    throw new IOException("Error opening split file: " + file, e);
   }
 
-  throw new IOException("Split file not found: " + file.toString());
+  throw new IOException("Split file not found: " + file);
 }
 
 @Override

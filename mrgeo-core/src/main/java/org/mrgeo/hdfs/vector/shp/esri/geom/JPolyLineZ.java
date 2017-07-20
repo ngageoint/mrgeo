@@ -153,7 +153,7 @@ public void debug()
 {
   if (extent != null)
   {
-    System.out.println("Extent: " + extent.toString());
+    System.out.println("Extent: " + extent);
   }
   System.out.println(toString());
   String extra = "";
@@ -176,7 +176,7 @@ public void debug()
       {
         extra = " < 0.0|0.0";
       }
-      System.out.println("  PointZ[" + i + "]: " + point[i].toString() + "," + zarr[i] + ","
+      System.out.println("  PointZ[" + i + "]: " + point[i] + "," + zarr[i] + ","
           + marr[i] + " " + extra);
       prev = point[i];
     }

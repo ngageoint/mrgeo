@@ -89,7 +89,7 @@ public void append(FeatureIdWritable key, Geometry value) throws IOException
       i++;
     }
     // Write the header line which is a delimited list of attribute names
-    out.println(header.toString());
+    out.println(header);
   }
 
   StringBuilder strFeature = new StringBuilder();
@@ -115,7 +115,7 @@ public void append(FeatureIdWritable key, Geometry value) throws IOException
       }
     }
   }
-  out.println(strFeature.toString());
+  out.println(strFeature);
 }
 
 @Override

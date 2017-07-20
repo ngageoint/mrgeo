@@ -79,7 +79,7 @@ static public String wktGeometryFixer(String wktGeometry)
   }
   if (!geometryType.isEmpty() && fixedGeometry.length() != 0)
   {
-    return geometryType + "(" + fixedGeometry.toString() + ")";
+    return geometryType + "(" + fixedGeometry + ")";
   }
   return geometryStr;
 }

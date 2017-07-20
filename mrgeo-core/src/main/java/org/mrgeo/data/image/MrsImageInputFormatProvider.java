@@ -86,7 +86,7 @@ public Configuration setupSparkJob(Configuration conf, MrsImageDataProvider prov
   }
   catch (IOException e)
   {
-    throw new DataProviderException("Failure configuring map/reduce job " + context.toString(), e);
+    throw new DataProviderException("Failure configuring map/reduce job " + context, e);
   }
 }
 

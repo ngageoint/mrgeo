@@ -247,7 +247,7 @@ public void debug()
 {
   if (extent != null)
   {
-    System.out.println("Extent: " + extent.toString());
+    System.out.println("Extent: " + extent);
   }
   System.out.println(toString());
   for (int p = 0; p < part.length; p++)
@@ -256,7 +256,7 @@ public void debug()
     int limit = ((p + 1) == part.length) ? point.length : part[p + 1];
     for (int i = part[p]; i < limit; i++)
     {
-      System.out.println("  PointZ[" + i + "]: " + point[i].toString() + "," + zarr[i] + ","
+      System.out.println("  PointZ[" + i + "]: " + point[i] + "," + zarr[i] + ","
           + marr[i]);
     }
   }

@@ -30,7 +30,7 @@ private TileBounds region;
 public RegionSplitVisitor(TileBounds region)
 {
   this.region = region;
-  log.debug("Created RegionSplitVisitor with region: " + region.toString());
+  log.debug("Created RegionSplitVisitor with region: " + region);
 }
 
 @Override

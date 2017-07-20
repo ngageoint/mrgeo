@@ -151,7 +151,7 @@ public void debug()
 {
   if (extent != null)
   {
-    System.out.println("Extent: " + extent.toString());
+    System.out.println("Extent: " + extent);
   }
 }
 

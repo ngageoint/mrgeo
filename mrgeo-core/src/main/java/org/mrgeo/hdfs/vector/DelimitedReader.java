@@ -131,7 +131,7 @@ private static String nextLine(LineProducer lineProducer) throws IllegalArgument
   }
   catch (IOException e1)
   {
-    log.error("Got IOException while reading delimited file: " + lineProducer.toString());
+    log.error("Got IOException while reading delimited file: " + lineProducer);
     throw new IllegalArgumentException(e1);
   }
 }

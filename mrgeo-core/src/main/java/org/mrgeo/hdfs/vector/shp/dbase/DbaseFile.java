@@ -139,12 +139,10 @@ public synchronized void addRow(List data)
     temp[row.length] = data;
     row = temp;
   }
-  {
-    byte[] temp = new byte[flg.length + 1];
-    System.arraycopy(flg, 0, temp, 0, flg.length);
-    temp[flg.length] = ROW_OK;
-    flg = temp;
-  }
+  byte[] temp = new byte[flg.length + 1];
+  System.arraycopy(flg, 0, temp, 0, flg.length);
+  temp[flg.length] = ROW_OK;
+  flg = temp;
 
   modData = true;
 }

@@ -181,7 +181,7 @@ private MrsPyramidMetadata loadMetadata() throws IOException
   if (fs.exists(metapath))
   {
     // load the file from HDFS
-    log.debug("Physically loading image metadata from " + metapath.toString());
+    log.debug("Physically loading image metadata from " + metapath);
     try (InputStream is = HadoopFileUtils.open(conf, metapath))
     {
       // load the metadata from the input stream

@@ -319,10 +319,10 @@ public static void delete(Configuration conf, Path path) throws IOException
   FileSystem fs = getFileSystem(conf, path);
   if (fs.exists(path))
   {
-    log.info("Deleting path " + path.toString());
+    log.info("Deleting path " + path);
     if (fs.delete(path, true) == false)
     {
-      throw new IOException("Error deleting directory " + path.toString());
+      throw new IOException("Error deleting directory " + path);
     }
     Path qualifiedPath = path.makeQualified(fs);
     URI pathUri = qualifiedPath.toUri();
@@ -341,14 +341,14 @@ public static void delete(Configuration conf, Path path) throws IOException
         while (stillExists && waitCount < waitPhases[sleepIndex][0])
         {
           waitCount++;
-          log.info("Waiting " + waitPhases[sleepIndex][1] + " seconds " + path.toString() + " to be deleted");
+          log.info("Waiting " + waitPhases[sleepIndex][1] + " seconds " + path + " to be deleted");
           try
           {
             Thread.sleep(waitPhases[sleepIndex][1] * 1000L);
           }
           catch (InterruptedException e)
           {
-            log.warn("While waiting for " + path.toString() + " to be deleted", e);
+            log.warn("While waiting for " + path + " to be deleted", e);
           }
           stillExists = fs.exists(path);
           log.info("After waiting exists = " + stillExists);
@@ -357,13 +357,13 @@ public static void delete(Configuration conf, Path path) throws IOException
       }
       if (stillExists)
       {
-        throw new IOException(path.toString() + " was not deleted within the waiting period");
+        throw new IOException(path + " was not deleted within the waiting period");
       }
     }
   }
   else
   {
-    log.info("Path already does not exist " + path.toString());
+    log.info("Path already does not exist " + path);
   }
 }
 
@@ -527,12 +527,12 @@ public static void move(Configuration conf, Path inputPath, Path outputPath)
 
   if (!fs.rename(inputPath, outputPath))
   {
-    throw new IOException("Cannot rename " + inputPath.toString() + " to " +
-        outputPath.toString());
+    throw new IOException("Cannot rename " + inputPath + " to " +
+        outputPath);
   }
   if (!fs.exists(outputPath))
   {
-    throw new IOException("Output path does not exist: " + outputPath.toString());
+    throw new IOException("Output path does not exist: " + outputPath);
   }
 }
 
@@ -597,7 +597,7 @@ public static InputStream open(Configuration conf, Path path) throws IOException
     return fs.open(path, 131072);
   }
 
-  throw new FileNotFoundException("File not found: " + path.toUri().toString());
+  throw new FileNotFoundException("File not found: " + path.toUri());
 }
 
 public static InputStream open(Path path) throws IOException
@@ -684,11 +684,11 @@ private static long copyFileFromS3(AmazonS3 s3Client, URI uri, File localFile,
             new GetObjectRequest(uri.getHost(), uri.getPath().substring(1)));
   }
   catch(com.amazonaws.AmazonServiceException e) {
-    log.error("Got AmazonServiceException while getting " + uri.toString() + ": " + e.getMessage(), e);
+    log.error("Got AmazonServiceException while getting " + uri + ": " + e.getMessage(), e);
     throw new IOException(e);
   }
   catch(com.amazonaws.AmazonClientException e) {
-    log.error("Got AmazonClientException while getting " + uri.toString() + ": " + e.getMessage(), e);
+    log.error("Got AmazonClientException while getting " + uri + ": " + e.getMessage(), e);
     throw new IOException(e);
   }
 
@@ -720,7 +720,7 @@ public static class SequenceFileReaderWrapper {
   {
     return "SequenceFileReaderWrapper for " +
             ((localPath == null) ? "null" : localPath.toString()) +
-            " in lieu of " + path.toString();
+            " in lieu of " + path;
   }
 
   @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File() - name is gotten from mrgeo.conf")
@@ -763,12 +763,13 @@ public static class SequenceFileReaderWrapper {
               AmazonS3 s3Client = new AmazonS3Client(new DefaultAWSCredentialsProviderChain());
               // Copy the index and data files locally
               long fileSize = copyFileFromS3(s3Client, pathUri, tmpFile, cacheEntry.getPrimaryFileOutputStream());
-              log.debug("Copied data from " + pathUri.toString() + " to " + tmpFile.getAbsolutePath() + ": " + fileSize);
-              log.debug("SequenceFile " + pathUri.toString() + " size is " + fileSize);
+              log.debug("Copied data from " + pathUri + " to " + tmpFile.getAbsolutePath() + ": " + fileSize);
+              log.debug("SequenceFile " + pathUri + " size is " + fileSize);
             } finally {
               // Release the write lock on the original cache entry to allow locks
               // to readers waiting for the write to complete.
-              log.debug("Downgrading from writeLock to readLock from thread " + Thread.currentThread().getId() + " on cacheEntry " + cacheEntry.toString());
+              log.debug("Downgrading from writeLock to readLock from thread " + Thread.currentThread().getId() + " on cacheEntry " +
+                  cacheEntry);
               cacheEntry.releaseWriteLock();
               cacheEntry.readLock();
             }
@@ -779,10 +780,10 @@ public static class SequenceFileReaderWrapper {
             cacheEntry.readLock();
           }
         }
-        log.debug("Opening local reader to " + localPath.toString());
+        log.debug("Opening local reader to " + localPath);
         reader = new SequenceFile.Reader(conf, SequenceFile.Reader.file(localPath));
       } else {
-        log.debug("Not caching locally: " + path.toString());
+        log.debug("Not caching locally: " + path);
         localPath = null;
         reader = new SequenceFile.Reader(conf, SequenceFile.Reader.file(path));
       }
@@ -793,7 +794,7 @@ public static class SequenceFileReaderWrapper {
   public void close() throws IOException
   {
     if (reader != null) {
-      log.debug("Closing: " + path.toString());
+      log.debug("Closing: " + path);
       reader.close();
       reader = null;
       // Inform the file cache that we are done with the file
@@ -828,7 +829,7 @@ public static class MapFileReaderWrapper
   {
     return "MapFileReaderWrapper for " +
             ((localPath == null) ? "null" : localPath.toString()) +
-            " in lieu of " + path.toString();
+            " in lieu of " + path;
   }
 
   @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File() - name is generated in code")
@@ -883,19 +884,19 @@ public static class MapFileReaderWrapper
               try (FileOutputStream fosData = new FileOutputStream(tmpDataFile))
               {
                 long dataSize = copyFileFromS3(s3Client, dataUri, tmpDataFile, fosData);
-                log.debug("Copied data from " + dataUri.toString() + " to " +
+                log.debug("Copied data from " + dataUri + " to " +
                     tmpDataFile.getAbsolutePath() + ": " + dataSize);
               }
               long indexSize = copyFileFromS3(s3Client, indexUri, tmpIndexFile,
                       cacheEntry.getPrimaryFileOutputStream());
-              log.debug("Copied data from " + indexUri.toString() + " to " +
+              log.debug("Copied data from " + indexUri + " to " +
                       tmpIndexFile.getAbsolutePath() + ": " + indexSize);
-              log.debug("Index " + indexUri.toString() + " size is " + indexSize);
+              log.debug("Index " + indexUri + " size is " + indexSize);
             } finally {
               // Release the write lock on the original cache entry to allow locks
               // to readers waiting for the write to complete.
               log.debug("Downgrading from writeLock to readLock from thread " +
-                      Thread.currentThread().getId() + " on cacheEntry " + cacheEntry.toString());
+                      Thread.currentThread().getId() + " on cacheEntry " + cacheEntry);
               cacheEntry.releaseWriteLock();
               cacheEntry.readLock();
             }
@@ -906,10 +907,10 @@ public static class MapFileReaderWrapper
             cacheEntry.readLock();
           }
         }
-        log.debug("Opening local reader to " + localPath.toString());
+        log.debug("Opening local reader to " + localPath);
         reader = new MapFile.Reader(localPath, conf);
       } else {
-        log.debug("Not caching locally: " + path.toString());
+        log.debug("Not caching locally: " + path);
         localPath = null;
         reader = new MapFile.Reader(path, conf);
       }
@@ -920,7 +921,7 @@ public static class MapFileReaderWrapper
   public void close() throws IOException
   {
     if (reader != null) {
-      log.debug("Closing: " + path.toString());
+      log.debug("Closing: " + path);
       reader.close();
       reader = null;
       // Inform the file cache that we are done with the file

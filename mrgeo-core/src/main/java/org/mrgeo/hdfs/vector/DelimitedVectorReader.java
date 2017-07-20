@@ -136,7 +136,7 @@ private DelimitedParser getDelimitedParser() throws IOException
     // a map/reduce operation. In that case "output.csv" is a directory
     // containing multiple part*.csv files. And the .columns file is
     // stored as output.tsv.columns at the parent level.
-    columnsPath = new Path(columnsPath.getParent().toString() + ".columns");
+    columnsPath = new Path(columnsPath.getParent() + ".columns");
   }
   if (fs.exists(columnsPath))
   {

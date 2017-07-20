@@ -51,40 +51,28 @@ public DbaseField(String name, int type)
   switch (type)
   {
   case FLOAT:
-  {
     length = 13;
     decimal = 3;
     break;
-  }
   case CHARACTER:
-  {
     length = 50;
     decimal = 0;
     break;
-  }
   case NUMERIC:
-  {
     length = 13;
     decimal = 0;
     break;
-  }
   case LOGICAL:
-  {
     length = 1;
     decimal = 0;
     break;
-  }
   case DATE:
-  {
     length = 8;
     decimal = 0;
     break;
-  }
   default:
-  {
     length = 20;
     decimal = 0;
-  }
   }
 }
 
@@ -105,17 +93,13 @@ public DbaseField(String name, int type, int length, int decimal)
   switch (type)
   {
   case LOGICAL:
-  {
     this.length = 1;
     this.decimal = 0;
     break;
-  }
   case DATE:
-  {
     this.length = 8;
     this.decimal = 0;
     break;
-  }
   default:
     this.length = length;
     this.decimal = decimal;

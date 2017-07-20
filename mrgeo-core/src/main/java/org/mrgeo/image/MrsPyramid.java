@@ -76,7 +76,6 @@ final LoadingCache<Integer, Optional<MrsImage>> imageCache = CacheBuilder.newBui
 
 private MrsPyramid(MrsImageDataProvider provider)
 {
-  super();
 
   this.provider = provider;
 

@@ -93,7 +93,7 @@ public void write(MrsPyramidMetadata metadata) throws IOException
     fs.delete(path, false);
   }
 
-  log.debug("Saving metadata to " + path.toString());
+  log.debug("Saving metadata to " + path);
   FSDataOutputStream os = null;
   try
   {

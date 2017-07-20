@@ -100,7 +100,7 @@ static public class CsvRecordWriter extends RecordWriter<FeatureIdWritable, Geom
 
     FileSystem fs = HadoopFileUtils.getFileSystem(columnsOutput);
 
-    log.info("columnsOutput path: " + columnsOutput.toString() + ", this: " + this);
+    log.info("columnsOutput path: " + columnsOutput + ", this: " + this);
     if (output.toString().endsWith(".tsv"))
     {
       delimiter = '\t';

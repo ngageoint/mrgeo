@@ -41,11 +41,9 @@ public static boolean contains(JShape shp1, JShape shp2)
   switch (shp1.getType())
   {
   case JShape.POINT:
-  {
     switch (shp2.getType())
     {
     case JShape.POINT:
-    {
       JPoint p1 = (JPoint) shp1;
       JPoint p2 = (JPoint) shp2;
       if (p1.equals(p2))
@@ -53,23 +51,15 @@ public static boolean contains(JShape shp1, JShape shp2)
         return true;
       }
       return false;
-    }
     default:
-    {
       return false;
     }
-    }
-  }
   case JShape.POLYLINE:
-  {
     return false;
-  }
   case JShape.POLYGON:
-  {
     switch (shp2.getType())
     {
     case JShape.POINT:
-    {
       JPolygon poly = (JPolygon) shp1;
       JPoint p2 = (JPoint) shp2;
       if (poly.contains(p2.getCoord()))
@@ -77,17 +67,11 @@ public static boolean contains(JShape shp1, JShape shp2)
         return true;
       }
       return false;
-    }
     default:
-    {
       throw new InternalError("Contains algorithm not implemented for shape types!");
     }
-    }
-  }
   default:
-  {
     throw new InternalError("Contains algorithm not implemented for shape types!");
-  }
   }
 }
 
@@ -154,21 +138,15 @@ public static Coord getCoordOnSegment(Coord c1, Coord c2, double value, int flag
   switch (flag)
   {
   case KM:
-  {
     double distance_Total = getDistance(c1, c2); // calc total length of line
     // in Km
     percent = value / distance_Total; // percentage along line to c2
     break;
-  }
   case PERCENT:
-  {
     percent = value;
     break;
-  }
   default:
-  {
     return null;
-  }
   }
   // check percent for early exit
   if (percent <= 0.0)
@@ -309,9 +287,7 @@ public static double getDistance(Coord c, JShape shp)
   case JShape.POLYGON:
     return getDistanceToPolygon(c, (JPolygon) shp);
   default:
-  {
     throw new InternalError("Distance algorithm not implemented for shape types!");
-  }
   }
 }
 
@@ -326,7 +302,6 @@ public static double getDistance(JShape shp1, JShape shp2)
   switch (shp1.getType())
   {
   case JShape.POINT:
-  {
     switch (shp2.getType())
     {
     case JShape.POINT:
@@ -336,39 +311,26 @@ public static double getDistance(JShape shp1, JShape shp2)
     case JShape.POLYGON:
       return getDistanceToPolygon(((JPoint) shp1).getCoord(), (JPolygon) shp2);
     default:
-    {
       throw new InternalError("Distance algorithm not implemented for shape types!");
     }
-    }
-  }
   case JShape.POLYLINE:
-  {
     switch (shp2.getType())
     {
     case JShape.POINT:
       return getDistanceToLine(((JPoint) shp2).getCoord(), (JPolyLine) shp1);
     default:
-    {
       throw new InternalError("Distance algorithm not implemented for shape types!");
     }
-    }
-  }
   case JShape.POLYGON:
-  {
     switch (shp2.getType())
     {
     case JShape.POINT:
       return getDistanceToPolygon(((JPoint) shp2).getCoord(), (JPolygon) shp1);
     default:
-    {
       throw new InternalError("Distance algorithm not implemented for shape types!");
     }
-    }
-  }
   default:
-  {
     throw new InternalError("Distance algorithm not implemented for shape types!");
-  }
   }
 }
 

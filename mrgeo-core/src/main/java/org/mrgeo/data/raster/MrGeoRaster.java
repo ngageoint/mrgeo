@@ -75,29 +75,17 @@ public static MrGeoRaster createEmptyRaster(int width, int height, int bands, in
   switch (datatype)
   {
   case DataBuffer.TYPE_BYTE:
-  {
     return MrGeoByteRaster.createEmptyRaster(width, height, bands);
-  }
   case DataBuffer.TYPE_FLOAT:
-  {
     return MrGeoFloatRaster.createEmptyRaster(width, height, bands);
-  }
   case DataBuffer.TYPE_DOUBLE:
-  {
     return MrGeoDoubleRaster.createEmptyRaster(width, height, bands);
-  }
   case DataBuffer.TYPE_INT:
-  {
     return MrGeoIntRaster.createEmptyRaster(width, height, bands);
-  }
   case DataBuffer.TYPE_SHORT:
-  {
     return MrGeoShortRaster.createEmptyRaster(width, height, bands);
-  }
   case DataBuffer.TYPE_USHORT:
-  {
     return MrGeoUShortRaster.createEmptyRaster(width, height, bands);
-  }
   default:
     throw new RasterWritableException("Error trying to read raster.  Bad raster data type");
   }
@@ -124,26 +112,16 @@ public static MrGeoRaster createRaster(int width, int height, int bands, int dat
   switch (datatype)
   {
   case DataBuffer.TYPE_BYTE:
-  {
     return new MrGeoByteRaster(width, height, bands, data, dataOffset);
-  }
   case DataBuffer.TYPE_FLOAT:
-  {
     return new MrGeoFloatRaster(width, height, bands, data, dataOffset);
-  }
   case DataBuffer.TYPE_DOUBLE:
-  {
     return new MrGeoDoubleRaster(width, height, bands, data, dataOffset);
-  }
   case DataBuffer.TYPE_INT:
-  {
     return new MrGeoIntRaster(width, height, bands, data, dataOffset);
-  }
   case DataBuffer.TYPE_SHORT:
   case DataBuffer.TYPE_USHORT:
-  {
     return new MrGeoShortRaster(width, height, bands, data, dataOffset);
-  }
   default:
     throw new RasterWritableException("Error trying to read raster.  Bad raster data type");
   }
@@ -747,7 +725,6 @@ final public void mosaic(MrGeoRaster other, double[] nodata)
           break;
         }
         case DataBuffer.TYPE_USHORT:
-        {
           int p = other.getPixeUShort(x, y, b);
           if (getPixeUShort(x, y, b) == (short) nodata[b])
           {
@@ -755,9 +732,11 @@ final public void mosaic(MrGeoRaster other, double[] nodata)
           }
 
           break;
+        default:
+          throw new RasterWritableException(
+              "Error trying to get mosaic raster. Bad raster data type");
         }
 
-        }
       }
     }
   }
@@ -769,7 +748,7 @@ final public Dataset toDataset()
 }
 
 final public Dataset toDiskBasedDataset(Bounds bounds, double[] nodatas,
-                                        int xoffset, int yoffset, int outWidth, int outHeight)
+    int xoffset, int yoffset, int outWidth, int outHeight)
 {
   int gdaltype = GDALUtils.toGDALDataType(datatype);
   Dataset ds = GDALUtils.createEmptyDiskBasedRaster(outWidth, outHeight, bands, gdaltype, nodatas);
@@ -784,9 +763,9 @@ final public Dataset toDataset(Bounds bounds, double[] nodatas)
 }
 
 private Dataset toDataset(Dataset ds, int gdaltype, Bounds bounds,
-                          int xoffset, int yoffset,
-                          int outWidth, int outHeight,
-                          double[] nodatas)
+    int xoffset, int yoffset,
+    int outWidth, int outHeight,
+    double[] nodatas)
 {
   double[] xform = new double[6];
   if (bounds != null)
@@ -843,16 +822,16 @@ private Dataset toDataset(Dataset ds, int gdaltype, Bounds bounds,
 }
 
 public void copyToDataset(Dataset ds, int dsWidth, int dsHeight, Bounds fullBounds, Bounds bounds,
-                          int tilesize, int zoomlevel, int gdaltype) throws IOException
+    int tilesize, int zoomlevel, int gdaltype) throws IOException
 {
   Pixel ulPixelTile = TMSUtils
-          .latLonToPixelsUL(bounds.n, bounds.w, zoomlevel, tilesize);
+      .latLonToPixelsUL(bounds.n, bounds.w, zoomlevel, tilesize);
   Pixel ulPixelDS = TMSUtils
-          .latLonToPixelsUL(fullBounds.n, fullBounds.w, zoomlevel, tilesize);
+      .latLonToPixelsUL(fullBounds.n, fullBounds.w, zoomlevel, tilesize);
   Pixel lrPixelTile = TMSUtils
-          .latLonToPixelsUL(bounds.s, bounds.e, zoomlevel, tilesize);
+      .latLonToPixelsUL(bounds.s, bounds.e, zoomlevel, tilesize);
   Pixel lrPixelDS = TMSUtils
-          .latLonToPixelsUL(fullBounds.s, fullBounds.e, zoomlevel, tilesize);
+      .latLonToPixelsUL(fullBounds.s, fullBounds.e, zoomlevel, tilesize);
 
   long leftPixel = Math.max(ulPixelDS.px, ulPixelTile.px);
   long rightPixel = Math.min(lrPixelDS.px, lrPixelTile.px);
@@ -896,7 +875,6 @@ final public Raster toRaster()
   switch (datatype)
   {
   case DataBuffer.TYPE_BYTE:
-  {
     // we can't use the byte buffer explicitly because the header info is
     // still in it...
     byte[] bytedata = new byte[databytes];
@@ -904,9 +882,7 @@ final public Raster toRaster()
 
     raster.setDataElements(0, 0, width, height, bytedata);
     break;
-  }
   case DataBuffer.TYPE_FLOAT:
-  {
     FloatBuffer floatbuff = rasterBuffer.asFloatBuffer();
     float[] floatdata = new float[databytes / bytesPerPixel()];
 
@@ -914,9 +890,7 @@ final public Raster toRaster()
 
     raster.setDataElements(0, 0, width, height, floatdata);
     break;
-  }
   case DataBuffer.TYPE_DOUBLE:
-  {
     DoubleBuffer doublebuff = rasterBuffer.asDoubleBuffer();
     double[] doubledata = new double[databytes / bytesPerPixel()];
 
@@ -925,9 +899,7 @@ final public Raster toRaster()
     raster.setDataElements(0, 0, width, height, doubledata);
 
     break;
-  }
   case DataBuffer.TYPE_INT:
-  {
     IntBuffer intbuff = rasterBuffer.asIntBuffer();
     int[] intdata = new int[databytes / bytesPerPixel()];
 
@@ -936,16 +908,13 @@ final public Raster toRaster()
     raster.setDataElements(0, 0, width, height, intdata);
 
     break;
-  }
   case DataBuffer.TYPE_SHORT:
   case DataBuffer.TYPE_USHORT:
-  {
     ShortBuffer shortbuff = rasterBuffer.asShortBuffer();
     short[] shortdata = new short[databytes / bytesPerPixel()];
     shortbuff.get(shortdata);
     raster.setDataElements(0, 0, width, height, shortdata);
     break;
-  }
   default:
     throw new RasterWritableException("Error trying to read raster.  Bad raster data type");
   }

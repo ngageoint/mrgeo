@@ -35,7 +35,6 @@ private int recordLength;
 
 DbaseHeader()
 {
-  super();
   fields = new Vector<>();
   format = 3; // DBASE III is default for now
   langDriverID = 27; // default, not sure what it means
@@ -171,7 +170,7 @@ public synchronized String toString()
   for (int i = 0; i < fields.size(); i++)
   {
     DbaseField field = fields.get(i);
-    s = s + "  " + StringUtils.pad(i + ")", 5) + field.toString() + "\n";
+    s = s + "  " + StringUtils.pad(i + ")", 5) + field + "\n";
   }
   return s;
 }

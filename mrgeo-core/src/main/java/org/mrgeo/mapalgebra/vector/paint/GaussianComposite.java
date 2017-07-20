@@ -42,7 +42,6 @@ private AffineTransform translate;
 
 public GaussianComposite()
 {
-  super();
 }
 
 public GaussianComposite(double weight)

@@ -94,9 +94,7 @@ public void load(int i, byte[] record)
 //            p[i].add(new Coord(px, py), z, m);
 //          }
 //          else
-        {
-          polygonZ.add(new Coord(px, py), z, m);
-        }
+        polygonZ.add(new Coord(px, py), z, m);
       }
     }
   }

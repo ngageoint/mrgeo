@@ -78,9 +78,7 @@ public void load(int i, byte[] record)
 //            p[i].add(new Coord(px, py));
 //          }
 //          else
-        {
-          polyLine.add(new Coord(px, py));
-        }
+        polyLine.add(new Coord(px, py));
       }
     }
   }

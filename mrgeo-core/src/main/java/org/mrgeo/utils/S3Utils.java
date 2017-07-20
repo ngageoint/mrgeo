@@ -211,7 +211,7 @@ public class S3Utils
       // Some operating systems do not support shared locks, so report that here. But
       // keep the lock active - the system will just run slower.
       if (!readFileLock.isShared()) {
-        log.warn("Unable to create a shared lock on " + getLocalPath().toString());
+        log.warn("Unable to create a shared lock on " + getLocalPath());
       }
     }
 
@@ -428,8 +428,8 @@ public class S3Utils
   private static class CacheCleanupOnElementRemoval implements RemovalListener<String, S3CacheEntry> {
     @Override
     public void onRemoval(RemovalNotification<String, S3CacheEntry> notification) {
-      log.debug("S3 cache removal key: " + notification.getKey() + " with cause " + notification.getCause().toString() + " from thread " + Thread.currentThread().getId());
-      log.debug("S3 cache removal value: " + notification.getValue().toString() + " from thread " + Thread.currentThread().getId());
+      log.debug("S3 cache removal key: " + notification.getKey() + " with cause " + notification.getCause() + " from thread " + Thread.currentThread().getId());
+      log.debug("S3 cache removal value: " + notification.getValue() + " from thread " + Thread.currentThread().getId());
       try {
         notification.getValue().cleanup();
       } catch (IOException e) {
@@ -708,7 +708,7 @@ public class S3Utils
                 zoomLevel = Integer.parseInt(zoomName.toString());
               }
               catch(NumberFormatException nfe) {
-                log.error("Unable to parse zoom level from " + zoomName.toString());
+                log.error("Unable to parse zoom level from " + zoomName);
               }
             }
           }
@@ -739,7 +739,7 @@ public class S3Utils
             else if (bbox != null) {
               // Have to read the tiles from the partition and see if any of them
               // intersect the specified bbox.
-              Path indexPath = new Path("file://" + entry.imagePath.toString(), "index");
+              Path indexPath = new Path("file://" + entry.imagePath, "index");
               int tilesize = defaultTileSize;
               try {
                 // Get the image name
@@ -773,22 +773,22 @@ public class S3Utils
                   hasKey = indexReader.next(key);
                 }
               } catch (IllegalAccessException | InstantiationException e) {
-                log.error("Unable to check the bounds of " + indexPath.toString(), e);
+                log.error("Unable to check the bounds of " + indexPath, e);
               }
             }
 
             if (deleteFile) {
               deleteCount++;
               if (dryrun) {
-                System.out.println("Would delete S3 cached file at " + entry.imagePath.toString());
+                System.out.println("Would delete S3 cached file at " + entry.imagePath);
               } else {
                 org.mrgeo.utils.FileUtils.deleteDir(entry.imagePath.toFile(), true);
-                System.out.println("Deleted S3 cached file at " + entry.imagePath.toString());
+                System.out.println("Deleted S3 cached file at " + entry.imagePath);
               }
             }
           }
           catch(IOException e) {
-            log.warn("Unable to clean cached S3 image at " + entry.imagePath.toString(), e);
+            log.warn("Unable to clean cached S3 image at " + entry.imagePath, e);
           }
         }
         System.out.println(((dryrun) ? "Would have deleted " : "Deleted ") + deleteCount + " cache entries");
