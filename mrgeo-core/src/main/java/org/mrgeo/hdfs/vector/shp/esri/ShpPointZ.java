@@ -22,10 +22,8 @@ import org.mrgeo.hdfs.vector.shp.util.Convert;
 import java.io.IOException;
 
 
-public class ShpPointZ implements ShpData
+public class ShpPointZ extends ShpShape
 {
-protected JPointZ[] p;
-private ESRILayer parent;
 
 /**
  * Creates new ShpPoint
@@ -40,55 +38,10 @@ public void addShape(JShape obj) throws FormatException
 {
   if (obj instanceof JPointZ)
   {
-    JPointZ[] temp = new JPointZ[p.length + 1];
-    System.arraycopy(p, 0, temp, 0, p.length);
-    temp[p.length] = (JPointZ) obj;
-    p = temp;
+    super.addShape(obj);
   }
 }
 
-@Override
-public int getCount()
-{
-  return parent.index.recordCount;
-}
-
-@Override
-@SuppressWarnings("squid:S00112")
-// I didn't write this code, so I'm not sure why it throws the RuntimeException.  Keeping it
-public JShape getShape(int i) throws IOException
-{
-  try
-  {
-    if (i < parent.index.getCachePos()
-        || i > (parent.index.getCachePos() + parent.index.getCurrentCacheSize() - 1))
-    {
-      // save if necessary
-      if (parent.index.modData)
-      {
-        parent.save();
-      }
-      if (parent.table.isModified())
-      {
-        parent.table.save();
-      }
-      // load
-      parent.index.loadData(i);
-      parent.shape.loadData(i);
-      // set data references
-      for (int j = 0; j < p.length; j++)
-      {
-        JShape obj = p[j];
-        obj.setDataReference(parent.table.getRow(j + parent.index.getCachePos()));
-      }
-    }
-    return p[i - parent.index.getCachePos()];
-  }
-  catch (Exception e)
-  {
-    throw new RuntimeException(e);
-  }
-}
 
 @Override
 public void load(int i, byte[] record)
@@ -110,18 +63,15 @@ public void resizeCache(int size)
 @Override
 public byte[] save(int i)
 {
+  JPointZ pt = (JPointZ)p[i];
+
   byte[] record = new byte[p[i].getRecordLength()];
   Convert.setLEInteger(record, 0, JShape.POINTZ);
-  Convert.setLEDouble(record, 4, p[i].getX());
-  Convert.setLEDouble(record, 12, p[i].getY());
-  Convert.setLEDouble(record, 20, p[i].getZ());
-  Convert.setLEDouble(record, 28, p[i].getM());
+  Convert.setLEDouble(record, 4, pt.getX());
+  Convert.setLEDouble(record, 12, pt.getY());
+  Convert.setLEDouble(record, 20, pt.getZ());
+  Convert.setLEDouble(record, 28, pt.getM());
   return record;
 }
 
-@Override
-public void setParent(ESRILayer parent)
-{
-  this.parent = parent;
-}
 }

@@ -44,10 +44,10 @@ protected ShxFile index;
 protected String mode; // RAF mode
 protected ShpFile shape;
 protected DbaseFile table;
-private double maxScale = Long.MAX_VALUE;
-private double minScale;
+//private double maxScale = Long.MAX_VALUE;
+//private double minScale;
 private String projection = "";
-private boolean visible = true;
+//private boolean visible = true;
 
 /**
  * Opens an existing shapefile for read-only.
@@ -183,15 +183,15 @@ public int[] getDataWidths()
   return temp;
 }
 
-public double getMaxScale()
-{
-  return maxScale;
-}
-
-public double getMinScale()
-{
-  return minScale;
-}
+//public double getMaxScale()
+//{
+//  return maxScale;
+//}
+//
+//public double getMinScale()
+//{
+//  return minScale;
+//}
 
 public int getNumRecords()
 {
@@ -240,10 +240,10 @@ public DbaseFile getTable()
   return table;
 }
 
-public boolean isLayerVisible()
-{
-  return visible;
-}
+//public boolean isLayerVisible()
+//{
+//  return visible;
+//}
 
 @SuppressWarnings("squid:S00112")
 // I didn't write this code, so I'm not sure why it throws the RuntimeException.  Keeping it
