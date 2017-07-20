@@ -50,7 +50,7 @@ public interface AdHocDataProviderFactory
  *
  * @return
  */
-public boolean isValid(Configuration conf);
+boolean isValid(Configuration conf);
 
 /**
  * This method is called once when DataProviderFactory finds this factory.
@@ -59,9 +59,9 @@ public boolean isValid(Configuration conf);
  *
  * @param conf
  */
-public void initialize(Configuration conf) throws DataProviderException;
+void initialize(Configuration conf) throws DataProviderException;
 
-public String getPrefix();
+String getPrefix();
 
 /**
  * This method is called before a Spark job runs in order to get back a set of
@@ -81,7 +81,7 @@ public String getPrefix();
  * (including configuration settings from other providers). We suggest using the
  * data provider class name as a prefix for example.
  */
-public Map<String, String> getConfiguration();
+Map<String, String> getConfiguration();
 
 /**
  * This method is called on the remote side of a Spark job to allow provider
@@ -96,7 +96,7 @@ public Map<String, String> getConfiguration();
  *
  * @param properties
  */
-public void setConfiguration(Map<String, String> properties);
+void setConfiguration(Map<String, String> properties);
 
 /**
  * Give back an ad hoc data provider for a named resource. The name is interpreted
@@ -106,9 +106,9 @@ public void setConfiguration(Map<String, String> properties);
  * @param name
  * @return
  */
-public AdHocDataProvider createAdHocDataProvider(String name,
-                                                 Configuration conf,
-                                                 ProviderProperties providerProperties) throws IOException;
+AdHocDataProvider createAdHocDataProvider(String name,
+    Configuration conf,
+    ProviderProperties providerProperties) throws IOException;
 
 /**
  * Give back an ad hoc data provider for a resource that is named by this method.
@@ -118,15 +118,15 @@ public AdHocDataProvider createAdHocDataProvider(String name,
  *
  * @return
  */
-public AdHocDataProvider createAdHocDataProvider(
-        Configuration conf,
-        ProviderProperties providerProperties) throws IOException;
+AdHocDataProvider createAdHocDataProvider(
+    Configuration conf,
+    ProviderProperties providerProperties) throws IOException;
 
-public boolean canOpen(String name, Configuration conf, ProviderProperties providerProperties) throws IOException;
+boolean canOpen(String name, Configuration conf, ProviderProperties providerProperties) throws IOException;
 
-public boolean canWrite(String name, Configuration conf, ProviderProperties providerProperties) throws IOException;
+boolean canWrite(String name, Configuration conf, ProviderProperties providerProperties) throws IOException;
 
-public boolean exists(String name, Configuration conf, ProviderProperties providerProperties) throws IOException;
+boolean exists(String name, Configuration conf, ProviderProperties providerProperties) throws IOException;
 
-public void delete(String name, Configuration conf, ProviderProperties providerProperties) throws IOException;
+void delete(String name, Configuration conf, ProviderProperties providerProperties) throws IOException;
 }

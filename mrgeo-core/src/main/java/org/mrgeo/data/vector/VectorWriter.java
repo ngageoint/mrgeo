@@ -22,8 +22,8 @@ import java.io.IOException;
 
 public interface VectorWriter
 {
-public abstract void append(FeatureIdWritable key, Geometry value)
+void append(FeatureIdWritable key, Geometry value)
     throws IOException;
 
-public abstract void close() throws IOException;
+void close() throws IOException;
 }

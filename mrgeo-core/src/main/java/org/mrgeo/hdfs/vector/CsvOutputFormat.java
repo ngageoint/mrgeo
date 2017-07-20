@@ -289,7 +289,7 @@ static public class CsvRecordWriter extends RecordWriter<FeatureIdWritable, Geom
         ColumnDefinitionFile cdf = new ColumnDefinitionFile();
         if (writeGeometry)
         {
-          List<String> modified = new ArrayList();
+          List<String> modified = new ArrayList<>();
           modified.add("GEOMETRY");
           modified.addAll(attributes);
 

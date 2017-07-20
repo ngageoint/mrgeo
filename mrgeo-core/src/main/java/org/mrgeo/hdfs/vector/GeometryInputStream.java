@@ -28,10 +28,10 @@ public interface GeometryInputStream extends Iterator<WritableGeometry>
 /**
  * Returns the projection as WKT.
  */
-public String getProjection();
+String getProjection();
 
 @Override
-public boolean hasNext();
+boolean hasNext();
 
 /**
  * The returned WritableGeometry is own by the caller.
@@ -39,7 +39,7 @@ public boolean hasNext();
  * @return
  */
 @Override
-public WritableGeometry next();
+WritableGeometry next();
 
-public void close() throws IOException;
+void close() throws IOException;
 }

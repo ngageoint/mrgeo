@@ -393,11 +393,7 @@ public boolean equals(ColorScale cs)
   if (!Arrays.equals(quantiles, cs.quantiles)) {
     return false;
   }
-  if (!Arrays.equals(quantileSubScales, cs.quantileSubScales)) {
-    return false;
-  }
-
-  return true;
+  return Arrays.equals(quantileSubScales, cs.quantileSubScales);
 }
 
 public boolean getForceValuesIntoRange()
@@ -607,7 +603,7 @@ public void fromJSON(String json) throws ColorScaleException
   try
   {
     ObjectMapper mapper = new ObjectMapper();
-    Map<String, Object> colorScaleMap = mapper.readValue(json, Map.class);
+    Map<String, Object> colorScaleMap = (Map<String, Object>)mapper.readValue(json, Map.class);
     String scalingStr = (String) colorScaleMap.get("Scaling");
     if (scalingStr != null)
     {
@@ -915,7 +911,7 @@ protected void buildCache()
         // of the colors to the data bins.
         float colorsPerQuantileBin = (float)(colors.length - 2) / (float)(quantiles.length + 1);
         for (int q = 1; q <= quantiles.length; q++) {
-          int index = (int) Math.round(colorsPerQuantileBin * q);
+          int index = Math.round(colorsPerQuantileBin * q);
           quantileColors[q] = colors[index];
         }
         allQuantilesHaveColors = true;
@@ -1009,7 +1005,7 @@ private int interpolateValue(int v1, int v2, float factor)
  * @param v
  * @param color
  */
-final private void absoluteColor(double v, int[] color)
+private void absoluteColor(double v, int[] color)
 {
   double search;
   switch (scaling)
@@ -1054,7 +1050,7 @@ final private void absoluteColor(double v, int[] color)
  * @param color
  * @return
  */
-final private void interpolateColor(double v, int[] color)
+private void interpolateColor(double v, int[] color)
 {
   double search;
   switch (scaling)
@@ -1161,8 +1157,7 @@ public static class ColorScaleException extends Exception
 
   public ColorScaleException(String msg)
   {
-    Exception e = new Exception(msg);
-    origException = e;
+    origException = new Exception(msg);
   }
 
   @Override

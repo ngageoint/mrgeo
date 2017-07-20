@@ -234,8 +234,8 @@ private void cacheNextLine()
 
 public interface DelimitedReaderVisitor
 {
-  public boolean accept(long id, Geometry geometry);
+  boolean accept(long id, Geometry geometry);
 
-  public boolean stopReading(long id, Geometry geometry);
+  boolean stopReading(long id, Geometry geometry);
 }
 }

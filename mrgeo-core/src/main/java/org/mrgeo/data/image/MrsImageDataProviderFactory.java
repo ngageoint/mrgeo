@@ -50,7 +50,7 @@ public interface MrsImageDataProviderFactory
  *
  * @return
  */
-public boolean isValid();
+boolean isValid();
 
 /**
  * This method is called once when DataProviderFactory finds this factory.
@@ -59,7 +59,7 @@ public boolean isValid();
  *
  * @param conf
  */
-public void initialize(Configuration conf) throws DataProviderException;
+void initialize(Configuration conf) throws DataProviderException;
 
 /**
  * Returns the prefix to be used for this image data provider. All data plugin
@@ -67,7 +67,7 @@ public void initialize(Configuration conf) throws DataProviderException;
  *
  * @return
  */
-public String getPrefix();
+String getPrefix();
 
 /**
  * This method is called before a Spark job runs in order to get back a set of
@@ -87,7 +87,7 @@ public String getPrefix();
  * (including configuration settings from other providers). We suggest using the
  * data provider class name as a prefix for example.
  */
-public Map<String, String> getConfiguration();
+Map<String, String> getConfiguration();
 
 /**
  * This method is called on the remote side of a Spark job to allow provider
@@ -102,7 +102,7 @@ public Map<String, String> getConfiguration();
  *
  * @param properties
  */
-public void setConfiguration(Map<String, String> properties);
+void setConfiguration(Map<String, String> properties);
 
 /**
  * Return a temporary (ephemeral) image data provider. The MrGeo core code
@@ -112,8 +112,8 @@ public void setConfiguration(Map<String, String> properties);
  *
  * @return
  */
-public MrsImageDataProvider createTempMrsImageDataProvider(Configuration conf,
-                                                           ProviderProperties providerProperties)
+MrsImageDataProvider createTempMrsImageDataProvider(Configuration conf,
+    ProviderProperties providerProperties)
     throws IOException;
 
 /**
@@ -125,9 +125,9 @@ public MrsImageDataProvider createTempMrsImageDataProvider(Configuration conf,
  * @param input
  * @return
  */
-public MrsImageDataProvider createMrsImageDataProvider(String input,
-                                                       Configuration conf,
-                                                       ProviderProperties providerProperties);
+MrsImageDataProvider createMrsImageDataProvider(String input,
+    Configuration conf,
+    ProviderProperties providerProperties);
 
 /**
  * Return a list of all of the images that the data plugin knows about. This method
@@ -136,8 +136,8 @@ public MrsImageDataProvider createMrsImageDataProvider(String input,
  * @return
  * @throws IOException
  */
-public String[] listImages(Configuration conf,
-                           ProviderProperties providerProperties) throws IOException;
+String[] listImages(Configuration conf,
+    ProviderProperties providerProperties) throws IOException;
 
 /**
  * Return true if this data plugin is capable of opening the specified
@@ -151,9 +151,9 @@ public String[] listImages(Configuration conf,
  * @return
  * @throws IOException
  */
-public boolean canOpen(String input,
-                       Configuration conf,
-                       ProviderProperties providerProperties) throws IOException;
+boolean canOpen(String input,
+    Configuration conf,
+    ProviderProperties providerProperties) throws IOException;
 
 /**
  * Returns true if the data plugin is able to create the specified
@@ -166,9 +166,9 @@ public boolean canOpen(String input,
  * @return
  * @throws IOException
  */
-public boolean canWrite(String input,
-                        Configuration conf,
-                        ProviderProperties providerProperties) throws IOException;
+boolean canWrite(String input,
+    Configuration conf,
+    ProviderProperties providerProperties) throws IOException;
 
 /**
  * Returns true if the data plugin determines that the specified resource
@@ -179,9 +179,9 @@ public boolean canWrite(String input,
  * @return
  * @throws IOException
  */
-public boolean exists(String name,
-                      Configuration conf,
-                      ProviderProperties providerProperties) throws IOException;
+boolean exists(String name,
+    Configuration conf,
+    ProviderProperties providerProperties) throws IOException;
 
 /**
  * Deletes the specified resource. This method should only be called from
@@ -190,7 +190,7 @@ public boolean exists(String name,
  * @param name
  * @throws IOException
  */
-public void delete(String name,
-                   Configuration conf,
-                   ProviderProperties providerProperties) throws IOException;
+void delete(String name,
+    Configuration conf,
+    ProviderProperties providerProperties) throws IOException;
 }
