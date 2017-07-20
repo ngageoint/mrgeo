@@ -24,6 +24,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 
 public abstract class GeometryImpl implements WritableGeometry
@@ -123,7 +124,7 @@ public Geometry clip(Polygon geom)
 public void writeAttributes(DataOutputStream stream) throws IOException
 {
   stream.writeInt(attributes.size());
-  for (Map.Entry<String, String> attr : attributes.entrySet())
+  for (Entry<String, String> attr : attributes.entrySet())
   {
     stream.writeUTF(attr.getKey());
     // attr can be larger than 64K, so we have to use the alternate write method

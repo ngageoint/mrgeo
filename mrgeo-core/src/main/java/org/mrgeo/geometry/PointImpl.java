@@ -18,6 +18,7 @@ package org.mrgeo.geometry;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
+import org.mrgeo.geometry.Geometry.Type;
 import org.mrgeo.utils.GeoHash;
 import org.mrgeo.utils.tms.Bounds;
 
@@ -204,7 +205,7 @@ public void read(DataInputStream stream) throws IOException
 @Override
 public Type type()
 {
-  return Geometry.Type.POINT;
+  return Type.POINT;
 }
 
 @Override

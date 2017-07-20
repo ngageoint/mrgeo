@@ -220,7 +220,7 @@ private void load(InputStream is) throws IOException
       {
         type = FactorType.Unknown.toString();
       }
-      c.setType(Column.FactorType.valueOf(type));
+      c.setType(FactorType.valueOf(type));
       String tmp = s.getAttribute("min");
       if (!tmp.isEmpty())
       {

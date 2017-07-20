@@ -32,6 +32,8 @@ import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.io.SequenceFile;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.S3Utils;
+import org.mrgeo.utils.S3Utils.S3Cache;
+import org.mrgeo.utils.S3Utils.S3CacheEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -706,7 +708,7 @@ public static class SequenceFileReaderWrapper {
   private Path path;
   private SequenceFile.Reader reader;
   private Path localPath;
-  private S3Utils.S3CacheEntry cacheEntry;
+  private S3CacheEntry cacheEntry;
 
   public SequenceFileReaderWrapper(Path path, Configuration conf) throws IOException
   {
@@ -730,8 +732,8 @@ public static class SequenceFileReaderWrapper {
       URI pathUri = qualifiedPath.toUri();
       String scheme = pathUri.getScheme().toLowerCase();
       if ("s3".equals(scheme) || "s3a".equals(scheme) || "s3n".equals(scheme)) {
-        S3Utils.S3Cache localS3Cache = S3Utils.getS3Cache();
-        S3Utils.S3Cache s3Cache = S3Utils.getS3Cache();
+        S3Cache localS3Cache = S3Utils.getS3Cache();
+        S3Cache s3Cache = S3Utils.getS3Cache();
         File tmpBucketDir = new File(S3Utils.getCacheDir(), pathUri.getHost());
         File tmpFile = new File(tmpBucketDir, pathUri.getPath().substring(1));
         // Copy the file from S3 to the local drive and return a reader for that file
@@ -808,7 +810,7 @@ public static class MapFileReaderWrapper
   private Path path;
   private MapFile.Reader reader;
   private Path localPath;
-  private S3Utils.S3CacheEntry cacheEntry;
+  private S3CacheEntry cacheEntry;
 
   public MapFileReaderWrapper(Path path, Configuration conf)
   {
@@ -840,7 +842,7 @@ public static class MapFileReaderWrapper
       URI dataUri = UriBuilder.fromUri(pathUri).path("data").build();
       String scheme = pathUri.getScheme().toLowerCase();
       if ("s3".equals(scheme) || "s3a".equals(scheme) || "s3n".equals(scheme)) {
-        S3Utils.S3Cache localS3Cache = S3Utils.getS3Cache();
+        S3Cache localS3Cache = S3Utils.getS3Cache();
         File cacheDir = S3Utils.getCacheDir();
         log.debug("cacheDir = " + cacheDir.getAbsolutePath());
         File tmpBucketDir = new File(S3Utils.getCacheDir(), pathUri.getHost());

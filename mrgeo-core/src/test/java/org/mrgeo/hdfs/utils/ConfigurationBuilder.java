@@ -2,6 +2,7 @@ package org.mrgeo.hdfs.utils;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.SequenceFile;
+import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.image.ImageInputFormatContext;
 
@@ -93,7 +94,7 @@ public Configuration build()
   when(configuration.getInt(TILE_SIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT)).thenReturn(tileSize);
   when(configuration.get(BOUNDS)).thenReturn(boundsString);
   when(configuration.getBoolean(FILE_OUTPT_FORMAT_COMPRESS, false)).thenReturn(compressOutput);
-  when(configuration.get(FILE_OUTPUT_COMPRESSION_TYPE, SequenceFile.CompressionType.RECORD.toString()))
+  when(configuration.get(FILE_OUTPUT_COMPRESSION_TYPE, CompressionType.RECORD.toString()))
       .thenReturn(outputCompressionType);
   when(configuration.get(FILE_OUTPUT_COMPRESSION_CODEC)).thenReturn(outputCompressionCodec);
   when(configuration.get(FILE_OUTPUT_PATH)).thenReturn(outputFilePath);

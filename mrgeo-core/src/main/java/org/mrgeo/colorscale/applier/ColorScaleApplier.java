@@ -16,6 +16,8 @@
 package org.mrgeo.colorscale.applier;
 
 import org.mrgeo.colorscale.ColorScale;
+import org.mrgeo.colorscale.ColorScale.ColorScaleException;
+import org.mrgeo.colorscale.ColorScale.Scaling;
 import org.mrgeo.data.raster.MrGeoRaster;
 
 /**
@@ -29,7 +31,7 @@ public abstract class ColorScaleApplier
  * Applies a color scale to a rendered image
  */
 public abstract MrGeoRaster applyColorScale(MrGeoRaster raster, ColorScale colorScale, double[] extrema,
-    double[] defaultValue, double[][] quantiles) throws ColorScale.ColorScaleException;
+    double[] defaultValue, double[][] quantiles) throws ColorScaleException;
 
 /**
  * Returns the mime type for the color scale applier
@@ -81,14 +83,14 @@ void setupExtrema(ColorScale colorScale, double[] extrema, double defaultValue, 
 // if we don't have min/max make the color scale modulo with
   if (extrema == null)
   {
-    colorScale.setScaling(ColorScale.Scaling.Modulo);
+    colorScale.setScaling(Scaling.Modulo);
     colorScale.setScaleRange(0.0, 10.0);
   }
-  else if (colorScale.getScaling() == ColorScale.Scaling.MinMax)
+  else if (colorScale.getScaling() == Scaling.MinMax)
   {
     colorScale.setScaleRange(extrema[0], extrema[1]);
   }
-  else if (colorScale.getScaling() == ColorScale.Scaling.Quantile) {
+  else if (colorScale.getScaling() == Scaling.Quantile) {
     colorScale.setScaleRangeWithQuantiles(extrema[0], extrema[1], quantiles);
   }
 

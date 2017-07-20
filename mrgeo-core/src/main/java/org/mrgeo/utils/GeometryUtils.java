@@ -20,6 +20,7 @@ import com.vividsolutions.jts.geom.TopologyException;
 import com.vividsolutions.jts.simplify.TopologyPreservingSimplifier;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.mrgeo.geometry.*;
+import org.mrgeo.geometry.Geometry.Type;
 import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -223,7 +224,7 @@ public static boolean inside(final Polygon poly, final Point p)
 
 public static boolean intersects(final Polygon polygon, final Geometry geometry)
 {
-  if (geometry.type() == Geometry.Type.COLLECTION && geometry instanceof GeometryCollection)
+  if (geometry.type() == Type.COLLECTION && geometry instanceof GeometryCollection)
   {
     GeometryCollection gc = (GeometryCollection) geometry;
     for (Geometry geom : gc.getGeometries())

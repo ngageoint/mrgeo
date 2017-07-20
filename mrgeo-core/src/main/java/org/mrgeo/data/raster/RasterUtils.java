@@ -15,6 +15,7 @@
 
 package org.mrgeo.data.raster;
 
+import org.mrgeo.data.raster.RasterWritable.RasterWritableException;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.TMSUtils;
 
@@ -162,7 +163,7 @@ public static double getDefaultNoDataForType(final int rasterDataType)
   case DataBuffer.TYPE_USHORT:
     return 65536;  // no ushort constant
   default:
-    throw new RasterWritable.RasterWritableException(
+    throw new RasterWritableException(
         "Error trying to get default nodata value from raster. Bad raster data type " + rasterDataType);
   }
 }
@@ -198,7 +199,7 @@ private static void fillWithNodata(final WritableRaster raster, final double nod
       raster.setSamples(0, 0, raster.getWidth(), raster.getHeight(), b, doublesamples);
       break;
     default:
-      throw new RasterWritable.RasterWritableException(
+      throw new RasterWritableException(
           "Error trying to get fill pixels in the raster with nodata value. Bad raster data type");
     }
   }
@@ -208,7 +209,7 @@ private static void fillWithNodata(final WritableRaster raster, final double[] n
 {
   if (raster.getNumBands() != nodata.length)
   {
-    throw new RasterWritable.RasterWritableException(
+    throw new RasterWritableException(
         "Error - cannot fill fill " + raster.getNumBands() +
             " band raster with nodata array containing " + nodata.length +
             " values");
@@ -242,7 +243,7 @@ private static void fillWithNodata(final WritableRaster raster, final double[] n
       raster.setSamples(0, 0, raster.getWidth(), raster.getHeight(), b, doublesamples);
       break;
     default:
-      throw new RasterWritable.RasterWritableException(
+      throw new RasterWritableException(
           "Error trying to get fill pixels in the raster with nodata value. Bad raster data type");
     }
   }

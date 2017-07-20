@@ -25,6 +25,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.SequenceFile;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsPyramidMetadataReader;
@@ -753,7 +754,7 @@ public class S3Utils
                   else {
                     MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(
                             "s3://" + strRelativeImagePath,
-                            DataProviderFactory.AccessMode.READ, providerProperties);
+                            AccessMode.READ, providerProperties);
                     MrsPyramidMetadataReader metadataReader = dp.getMetadataReader();
                     if (metadataReader != null) {
                       MrsPyramidMetadata metadata = metadataReader.read();

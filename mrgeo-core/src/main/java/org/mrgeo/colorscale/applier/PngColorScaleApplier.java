@@ -16,7 +16,9 @@
 package org.mrgeo.colorscale.applier;
 
 import org.mrgeo.colorscale.ColorScale;
+import org.mrgeo.colorscale.ColorScale.ColorScaleException;
 import org.mrgeo.data.raster.MrGeoRaster;
+import org.mrgeo.data.raster.MrGeoRaster.MrGeoRasterException;
 import org.mrgeo.data.raster.RasterUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +41,7 @@ private static final Logger log = LoggerFactory.getLogger(PngColorScaleApplier.c
  */
 @Override
 public MrGeoRaster applyColorScale(final MrGeoRaster raster, ColorScale colorScale, final double[] extrema,
-    final double[] defaultValues, final double[][] quantiles) throws ColorScale.ColorScaleException
+    final double[] defaultValues, final double[][] quantiles) throws ColorScaleException
 {
   try
   {
@@ -52,9 +54,9 @@ public MrGeoRaster applyColorScale(final MrGeoRaster raster, ColorScale colorSca
     apply(raster, colored, colorScale);
     return colored;
   }
-  catch (MrGeoRaster.MrGeoRasterException e)
+  catch (MrGeoRasterException e)
   {
-    throw new ColorScale.ColorScaleException(e);
+    throw new ColorScaleException(e);
   }
 }
 

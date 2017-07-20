@@ -27,6 +27,7 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.vector.*;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.hdfs.vector.ShpInputFormat.ShpRecordReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -374,7 +375,7 @@ public RecordReader<FeatureIdWritable, Geometry> getRecordReader() throws IOExce
   }
   else if (isSourceShapefile(resourcePath))
   {
-    return new ShpInputFormat.ShpRecordReader();
+    return new ShpRecordReader();
   }
   throw new IOException("Unable to create vector reader for " + resourceName);
 }

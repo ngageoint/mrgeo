@@ -19,6 +19,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.image.ImageInputFormatContext;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.raster.RasterWritable;
@@ -118,7 +119,7 @@ private RecordReader<TileIdWritable, RasterWritable> getRecordReader(
     final String name, final Configuration conf) throws DataProviderNotFound
 {
   MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(name,
-      DataProviderFactory.AccessMode.READ, conf);
+      AccessMode.READ, conf);
   return dp.getRecordReader();
 }
 

@@ -1,6 +1,7 @@
 package org.mrgeo.hdfs.utils;
 
 import org.apache.hadoop.io.SequenceFile;
+import org.apache.hadoop.io.SequenceFile.Reader;
 import org.apache.hadoop.io.Writable;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -20,12 +21,12 @@ public class SequenceFileReaderBuilder
 {
 private static final Logger logger = LoggerFactory.getLogger(SequenceFileReaderBuilder.class);
 
-private SequenceFile.Reader sequenceFileReader;
+private Reader sequenceFileReader;
 private KeyValueHelper keyValueHelper;
 
 public SequenceFileReaderBuilder()
 {
-  this.sequenceFileReader = mock(SequenceFile.Reader.class);
+  this.sequenceFileReader = mock(Reader.class);
   keyValueHelper = new KeyValueHelper();
 }
 
@@ -57,7 +58,7 @@ public SequenceFileReaderBuilder values(Writable[] values)
   return this;
 }
 
-public SequenceFile.Reader build() throws IOException
+public Reader build() throws IOException
 {
   when(sequenceFileReader.getKeyClass()).thenReturn(keyValueHelper.getKeyClass());
   when(sequenceFileReader.getValueClass()).thenReturn(keyValueHelper.getValueClass());

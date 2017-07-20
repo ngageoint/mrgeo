@@ -18,6 +18,7 @@ package org.mrgeo.hdfs.output.image;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.io.SequenceFile;
+import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.compress.CompressionCodec;
@@ -41,7 +42,7 @@ private static final Logger log = LoggerFactory.getLogger(HdfsMrsPyramidOutputFo
 public RecordWriter<WritableComparable<?>, Writable> getRecordWriter(TaskAttemptContext context) throws IOException
 {
   CompressionCodec codec = null;
-  SequenceFile.CompressionType compressionType = SequenceFile.CompressionType.NONE;
+  CompressionType compressionType = CompressionType.NONE;
   if (getCompressOutput(context))
   {
     // find the kind of compression to do
@@ -59,7 +60,7 @@ public RecordWriter<WritableComparable<?>, Writable> getRecordWriter(TaskAttempt
 }
 
 protected MapFile.Writer createMapFileWriter(TaskAttemptContext context, CompressionCodec codec,
-    SequenceFile.CompressionType compressionType, Path file) throws IOException
+    CompressionType compressionType, Path file) throws IOException
 {
   return new MapFile.Writer(context.getConfiguration(), file,
       MapFile.Writer.keyClass(context.getOutputKeyClass().asSubclass(WritableComparable.class)),

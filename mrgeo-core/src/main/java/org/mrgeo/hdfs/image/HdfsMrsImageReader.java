@@ -32,7 +32,9 @@ import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.tile.FileSplit;
+import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.hdfs.utils.HadoopFileUtils.MapFileReaderWrapper;
 import org.mrgeo.utils.HadoopUtils;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
@@ -67,14 +69,14 @@ final boolean profile;
 //final private HdfsMrsImageDataProvider provider;
 final private MrsPyramidReaderContext context;
 final private FileSplit splits = new FileSplit();
-private final LoadingCache<Integer, HadoopFileUtils.MapFileReaderWrapper> readerCache = CacheBuilder.newBuilder()
+private final LoadingCache<Integer, MapFileReaderWrapper> readerCache = CacheBuilder.newBuilder()
     .maximumSize(READER_CACHE_SIZE)
     .expireAfterAccess(READER_CACHE_EXPIRE, TimeUnit.SECONDS)
     .removalListener(
-        new RemovalListener<Integer, HadoopFileUtils.MapFileReaderWrapper>()
+        new RemovalListener<Integer, MapFileReaderWrapper>()
         {
           @Override
-          public void onRemoval(final RemovalNotification<Integer, HadoopFileUtils.MapFileReaderWrapper> notification)
+          public void onRemoval(final RemovalNotification<Integer, MapFileReaderWrapper> notification)
           {
             try
             {
@@ -85,11 +87,11 @@ private final LoadingCache<Integer, HadoopFileUtils.MapFileReaderWrapper> reader
               log.error("IOException removing HdfsMrsImageReader from cache {} ", e);
             }
           }
-        }).build(new CacheLoader<Integer, HadoopFileUtils.MapFileReaderWrapper>()
+        }).build(new CacheLoader<Integer, MapFileReaderWrapper>()
     {
 
       @Override
-      public HadoopFileUtils.MapFileReaderWrapper load(final Integer partitionIndex) throws IOException
+      public MapFileReaderWrapper load(final Integer partitionIndex) throws IOException
       {
         return loadReader(partitionIndex);
       }
@@ -246,7 +248,7 @@ public KVIterator<TileIdWritable, MrGeoRaster> get()
 @Override
 public MrGeoRaster get(final TileIdWritable key)
 {
-  HadoopFileUtils.MapFileReaderWrapper readerWrapper = null;
+  MapFileReaderWrapper readerWrapper = null;
   try
   {
     // get the reader that handles the partition/map file
@@ -349,14 +351,14 @@ public int getPartitionIndex(final TileIdWritable key) throws IOException
  */
 @SuppressWarnings("squid:S1166") // Exception caught and handled
 @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST_OF_RETURN_VALUE", justification = "We _are_ checking!")
-public HadoopFileUtils.MapFileReaderWrapper getReaderWrapper(final int partitionIndex) throws IOException
+public MapFileReaderWrapper getReaderWrapper(final int partitionIndex) throws IOException
 {
   try
   {
     if (canBeCached)
     {
       log.info("Loading reader for partitionIndex " + partitionIndex + " through the cache");
-      HadoopFileUtils.MapFileReaderWrapper reader = readerCache.get(partitionIndex);
+      MapFileReaderWrapper reader = readerCache.get(partitionIndex);
       try
       {
         // there is a slim chance the cached reader was closed, this will check, close the reader,
@@ -406,13 +408,13 @@ protected Path getTilePath()
   return imagePath;
 }
 
-private HadoopFileUtils.MapFileReaderWrapper loadReader(int partitionIndex) throws IOException
+private MapFileReaderWrapper loadReader(int partitionIndex) throws IOException
 {
-  final FileSplit.FileSplitInfo part =
-      (FileSplit.FileSplitInfo) splits.getSplits()[partitionIndex];
+  final FileSplitInfo part =
+      (FileSplitInfo) splits.getSplits()[partitionIndex];
 
   final Path path = new Path(imagePath, part.getName());
-  return new HadoopFileUtils.MapFileReaderWrapper(path, conf);
+  return new MapFileReaderWrapper(path, conf);
 
 //    if (profile)
 //    {

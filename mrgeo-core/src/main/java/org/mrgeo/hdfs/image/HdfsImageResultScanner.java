@@ -20,7 +20,9 @@ import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.tile.Splits;
+import org.mrgeo.hdfs.tile.Splits.SplitException;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.hdfs.utils.HadoopFileUtils.MapFileReaderWrapper;
 import org.mrgeo.image.MrsImageException;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.TMSUtils;
@@ -45,7 +47,7 @@ private final long rowStart;
 private final long rowEnd;
 private final int zoom;
 // hdfs specific reader
-private HadoopFileUtils.MapFileReaderWrapper mapfile;
+private MapFileReaderWrapper mapfile;
 // keep track of where the reader is
 private int curPartitionIndex;
 // return item
@@ -339,7 +341,7 @@ private void primeScanner(final long startTileId, final long endTileId)
     }
   }
   // if the tiles are out of bounds, this exception will be thrown.
-  catch (Splits.SplitException se)
+  catch (SplitException se)
   {
     currentKey = null;
   }

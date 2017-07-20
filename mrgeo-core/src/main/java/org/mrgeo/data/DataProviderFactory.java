@@ -39,6 +39,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -152,7 +153,7 @@ public static void saveProviderPropertiesToConfig(final ProviderProperties provi
   // side of a map/reduce 1 job.
   Map<String, String> configSettings = getConfigurationFromProviders();
   log.debug("Saving " + configSettings.size() + " configuration settings from data providers to config");
-  for (Map.Entry<String, String> es : configSettings.entrySet())
+  for (Entry<String, String> es : configSettings.entrySet())
   {
     conf.set(DATA_PROVIDER_CONFIG_PREFIX + es.getKey(), es.getValue());
   }
@@ -162,12 +163,12 @@ public static ProviderProperties loadProviderPropertiesFromConfig(Configuration 
 {
   // Tell each data provider to load their config settings from the Configuration.
   // This is the inverse operation to saveProviderPropertiesToConfig.
-  Iterator<Map.Entry<String, String>> iter = conf.iterator();
+  Iterator<Entry<String, String>> iter = conf.iterator();
   Map<String, String> configSettings = new HashMap<>();
   int prefixLen = DATA_PROVIDER_CONFIG_PREFIX.length();
   while (iter.hasNext())
   {
-    Map.Entry<String, String> entry = iter.next();
+    Entry<String, String> entry = iter.next();
     if (entry.getKey().startsWith(DATA_PROVIDER_CONFIG_PREFIX))
     {
       configSettings.put(entry.getKey().substring(prefixLen),

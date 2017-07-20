@@ -17,12 +17,14 @@ package org.mrgeo.mapreduce;
 
 import org.apache.hadoop.io.Writable;
 import org.mrgeo.geometry.*;
+import org.mrgeo.geometry.Geometry.Type;
 import org.mrgeo.utils.StringUtils;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Not to be confused with WritableGeometry the GeometryWritable class provides the ability to be
@@ -99,7 +101,7 @@ private static void readPolygon(final DataInput in, final WritablePolygon p) thr
 private static void writeAttributes(final DataOutput out, final Geometry g) throws IOException
 {
   out.writeInt(g.getAllAttributes().size());
-  for (Map.Entry attr : g.getAllAttributesSorted().entrySet())
+  for (Entry attr : g.getAllAttributesSorted().entrySet())
   {
     out.writeUTF(attr.getKey().toString());
     // Cannot use writeUTF for the value because there is a limit of 64K
@@ -180,7 +182,7 @@ private WritableGeometry readGeometry(final DataInput in) throws IOException
 {
   WritableGeometry result;
 
-  final Geometry.Type type = Geometry.Type.values()[in.readInt()];
+  final Type type = Type.values()[in.readInt()];
   switch (type)
   {
   case COLLECTION:

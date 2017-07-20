@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Created by ericwood on 8/11/16.
@@ -65,7 +66,7 @@ public RestClient(String baseUrl, String username, String password)
 
 private static Request setHeaders(Request request, Map<String, String> requestHeaders)
 {
-  for (Map.Entry<String, String> headerEntry : requestHeaders.entrySet())
+  for (Entry<String, String> headerEntry : requestHeaders.entrySet())
   {
     request.setHeader(headerEntry.getKey(), headerEntry.getValue());
   }

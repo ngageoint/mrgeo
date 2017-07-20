@@ -19,6 +19,7 @@ import org.mrgeo.core.MrGeoProperties;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 
 /**
@@ -40,7 +41,7 @@ static Map<String, Properties> getPropertiesByProfileName()
 //        Properties mrgeoProps = new Properties();
 //        mrgeoProps.putAll(MrGeoProperties.getInstance());
   // TODO may want to add system properties as well, so a MRGEO setting gould be overriden at runtime.
-  for (Map.Entry<Object, Object> prop : mrgeoProps.entrySet())
+  for (Entry<Object, Object> prop : mrgeoProps.entrySet())
   {
     String propName = prop.getKey().toString();
     String[] propParts = propName.split(MRGEO_PUBLISHER_PROPERTY_PREFIX);

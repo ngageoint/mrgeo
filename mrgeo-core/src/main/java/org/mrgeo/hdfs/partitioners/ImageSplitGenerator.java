@@ -16,7 +16,9 @@
 package org.mrgeo.hdfs.partitioners;
 
 import org.mrgeo.hdfs.tile.FileSplit;
+import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo;
 import org.mrgeo.hdfs.tile.PartitionerSplit;
+import org.mrgeo.hdfs.tile.PartitionerSplit.PartitionerSplitInfo;
 import org.mrgeo.hdfs.tile.SplitInfo;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.TMSUtils;
@@ -96,7 +98,7 @@ private static int computeIncrement(final LongRectangle tileBounds,
 @Override
 public SplitInfo[] getSplits()
 {
-  List<FileSplit.FileSplitInfo> splits = new ArrayList<>();
+  List<FileSplitInfo> splits = new ArrayList<>();
 
   // If increment < 0, then that means no splits are required because all of
   // the tiles will fit in a single block.
@@ -108,25 +110,25 @@ public SplitInfo[] getSplits()
     int partition = 0;
     for (long i = minTileY + increment - 1; i < maxTileY; i += increment, partition++)
     {
-      splits.add(new FileSplit.FileSplitInfo(
+      splits.add(new FileSplitInfo(
           TMSUtils.tileid(minTileX, i, zoomLevel),
           TMSUtils.tileid(maxTileX, i, zoomLevel),
           "", partition));
     }
     // Add the last split
-    splits.add(new FileSplit.FileSplitInfo(
+    splits.add(new FileSplitInfo(
         TMSUtils.tileid(minTileX, maxTileY, zoomLevel),
         TMSUtils.tileid(maxTileX, maxTileY, zoomLevel),
         "", partition));
   }
 
-  return splits.toArray(new FileSplit.FileSplitInfo[splits.size()]);
+  return splits.toArray(new FileSplitInfo[splits.size()]);
 }
 
 @Override
 public SplitInfo[] getPartitions()
 {
-  List<PartitionerSplit.PartitionerSplitInfo> splits =
+  List<PartitionerSplitInfo> splits =
       new ArrayList<>();
 
   // If increment < 0, then that means no splits are required because all of
@@ -139,17 +141,17 @@ public SplitInfo[] getPartitions()
     int partition = 0;
     for (long i = minTileY + increment - 1; i < maxTileY; i += increment, partition++)
     {
-      splits.add(new PartitionerSplit.PartitionerSplitInfo(
+      splits.add(new PartitionerSplitInfo(
           TMSUtils.tileid(maxTileX, i, zoomLevel),
           partition));
     }
     // Add the last split
-    splits.add(new PartitionerSplit.PartitionerSplitInfo(
+    splits.add(new PartitionerSplitInfo(
         TMSUtils.tileid(maxTileX, maxTileY, zoomLevel),
         partition));
   }
 
-  return splits.toArray(new PartitionerSplit.PartitionerSplitInfo[splits.size()]);
+  return splits.toArray(new PartitionerSplitInfo[splits.size()]);
 }
 
 }

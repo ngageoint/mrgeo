@@ -763,7 +763,7 @@ public void put(final double key, final int[] c)
 public void setDefaultGrayScaleValues()
 {
   clear();
-  setScaling(ColorScale.Scaling.MinMax);
+  setScaling(Scaling.MinMax);
   put(0.0, new Color(0, 0, 0));
   put(0.1, new Color(26, 26, 26));
   put(0.2, new Color(52, 52, 52));
@@ -786,7 +786,7 @@ public void setDefaultGrayScaleValues()
 public void setDefaultValues()
 {
   clear();
-  setScaling(ColorScale.Scaling.MinMax);
+  setScaling(Scaling.MinMax);
   put(0.0, new Color(0, 0, 0, 0));
   put(1e-12, new Color(255, 255, 255, 128));
   put(0.1, new Color(247, 252, 253));

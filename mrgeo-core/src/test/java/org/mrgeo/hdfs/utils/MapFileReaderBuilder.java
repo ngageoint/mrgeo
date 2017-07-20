@@ -1,6 +1,7 @@
 package org.mrgeo.hdfs.utils;
 
 import org.apache.hadoop.io.MapFile;
+import org.apache.hadoop.io.MapFile.Reader;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.mockito.invocation.InvocationOnMock;
@@ -22,12 +23,12 @@ public class MapFileReaderBuilder
 {
 private static final Logger logger = LoggerFactory.getLogger(MapFileReaderBuilder.class);
 
-private MapFile.Reader mapFileReader;
+private Reader mapFileReader;
 private KeyValueHelper keyValueHelper;
 
 public MapFileReaderBuilder()
 {
-  this.mapFileReader = mock(MapFile.Reader.class);
+  this.mapFileReader = mock(Reader.class);
   keyValueHelper = new KeyValueHelper();
 }
 
@@ -59,7 +60,7 @@ public MapFileReaderBuilder values(Writable[] values)
   return this;
 }
 
-public MapFile.Reader build() throws IOException
+public Reader build() throws IOException
 {
   when(mapFileReader.getKeyClass()).thenReturn(keyValueHelper.getKeyClass());
   when(mapFileReader.getValueClass()).thenReturn(keyValueHelper.getValueClass());

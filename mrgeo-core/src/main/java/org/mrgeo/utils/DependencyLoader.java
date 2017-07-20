@@ -42,6 +42,7 @@ import java.net.URL;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -432,7 +433,7 @@ private static Set<File> findJarsInClasspath(final Set<String> jars, boolean rec
   // now perform any variable replacement in the classpath
   Map<String, String> envMap = System.getenv();
 
-  for (Map.Entry<String, String> entry : envMap.entrySet())
+  for (Entry<String, String> entry : envMap.entrySet())
   {
     String key = entry.getKey();
     String value = entry.getValue();

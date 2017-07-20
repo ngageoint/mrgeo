@@ -27,6 +27,7 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.tile.TileIdWritable;
+import org.mrgeo.image.MrsPyramidMetadata.Classification;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.Pixel;
@@ -264,7 +265,7 @@ public boolean hasPyramids()
   return metadata.hasPyramids();
 }
 
-public MrsPyramidMetadata.Classification getClassification() throws IOException
+public Classification getClassification() throws IOException
 {
   return provider.getMetadataReader().read().getClassification();
 }

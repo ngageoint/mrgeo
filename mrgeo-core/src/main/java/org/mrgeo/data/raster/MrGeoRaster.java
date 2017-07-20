@@ -22,6 +22,7 @@ import org.gdal.gdalconst.gdalconstConstants;
 import org.mrgeo.aggregators.Aggregator;
 import org.mrgeo.data.raster.Interpolator.Bilinear;
 import org.mrgeo.data.raster.Interpolator.Nearest;
+import org.mrgeo.data.raster.RasterWritable.RasterWritableException;
 import org.mrgeo.utils.ByteArrayUtils;
 import org.mrgeo.utils.FloatUtils;
 import org.mrgeo.utils.GDALUtils;
@@ -98,7 +99,7 @@ public static MrGeoRaster createEmptyRaster(int width, int height, int bands, in
     return MrGeoUShortRaster.createEmptyRaster(width, height, bands);
   }
   default:
-    throw new RasterWritable.RasterWritableException("Error trying to read raster.  Bad raster data type");
+    throw new RasterWritableException("Error trying to read raster.  Bad raster data type");
   }
 }
 
@@ -144,7 +145,7 @@ public static MrGeoRaster createRaster(int width, int height, int bands, int dat
     return new MrGeoShortRaster(width, height, bands, data, dataOffset);
   }
   default:
-    throw new RasterWritable.RasterWritableException("Error trying to read raster.  Bad raster data type");
+    throw new RasterWritableException("Error trying to read raster.  Bad raster data type");
   }
 }
 
@@ -178,7 +179,7 @@ public static MrGeoRaster fromRaster(Raster raster) throws IOException
           mrgeo.setPixel(x, y, b, raster.getSampleDouble(x, y, b));
           break;
         default:
-          throw new RasterWritable.RasterWritableException("Error trying to read raster.  Bad raster data type");
+          throw new RasterWritableException("Error trying to read raster.  Bad raster data type");
         }
       }
     }
@@ -563,7 +564,7 @@ public MrGeoRaster scale(final int dstWidth,
       }
       break;
     default:
-      throw new RasterWritable.RasterWritableException("Error trying to scale raster. Bad raster data type");
+      throw new RasterWritableException("Error trying to scale raster. Bad raster data type");
     }
 
     if (dst.width == dstWidth && dst.height == dstHeight)
@@ -676,7 +677,7 @@ final public MrGeoRaster reduce(final int xfactor, final int yfactor, Aggregator
           child.setPixel(x / xfactor, y / yfactor, b, doublesample);
           break;
         default:
-          throw new RasterWritable.RasterWritableException(
+          throw new RasterWritableException(
               "Error trying to get decimate pixels in the raster. Bad raster data type");
         }
       }
@@ -946,7 +947,7 @@ final public Raster toRaster()
     break;
   }
   default:
-    throw new RasterWritable.RasterWritableException("Error trying to read raster.  Bad raster data type");
+    throw new RasterWritableException("Error trying to read raster.  Bad raster data type");
   }
 
   return raster;

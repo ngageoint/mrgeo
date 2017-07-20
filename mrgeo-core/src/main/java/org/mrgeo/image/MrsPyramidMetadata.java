@@ -999,7 +999,7 @@ public static class TileMetadata implements Serializable
  * ImageMetadata is a container of the multiple types of
  * bounds for images.
  */
-public static class ImageMetadata extends MrsPyramidMetadata.TileMetadata
+public static class ImageMetadata extends TileMetadata
 {
   private static final long serialVersionUID = 1L;
 

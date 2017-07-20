@@ -96,14 +96,14 @@ public void generateSplits(Path parent, Configuration conf) throws IOException
       TileIdWritable lastKey = (TileIdWritable) reader.getClosest(new TileIdWritable(Long.MAX_VALUE), val, true);
       if (firstKey != null && lastKey != null)
       {
-        list.add(new FileSplit.FileSplitInfo(firstKey.get(), lastKey.get(), mapfile.getName(), partition));
+        list.add(new FileSplitInfo(firstKey.get(), lastKey.get(), mapfile.getName(), partition));
       }
 
       partition++;
     }
   }
 
-  splits = list.toArray(new FileSplit.FileSplitInfo[list.size()]);
+  splits = list.toArray(new FileSplitInfo[list.size()]);
 }
 
 @Override

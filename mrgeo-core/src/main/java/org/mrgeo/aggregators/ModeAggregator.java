@@ -23,6 +23,7 @@ import org.mrgeo.utils.FloatUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Returns the mode of pixel values.
@@ -48,7 +49,7 @@ public double aggregate(double[] values, double nodata)
   double mode = nodata;
   int maxFreq = 0;
 
-  for (Map.Entry<Double, Integer> entry : freqs.entrySet())
+  for (Entry<Double, Integer> entry : freqs.entrySet())
   {
     int freq = entry.getValue();
     if (freq > maxFreq)
@@ -78,7 +79,7 @@ public float aggregate(float[] values, float nodata)
   float mode = nodata;
   int maxFreq = 0;
 
-  for (Map.Entry<Float, Integer> entry : freqs.entrySet())
+  for (Entry<Float, Integer> entry : freqs.entrySet())
   {
     int freq = entry.getValue();
     if (freq > maxFreq)
@@ -108,7 +109,7 @@ public int aggregate(int[] values, int nodata)
   int mode = nodata;
   int maxFreq = 0;
 
-  for (Map.Entry<Integer, Integer> entry : freqs.entrySet())
+  for (Entry<Integer, Integer> entry : freqs.entrySet())
   {
     int freq = entry.getValue();
     if (freq > maxFreq)
@@ -138,7 +139,7 @@ public short aggregate(short[] values, short nodata)
   short mode = nodata;
   int maxFreq = 0;
 
-  for (Map.Entry<Short, Integer> entry : freqs.entrySet())
+  for (Entry<Short, Integer> entry : freqs.entrySet())
   {
     int freq = entry.getValue();
     if (freq > maxFreq)
@@ -168,7 +169,7 @@ public byte aggregate(byte[] values, byte nodata)
   byte mode = nodata;
   int maxFreq = 0;
 
-  for (Map.Entry<Byte, Integer> entry : freqs.entrySet())
+  for (Entry<Byte, Integer> entry : freqs.entrySet())
   {
     int freq = entry.getValue();
     if (freq > maxFreq)

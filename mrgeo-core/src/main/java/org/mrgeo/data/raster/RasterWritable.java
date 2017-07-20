@@ -23,6 +23,7 @@ import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionInputStream;
 import org.apache.hadoop.io.compress.Decompressor;
+import org.mrgeo.data.raster.MrGeoRaster.MrGeoRasterException;
 import org.mrgeo.utils.ByteArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,7 +87,7 @@ public static RasterWritable toWritable(MrGeoRaster raster) throws IOException
   return new RasterWritable(raster.data());
 }
 
-private static MrGeoRaster convertFromV2(byte[] data) throws MrGeoRaster.MrGeoRasterException
+private static MrGeoRaster convertFromV2(byte[] data) throws MrGeoRasterException
 {
   final ByteBuffer rasterBuffer = ByteBuffer.wrap(data);
 

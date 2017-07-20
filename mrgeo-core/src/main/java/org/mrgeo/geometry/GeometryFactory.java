@@ -17,6 +17,7 @@ package org.mrgeo.geometry;
 
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.mrgeo.geometry.Geometry.Type;
 
 import java.util.Collection;
 import java.util.Map;
@@ -37,7 +38,7 @@ public static Class[] getClasses()
                   ArrayUtils.addAll(GeometryCollectionImpl.getClasses(), GeometryImpl.getClasses())))));
 }
 
-public static WritableGeometry createGeometry(final Geometry.Type type)
+public static WritableGeometry createGeometry(final Type type)
 {
   switch (type)
   {

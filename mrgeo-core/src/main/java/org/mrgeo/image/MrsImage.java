@@ -25,6 +25,7 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageReader;
 import org.mrgeo.data.image.MrsPyramidReaderContext;
 import org.mrgeo.data.raster.MrGeoRaster;
+import org.mrgeo.data.raster.MrGeoRaster.MrGeoRasterException;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.utils.LatLng;
@@ -438,19 +439,19 @@ public Set<Long> getTileIdsFromBounds(final Bounds bounds)
   return getTileIdsFromBounds(bounds, getZoomlevel(), getTilesize());
 }
 
-public MrGeoRaster getRaster() throws MrGeoRaster.MrGeoRasterException
+public MrGeoRaster getRaster() throws MrGeoRasterException
 {
   return getRaster(getTileBounds());
 }
 
-public MrGeoRaster getRaster(final Bounds bounds) throws MrGeoRaster.MrGeoRasterException
+public MrGeoRaster getRaster(final Bounds bounds) throws MrGeoRasterException
 {
   final TileBounds tb = TMSUtils.boundsToTile(bounds, getZoomlevel(), getTilesize());
 
   return getRaster(tb);
 }
 
-public MrGeoRaster getRaster(final long[] tiles) throws MrGeoRaster.MrGeoRasterException
+public MrGeoRaster getRaster(final long[] tiles) throws MrGeoRasterException
 {
   final Tile[] tileids = new Tile[tiles.length];
   for (int i = 0; i < tiles.length; i++)
@@ -461,14 +462,14 @@ public MrGeoRaster getRaster(final long[] tiles) throws MrGeoRaster.MrGeoRasterE
   return getRaster(tileids);
 }
 
-public MrGeoRaster getRaster(final LongRectangle tileBounds) throws MrGeoRaster.MrGeoRasterException
+public MrGeoRaster getRaster(final LongRectangle tileBounds) throws MrGeoRasterException
 {
   final TileBounds tb = new TileBounds(tileBounds.getMinX(), tileBounds
       .getMinY(), tileBounds.getMaxX(), tileBounds.getMaxY());
   return getRaster(tb);
 }
 
-public MrGeoRaster getRaster(final TileIdWritable[] tiles) throws MrGeoRaster.MrGeoRasterException
+public MrGeoRaster getRaster(final TileIdWritable[] tiles) throws MrGeoRasterException
 {
   final Tile[] tileids = new Tile[tiles.length];
   for (int i = 0; i < tiles.length; i++)
@@ -480,7 +481,7 @@ public MrGeoRaster getRaster(final TileIdWritable[] tiles) throws MrGeoRaster.Mr
 }
 
 @SuppressWarnings("squid:S1166") // TileNotFoundException exceptions are caught and ignored.  This is OK
-public MrGeoRaster getRaster(final Tile[] tiles) throws MrGeoRaster.MrGeoRasterException
+public MrGeoRaster getRaster(final Tile[] tiles) throws MrGeoRasterException
 {
   getMetadata(); // make sure metadata is loaded
 
@@ -553,7 +554,7 @@ public MrGeoRaster getRaster(final Tile[] tiles) throws MrGeoRaster.MrGeoRasterE
   return merged;
 }
 
-public MrGeoRaster getRaster(final TileBounds tileBounds) throws MrGeoRaster.MrGeoRasterException
+public MrGeoRaster getRaster(final TileBounds tileBounds) throws MrGeoRasterException
 {
   getMetadata(); // make sure metadata is loaded
 

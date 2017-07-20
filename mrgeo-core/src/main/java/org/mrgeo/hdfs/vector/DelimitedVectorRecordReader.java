@@ -27,6 +27,7 @@ import org.apache.hadoop.mapreduce.lib.input.LineRecordReader;
 import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.hdfs.vector.Column.FactorType;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -78,7 +79,7 @@ public static DelimitedParser getDelimitedParser(String input, Configuration con
       {
         String c = col.getName();
 
-        if (col.getType() == Column.FactorType.Numeric)
+        if (col.getType() == FactorType.Numeric)
         {
           if (c.equals("x"))
           {

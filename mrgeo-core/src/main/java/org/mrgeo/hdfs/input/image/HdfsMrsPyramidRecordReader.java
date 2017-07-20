@@ -19,6 +19,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.SequenceFile;
+import org.apache.hadoop.io.SequenceFile.Reader;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -31,7 +32,7 @@ import java.io.IOException;
 
 public class HdfsMrsPyramidRecordReader extends RecordReader<TileIdWritable, RasterWritable>
 {
-private SequenceFile.Reader reader;
+private Reader reader;
 private TileIdWritable key;
 private RasterWritable value;
 private long startTileId;
@@ -142,9 +143,9 @@ public boolean nextKeyValue() throws IOException, InterruptedException
 // Default ReaderFactory
 static class ReaderFactory
 {
-  public SequenceFile.Reader createReader(FileSystem fs, Path path, Configuration config) throws IOException
+  public Reader createReader(FileSystem fs, Path path, Configuration config) throws IOException
   {
-    return new SequenceFile.Reader(fs, path, config);
+    return new Reader(fs, path, config);
   }
 }
 }

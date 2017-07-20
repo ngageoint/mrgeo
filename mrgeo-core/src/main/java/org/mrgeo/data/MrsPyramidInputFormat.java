@@ -16,6 +16,7 @@
 package org.mrgeo.data;
 
 import org.apache.hadoop.mapreduce.*;
+import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.image.ImageInputFormatContext;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageInputFormatProvider;
@@ -96,7 +97,7 @@ protected List<TiledInputSplit> getNativeSplits(final JobContext context,
     final String input) throws IOException, InterruptedException
 {
   MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(input,
-      DataProviderFactory.AccessMode.READ, context.getConfiguration());
+      AccessMode.READ, context.getConfiguration());
   MrsImageInputFormatProvider ifProvider = dp.getImageInputFormatProvider(ifContext);
   List<InputSplit> splits = ifProvider.getInputFormat(input).getSplits(context);
   // In order to work with MrGeo and input bounds cropping, the splits must be

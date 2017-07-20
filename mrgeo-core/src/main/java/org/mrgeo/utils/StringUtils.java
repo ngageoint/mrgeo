@@ -19,6 +19,7 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.*;
 import java.util.*;
+import java.util.Map.Entry;
 
 public class StringUtils
 {
@@ -61,9 +62,9 @@ public static <T> String join(final T[] tokens, final String delimiter)
   return buffer.toString();
 }
 
-public static String join(final Iterable<? extends Object> tokens, final String delimiter)
+public static String join(final Iterable<?> tokens, final String delimiter)
 {
-  Iterator<? extends Object> oIter;
+  Iterator<?> oIter;
   if (tokens == null || (!(oIter = tokens.iterator()).hasNext()))
   {
     return "";
@@ -90,7 +91,7 @@ public static String toString(final Map<?, ?> tokens)
 {
   StringBuilder buf = new StringBuilder("{ ");
   String comma = "";
-  for (Map.Entry<?, ?> e : tokens.entrySet())
+  for (Entry<?, ?> e : tokens.entrySet())
   {
     buf.append(comma + e.getKey() + ":" + e.getValue());
     comma = ", ";

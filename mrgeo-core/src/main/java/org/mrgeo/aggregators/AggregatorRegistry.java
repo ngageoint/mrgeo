@@ -19,6 +19,7 @@
 package org.mrgeo.aggregators;
 
 import com.google.common.collect.ImmutableBiMap;
+import com.google.common.collect.ImmutableBiMap.Builder;
 
 /**
  * A registry class containing a bi-directional map
@@ -30,7 +31,7 @@ import com.google.common.collect.ImmutableBiMap;
 public class AggregatorRegistry
 {
 static public final ImmutableBiMap<String, Class<? extends Aggregator>> aggregatorRegistry =
-    new ImmutableBiMap.Builder<String, Class<? extends Aggregator>>()
+    new Builder<String, Class<? extends Aggregator>>()
         .put("MEAN", MeanAggregator.class)
         .put("SUM", SumAggregator.class)
         .put("MODE", ModeAggregator.class)

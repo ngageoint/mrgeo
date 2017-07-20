@@ -27,6 +27,7 @@ import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
 import org.mrgeo.hdfs.input.MapFileFilter;
+import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
@@ -129,13 +130,13 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
   org.mrgeo.hdfs.tile.FileSplit fsplit = createFileSplit();
   fsplit.readSplits(inputWithZoom);
 
-  org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo[] splits =
-      (org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo[]) fsplit.getSplits();
+  FileSplitInfo[] splits =
+      (FileSplitInfo[]) fsplit.getSplits();
 
   List<InputSplit> result = new ArrayList<>(splits.length);
 
   final Bounds requestedBounds = ifContext.getBounds();
-  for (org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo split : splits)
+  for (FileSplitInfo split : splits)
   {
     final Path part = new Path(inputWithZoom, split.getName());
     final Path dataFile = new Path(part, MapFile.DATA_FILE_NAME);
