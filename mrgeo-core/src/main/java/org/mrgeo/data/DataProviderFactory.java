@@ -1100,10 +1100,10 @@ private static class AdHocLoader implements Callable<AdHocDataProvider>
   {
     this.conf = conf;
     this.props = props;
-    this.prefix = getPrefix(name);
+    prefix = getPrefix(name);
     if (prefix != null)
     {
-      this.name = name.substring(this.prefix.length() + PREFIX_CHAR.length());
+      this.name = name.substring(prefix.length() + PREFIX_CHAR.length());
     }
     else
     {
@@ -1206,10 +1206,10 @@ private static class MrsImageLoader implements Callable<MrsImageDataProvider>
   {
     this.conf = conf;
     this.props = props;
-    this.prefix = getPrefix(name);
+    prefix = getPrefix(name);
     if (prefix != null)
     {
-      this.name = name.substring(this.prefix.length() + PREFIX_CHAR.length());
+      this.name = name.substring(prefix.length() + PREFIX_CHAR.length());
     }
     else
     {
@@ -1340,10 +1340,10 @@ private static class VectorLoader implements Callable<VectorDataProvider>
     {
       this.props = props;
     }
-    this.prefix = getPrefix(name);
+    prefix = getPrefix(name);
     if (prefix != null)
     {
-      this.name = name.substring(this.prefix.length() + PREFIX_CHAR.length());
+      this.name = name.substring(prefix.length() + PREFIX_CHAR.length());
     }
     else
     {

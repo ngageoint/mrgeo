@@ -124,7 +124,7 @@ static public class CsvRecordWriter extends RecordWriter<FeatureIdWritable, Geom
       profile = false;
     }
 
-    this.externalColumnsOutput = columnsOutput;
+    externalColumnsOutput = columnsOutput;
     init(null, output);
   }
 

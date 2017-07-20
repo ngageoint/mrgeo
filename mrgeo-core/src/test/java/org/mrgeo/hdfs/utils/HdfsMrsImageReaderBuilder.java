@@ -24,13 +24,13 @@ private int zoom;
 
 public HdfsMrsImageReaderBuilder()
 {
-  this.hdfsMrsImageReader = mock(HdfsMrsImageReader.class);
+  hdfsMrsImageReader = mock(HdfsMrsImageReader.class);
 }
 
 public HdfsMrsImageReaderBuilder mapFileReader(MapFileReaderWrapper mapFileReader)
 {
   // each call adds a new map file reader to the list
-  this.mapFileReaderWrappers.add(mapFileReader);
+  mapFileReaderWrappers.add(mapFileReader);
 
   return this;
 }

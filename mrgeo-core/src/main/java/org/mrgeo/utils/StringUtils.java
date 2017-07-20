@@ -37,7 +37,7 @@ public static String join(double[] tokens, String delimiter)
   StringBuilder buffer = new StringBuilder(String.valueOf(tokens[0]));
   for (int i = 1; i < tokens.length; i++)
   {
-    buffer.append(delimiter).append(String.valueOf(tokens[i]));
+    buffer.append(delimiter).append(tokens[i]);
   }
   return buffer.toString();
 }
@@ -47,7 +47,7 @@ public static String join(int[] tokens, String delimiter)
   StringBuilder buffer = new StringBuilder(String.valueOf(tokens[0]));
   for (int i = 1; i < tokens.length; i++)
   {
-    buffer.append(delimiter).append(String.valueOf(tokens[i]));
+    buffer.append(delimiter).append(tokens[i]);
   }
   return buffer.toString();
 }
@@ -57,7 +57,7 @@ public static <T> String join(T[] tokens, String delimiter)
   StringBuilder buffer = new StringBuilder(tokens[0].toString());
   for (int i = 1; i < tokens.length; i++)
   {
-    buffer.append(delimiter).append(String.valueOf(tokens[i]));
+    buffer.append(delimiter).append(tokens[i]);
   }
   return buffer.toString();
 }

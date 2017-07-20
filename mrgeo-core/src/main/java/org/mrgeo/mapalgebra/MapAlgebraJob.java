@@ -53,7 +53,7 @@ public MapAlgebraJob(String expression, String output,
 @Override
 public void setJobResults(JobResults jr)
 {
-  this.jobResults = jr;
+  jobResults = jr;
 }
 
 @Override

@@ -60,7 +60,7 @@ public ImageStats(double min, double max, double sum, long count)
   this.max = max;
   this.sum = sum;
   this.count = count;
-  this.mean = sum / count;
+  mean = sum / count;
 }
 
 /**

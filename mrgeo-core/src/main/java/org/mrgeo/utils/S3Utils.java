@@ -136,35 +136,35 @@ public class S3Utils
     @Override
     public void readLock() throws IOException {
       log.debug("Lock readLock lock from thread " + Thread.currentThread().getId() +
-              " on cacheEntry " + this.toString());
+              " on cacheEntry " + toString());
       rwLock.readLock().lock();
     }
 
     @Override
     public void writeLock() throws IOException {
       log.debug("Lock writeLock lock from thread " + Thread.currentThread().getId() +
-              " on cacheEntry " + this.toString());
+              " on cacheEntry " + toString());
       rwLock.writeLock().lock();
     }
 
     @Override
     public boolean tryWriteLock() throws IOException {
       log.debug("Lock writeLock lock from thread " + Thread.currentThread().getId() +
-              " on cacheEntry " + this.toString());
+              " on cacheEntry " + toString());
       return rwLock.writeLock().tryLock();
     }
 
     @Override
     public void releaseReadLock() {
       log.debug("Lock readLock unlock from thread " + Thread.currentThread().getId() +
-              " on cacheEntry " + this.toString());
+              " on cacheEntry " + toString());
       rwLock.readLock().unlock();
     }
 
     @Override
     public void releaseWriteLock() throws IOException {
       log.debug("Lock writeLock unlock from thread " + Thread.currentThread().getId() +
-              " on cacheEntry " + this.toString());
+              " on cacheEntry " + toString());
       rwLock.writeLock().unlock();
       // The lock is memory-based, but we want to make sure to close the file output stream
       // when we release the lock so we don't retain open files.
@@ -188,7 +188,7 @@ public class S3Utils
 
     S3FileCacheEntry(Path localPath, File localFile) {
       this.localPath = localPath;
-      this.primaryFile = localFile;
+      primaryFile = localFile;
     }
 
     S3FileCacheEntry(Path localPath, File primaryFile, File secondaryFile) {

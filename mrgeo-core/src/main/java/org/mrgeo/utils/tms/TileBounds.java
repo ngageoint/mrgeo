@@ -30,10 +30,10 @@ public long w;
 
 public TileBounds(long tx, long ty)
 {
-  this.n = ty;
-  this.s = ty;
-  this.e = tx;
-  this.w = tx;
+  n = ty;
+  s = ty;
+  e = tx;
+  w = tx;
 }
 
 public TileBounds(long w, long s, long e, long n)
@@ -46,10 +46,10 @@ public TileBounds(long w, long s, long e, long n)
 
 public TileBounds(Tile t)
 {
-  this.n = t.ty;
-  this.s = t.ty;
-  this.e = t.tx;
-  this.w = t.tx;
+  n = t.ty;
+  s = t.ty;
+  e = t.tx;
+  w = t.tx;
 }
 
 public static TileBounds convertFromLongRectangle(LongRectangle rectangle)
@@ -231,8 +231,8 @@ public TileBounds intersection(TileBounds b, boolean includeAdjacent)
 {
 
   TileBounds
-      intersectBounds = new TileBounds(Math.max(this.w, b.w), Math.max(this.s, b.s), Math
-      .min(this.e, b.e), Math.min(this.n, b.n));
+      intersectBounds = new TileBounds(Math.max(w, b.w), Math.max(s, b.s), Math
+      .min(e, b.e), Math.min(n, b.n));
   if (includeAdjacent)
   {
     if (intersectBounds.w <= intersectBounds.e && intersectBounds.s <= intersectBounds.n)

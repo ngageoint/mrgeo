@@ -46,7 +46,7 @@ private ReaderFactory readerFactory;
 // Default constructor injects Default Reader Factory
 public HdfsMrsPyramidRecordReader()
 {
-  this.readerFactory = new ReaderFactory();
+  readerFactory = new ReaderFactory();
 }
 
 // Constructor for injecting a ReaderFactory implementation
@@ -105,12 +105,12 @@ public void initialize(InputSplit split, TaskAttemptContext context) throws IOEx
 
     // Use a factory to create the reader reader to make this class easier to test and support decoupling the reader
     // lifecycle from this object's lifecycle.
-    this.reader = readerFactory.createReader(fs, path, conf);
+    reader = readerFactory.createReader(fs, path, conf);
 
     try
     {
-      this.key = (TileIdWritable) reader.getKeyClass().newInstance();
-      this.value = (RasterWritable) reader.getValueClass().newInstance();
+      key = (TileIdWritable) reader.getKeyClass().newInstance();
+      value = (RasterWritable) reader.getValueClass().newInstance();
     }
     catch (InstantiationException | IllegalAccessException e)
     {

@@ -52,11 +52,11 @@ public LongRectangle(long minX, long minY, long maxX, long maxY)
 
 public LongRectangle(LongRectangle copy)
 {
-  this.minX = copy.minX;
-  this.minY = copy.minY;
+  minX = copy.minX;
+  minY = copy.minY;
 
-  this.maxX = copy.maxX;
-  this.maxY = copy.maxY;
+  maxX = copy.maxX;
+  maxY = copy.maxY;
 
   set = true;
 }

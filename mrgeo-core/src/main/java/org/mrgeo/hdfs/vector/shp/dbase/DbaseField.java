@@ -52,38 +52,38 @@ public DbaseField(String name, int type)
   {
   case FLOAT:
   {
-    this.length = 13;
-    this.decimal = 3;
+    length = 13;
+    decimal = 3;
     break;
   }
   case CHARACTER:
   {
-    this.length = 50;
-    this.decimal = 0;
+    length = 50;
+    decimal = 0;
     break;
   }
   case NUMERIC:
   {
-    this.length = 13;
-    this.decimal = 0;
+    length = 13;
+    decimal = 0;
     break;
   }
   case LOGICAL:
   {
-    this.length = 1;
-    this.decimal = 0;
+    length = 1;
+    decimal = 0;
     break;
   }
   case DATE:
   {
-    this.length = 8;
-    this.decimal = 0;
+    length = 8;
+    decimal = 0;
     break;
   }
   default:
   {
-    this.length = 20;
-    this.decimal = 0;
+    length = 20;
+    decimal = 0;
   }
   }
 }

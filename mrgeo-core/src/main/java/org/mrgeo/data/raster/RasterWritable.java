@@ -45,7 +45,7 @@ private byte[] bytes;
 
 public RasterWritable()
 {
-  this.bytes = null;
+  bytes = null;
 }
 
 protected RasterWritable(byte[] bytes)
@@ -333,7 +333,7 @@ public static class RasterWritableException extends RuntimeException
 
   RasterWritableException(String msg)
   {
-    this.origException = new Exception(msg);
+    origException = new Exception(msg);
   }
 
   @Override

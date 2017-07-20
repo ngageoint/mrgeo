@@ -362,31 +362,31 @@ public static class FileSplitInfo extends SplitInfo
   @Override
   boolean compareEQ(long tileId)
   {
-    return tileId == this.endId;
+    return tileId == endId;
   }
 
   @Override
   boolean compareLE(long tileId)
   {
-    return tileId <= this.endId;
+    return tileId <= endId;
   }
 
   @Override
   boolean compareLT(long tileId)
   {
-    return tileId < this.endId;
+    return tileId < endId;
   }
 
   @Override
   boolean compareGE(long tileId)
   {
-    return tileId >= this.endId;
+    return tileId >= endId;
   }
 
   @Override
   boolean compareGT(long tileId)
   {
-    return tileId > this.endId;
+    return tileId > endId;
   }
 }
 

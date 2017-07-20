@@ -67,7 +67,7 @@ MrGeoRaster(int width, int height, int bands, int datatype, byte[] data, int dat
   this.data = data;
   this.dataoffset = dataoffset;
 
-  this.bandoffset = width * height;
+  bandoffset = width * height;
 }
 
 public static MrGeoRaster createEmptyRaster(int width, int height, int bands, int datatype) throws MrGeoRasterException
@@ -829,7 +829,7 @@ private Dataset toDataset(Dataset ds, int gdaltype, Bounds bounds,
       }
     }
     for (int y=0; y < outHeight; y++) {
-      System.arraycopy(this.data, calculateByteOffset(xoffset, y + yoffset, b), rowdata, 0, rowdata.length);
+      System.arraycopy(data, calculateByteOffset(xoffset, y + yoffset, b), rowdata, 0, rowdata.length);
       int success = band.WriteRaster(0, y, outWidth, 1, outWidth, 1, gdaltype, rowdata);
       if (success != gdalconstConstants.CE_None)
       {
@@ -869,7 +869,7 @@ public void copyToDataset(Dataset ds, int dsWidth, int dsHeight, Bounds fullBoun
   for (int b = 0; b < ds.GetRasterCount(); b++) {
     for (int y = 0; y < outHeight; y++) {
       Band band = ds.GetRasterBand(b + 1); // gdal bands are 1's based
-      System.arraycopy(this.data, calculateByteOffset(xoffset, y + yoffset, b), rowdata, 0, rowdata.length);
+      System.arraycopy(data, calculateByteOffset(xoffset, y + yoffset, b), rowdata, 0, rowdata.length);
       int success = band.WriteRaster(xoffsetWrite, y + yoffsetWrite, outWidth, 1, outWidth, 1, gdaltype, rowdata);
       if (success != gdalconstConstants.CE_None) {
         throw new IOException("Failed writing raster. gdal error: " + success);
@@ -1015,7 +1015,7 @@ public static class MrGeoRasterException extends IOException
 
   MrGeoRasterException(String msg)
   {
-    this.origException = new Exception(msg);
+    origException = new Exception(msg);
   }
 
   @Override

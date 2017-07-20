@@ -28,7 +28,7 @@ public class AllOnes extends TestFiles
 {
 public AllOnes() throws JsonGenerationException, JsonMappingException, IOException
 {
-  super.setup(org.mrgeo.core.Defs.CWD + "/" + org.mrgeo.core.Defs.INPUT + "/" + "all-ones",
+  setup(org.mrgeo.core.Defs.CWD + "/" + org.mrgeo.core.Defs.INPUT + "/" + "all-ones",
       (ProviderProperties) null);
 }
 

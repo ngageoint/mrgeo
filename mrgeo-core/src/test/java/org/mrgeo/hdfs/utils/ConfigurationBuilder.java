@@ -36,7 +36,7 @@ private String outputFilePath;
 
 public ConfigurationBuilder()
 {
-  this.configuration = mock(Configuration.class);
+  configuration = mock(Configuration.class);
 }
 
 public ConfigurationBuilder zoomLevel(int zoomLevel)

@@ -19,12 +19,12 @@ private List<FileSplitInfo> splits = new ArrayList<>();
 
 public MrGeoFileSplitBuilder()
 {
-  this.fileSplit = mock(FileSplit.class);
+  fileSplit = mock(FileSplit.class);
 }
 
 public MrGeoFileSplitBuilder split(FileSplitInfo split)
 {
-  this.splits.add(split);
+  splits.add(split);
 
   return this;
 }

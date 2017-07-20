@@ -30,7 +30,7 @@ private Map<String, OutputStream> outputStreamMap = new HashMap<>();
 
 public FileSystemBuilder()
 {
-  this.fileSystem = mock(FileSystem.class);
+  fileSystem = mock(FileSystem.class);
 }
 
 public FileSystemBuilder fileStatus(Path parent, FileStatus fileStatus)

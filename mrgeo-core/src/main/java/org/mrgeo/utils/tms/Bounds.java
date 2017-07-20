@@ -292,8 +292,8 @@ public boolean intersects(double w, double s, double e, double n)
 public boolean intersects(Bounds b, boolean includeAdjacent)
 {
   Bounds
-      intersectBounds = new Bounds(Math.max(this.w, b.w), Math.max(this.s, b.s), Math
-      .min(this.e, b.e), Math.min(this.n, b.n));
+      intersectBounds = new Bounds(Math.max(w, b.w), Math.max(s, b.s), Math
+      .min(e, b.e), Math.min(n, b.n));
   if (includeAdjacent)
   {
     return (intersectBounds.w <= intersectBounds.e && intersectBounds.s <= intersectBounds.n);
@@ -314,8 +314,8 @@ public String toCommaString()
 
 public Bounds union(Bounds b)
 {
-  return new Bounds(Math.min(this.w, b.w), Math.min(this.s, b.s), Math.max(
-      this.e, b.e), Math.max(this.n, b.n));
+  return new Bounds(Math.min(w, b.w), Math.min(s, b.s), Math.max(
+      e, b.e), Math.max(n, b.n));
 }
 
 public Bounds intersection(Bounds b)
@@ -330,8 +330,8 @@ public Bounds intersection(Bounds b, boolean includeAdjacent)
 {
 
   Bounds
-      intersectBounds = new Bounds(Math.max(this.w, b.w), Math.max(this.s, b.s), Math
-      .min(this.e, b.e), Math.min(this.n, b.n));
+      intersectBounds = new Bounds(Math.max(w, b.w), Math.max(s, b.s), Math
+      .min(e, b.e), Math.min(n, b.n));
 
   if (includeAdjacent)
   {

@@ -40,7 +40,7 @@ protected ImageInputFormatContext context;
 
 public MrsImageInputFormatProvider(ImageInputFormatContext config)
 {
-  this.context = config;
+  context = config;
 }
 
 /**

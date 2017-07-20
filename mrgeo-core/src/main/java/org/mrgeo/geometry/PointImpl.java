@@ -48,16 +48,16 @@ PointImpl(Map<String, String> attributes)
 
 PointImpl()
 {
-  this.x = Double.NaN;
-  this.y = Double.NaN;
-  this.z = 0.0;
+  x = Double.NaN;
+  y = Double.NaN;
+  z = 0.0;
 }
 
 PointImpl(double x, double y)
 {
   this.x = x;
   this.y = y;
-  this.z = 0;
+  z = 0;
 }
 
 PointImpl(double x, double y, double z)
@@ -82,7 +82,7 @@ PointImpl(double x, double y, Map<String, String> attributes)
 {
   this.x = x;
   this.y = y;
-  this.z = 0;
+  z = 0;
 
   this.attributes.clear();
   this.attributes.putAll(attributes);

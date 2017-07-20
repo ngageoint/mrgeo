@@ -48,7 +48,7 @@ public Column(String name, double min, double max)
   this.name = name;
   this.min = min;
   this.max = max;
-  this.type = FactorType.Numeric;
+  type = FactorType.Numeric;
 }
 
 public Column(String name, FactorType type)

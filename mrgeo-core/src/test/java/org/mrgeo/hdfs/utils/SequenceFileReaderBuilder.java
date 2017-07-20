@@ -26,7 +26,7 @@ private KeyValueHelper keyValueHelper;
 
 public SequenceFileReaderBuilder()
 {
-  this.sequenceFileReader = mock(Reader.class);
+  sequenceFileReader = mock(Reader.class);
   keyValueHelper = new KeyValueHelper();
 }
 

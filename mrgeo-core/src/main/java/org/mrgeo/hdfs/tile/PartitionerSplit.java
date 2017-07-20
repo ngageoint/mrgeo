@@ -179,31 +179,31 @@ public static class PartitionerSplitInfo extends SplitInfo
   @Override
   boolean compareEQ(long tileId)
   {
-    return tileId == this.tileid;
+    return tileId == tileid;
   }
 
   @Override
   boolean compareLE(long tileId)
   {
-    return tileId <= this.tileid;
+    return tileId <= tileid;
   }
 
   @Override
   boolean compareLT(long tileId)
   {
-    return tileId < this.tileid;
+    return tileId < tileid;
   }
 
   @Override
   boolean compareGE(long tileId)
   {
-    return tileId >= this.tileid;
+    return tileId >= tileid;
   }
 
   @Override
   boolean compareGT(long tileId)
   {
-    return tileId > this.tileid;
+    return tileId > tileid;
   }
 }
 

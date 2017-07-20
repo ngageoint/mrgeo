@@ -107,7 +107,7 @@ public void setColumns(Collection<Column> columns)
 
 public void setColumns(List<String> names)
 {
-  this.columns = new Vector<>();
+  columns = new Vector<>();
   for (String name : names)
   {
     Column col = new Column(name, FactorType.Unknown);
@@ -204,7 +204,7 @@ private void load(InputStream is) throws IOException
   try
   {
     String firstLineHeaderStr = xp.evaluate("/AllColumns/@firstLineHeader", doc);
-    if (firstLineHeaderStr != null && firstLineHeaderStr.equals("true"))
+    if ("true".equals(firstLineHeaderStr))
     {
       firstLineHeader = true;
     }

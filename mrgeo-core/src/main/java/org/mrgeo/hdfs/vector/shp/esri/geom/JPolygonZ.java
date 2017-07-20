@@ -181,19 +181,19 @@ public byte check(boolean clean)
 public boolean contains(Coord c)
 {
   // fast answer (test MBR)
-  if (c.x < this.extent.min.x)
+  if (c.x < extent.min.x)
   {
     return false;
   }
-  if (c.x > this.extent.max.x)
+  if (c.x > extent.max.x)
   {
     return false;
   }
-  if (c.y < this.extent.min.y)
+  if (c.y < extent.min.y)
   {
     return false;
   }
-  if (c.y > this.extent.max.y)
+  if (c.y > extent.max.y)
   {
     return false;
   }

@@ -58,16 +58,16 @@ public GaussianComposite(double weight, double nodata)
 public void setEllipse(Point center, double majorWidth, double minorWidth,
     double orientation, AffineTransform transform)
 {
-  this.major = majorWidth;
-  this.minor = minorWidth;
+  major = majorWidth;
+  minor = minorWidth;
 
   this.center = new Point2D.Double(center.getX(), center.getY());
 
   // translation from lat/lon to pixels
-  this.translate = new AffineTransform(transform);
+  translate = new AffineTransform(transform);
 
   // orientation of the ellipse
-  this.rotate = AffineTransform.getRotateInstance(-orientation);
+  rotate = AffineTransform.getRotateInstance(-orientation);
 }
 
 /*

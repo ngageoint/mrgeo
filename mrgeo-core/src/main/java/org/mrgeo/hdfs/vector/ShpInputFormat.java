@@ -207,8 +207,8 @@ static public class ShpRecordReader extends RecordReader<FeatureIdWritable, Geom
 
       GeometryInputSplit gis = (GeometryInputSplit) split;
 
-      this.start = gis.startIndex;
-      this.end = gis.endIndex;
+      start = gis.startIndex;
+      end = gis.endIndex;
       currentIndex = start - 1;
     }
     else

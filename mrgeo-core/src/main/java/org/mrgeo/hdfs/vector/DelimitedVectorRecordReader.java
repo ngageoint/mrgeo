@@ -194,7 +194,7 @@ public static class VectorLineProducer implements LineProducer
 
   public VectorLineProducer(LineRecordReader recordReader)
   {
-    this.lineRecordReader = recordReader;
+    lineRecordReader = recordReader;
   }
 
   @Override

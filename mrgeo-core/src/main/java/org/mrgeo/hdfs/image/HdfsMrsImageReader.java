@@ -303,7 +303,7 @@ public MrGeoRaster get(TileIdWritable key)
       }
       catch (IOException e)
       {
-        log.error("Unable to close reader for " + this.imagePath, e);
+        log.error("Unable to close reader for " + imagePath, e);
       }
     }
   }

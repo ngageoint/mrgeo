@@ -49,10 +49,10 @@ private ProviderProperties inputProviderProperties;
 public ImageInputFormatContext(int zoomlevel, int tileSize,
     String input, ProviderProperties inputProviderProperties)
 {
-  this.zoomLevel = zoomlevel;
+  zoomLevel = zoomlevel;
   this.tileSize = tileSize;
   this.input = input;
-  this.bounds = null;
+  bounds = null;
   this.inputProviderProperties = inputProviderProperties;
 }
 
@@ -65,7 +65,7 @@ public ImageInputFormatContext(int zoomlevel, int tileSize,
     String input, Bounds bounds,
     ProviderProperties inputProviderProperties)
 {
-  this.zoomLevel = zoomlevel;
+  zoomLevel = zoomlevel;
   this.tileSize = tileSize;
   this.input = input;
   this.bounds = bounds;

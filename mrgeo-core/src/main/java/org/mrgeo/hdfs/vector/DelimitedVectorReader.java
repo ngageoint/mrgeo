@@ -47,7 +47,7 @@ public DelimitedVectorReader(HdfsVectorDataProvider dp,
     VectorReaderContext context,
     Configuration conf)
 {
-  this.provider = dp;
+  provider = dp;
   this.context = context;
   this.conf = conf;
 }
@@ -231,7 +231,7 @@ public static class HdfsFileReader implements LineProducer
 
   public void initialize(Configuration conf, Path p) throws IOException
   {
-    this.sourcePath = p;
+    sourcePath = p;
     InputStream is = HadoopFileUtils.open(conf, p);
     reader = new BufferedReader(new InputStreamReader(is));
   }

@@ -28,7 +28,7 @@ private KeyValueHelper keyValueHelper;
 
 public MapFileReaderBuilder()
 {
-  this.mapFileReader = mock(Reader.class);
+  mapFileReader = mock(Reader.class);
   keyValueHelper = new KeyValueHelper();
 }
 

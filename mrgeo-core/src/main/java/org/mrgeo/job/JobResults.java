@@ -27,7 +27,7 @@ private String failureMessage;
 
 public void starting()
 {
-  this.started = true;
+  started = true;
 }
 
 public void succeeded()

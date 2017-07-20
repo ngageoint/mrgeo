@@ -28,7 +28,7 @@ public MrsPyramidWriterContext()
 public MrsPyramidWriterContext(int zoomlevel, int partition, String protectionLevel)
 {
   this.zoomlevel = zoomlevel;
-  this.partNum = partition;
+  partNum = partition;
   this.protectionLevel = protectionLevel;
 }
 

@@ -21,7 +21,7 @@ private Path resourcePath;
 public HdfsMrsImageDataProviderBuilder()
 {
   // RETURNS_DEEP_STUBS allows us to avoid mocking intermediate objects (e.g. MetadataReader)
-  this.imageDataProvider = mock(HdfsMrsImageDataProvider.class, RETURNS_DEEP_STUBS);
+  imageDataProvider = mock(HdfsMrsImageDataProvider.class, RETURNS_DEEP_STUBS);
 //        this.metadataReader = mock(MrsPyramidMetadataReader.class);
 }
 

@@ -40,8 +40,8 @@ double lng;
 
 public LatLng()
 {
-  this.lat = Double.NaN;
-  this.lng = Double.NaN;
+  lat = Double.NaN;
+  lng = Double.NaN;
 }
 
 public LatLng(double lat, double lng)

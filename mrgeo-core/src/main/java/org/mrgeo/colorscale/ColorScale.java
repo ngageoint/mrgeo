@@ -849,7 +849,7 @@ protected void buildCache()
   }
   else if (scaling == Scaling.Quantile) {
     // If there are no quantiles for the image, then revert to an Absolute scale
-    if (this.quantiles == null || this.quantiles.length < 1) {
+    if (quantiles == null || quantiles.length < 1) {
       // Revert to interpolated Absolute scale.
       scaling = Scaling.Absolute;
       interpolate = true;
@@ -1155,14 +1155,14 @@ public static class ColorScaleException extends Exception
 
   public ColorScaleException(Exception e)
   {
-    this.origException = e;
+    origException = e;
     // printStackTrace();
   }
 
   public ColorScaleException(String msg)
   {
     Exception e = new Exception(msg);
-    this.origException = e;
+    origException = e;
   }
 
   @Override

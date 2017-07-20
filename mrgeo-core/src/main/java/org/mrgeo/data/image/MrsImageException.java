@@ -22,14 +22,14 @@ private final Exception origException;
 
 public MrsImageException(Exception e)
 {
-  this.origException = e;
+  origException = e;
   printStackTrace();
 }
 
 public MrsImageException(String msg)
 {
   Exception e = new Exception(msg);
-  this.origException = e;
+  origException = e;
 }
 
 @Override

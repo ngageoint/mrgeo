@@ -93,18 +93,18 @@ public MrsPyramidMetadata()
 
 public MrsPyramidMetadata(MrsPyramidMetadata copy)
 {
-  this.pyramid = copy.pyramid;
-  this.bounds = copy.bounds == null ? null : copy.bounds.clone();
-  this.tilesize = copy.tilesize;
-  this.maxZoomLevel = copy.maxZoomLevel;
-  this.tags.putAll(copy.tags);
-  this.protectionLevel = copy.protectionLevel;
-  this.bands = copy.bands;
-  this.defaultValues = ArrayUtils.clone(copy.defaultValues);
-  this.tileType = copy.tileType;
+  pyramid = copy.pyramid;
+  bounds = copy.bounds == null ? null : copy.bounds.clone();
+  tilesize = copy.tilesize;
+  maxZoomLevel = copy.maxZoomLevel;
+  tags.putAll(copy.tags);
+  protectionLevel = copy.protectionLevel;
+  bands = copy.bands;
+  defaultValues = ArrayUtils.clone(copy.defaultValues);
+  tileType = copy.tileType;
   if (copy.quantiles == null)
   {
-    this.quantiles = null;
+    quantiles = null;
   }
   else
   {
@@ -113,13 +113,13 @@ public MrsPyramidMetadata(MrsPyramidMetadata copy)
     {
       if (copy.quantiles[b] != null)
       {
-        this.quantiles[b] = copy.quantiles[b].clone();
+        quantiles[b] = copy.quantiles[b].clone();
       }
     }
   }
   if (copy.categories == null)
   {
-    this.categories = null;
+    categories = null;
   }
   else
   {
@@ -128,37 +128,37 @@ public MrsPyramidMetadata(MrsPyramidMetadata copy)
     {
       if (copy.categories[b] != null)
       {
-        this.categories[b] = copy.categories[b].clone();
+        categories[b] = copy.categories[b].clone();
       }
     }
   }
 
-  this.classification = copy.classification;
-  this.resamplingMethod = copy.resamplingMethod;
+  classification = copy.classification;
+  resamplingMethod = copy.resamplingMethod;
 
-  this.imageData = new ImageMetadata[copy.imageData.length];
+  imageData = new ImageMetadata[copy.imageData.length];
   for (int i = 0; i < copy.imageData.length; i++)
   {
-    this.imageData[i] = new ImageMetadata();
+    imageData[i] = new ImageMetadata();
     if (copy.imageData[i] != null)
     {
-      this.imageData[i].name = copy.imageData[i].name;
+      imageData[i].name = copy.imageData[i].name;
       if (copy.imageData[i].stats != null)
       {
-        this.imageData[i].stats = ArrayUtils.clone(copy.imageData[i].stats);
+        imageData[i].stats = ArrayUtils.clone(copy.imageData[i].stats);
       }
       if (copy.imageData[i].pixelBounds != null)
       {
-        this.imageData[i].pixelBounds = new LongRectangle(copy.imageData[i].pixelBounds);
+        imageData[i].pixelBounds = new LongRectangle(copy.imageData[i].pixelBounds);
       }
       if (copy.imageData[i].tileBounds != null)
       {
-        this.imageData[i].tileBounds = new LongRectangle(copy.imageData[i].tileBounds);
+        imageData[i].tileBounds = new LongRectangle(copy.imageData[i].tileBounds);
       }
     }
   }
 
-  this.stats = ArrayUtils.clone(copy.stats);
+  stats = ArrayUtils.clone(copy.stats);
 }
 
 /**
@@ -251,7 +251,7 @@ public void setMaxZoomLevel(int zoomlevel)
       imageData = ArrayUtils.add(imageData, new ImageMetadata());
     }
   }
-  this.maxZoomLevel = zoomlevel;
+  maxZoomLevel = zoomlevel;
 }
 
 @JsonIgnore

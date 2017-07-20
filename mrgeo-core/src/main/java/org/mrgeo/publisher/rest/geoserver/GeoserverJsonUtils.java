@@ -287,7 +287,7 @@ protected static class GeoserverBoundingBoxBuilder
 
   public GeoserverBoundingBoxBuilder()
   {
-    this.boundingBox = new BoundingBox();
+    boundingBox = new BoundingBox();
   }
 
   public GeoserverBoundingBoxBuilder minx(double minx)
@@ -332,7 +332,7 @@ protected static class GeoserverGridBuilder
 
   public GeoserverGridBuilder()
   {
-    this.grid = new Grid();
+    grid = new Grid();
   }
 
   public GeoserverGridBuilder dimension(int dimension)
@@ -343,13 +343,13 @@ protected static class GeoserverGridBuilder
 
   public GeoserverGridBuilder range(GridRange gridRange)
   {
-    this.grid.range = gridRange;
+    grid.range = gridRange;
     return this;
   }
 
   public GeoserverGridBuilder transform(Transform gridTransform)
   {
-    this.grid.transform = gridTransform;
+    grid.transform = gridTransform;
     return this;
   }
 
@@ -371,7 +371,7 @@ protected static class GeoserverGridRangeBuilder
 
   public GeoserverGridRangeBuilder()
   {
-    this.range = new GridRange();
+    range = new GridRange();
   }
 
   public GeoserverGridRangeBuilder low(long minX, long minY)
@@ -398,7 +398,7 @@ protected static class GeoserverTransformBuilder
 
   public GeoserverTransformBuilder()
   {
-    this.transform = new Transform();
+    transform = new Transform();
   }
 
   public GeoserverTransformBuilder scaleX(double scaleX)
@@ -450,7 +450,7 @@ protected static class GeoserverCoverageDimensionBuilder
 
   public GeoserverCoverageDimensionBuilder()
   {
-    this.coverageDimension = new CoverageDimension();
+    coverageDimension = new CoverageDimension();
   }
 
   public GeoserverCoverageDimensionBuilder name(String name)

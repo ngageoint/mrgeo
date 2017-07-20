@@ -45,7 +45,7 @@ public MrsPyramidInputSplit()
 public MrsPyramidInputSplit(TiledInputSplit split, String name) throws IOException
 {
   super();
-  this.wrappedInputSplit = split;
+  wrappedInputSplit = split;
   this.name = name;
 }
 

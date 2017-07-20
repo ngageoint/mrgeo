@@ -57,7 +57,7 @@ public double getNodata()
 public void setNodata(double nodata)
 {
   this.nodata = nodata;
-  this.isNodataNaN = Double.isNaN(nodata);
+  isNodataNaN = Double.isNaN(nodata);
 }
 
 @Override
