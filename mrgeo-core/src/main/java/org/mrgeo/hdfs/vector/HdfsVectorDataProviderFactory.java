@@ -63,15 +63,15 @@ public void setConfiguration(Map<String, String> properties)
 @Override
 public VectorDataProvider createVectorDataProvider(String prefix,
                                                    String input,
-                                                   final Configuration conf,
+                                                   Configuration conf,
                                                    ProviderProperties providerProperties)
 {
   return new HdfsVectorDataProvider(conf, prefix, input, providerProperties);
 }
 
 @Override
-public String[] listVectors(final Configuration conf,
-                            final ProviderProperties providerProperties) throws IOException
+public String[] listVectors(Configuration conf,
+                            ProviderProperties providerProperties) throws IOException
 {
   Path usePath = getBasePath(conf);
   FileSystem fs = HadoopFileUtils.getFileSystem(conf, usePath);
@@ -93,33 +93,33 @@ public String[] listVectors(final Configuration conf,
 }
 
 @Override
-public boolean canOpen(final String input,
-                       final Configuration conf,
-                       final ProviderProperties providerProperties) throws IOException
+public boolean canOpen(String input,
+                       Configuration conf,
+                       ProviderProperties providerProperties) throws IOException
 {
   return HdfsVectorDataProvider.canOpen(conf, input, providerProperties);
 }
 
 @Override
-public boolean canWrite(final String input,
-                        final Configuration conf,
-                        final ProviderProperties providerProperties) throws IOException
+public boolean canWrite(String input,
+                        Configuration conf,
+                        ProviderProperties providerProperties) throws IOException
 {
   return HdfsVectorDataProvider.canWrite(conf, input, providerProperties);
 }
 
 @Override
-public boolean exists(final String name,
-                      final Configuration conf,
-                      final ProviderProperties providerProperties) throws IOException
+public boolean exists(String name,
+                      Configuration conf,
+                      ProviderProperties providerProperties) throws IOException
 {
   return HdfsVectorDataProvider.exists(conf, name, providerProperties);
 }
 
 @Override
-public void delete(final String name,
-                   final Configuration conf,
-                   final ProviderProperties providerProperties) throws IOException
+public void delete(String name,
+                   Configuration conf,
+                   ProviderProperties providerProperties) throws IOException
 {
   if (exists(name, conf, providerProperties))
   {
@@ -127,7 +127,7 @@ public void delete(final String name,
   }
 }
 
-private Path getBasePath(final Configuration conf)
+private Path getBasePath(Configuration conf)
 {
   return HdfsVectorDataProvider.getBasePath(conf);
 }

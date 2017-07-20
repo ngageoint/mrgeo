@@ -38,29 +38,29 @@ public abstract class MrsImageReader
  * @param packageName where to look in the java space
  * @return an array of classes found
  */
-protected static Class<?>[] getClasses(final String packageName) throws IOException,
+protected static Class<?>[] getClasses(String packageName) throws IOException,
     ClassNotFoundException
 {
 
   // list all the classes in org.mrgeo.core.mrsimage.reader
   // ClassLoader cl = ClassLoader.getSystemClassLoader();
-  final ClassLoader cl = Thread.currentThread().getContextClassLoader();
+  ClassLoader cl = Thread.currentThread().getContextClassLoader();
 
-  final String pkgP = packageName.replace('.', '/');
+  String pkgP = packageName.replace('.', '/');
 
   // get the list of items in the package space
-  final Enumeration<URL> resources = cl.getResources(pkgP);
+  Enumeration<URL> resources = cl.getResources(pkgP);
 
   // go through the resources and add to the list of classes
-  final List<File> dirs = new ArrayList<>();
+  List<File> dirs = new ArrayList<>();
   while (resources.hasMoreElements())
   {
-    final URL resource = resources.nextElement();
+    URL resource = resources.nextElement();
     dirs.add(new File(resource.getFile()));
   }
 
-  final ArrayList<Class<?>> classes = new ArrayList<>();
-  for (final File directory : dirs)
+  ArrayList<Class<?>> classes = new ArrayList<>();
+  for (File directory : dirs)
   {
     classes.addAll(findClasses(directory, packageName));
   }
@@ -75,19 +75,19 @@ protected static Class<?>[] getClasses(final String packageName) throws IOExcept
  * @param packageName package to look into
  * @return list of classes in the package
  */
-private static List<Class<?>> findClasses(final File directory, final String packageName)
+private static List<Class<?>> findClasses(File directory, String packageName)
     throws ClassNotFoundException
 {
-  final List<Class<?>> classes = new ArrayList<>();
+  List<Class<?>> classes = new ArrayList<>();
   if (!directory.exists())
   {
     return classes;
   }
 
-  final File[] files = directory.listFiles();
+  File[] files = directory.listFiles();
   if (files != null)
   {
-    for (final File file : files)
+    for (File file : files)
     {
       if (file.isDirectory())
       {
@@ -139,9 +139,9 @@ public abstract boolean exists(TileIdWritable key);
 
 public abstract KVIterator<TileIdWritable, MrGeoRaster> get();
 
-public abstract KVIterator<TileIdWritable, MrGeoRaster> get(final LongRectangle tileBounds);
+public abstract KVIterator<TileIdWritable, MrGeoRaster> get(LongRectangle tileBounds);
 
-public abstract KVIterator<Bounds, MrGeoRaster> get(final Bounds bounds);
+public abstract KVIterator<Bounds, MrGeoRaster> get(Bounds bounds);
 
 /**
  * Need to be able to pull a series of items from the data store

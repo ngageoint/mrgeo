@@ -67,12 +67,12 @@ static
  * @param job  The {@link org.apache.hadoop.mapreduce.Job} to modify
  * @param path {@link org.apache.hadoop.fs.Path} to be added to the list of inputs for the map-reduce job.
  */
-public static void addInputPath(final Job job, final Path path) throws IOException
+public static void addInputPath(Job job, Path path) throws IOException
 {
-  final Configuration conf = job.getConfiguration();
-  final Path p = path.getFileSystem(conf).makeQualified(path);
-  final String dirStr = org.apache.hadoop.util.StringUtils.escapeString(p.toString());
-  final String dirs = conf.get("mapred.input.dir");
+  Configuration conf = job.getConfiguration();
+  Path p = path.getFileSystem(conf).makeQualified(path);
+  String dirStr = org.apache.hadoop.util.StringUtils.escapeString(p.toString());
+  String dirs = conf.get("mapred.input.dir");
   conf.set("mapred.input.dir", dirs == null ? dirStr : dirs + "," + dirStr);
 }
 
@@ -84,14 +84,14 @@ public static void addInputPath(final Job job, final Path path) throws IOExcepti
 public synchronized static Configuration createConfiguration()
 {
   Configuration config = new Configuration();
-  final Properties p = MrGeoProperties.getInstance();
-  final String hadoopParams = p.getProperty("hadoop.params");
+  Properties p = MrGeoProperties.getInstance();
+  String hadoopParams = p.getProperty("hadoop.params");
 
   // Usage of GenericOptionsParser was inspired by Hadoop's ToolRunner
   if (hadoopParams != null)
   {
-    final String[] hadoopParamsAsArray = hadoopParams.split(" ");
-    final GenericOptionsParser parser;
+    String[] hadoopParamsAsArray = hadoopParams.split(" ");
+    GenericOptionsParser parser;
     try
     {
       parser = new GenericOptionsParser(hadoopParamsAsArray);
@@ -106,7 +106,7 @@ public synchronized static Configuration createConfiguration()
   }
 
   // enables serialization of Serializable objects in Hadoop.
-  final String serializations = config.get("io.serializations");
+  String serializations = config.get("io.serializations");
   config.set("io.serializations", serializations + ",org.mrgeo.format.FeatureSerialization" +
       ",org.apache.hadoop.io.serializer.JavaSerialization");
   return config;
@@ -116,7 +116,7 @@ public synchronized static Configuration createConfiguration()
 // to an interface. This method uses reflection to determine the appropriate class to create and
 // returns a JobContext appropriately constructed
 @SuppressWarnings("squid:S1166") // Exception caught and handled
-public static JobContext createJobContext(final Configuration conf, final JobID id)
+public static JobContext createJobContext(Configuration conf, JobID id)
 {
   if (jobContext == null)
   {
@@ -127,7 +127,7 @@ public static JobContext createJobContext(final Configuration conf, final JobID 
   {
     return (JobContext) jobContext.newInstance(conf, id);
   }
-  catch (final IllegalArgumentException | InstantiationException |
+  catch (IllegalArgumentException | InstantiationException |
       IllegalAccessException | InvocationTargetException ignored)
   {
   }
@@ -138,7 +138,7 @@ public static JobContext createJobContext(final Configuration conf, final JobID 
 /**
  * Creates a random string filled with hex values.
  */
-public static synchronized String createRandomString(final int size)
+public static synchronized String createRandomString(int size)
 {
   // create a random string of about 1000 characters. This will force the
   // sequence file to split appropriately. Certainly a hack, but shouldn't
@@ -155,8 +155,8 @@ public static synchronized String createRandomString(final int size)
 // to an interface. This method uses reflection to determine the appropriate class to create and
 // returns a TaskAttemptContext appropriately constructed
 @SuppressWarnings("squid:S1166") // Exception caught and handled
-public static TaskAttemptContext createTaskAttemptContext(final Configuration conf,
-    final TaskAttemptID id)
+public static TaskAttemptContext createTaskAttemptContext(Configuration conf,
+    TaskAttemptID id)
 {
   if (taskAttempt == null)
   {
@@ -167,7 +167,7 @@ public static TaskAttemptContext createTaskAttemptContext(final Configuration co
   {
     return (TaskAttemptContext) taskAttempt.newInstance(conf, id);
   }
-  catch (final IllegalArgumentException | InvocationTargetException |
+  catch (IllegalArgumentException | InvocationTargetException |
       IllegalAccessException | InstantiationException ignored)
   {
   }
@@ -175,24 +175,24 @@ public static TaskAttemptContext createTaskAttemptContext(final Configuration co
   return null;
 }
 
-public static String createUniqueJobName(final String baseName)
+public static String createUniqueJobName(String baseName)
 {
   // create a new unique job name
-  final String now = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss").format(new Date());
+  String now = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss").format(new Date());
 
-  final String jobName = baseName + "_" + now + "_" + UUID.randomUUID().toString();
+  String jobName = baseName + "_" + now + "_" + UUID.randomUUID().toString();
 
   return jobName;
 }
 
-public static String[] getDefaultVectorBaseDirectories(final Properties props)
+public static String[] getDefaultVectorBaseDirectories(Properties props)
 {
-  final String defaultDirs[] = null;
+  String defaultDirs[] = null;
 
-  final String listDirs = props.getProperty(MrGeoConstants.MRGEO_HDFS_VECTOR, null);
+  String listDirs = props.getProperty(MrGeoConstants.MRGEO_HDFS_VECTOR, null);
   if (listDirs != null)
   {
-    final String[] dirs = listDirs.split(",");
+    String[] dirs = listDirs.split(",");
     if (dirs.length != 0)
     {
       for (int i = 0; i < dirs.length; i++)
@@ -213,10 +213,10 @@ public static String getDefaultVectorBaseDirectory()
   return getDefaultVectorBaseDirectory(MrGeoProperties.getInstance());
 }
 
-public static String getDefaultVectorBaseDirectory(final Properties props)
+public static String getDefaultVectorBaseDirectory(Properties props)
 {
-  final String defaultVectorDir = null;
-  final String[] dirs = getDefaultVectorBaseDirectories(props);
+  String defaultVectorDir = null;
+  String[] dirs = getDefaultVectorBaseDirectories(props);
 
   if (dirs != null && dirs.length != 0)
   {
@@ -226,10 +226,10 @@ public static String getDefaultVectorBaseDirectory(final Properties props)
 }
 
 public static double[]
-getDoubleArraySetting(final Configuration config, final String propertyName)
+getDoubleArraySetting(Configuration config, String propertyName)
 {
-  final String[] strValues = getStringArraySetting(config, propertyName);
-  final double[] result = new double[strValues.length];
+  String[] strValues = getStringArraySetting(config, propertyName);
+  double[] result = new double[strValues.length];
   for (int ii = 0; ii < strValues.length; ii++)
   {
     // Note: this will throw an exception if parsing is unsuccessful
@@ -239,10 +239,10 @@ getDoubleArraySetting(final Configuration config, final String propertyName)
 }
 
 
-public static int[] getIntArraySetting(final Configuration config, final String propertyName)
+public static int[] getIntArraySetting(Configuration config, String propertyName)
 {
-  final String[] strValues = getStringArraySetting(config, propertyName);
-  final int[] result = new int[strValues.length];
+  String[] strValues = getStringArraySetting(config, propertyName);
+  int[] result = new int[strValues.length];
   for (int ii = 0; ii < strValues.length; ii++)
   {
     // Note: this will throw an exception if parsing is unsuccessful
@@ -252,24 +252,24 @@ public static int[] getIntArraySetting(final Configuration config, final String 
 }
 
 public static MrsPyramidMetadata
-getMetadata(final Configuration config, final String pyramid) throws IOException,
+getMetadata(Configuration config, String pyramid) throws IOException,
     ClassNotFoundException
 {
-  final MrsPyramidMetadata metadata = (MrsPyramidMetadata) Base64Utils
+  MrsPyramidMetadata metadata = (MrsPyramidMetadata) Base64Utils
       .decodeToObject(config.get("mrspyramid.metadata." + pyramid, null));
 
   return metadata;
 }
 
 public static String[]
-getStringArraySetting(final Configuration config, final String propertyName)
+getStringArraySetting(Configuration config, String propertyName)
 {
-  final String str = config.get(propertyName);
+  String str = config.get(propertyName);
   if (str == null || str.length() == 0)
   {
     return new String[0];
   }
-  final String[] strValues = str.split(",");
+  String[] strValues = str.split(",");
   for (int ii = 0; ii < strValues.length; ii++)
   {
     strValues[ii] = strValues[ii].trim();
@@ -278,7 +278,7 @@ getStringArraySetting(final Configuration config, final String propertyName)
 }
 
 
-public static void setJar(final Job job, Class clazz) throws IOException
+public static void setJar(Job job, Class clazz) throws IOException
 {
   Configuration conf = job.getConfiguration();
 
@@ -297,21 +297,21 @@ public static void setJar(final Job job, Class clazz) throws IOException
   }
 }
 
-public static void setMetadata(final Configuration conf, final MrsPyramidMetadata metadata)
+public static void setMetadata(Configuration conf, MrsPyramidMetadata metadata)
     throws IOException
 {
   log.debug("Setting hadoop configuration metadata using metadata instance " + metadata);
   conf.set("mrspyramid.metadata." + metadata.getPyramid(), Base64Utils.encodeObject(metadata));
 }
 
-public static void setMetadata(final Job job, final MrsPyramidMetadata metadata)
+public static void setMetadata(Job job, MrsPyramidMetadata metadata)
     throws IOException
 {
   setMetadata(job.getConfiguration(), metadata);
 }
 
 
-public static void setupLocalRunner(final Configuration config) throws IOException
+public static void setupLocalRunner(Configuration config) throws IOException
 {
   // hadoop v1 key
   config.set("mapred.job.tracker", "local");
@@ -330,27 +330,27 @@ private static void loadJobContextClass()
 {
   try
   {
-    final Class<?> jc = Class.forName("org.apache.hadoop.mapreduce.JobContext");
-    final Class<?>[] argTypes = {Configuration.class, JobID.class};
+    Class<?> jc = Class.forName("org.apache.hadoop.mapreduce.JobContext");
+    Class<?>[] argTypes = {Configuration.class, JobID.class};
 
     jobContext = jc.getDeclaredConstructor(argTypes);
 
     return;
   }
-  catch (final ClassNotFoundException | NoSuchMethodException | SecurityException ignored)
+  catch (ClassNotFoundException | NoSuchMethodException | SecurityException ignored)
   {
   }
 
   try
   {
-    final Class<?> jci = Class.forName("org.apache.hadoop.mapreduce.task.JobContextImpl");
-    final Class<?>[] argTypes = {Configuration.class, JobID.class};
+    Class<?> jci = Class.forName("org.apache.hadoop.mapreduce.task.JobContextImpl");
+    Class<?>[] argTypes = {Configuration.class, JobID.class};
 
     jobContext = jci.getDeclaredConstructor(argTypes);
 
     return;
   }
-  catch (final ClassNotFoundException | SecurityException | NoSuchMethodException ignored)
+  catch (ClassNotFoundException | SecurityException | NoSuchMethodException ignored)
   {
   }
 
@@ -363,29 +363,29 @@ private static void loadTaskAttemptClass()
 {
   try
   {
-    final Class<?> tac = Class.forName("org.apache.hadoop.mapreduce.TaskAttemptContext");
-    final Class<?>[] argTypes = {Configuration.class, TaskAttemptID.class};
+    Class<?> tac = Class.forName("org.apache.hadoop.mapreduce.TaskAttemptContext");
+    Class<?>[] argTypes = {Configuration.class, TaskAttemptID.class};
 
     taskAttempt = tac.getDeclaredConstructor(argTypes);
 
     return;
   }
-  catch (final ClassNotFoundException | NoSuchMethodException | SecurityException ignored)
+  catch (ClassNotFoundException | NoSuchMethodException | SecurityException ignored)
   {
   }
 
   try
   {
     // Class<?> taci = Class.forName("org.apache.hadoop.mapreduce.TaskAttemptContextImpl");
-    final Class<?> taci = Class
+    Class<?> taci = Class
         .forName("org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl");
-    final Class<?>[] argTypes = {Configuration.class, TaskAttemptID.class};
+    Class<?>[] argTypes = {Configuration.class, TaskAttemptID.class};
 
     taskAttempt = taci.getDeclaredConstructor(argTypes);
 
     return;
   }
-  catch (final ClassNotFoundException | NoSuchMethodException | SecurityException ignored)
+  catch (ClassNotFoundException | NoSuchMethodException | SecurityException ignored)
   {
   }
 

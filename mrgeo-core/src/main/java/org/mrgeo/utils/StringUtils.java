@@ -32,7 +32,7 @@ public class StringUtils
  * @param delimiter
  * @return
  */
-public static String join(final double[] tokens, final String delimiter)
+public static String join(double[] tokens, String delimiter)
 {
   StringBuilder buffer = new StringBuilder(String.valueOf(tokens[0]));
   for (int i = 1; i < tokens.length; i++)
@@ -42,7 +42,7 @@ public static String join(final double[] tokens, final String delimiter)
   return buffer.toString();
 }
 
-public static String join(final int[] tokens, final String delimiter)
+public static String join(int[] tokens, String delimiter)
 {
   StringBuilder buffer = new StringBuilder(String.valueOf(tokens[0]));
   for (int i = 1; i < tokens.length; i++)
@@ -52,7 +52,7 @@ public static String join(final int[] tokens, final String delimiter)
   return buffer.toString();
 }
 
-public static <T> String join(final T[] tokens, final String delimiter)
+public static <T> String join(T[] tokens, String delimiter)
 {
   StringBuilder buffer = new StringBuilder(tokens[0].toString());
   for (int i = 1; i < tokens.length; i++)
@@ -62,7 +62,7 @@ public static <T> String join(final T[] tokens, final String delimiter)
   return buffer.toString();
 }
 
-public static String join(final Iterable<?> tokens, final String delimiter)
+public static String join(Iterable<?> tokens, String delimiter)
 {
   Iterator<?> oIter;
   if (tokens == null || (!(oIter = tokens.iterator()).hasNext()))
@@ -87,7 +87,7 @@ public static String repeat(String s, int times)
   return buf.toString();
 }
 
-public static String toString(final Map<?, ?> tokens)
+public static String toString(Map<?, ?> tokens)
 {
   StringBuilder buf = new StringBuilder("{ ");
   String comma = "";

@@ -50,7 +50,7 @@ public interface AdHocDataProviderFactory
  *
  * @return
  */
-public boolean isValid(final Configuration conf);
+public boolean isValid(Configuration conf);
 
 /**
  * This method is called once when DataProviderFactory finds this factory.
@@ -106,9 +106,9 @@ public void setConfiguration(Map<String, String> properties);
  * @param name
  * @return
  */
-public AdHocDataProvider createAdHocDataProvider(final String name,
-                                                 final Configuration conf,
-                                                 final ProviderProperties providerProperties) throws IOException;
+public AdHocDataProvider createAdHocDataProvider(String name,
+                                                 Configuration conf,
+                                                 ProviderProperties providerProperties) throws IOException;
 
 /**
  * Give back an ad hoc data provider for a resource that is named by this method.
@@ -119,14 +119,14 @@ public AdHocDataProvider createAdHocDataProvider(final String name,
  * @return
  */
 public AdHocDataProvider createAdHocDataProvider(
-        final Configuration conf,
-        final ProviderProperties providerProperties) throws IOException;
+        Configuration conf,
+        ProviderProperties providerProperties) throws IOException;
 
-public boolean canOpen(final String name, final Configuration conf, final ProviderProperties providerProperties) throws IOException;
+public boolean canOpen(String name, Configuration conf, ProviderProperties providerProperties) throws IOException;
 
-public boolean canWrite(final String name, final Configuration conf, final ProviderProperties providerProperties) throws IOException;
+public boolean canWrite(String name, Configuration conf, ProviderProperties providerProperties) throws IOException;
 
-public boolean exists(final String name, final Configuration conf, final ProviderProperties providerProperties) throws IOException;
+public boolean exists(String name, Configuration conf, ProviderProperties providerProperties) throws IOException;
 
-public void delete(final String name, final Configuration conf, final ProviderProperties providerProperties) throws IOException;
+public void delete(String name, Configuration conf, ProviderProperties providerProperties) throws IOException;
 }

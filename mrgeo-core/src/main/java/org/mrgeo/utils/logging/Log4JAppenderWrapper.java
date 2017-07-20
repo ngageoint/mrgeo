@@ -68,7 +68,7 @@ public void doAppend(LoggingEvent event)
   assert (wrappedAppender != null);
 
 
-  final String msg = event.getMessage().toString();
+  String msg = event.getMessage().toString();
 
   Matcher m = crlf.matcher(msg);
   if (m.find())

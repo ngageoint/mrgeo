@@ -43,13 +43,13 @@ public HdfsMrsPyramidInputFormatProvider(ImageInputFormatContext context)
 }
 
 @Override
-public InputFormat<TileIdWritable, RasterWritable> getInputFormat(final String input)
+public InputFormat<TileIdWritable, RasterWritable> getInputFormat(String input)
 {
   return new HdfsMrsPyramidInputFormat(input);
 }
 
 @Override
-public Configuration setupSparkJob(final Configuration conf, MrsImageDataProvider provider)
+public Configuration setupSparkJob(Configuration conf, MrsImageDataProvider provider)
     throws DataProviderException
 {
   try
@@ -67,7 +67,7 @@ public Configuration setupSparkJob(final Configuration conf, MrsImageDataProvide
 
 @Override
 public void setupJob(Job job,
-    final MrsImageDataProvider provider) throws DataProviderException
+    MrsImageDataProvider provider) throws DataProviderException
 {
   super.setupJob(job, provider);
   setupConfig(job);
@@ -106,7 +106,7 @@ private void setupConfig(Job job) throws DataProviderException
       {
         throw new DataProviderException("Failure opening input image pyramid: " + input, e);
       }
-      final MrsPyramidMetadata metadata = pyramid.getMetadata();
+      MrsPyramidMetadata metadata = pyramid.getMetadata();
 
       log.debug("In setupJob(), loading pyramid for " + input +
           " pyramid instance is " + pyramid + " metadata instance is " + metadata);

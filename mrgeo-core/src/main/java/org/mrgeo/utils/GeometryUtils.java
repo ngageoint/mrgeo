@@ -31,7 +31,7 @@ final private static double epsilon = 0.00000001;
 private static Logger log = LoggerFactory.getLogger(GeometryUtils.class);
 
 @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "Checking stored type 1st")
-public static Geometry clip(final Geometry geometry, final Polygon clip)
+public static Geometry clip(Geometry geometry, Polygon clip)
 {
   switch (geometry.type())
   {
@@ -50,25 +50,25 @@ public static Geometry clip(final Geometry geometry, final Polygon clip)
   }
 }
 
-public static Geometry clip(final GeometryCollection collection, final Polygon clip)
+public static Geometry clip(GeometryCollection collection, Polygon clip)
 {
-  final WritableGeometryCollection clipped = GeometryFactory.createGeometryCollection(collection
+  WritableGeometryCollection clipped = GeometryFactory.createGeometryCollection(collection
       .getAllAttributes());
-  final com.vividsolutions.jts.geom.Polygon jtsClip = clip.toJTS();
+  com.vividsolutions.jts.geom.Polygon jtsClip = clip.toJTS();
 
-  for (final Geometry g : collection.getGeometries())
+  for (Geometry g : collection.getGeometries())
   {
-    final com.vividsolutions.jts.geom.Geometry jtsClipped = intersect(jtsClip, g.toJTS());
+    com.vividsolutions.jts.geom.Geometry jtsClipped = intersect(jtsClip, g.toJTS());
 
     if (!jtsClipped.isEmpty())
     {
       if (jtsClipped instanceof com.vividsolutions.jts.geom.GeometryCollection)
       {
-        final com.vividsolutions.jts.geom.GeometryCollection jtsColl =
+        com.vividsolutions.jts.geom.GeometryCollection jtsColl =
             (com.vividsolutions.jts.geom.GeometryCollection) jtsClipped;
         for (int j = 0; j < jtsColl.getNumGeometries(); j++)
         {
-          final com.vividsolutions.jts.geom.Geometry jg = jtsColl.getGeometryN(j);
+          com.vividsolutions.jts.geom.Geometry jg = jtsColl.getGeometryN(j);
           if (!jg.isEmpty())
           {
             clipped.addGeometry(GeometryFactory.fromJTS(jg));
@@ -90,35 +90,35 @@ public static Geometry clip(final GeometryCollection collection, final Polygon c
   return clipped;
 }
 
-public static Geometry clip(final LinearRing ring, final Polygon clip)
+public static Geometry clip(LinearRing ring, Polygon clip)
 {
-  final com.vividsolutions.jts.geom.Geometry jtsClipped = intersect(clip.toJTS(), ring.toJTS());
+  com.vividsolutions.jts.geom.Geometry jtsClipped = intersect(clip.toJTS(), ring.toJTS());
 
   if (jtsClipped.isEmpty())
   {
     return null;
   }
 
-  final WritableGeometry clipped = GeometryFactory.fromJTS(jtsClipped);
+  WritableGeometry clipped = GeometryFactory.fromJTS(jtsClipped);
   clipped.setAttributes(ring.getAllAttributes());
   return clipped;
 }
 
-public static Geometry clip(final LineString line, final Polygon clip)
+public static Geometry clip(LineString line, Polygon clip)
 {
-  final com.vividsolutions.jts.geom.Geometry jtsClipped = intersect(clip.toJTS(), line.toJTS());
+  com.vividsolutions.jts.geom.Geometry jtsClipped = intersect(clip.toJTS(), line.toJTS());
 
   if (jtsClipped.isEmpty())
   {
     return null;
   }
 
-  final WritableGeometry clipped = GeometryFactory.fromJTS(jtsClipped);
+  WritableGeometry clipped = GeometryFactory.fromJTS(jtsClipped);
   clipped.setAttributes(line.getAllAttributes());
   return clipped;
 }
 
-public static Geometry clip(final Point point, final Polygon clip)
+public static Geometry clip(Point point, Polygon clip)
 {
   if (inside(clip, point))
   {
@@ -127,22 +127,22 @@ public static Geometry clip(final Point point, final Polygon clip)
   return null;
 }
 
-public static Geometry clip(final Polygon poly, final Polygon clip)
+public static Geometry clip(Polygon poly, Polygon clip)
 {
-  final com.vividsolutions.jts.geom.Geometry jtsClipped = intersect(clip.toJTS(), poly.toJTS());
+  com.vividsolutions.jts.geom.Geometry jtsClipped = intersect(clip.toJTS(), poly.toJTS());
 
   if (jtsClipped.isEmpty())
   {
     return null;
   }
 
-  final WritableGeometry clipped = GeometryFactory.fromJTS(jtsClipped);
+  WritableGeometry clipped = GeometryFactory.fromJTS(jtsClipped);
   clipped.setAttributes(poly.getAllAttributes());
 
   return clipped;
 }
 
-public static boolean colinear(final Point p0, final Point p1, final Point p2)
+public static boolean colinear(Point p0, Point p1, Point p2)
 {
   return FloatUtils.isEqual((p1.getY() - p0.getY()) * (p2.getX() - p1.getX()), (p2.getY() - p1.getY()) *
       (p1.getX() - p0.getX()));
@@ -155,58 +155,58 @@ public static boolean colinear(final Point p0, final Point p1, final Point p2)
 // We do this by finding the largest x coordinate in the
 // polygon and adding 1 to get the line x = xmax. Then we
 // need to pick a y value
-public static Point computeIntersection(final Point v0s, final Point v0e, final Point v1s,
-    final Point v1e)
+public static Point computeIntersection(Point v0s, Point v0e, Point v1s,
+    Point v1e)
 {
-  final Point dc = GeometryFactory.createPoint(v0s.getX() - v0e.getX(), v0s.getY() - v0e.getY());
-  final Point dp = GeometryFactory.createPoint(v1s.getX() - v1e.getX(), v1s.getY() - v1e.getY());
+  Point dc = GeometryFactory.createPoint(v0s.getX() - v0e.getX(), v0s.getY() - v0e.getY());
+  Point dp = GeometryFactory.createPoint(v1s.getX() - v1e.getX(), v1s.getY() - v1e.getY());
 
-  final double n1 = v0s.getX() * v0e.getY() - v0s.getY() * v0e.getX();
-  final double n2 = v1s.getX() * v1e.getY() - v1s.getY() * v1e.getX();
-  final double n3 = 1.0 / (dc.getX() * dp.getY() - dc.getY() * dp.getX());
+  double n1 = v0s.getX() * v0e.getY() - v0s.getY() * v0e.getX();
+  double n2 = v1s.getX() * v1e.getY() - v1s.getY() * v1e.getX();
+  double n3 = 1.0 / (dc.getX() * dp.getY() - dc.getY() * dp.getX());
 
   return GeometryFactory.createPoint((n1 * dp.getX() - n2 * dc.getX()) * n3,
       (n1 * dp.getY() - n2 * dc.getY()) * n3);
 }
 
-public static boolean contains(final Point v0, final Point v1, final Point p)
+public static boolean contains(Point v0, Point v1, Point p)
 {
   return Math.abs(dist(v0, v1) - (dist(v0, p) + dist(v1, p))) < epsilon;
 }
 
-public static double dist(final Point p0, final Point p1)
+public static double dist(Point p0, Point p1)
 {
   return Math.sqrt(dist2(p0, p1));
 }
 
-public static double dist2(final Point p0, final Point p1)
+public static double dist2(Point p0, Point p1)
 {
-  final double dx = p1.getX() - p0.getX();
-  final double dy = p1.getY() - p0.getY();
+  double dx = p1.getX() - p0.getX();
+  double dy = p1.getY() - p0.getY();
   return (dx * dx) + (dy * dy);
 }
 
-public static boolean inside(final Polygon poly, final Point p)
+public static boolean inside(Polygon poly, Point p)
 {
-  final LinearRing ring = poly.getExteriorRing();
-  final Bounds b = ring.getBounds();
+  LinearRing ring = poly.getExteriorRing();
+  Bounds b = ring.getBounds();
   if (b.contains(p.getX(), p.getY()))
   {
     boolean odd = false;
 
-    final double x = p.getX();
-    final double y = p.getY();
+    double x = p.getX();
+    double y = p.getY();
 
     Point r1 = ring.getPoint(0);
     for (int i = 1; i < ring.getNumPoints(); i++)
     {
-      final Point r2 = ring.getPoint(i);
+      Point r2 = ring.getPoint(i);
 
-      final double r1x = r1.getX();
-      final double r1y = r1.getY();
+      double r1x = r1.getX();
+      double r1y = r1.getY();
 
-      final double r2x = r2.getX();
-      final double r2y = r2.getY();
+      double r2x = r2.getX();
+      double r2y = r2.getY();
 
       if ((r1y < y && r2y >= y || r2y < y && r1y >= y) && (r1x <= x || r2x <= x))
       {
@@ -222,7 +222,7 @@ public static boolean inside(final Polygon poly, final Point p)
   return false;
 }
 
-public static boolean intersects(final Polygon polygon, final Geometry geometry)
+public static boolean intersects(Polygon polygon, Geometry geometry)
 {
   if (geometry.type() == Type.COLLECTION && geometry instanceof GeometryCollection)
   {
@@ -238,44 +238,44 @@ public static boolean intersects(final Polygon polygon, final Geometry geometry)
   }
   else
   {
-    final com.vividsolutions.jts.geom.Polygon jtsPoly = polygon.toJTS();
-    final com.vividsolutions.jts.geom.Geometry jtsGeom = geometry.toJTS();
+    com.vividsolutions.jts.geom.Polygon jtsPoly = polygon.toJTS();
+    com.vividsolutions.jts.geom.Geometry jtsGeom = geometry.toJTS();
 
     return jtsGeom.within(jtsPoly) || jtsGeom.contains(jtsPoly) || jtsGeom.intersects(jtsPoly);
   }
 }
 
-public static boolean intersects(final Point A, final Point B, final Point C, final Point D)
+public static boolean intersects(Point A, Point B, Point C, Point D)
 {
   return intersects(A, B, C, D, null);
 }
 
 // inspired by: http://www.gamedev.net/topic/222263-test-if-two-2d-line-segments-overlap/
-public static boolean intersects(final Point A, final Point B, final Point C, final Point D,
-    final WritablePoint intersection)
+public static boolean intersects(Point A, Point B, Point C, Point D,
+    WritablePoint intersection)
 {
 
-  final double ax = A.getX();
-  final double ay = A.getY();
+  double ax = A.getX();
+  double ay = A.getY();
 
-  final double bx = B.getX();
-  final double by = B.getY();
+  double bx = B.getX();
+  double by = B.getY();
 
-  final double lbx = bx - ax;
-  final double lby = by - ay;
+  double lbx = bx - ax;
+  double lby = by - ay;
 
-  final double cx = C.getX();
-  final double cy = C.getY();
+  double cx = C.getX();
+  double cy = C.getY();
 
-  final double ldx = D.getX() - C.getX();
-  final double ldy = D.getY() - C.getY();
+  double ldx = D.getX() - C.getX();
+  double ldy = D.getY() - C.getY();
 
   // final double dx = D.getX();
-  final double dy = D.getY();
+  double dy = D.getY();
 
-  final double pdDotb = -ldx * lby + lbx * ldy;
-  final double pdDotc = ldx * (ay - cy) - ldy * (ax - cx);
-  final double pbDotc = -lby * (ax - cx) + lbx * (ay - cy);
+  double pdDotb = -ldx * lby + lbx * ldy;
+  double pdDotc = ldx * (ay - cy) - ldy * (ax - cx);
+  double pbDotc = -lby * (ax - cx) + lbx * (ay - cy);
 
   // parallel?
   if (FloatUtils.isEqual(pdDotb, 0.0))
@@ -283,8 +283,8 @@ public static boolean intersects(final Point A, final Point B, final Point C, fi
     // collinear?
     if (FloatUtils.isEqual(pdDotc, 0.0))
     {
-      final double v;
-      final double w;
+      double v;
+      double w;
 
       if (!FloatUtils.isEqual(lbx, 0.0))
       {
@@ -296,8 +296,8 @@ public static boolean intersects(final Point A, final Point B, final Point C, fi
         {
           if (intersection != null)
           {
-            final double x = ax + (v * lbx);
-            final double y = w;
+            double x = ax + (v * lbx);
+            double y = w;
 
             intersection.setX(x);
             intersection.setY(y);
@@ -370,14 +370,14 @@ public static boolean intersects(final Point A, final Point B, final Point C, fi
     return false;
   }
 
-  final double u = pbDotc / pdDotb;
-  final double t = pdDotc / pdDotb;
+  double u = pbDotc / pdDotb;
+  double t = pdDotc / pdDotb;
 
   // Check for intersection
   if ((u >= 0 && u <= 1) && (t >= 0 && t <= 1))
   {
-    final double x = ax + (t * lbx);
-    final double y = ay + (t * lby);
+    double x = ax + (t * lbx);
+    double y = ay + (t * lby);
     if (intersection != null)
     {
       intersection.setX(x);
@@ -389,12 +389,12 @@ public static boolean intersects(final Point A, final Point B, final Point C, fi
   return false;
 }
 
-public static boolean isOn(final LinearRing clip, final Point p)
+public static boolean isOn(LinearRing clip, Point p)
 {
   Point c1 = clip.getPoint(0);
   for (int j = 1; j < clip.getNumPoints(); j++)
   {
-    final Point c2 = clip.getPoint(j);
+    Point c2 = clip.getPoint(j);
     if (contains(c1, c2, p))
     {
       return true;
@@ -406,16 +406,16 @@ public static boolean isOn(final LinearRing clip, final Point p)
   return false;
 }
 
-public static Polygon toPoly(final Bounds bounds)
+public static Polygon toPoly(Bounds bounds)
 {
-  final WritablePolygon poly = GeometryFactory.createPolygon();
+  WritablePolygon poly = GeometryFactory.createPolygon();
   poly.setExteriorRing(toRing(bounds));
   return poly;
 }
 
-public static LinearRing toRing(final Bounds bounds)
+public static LinearRing toRing(Bounds bounds)
 {
-  final WritableLinearRing ring = GeometryFactory.createLinearRing();
+  WritableLinearRing ring = GeometryFactory.createLinearRing();
   ring.addPoint(bounds.w, bounds.s);
   ring.addPoint(bounds.w, bounds.n);
   ring.addPoint(bounds.e, bounds.n);
@@ -425,7 +425,7 @@ public static LinearRing toRing(final Bounds bounds)
   return ring;
 }
 
-static boolean inside(final Point v0, final Point v1, final Point p)
+static boolean inside(Point v0, Point v1, Point p)
 {
   return ((v1.getX() - v0.getX()) * (p.getY() - v0.getY())) > ((v1.getY() - v0.getY()) * (p
       .getX() - v0.getX()));
@@ -434,23 +434,23 @@ static boolean inside(final Point v0, final Point v1, final Point p)
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled
 static com.vividsolutions.jts.geom.Geometry intersect(
-    final com.vividsolutions.jts.geom.Polygon jtsClip,
-    final com.vividsolutions.jts.geom.Geometry jtsGeom)
+    com.vividsolutions.jts.geom.Polygon jtsClip,
+    com.vividsolutions.jts.geom.Geometry jtsGeom)
 {
   com.vividsolutions.jts.geom.Geometry jtsClipped;
   try
   {
     jtsClipped = jtsGeom.intersection(jtsClip);
   }
-  catch (final TopologyException e)
+  catch (TopologyException e)
   {
-    final com.vividsolutions.jts.geom.Geometry g = TopologyPreservingSimplifier.simplify(jtsGeom,
+    com.vividsolutions.jts.geom.Geometry g = TopologyPreservingSimplifier.simplify(jtsGeom,
         1E-8);
     try
     {
       jtsClipped = g.intersection(jtsClip);
     }
-    catch (final TopologyException e1)
+    catch (TopologyException e1)
     {
       log.error(
           "JTS Topology problem: clip area: " + jtsClip.toString() + " geom: " + jtsGeom.toString() + " message: " +

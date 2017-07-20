@@ -53,7 +53,7 @@ protected MrsImageDataProvider()
   resourceName = null;
 }
 
-public MrsImageDataProvider(final String resourceName)
+public MrsImageDataProvider(String resourceName)
 {
   this.resourceName = resourceName;
 }
@@ -94,7 +94,7 @@ public abstract void move(String toResource) throws IOException;
  * @throws DataProviderException
  * @throws IOException
  */
-public void setupJob(final Job job) throws DataProviderException
+public void setupJob(Job job) throws DataProviderException
 {
 }
 
@@ -106,7 +106,7 @@ public void setupJob(final Job job) throws DataProviderException
  * @throws DataProviderException
  * @throws IOException
  */
-public Configuration setupSparkJob(final Configuration conf) throws DataProviderException
+public Configuration setupSparkJob(Configuration conf) throws DataProviderException
 {
   return conf;
 }
@@ -142,9 +142,9 @@ public MrsPyramidMetadataWriter getMetadataWriter()
 public abstract MrsPyramidMetadataWriter getMetadataWriter(
     MrsPyramidMetadataWriterContext context);
 
-public MrsImageReader getMrsTileReader(final int zoomlevel) throws IOException
+public MrsImageReader getMrsTileReader(int zoomlevel) throws IOException
 {
-  final MrsPyramidReaderContext context = new MrsPyramidReaderContext();
+  MrsPyramidReaderContext context = new MrsPyramidReaderContext();
   context.setZoomlevel(zoomlevel);
   return getMrsTileReader(context);
 }
@@ -158,15 +158,15 @@ public MrsImageReader getMrsTileReader(final int zoomlevel) throws IOException
  */
 public abstract MrsImageReader getMrsTileReader(MrsPyramidReaderContext context) throws IOException;
 
-public MrsImageWriter getMrsTileWriter(final int zoomlevel,
-    final String protectionLevel) throws IOException
+public MrsImageWriter getMrsTileWriter(int zoomlevel,
+    String protectionLevel) throws IOException
 {
-  final MrsPyramidWriterContext context = new MrsPyramidWriterContext(zoomlevel, 0,
+  MrsPyramidWriterContext context = new MrsPyramidWriterContext(zoomlevel, 0,
       protectionLevel);
   return getMrsTileWriter(context);
 }
 
-public abstract void delete(final int zoomlevel) throws IOException;
+public abstract void delete(int zoomlevel) throws IOException;
 
 public abstract MrsImageWriter getMrsTileWriter(MrsPyramidWriterContext context) throws IOException;
 
@@ -193,7 +193,7 @@ public abstract RecordWriter<TileIdWritable, RasterWritable> getRecordWriter();
  * @return
  */
 public abstract MrsImageInputFormatProvider getImageInputFormatProvider(
-    final ImageInputFormatContext context);
+    ImageInputFormatContext context);
 
 /**
  * Return an instance of an OutputFormat class to be used in Spark jobs for producing tiled
@@ -202,6 +202,6 @@ public abstract MrsImageInputFormatProvider getImageInputFormatProvider(
  * @return
  */
 public abstract MrsImageOutputFormatProvider getTiledOutputFormatProvider(
-    final ImageOutputFormatContext context);
+    ImageOutputFormatContext context);
 
 }

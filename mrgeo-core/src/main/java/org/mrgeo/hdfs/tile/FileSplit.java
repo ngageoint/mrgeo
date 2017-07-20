@@ -66,20 +66,20 @@ public void generateSplits(Path parent, Configuration conf) throws IOException
   List<FileSplitInfo> list = new ArrayList<>();
 
   // get a Hadoop file system handle
-  final FileSystem fs = getFileSystem(parent);
+  FileSystem fs = getFileSystem(parent);
 
   // get the list of paths of the subdirectories of the parent
-  final Path[] paths = FileUtil.stat2Paths(fs.listStatus(parent));
+  Path[] paths = FileUtil.stat2Paths(fs.listStatus(parent));
 
   Arrays.sort(paths);
 
   int partition = 0;
   // look inside each subdirectory for a data dir and keep track
-  for (final Path p : paths)
+  for (Path p : paths)
   {
     Path mapfile = null;
-    final FileStatus[] dirFiles = fs.listStatus(p);
-    for (final FileStatus dirFile : dirFiles)
+    FileStatus[] dirFiles = fs.listStatus(p);
+    for (FileStatus dirFile : dirFiles)
     {
       if (dirFile.getPath().getName().equals("data"))
       {
@@ -151,7 +151,7 @@ public void readSplits(InputStream stream) throws SplitException
     }
     else
     {
-      final long split = ByteBuffer.wrap(DatatypeConverter.parseBase64Binary(first)).getLong();
+      long split = ByteBuffer.wrap(DatatypeConverter.parseBase64Binary(first)).getLong();
       if (split == VERSION_2)
       {
         throw new SplitException("Old version 2 splits file, you need to convert it to version 3, " +
@@ -178,7 +178,7 @@ public boolean isVersion2(Path splitsfile) throws IOException
     Scanner reader = new Scanner(stream);
 
     String line = reader.nextLine();
-    final long split = ByteBuffer.wrap(DatatypeConverter.parseBase64Binary(line)).getLong();
+    long split = ByteBuffer.wrap(DatatypeConverter.parseBase64Binary(line)).getLong();
     return split == VERSION_2;
   }
   catch (BufferUnderflowException e)

@@ -39,7 +39,7 @@ public final static int SHORT_BYTES = Short.SIZE / Byte.SIZE;
 public final static int USHORT_BYTES = Character.SIZE / Byte.SIZE;
 
 
-public static ColorModel createColorModel(final Raster raster)
+public static ColorModel createColorModel(Raster raster)
 {
   SampleModel sm = raster.getSampleModel();
 
@@ -103,29 +103,29 @@ public static RasterSize getMaxPixelsForSize(int sizeInKb,
   return new RasterSize(widthInPx, heightInPx, zoom);
 }
 
-public static WritableRaster createEmptyRaster(final int width, final int height,
-    final int bands, final int datatype,
-    final double nodata)
+public static WritableRaster createEmptyRaster(int width, int height,
+    int bands, int datatype,
+    double nodata)
 {
-  final WritableRaster raster = createEmptyRaster(width, height, bands, datatype);
+  WritableRaster raster = createEmptyRaster(width, height, bands, datatype);
   fillWithNodata(raster, nodata);
   return raster;
 }
 
-public static WritableRaster createEmptyRaster(final int width, final int height,
-    final int bands, final int datatype,
-    final double[] nodatas)
+public static WritableRaster createEmptyRaster(int width, int height,
+    int bands, int datatype,
+    double[] nodatas)
 {
-  final WritableRaster raster = createEmptyRaster(width, height, bands, datatype);
+  WritableRaster raster = createEmptyRaster(width, height, bands, datatype);
   fillWithNodata(raster, nodatas);
   return raster;
 }
 
-public static WritableRaster createEmptyRaster(final int width, final int height,
-    final int bands, final int datatype)
+public static WritableRaster createEmptyRaster(int width, int height,
+    int bands, int datatype)
 {
   // we'll force the empty raster to be a banded model, for simplicity of the code.
-  final SampleModel model = new BandedSampleModel(datatype, width, height, bands);
+  SampleModel model = new BandedSampleModel(datatype, width, height, bands);
   return Raster.createWritableRaster(model, null);
 }
 
@@ -142,11 +142,11 @@ public static BufferedImage makeBufferedImage(Raster raster)
         raster.getDataBuffer(), null);
   }
 
-  ColorModel cm = RasterUtils.createColorModel(raster);
+  ColorModel cm = createColorModel(raster);
   return new BufferedImage(cm, wr, false, null);
 }
 
-public static double getDefaultNoDataForType(final int rasterDataType)
+public static double getDefaultNoDataForType(int rasterDataType)
 {
   switch (rasterDataType)
   {
@@ -168,11 +168,11 @@ public static double getDefaultNoDataForType(final int rasterDataType)
   }
 }
 
-private static void fillWithNodata(final WritableRaster raster, final double nodata)
+private static void fillWithNodata(WritableRaster raster, double nodata)
 {
-  final int elements = raster.getHeight() * raster.getWidth();
+  int elements = raster.getHeight() * raster.getWidth();
 
-  final int type = raster.getTransferType();
+  int type = raster.getTransferType();
   for (int b = 0; b < raster.getNumBands(); b++)
   {
     switch (type)
@@ -181,20 +181,20 @@ private static void fillWithNodata(final WritableRaster raster, final double nod
     case DataBuffer.TYPE_INT:
     case DataBuffer.TYPE_SHORT:
     case DataBuffer.TYPE_USHORT:
-      final int[] intsamples = new int[elements];
-      final int inodata = (int) nodata;
+      int[] intsamples = new int[elements];
+      int inodata = (int) nodata;
       Arrays.fill(intsamples, inodata);
       raster.setSamples(0, 0, raster.getWidth(), raster.getHeight(), b, intsamples);
       break;
     case DataBuffer.TYPE_FLOAT:
-      final float[] floatsamples = new float[elements];
+      float[] floatsamples = new float[elements];
 
-      final float fnodata = (float) nodata;
+      float fnodata = (float) nodata;
       Arrays.fill(floatsamples, fnodata);
       raster.setSamples(0, 0, raster.getWidth(), raster.getHeight(), b, floatsamples);
       break;
     case DataBuffer.TYPE_DOUBLE:
-      final double[] doublesamples = new double[elements];
+      double[] doublesamples = new double[elements];
       Arrays.fill(doublesamples, nodata);
       raster.setSamples(0, 0, raster.getWidth(), raster.getHeight(), b, doublesamples);
       break;
@@ -205,7 +205,7 @@ private static void fillWithNodata(final WritableRaster raster, final double nod
   }
 }
 
-private static void fillWithNodata(final WritableRaster raster, final double[] nodata)
+private static void fillWithNodata(WritableRaster raster, double[] nodata)
 {
   if (raster.getNumBands() != nodata.length)
   {
@@ -214,9 +214,9 @@ private static void fillWithNodata(final WritableRaster raster, final double[] n
             " band raster with nodata array containing " + nodata.length +
             " values");
   }
-  final int elements = raster.getHeight() * raster.getWidth();
+  int elements = raster.getHeight() * raster.getWidth();
 
-  final int type = raster.getTransferType();
+  int type = raster.getTransferType();
   for (int b = 0; b < raster.getNumBands(); b++)
   {
     switch (type)
@@ -225,20 +225,20 @@ private static void fillWithNodata(final WritableRaster raster, final double[] n
     case DataBuffer.TYPE_INT:
     case DataBuffer.TYPE_SHORT:
     case DataBuffer.TYPE_USHORT:
-      final int[] intsamples = new int[elements];
-      final int inodata = (int) nodata[b];
+      int[] intsamples = new int[elements];
+      int inodata = (int) nodata[b];
       Arrays.fill(intsamples, inodata);
       raster.setSamples(0, 0, raster.getWidth(), raster.getHeight(), b, intsamples);
       break;
     case DataBuffer.TYPE_FLOAT:
-      final float[] floatsamples = new float[elements];
+      float[] floatsamples = new float[elements];
 
-      final float fnodata = (float) nodata[b];
+      float fnodata = (float) nodata[b];
       Arrays.fill(floatsamples, fnodata);
       raster.setSamples(0, 0, raster.getWidth(), raster.getHeight(), b, floatsamples);
       break;
     case DataBuffer.TYPE_DOUBLE:
-      final double[] doublesamples = new double[elements];
+      double[] doublesamples = new double[elements];
       Arrays.fill(doublesamples, nodata[b]);
       raster.setSamples(0, 0, raster.getWidth(), raster.getHeight(), b, doublesamples);
       break;

@@ -35,9 +35,9 @@ final long maxTileY;
 final int zoomLevel;
 final int increment;
 
-public ImageSplitGenerator(final long minTileX, final long minTileY,
-    final long maxTileX, final long maxTileY,
-    final int zoomLevel, final int increment)
+public ImageSplitGenerator(long minTileX, long minTileY,
+    long maxTileX, long maxTileY,
+    int zoomLevel, int increment)
 {
   this.minTileX = minTileX;
   this.minTileY = minTileY;
@@ -47,8 +47,8 @@ public ImageSplitGenerator(final long minTileX, final long minTileY,
   this.increment = increment;
 }
 
-public ImageSplitGenerator(final LongRectangle tileBounds,
-    final int zoomLevel, final int tileSizeBytes, final long blockSizeBytes)
+public ImageSplitGenerator(LongRectangle tileBounds,
+    int zoomLevel, int tileSizeBytes, long blockSizeBytes)
 {
   this(tileBounds.getMinX(), tileBounds.getMinY(),
       tileBounds.getMaxX(), tileBounds.getMaxY(),
@@ -56,9 +56,9 @@ public ImageSplitGenerator(final LongRectangle tileBounds,
       computeIncrement(tileBounds, tileSizeBytes, blockSizeBytes));
 }
 
-public ImageSplitGenerator(final LongRectangle tileBounds,
-    final int zoomLevel, final int tileSizeBytes,
-    final long blockSizeBytes, final int maxPartitions)
+public ImageSplitGenerator(LongRectangle tileBounds,
+    int zoomLevel, int tileSizeBytes,
+    long blockSizeBytes, int maxPartitions)
 {
   this(tileBounds.getMinX(), tileBounds.getMinY(),
       tileBounds.getMaxX(), tileBounds.getMaxY(),
@@ -66,8 +66,8 @@ public ImageSplitGenerator(final LongRectangle tileBounds,
       computeIncrement(tileBounds, tileSizeBytes, blockSizeBytes, maxPartitions));
 }
 
-private static int computeIncrement(final LongRectangle tileBounds,
-    final int tileSizeBytes, final long blockSizeBytes)
+private static int computeIncrement(LongRectangle tileBounds,
+    int tileSizeBytes, long blockSizeBytes)
 {
   long tilesPerBlock = (int) (blockSizeBytes / tileSizeBytes);
   long tileCount = tileBounds.getHeight() * tileBounds.getWidth();
@@ -83,8 +83,8 @@ private static int computeIncrement(final LongRectangle tileBounds,
   return increment;
 }
 
-private static int computeIncrement(final LongRectangle tileBounds,
-    final int tileSizeBytes, final long blockSizeBytes, final int maxPartitions)
+private static int computeIncrement(LongRectangle tileBounds,
+    int tileSizeBytes, long blockSizeBytes, int maxPartitions)
 {
   int increment = computeIncrement(tileBounds, tileSizeBytes, blockSizeBytes);
   long partitions = tileBounds.getHeight() / increment;

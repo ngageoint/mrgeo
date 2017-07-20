@@ -92,9 +92,9 @@ public List<InputSplit> getSplits(JobContext context) throws IOException, Interr
  * It ensures that the native splits returned from the data provider are
  * instances of TiledInputSplit.
  */
-protected List<TiledInputSplit> getNativeSplits(final JobContext context,
-    final ImageInputFormatContext ifContext,
-    final String input) throws IOException, InterruptedException
+protected List<TiledInputSplit> getNativeSplits(JobContext context,
+    ImageInputFormatContext ifContext,
+    String input) throws IOException, InterruptedException
 {
   MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(input,
       AccessMode.READ, context.getConfiguration());
@@ -123,9 +123,9 @@ protected List<TiledInputSplit> getNativeSplits(final JobContext context,
  * logic is common to all pyramid input formats, regardless of the data provider,
  * so there should be no need to override it in sub-classes.
  */
-List<TiledInputSplit> filterInputSplits(final ImageInputFormatContext ifContext,
-    final List<TiledInputSplit> splits,
-    final int tileSize)
+List<TiledInputSplit> filterInputSplits(ImageInputFormatContext ifContext,
+    List<TiledInputSplit> splits,
+    int tileSize)
 {
   // If there are no splits or no crop region, just return the splits
   if (splits.size() == 0 || ifContext.getBounds() == null)

@@ -41,8 +41,8 @@ private String protectionLevel;
 private ProviderProperties providerProperties;
 
 public MapAlgebraJob(String expression, String output,
-    final String protectionLevel,
-    final ProviderProperties providerProperties)
+    String protectionLevel,
+    ProviderProperties providerProperties)
 {
   this.expression = expression;
   this.output = output;

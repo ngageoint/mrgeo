@@ -48,14 +48,14 @@ public abstract InputFormat<FeatureIdWritable, Geometry> getInputFormat(String i
  *
  * @param job
  */
-public void setupJob(final Job job,
-    final ProviderProperties providerProperties) throws DataProviderException
+public void setupJob(Job job,
+    ProviderProperties providerProperties) throws DataProviderException
 {
   setup(job.getConfiguration(), providerProperties);
 }
 
-public Configuration setupSparkJob(final Configuration conf,
-    final ProviderProperties providerProperties) throws DataProviderException
+public Configuration setupSparkJob(Configuration conf,
+    ProviderProperties providerProperties) throws DataProviderException
 {
   setup(conf, providerProperties);
   return conf;
@@ -66,7 +66,7 @@ public Configuration setupSparkJob(final Configuration conf,
  *
  * @param job
  */
-public void teardown(final Job job) throws DataProviderException
+public void teardown(Job job) throws DataProviderException
 {
 }
 
@@ -75,7 +75,7 @@ protected VectorInputFormatContext getContext()
   return context;
 }
 
-private void setup(final Configuration conf, final ProviderProperties providerProperties)
+private void setup(Configuration conf, ProviderProperties providerProperties)
 {
   DataProviderFactory.saveProviderPropertiesToConfig(providerProperties,
       conf);

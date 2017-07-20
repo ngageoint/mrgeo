@@ -231,7 +231,7 @@ private Response execute(Request request) throws IOException
 
 private static class JsonResponseHandler implements org.apache.http.client.ResponseHandler<String>
 {
-  public String handleResponse(final HttpResponse response) throws IOException, HttpResponseException,
+  public String handleResponse(HttpResponse response) throws IOException, HttpResponseException,
       ClientProtocolException
   {
     return getResponseAsJson(response);
@@ -240,7 +240,7 @@ private static class JsonResponseHandler implements org.apache.http.client.Respo
 
 private static class ResponseHandler implements org.apache.http.client.ResponseHandler<String>
 {
-  public String handleResponse(final HttpResponse response) throws IOException, HttpResponseException,
+  public String handleResponse(HttpResponse response) throws IOException, HttpResponseException,
       ClientProtocolException
   {
     return getResponse(response);

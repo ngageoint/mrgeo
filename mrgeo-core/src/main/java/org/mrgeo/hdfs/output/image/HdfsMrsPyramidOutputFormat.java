@@ -54,7 +54,7 @@ public RecordWriter<WritableComparable<?>, Writable> getRecordWriter(TaskAttempt
 
   Path file = getDefaultWorkFile(context, "");
 
-  final MapFile.Writer out = createMapFileWriter(context, codec, compressionType, file);
+  MapFile.Writer out = createMapFileWriter(context, codec, compressionType, file);
 
   return new Writer(out);
 }

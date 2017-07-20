@@ -53,7 +53,7 @@ final LoadingCache<Integer, Optional<MrsImage>> imageCache = CacheBuilder.newBui
         new RemovalListener<Integer, Optional<MrsImage>>()
         {
           @Override
-          public void onRemoval(final RemovalNotification<Integer, Optional<MrsImage>> notification)
+          public void onRemoval(RemovalNotification<Integer, Optional<MrsImage>> notification)
           {
             if (notification.getValue().isPresent())
             {
@@ -66,7 +66,7 @@ final LoadingCache<Integer, Optional<MrsImage>> imageCache = CacheBuilder.newBui
     .build(new CacheLoader<Integer, Optional<MrsImage>>()
     {
       @Override
-      public Optional<MrsImage> load(final Integer level) throws IOException
+      public Optional<MrsImage> load(Integer level) throws IOException
       {
         log.debug("image cache miss: " + provider.getResourceName() + "/" + level);
 
@@ -83,11 +83,11 @@ private MrsPyramid(MrsImageDataProvider provider)
 }
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled
-public static void calculateMetadata(final String pyramidname, final int zoom,
-    final MrsImageDataProvider provider,
-    final ImageStats[] levelStats,
-    final double[] defaultValues,
-    final Bounds bounds, final String protectionLevel) throws IOException
+public static void calculateMetadata(String pyramidname, int zoom,
+    MrsImageDataProvider provider,
+    ImageStats[] levelStats,
+    double[] defaultValues,
+    Bounds bounds, String protectionLevel) throws IOException
 {
   MrsPyramidMetadata metadata;
   try
@@ -114,15 +114,15 @@ public static void calculateMetadata(final String pyramidname, final int zoom,
   }
 
 
-  final MrsImageReader reader = provider.getMrsTileReader(zoom);
+  MrsImageReader reader = provider.getMrsTileReader(zoom);
   try
   {
 
-    final KVIterator<TileIdWritable, MrGeoRaster> rasterIter = reader.get();
+    KVIterator<TileIdWritable, MrGeoRaster> rasterIter = reader.get();
 
     if (rasterIter != null && rasterIter.hasNext())
     {
-      final MrGeoRaster raster = rasterIter.next();
+      MrGeoRaster raster = rasterIter.next();
 
       calculateMetadata(zoom, raster, provider, levelStats, metadata);
     }
@@ -133,23 +133,23 @@ public static void calculateMetadata(final String pyramidname, final int zoom,
   }
 }
 
-public static void calculateMetadata(final int zoom,
-    final MrGeoRaster raster,
-    final MrsImageDataProvider provider,
-    final ImageStats[] levelStats,
-    final MrsPyramidMetadata metadata) throws IOException
+public static void calculateMetadata(int zoom,
+    MrGeoRaster raster,
+    MrsImageDataProvider provider,
+    ImageStats[] levelStats,
+    MrsPyramidMetadata metadata) throws IOException
 {
 
-  final int tilesize = raster.width();
+  int tilesize = raster.width();
 
-  final Bounds bounds = metadata.getBounds();
+  Bounds bounds = metadata.getBounds();
 
-  final TileBounds tb = TMSUtils.boundsToTile(bounds, zoom, tilesize);
+  TileBounds tb = TMSUtils.boundsToTile(bounds, zoom, tilesize);
   metadata.setTileBounds(zoom, new LongRectangle(tb.w, tb.s, tb.e, tb.n));
 
-  final Pixel pll = TMSUtils.latLonToPixels(bounds.s, bounds.w, zoom,
+  Pixel pll = TMSUtils.latLonToPixels(bounds.s, bounds.w, zoom,
       tilesize);
-  final Pixel pur = TMSUtils.latLonToPixels(bounds.n, bounds.e, zoom,
+  Pixel pur = TMSUtils.latLonToPixels(bounds.n, bounds.e, zoom,
       tilesize);
   metadata.setPixelBounds(zoom, new LongRectangle(0, 0, pur.px - pll.px, pur.py - pll.py));
 
@@ -171,14 +171,14 @@ public static void calculateMetadata(final int zoom,
 }
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled
-public static boolean isValid(final String name, final ProviderProperties providerProperties)
+public static boolean isValid(String name, ProviderProperties providerProperties)
 {
   try
   {
-    MrsPyramid.open(name, providerProperties);
+    open(name, providerProperties);
     return true;
   }
-  catch (final IOException ignored)
+  catch (IOException ignored)
   {
   }
 
@@ -186,29 +186,29 @@ public static boolean isValid(final String name, final ProviderProperties provid
 }
 
 @Deprecated
-public static MrsPyramid loadPyramid(final String name,
-    final ProviderProperties providerProperties) throws IOException
+public static MrsPyramid loadPyramid(String name,
+    ProviderProperties providerProperties) throws IOException
 {
-  return MrsPyramid.open(name, providerProperties);
+  return open(name, providerProperties);
 }
 
-public static MrsPyramid open(final String name,
-    final ProviderProperties providerProperties) throws IOException
+public static MrsPyramid open(String name,
+    ProviderProperties providerProperties) throws IOException
 {
   MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(name,
       AccessMode.READ, providerProperties);
   return new MrsPyramid(provider);
 }
 
-public static MrsPyramid open(final String name,
-    final Configuration conf) throws IOException
+public static MrsPyramid open(String name,
+    Configuration conf) throws IOException
 {
   MrsImageDataProvider provider = DataProviderFactory.getMrsImageDataProvider(name,
       AccessMode.READ, conf);
   return new MrsPyramid(provider);
 }
 
-public static MrsPyramid open(final MrsImageDataProvider provider) throws IOException
+public static MrsPyramid open(MrsImageDataProvider provider) throws IOException
 {
   return new MrsPyramid(provider);
 }
@@ -282,7 +282,7 @@ public MrsImage getHighestResImage() throws IOException
  * Be sure to also call MrsImage.close() on the returned MrsImage, or else there'll be a leak
  */
 @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST_OF_RETURN_VALUE", justification = "We _are_ checking!")
-public MrsImage getImage(final int level) throws IOException
+public MrsImage getImage(int level) throws IOException
 {
   try {
     Optional<MrsImage> o = imageCache.get(level);
@@ -299,7 +299,7 @@ public MrsImage getImage(final int level) throws IOException
       throw new IOException("Requested zoom level " + level + " is greater than the max zoom level for the image " + getMaximumLevel());
     }
   }
-  catch (final ExecutionException e)
+  catch (ExecutionException e)
   {
     if (e.getCause() instanceof IOException)
     {

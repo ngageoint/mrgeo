@@ -30,7 +30,7 @@ private final String newProjection;
 private transient Reprojector reprojector;
 private ShapefileGeometryCollection src;
 
-public ReprojectedShapefileGeometryCollection(final ShapefileGeometryCollection src, final String newProjection)
+public ReprojectedShapefileGeometryCollection(ShapefileGeometryCollection src, String newProjection)
 {
   this.src = src;
   this.newProjection = newProjection;
@@ -49,9 +49,9 @@ public void close()
 }
 
 @Override
-public WritableGeometry get(final int index)
+public WritableGeometry get(int index)
 {
-  final WritableGeometry result = src.get(index).createWritableClone();
+  WritableGeometry result = src.get(index).createWritableClone();
   result.filter(reprojector);
   return result;
 }
@@ -72,7 +72,7 @@ public int size()
   return src.size();
 }
 
-private void readObject(final ObjectInputStream is) throws ClassNotFoundException, IOException
+private void readObject(ObjectInputStream is) throws ClassNotFoundException, IOException
 {
   // always perform the default de-serialization first
   is.defaultReadObject();
@@ -85,7 +85,7 @@ static class LocalIterator implements Iterator<WritableGeometry>
   private final ReprojectedShapefileGeometryCollection parent;
   private int currentIndex;
 
-  public LocalIterator(final ReprojectedShapefileGeometryCollection parent)
+  public LocalIterator(ReprojectedShapefileGeometryCollection parent)
   {
     this.parent = parent;
   }

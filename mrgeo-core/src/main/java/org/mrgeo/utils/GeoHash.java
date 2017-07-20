@@ -74,11 +74,11 @@ static
   BORDERS[RIGHT][ODD] = BORDERS[TOP][EVEN];
 }
 
-public static String calculateAdjacent(String srcHash, final int dir)
+public static String calculateAdjacent(String srcHash, int dir)
 {
   srcHash = srcHash.toLowerCase();
-  final char lastChr = srcHash.charAt(srcHash.length() - 1);
-  final int type = (srcHash.length() % 2) != 0 ? ODD : EVEN;
+  char lastChr = srcHash.charAt(srcHash.length() - 1);
+  int type = (srcHash.length() % 2) != 0 ? ODD : EVEN;
   String base = srcHash.substring(0, srcHash.length() - 1);
   if (BORDERS[dir][type].indexOf(lastChr) != -1)
   {
@@ -87,19 +87,19 @@ public static String calculateAdjacent(String srcHash, final int dir)
   return base + BASE32.charAt(NEIGHBORS[dir][type].indexOf(lastChr));
 }
 
-public static LatLng decode(final long hash)
+public static LatLng decode(long hash)
 {
-  final double[] ll = decodeBitsToArray(hash);
+  double[] ll = decodeBitsToArray(hash);
   return new LatLng(ll[0], ll[1]);
 }
 
-public static Bounds decode(final String geohash)
+public static Bounds decode(String geohash)
 {
-  final double[][] bounds = decodeToArray(geohash);
+  double[][] bounds = decodeToArray(geohash);
   return new Bounds(bounds[1][0], bounds[0][0], bounds[1][1], bounds[0][1]);
 }
 
-public static double[] decodeBitsToArray(final long hash)
+public static double[] decodeBitsToArray(long hash)
 {
   double minLat = -90.0;
   double maxLat = 90.0;
@@ -115,8 +115,8 @@ public static double[] decodeBitsToArray(final long hash)
 
   while (true)
   {
-    final double midLat = minLat + ((maxLat - minLat) / 2);
-    final double midLon = minLon + ((maxLon - minLon) / 2);
+    double midLat = minLat + ((maxLat - minLat) / 2);
+    double midLon = minLon + ((maxLon - minLon) / 2);
 
     if ((hash & bits) != 0)
     {
@@ -154,11 +154,11 @@ public static double[] decodeBitsToArray(final long hash)
   return new double[]{lat, lon};
 }
 
-public static double[][] decodeToArray(final String geohash)
+public static double[][] decodeToArray(String geohash)
 {
   boolean is_even = true;
-  final double[] lat = new double[3];
-  final double[] lon = new double[3];
+  double[] lat = new double[3];
+  double[] lon = new double[3];
 
   lat[0] = -90.0;
   lat[1] = 90.0;
@@ -169,9 +169,9 @@ public static double[][] decodeToArray(final String geohash)
 
   for (int i = 0; i < geohash.length(); i++)
   {
-    final char c = geohash.charAt(i);
-    final int cd = BASE32.indexOf(c);
-    for (final int mask : BITS)
+    char c = geohash.charAt(i);
+    int cd = BASE32.indexOf(c);
+    for (int mask : BITS)
     {
       if (is_even)
       {
@@ -192,11 +192,11 @@ public static double[][] decodeToArray(final String geohash)
   return new double[][]{lat, lon};
 }
 
-public static String encode(final double latitude, final double longitude)
+public static String encode(double latitude, double longitude)
 {
   boolean is_even = true;
-  final double lat[] = new double[2];
-  final double lon[] = new double[2];
+  double lat[] = new double[2];
+  double lon[] = new double[2];
   int bit = 0;
   int ch = 0;
   StringBuilder geohash = new StringBuilder();
@@ -210,7 +210,7 @@ public static String encode(final double latitude, final double longitude)
   {
     if (is_even)
     {
-      final double mid = (lon[0] + lon[1]) / 2.0;
+      double mid = (lon[0] + lon[1]) / 2.0;
       if (longitude > mid)
       {
         ch |= BITS[bit];
@@ -223,7 +223,7 @@ public static String encode(final double latitude, final double longitude)
     }
     else
     {
-      final double mid = (lat[0] + lat[1]) / 2.0;
+      double mid = (lat[0] + lat[1]) / 2.0;
       if (latitude > mid)
       {
         ch |= BITS[bit];
@@ -251,7 +251,7 @@ public static String encode(final double latitude, final double longitude)
 
 // This algorithm is from:
 // http://karussell.wordpress.com/2012/05/23/spatial-keys-memory-efficient-geohashes/
-public static long encodeBits(final double latitude, final double longitude)
+public static long encodeBits(double latitude, double longitude)
 {
   long hash = 0;
   double minLat = -90.0;
@@ -261,8 +261,8 @@ public static long encodeBits(final double latitude, final double longitude)
   int i = 0;
   while (true)
   {
-    final double midLat = minLat + ((maxLat - minLat) / 2);
-    final double midLon = minLon + ((maxLon - minLon) / 2);
+    double midLat = minLat + ((maxLat - minLat) / 2);
+    double midLon = minLon + ((maxLon - minLon) / 2);
 
     if (latitude > midLat)
     {
@@ -301,12 +301,12 @@ public static int getPrecision()
   return precision;
 }
 
-public static void setPrecision(final int p)
+public static void setPrecision(int p)
 {
   precision = p;
 }
 
-private static void refine_interval(final double[] interval, final int cd, final int mask)
+private static void refine_interval(double[] interval, int cd, int mask)
 {
   if ((cd & mask) > 0)
   {

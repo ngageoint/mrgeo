@@ -32,12 +32,12 @@ private static final Logger log = LoggerFactory.getLogger(FileUtils.class);
 
 public static File createUniqueTmpDir() throws IOException
 {
-  final File baseDir = new File(System.getProperty("java.io.tmpdir"));
+  File baseDir = new File(System.getProperty("java.io.tmpdir"));
 
-  final String username = "mrgeo-" + System.getProperty("user.name");
-  final String baseName = "-" + System.currentTimeMillis();
+  String username = "mrgeo-" + System.getProperty("user.name");
+  String baseName = "-" + System.currentTimeMillis();
 
-  final File tempDir = new File(baseDir, username + "/" + baseName);
+  File tempDir = new File(baseDir, username + "/" + baseName);
 
   return createDisposibleDirectory(tempDir);
 }
@@ -45,10 +45,10 @@ public static File createUniqueTmpDir() throws IOException
 
 public static File createTmpUserDir() throws IOException
 {
-  final File baseDir = new File(System.getProperty("java.io.tmpdir"));
-  final String username = "mrgeo-" + System.getProperty("user.name");
+  File baseDir = new File(System.getProperty("java.io.tmpdir"));
+  String username = "mrgeo-" + System.getProperty("user.name");
 
-  final File tempDir = new File(baseDir, username);
+  File tempDir = new File(baseDir, username);
 
   return createDisposibleDirectory(tempDir);
 }
@@ -85,12 +85,12 @@ public static File createDir(File dir) throws IOException
   return dir;
 }
 
-public static void deleteDir(final File dir) throws IOException
+public static void deleteDir(File dir) throws IOException
 {
   deleteDir(dir, false);
 }
 
-public static void deleteDir(final File dir, final Boolean recursive) throws IOException
+public static void deleteDir(File dir, Boolean recursive) throws IOException
 {
   if (dir.exists() && dir.isDirectory())
   {
@@ -122,7 +122,7 @@ public static void deleteDir(final File dir, final Boolean recursive) throws IOE
 
 
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File used to create URI")
-public static String resolveURI(final String path)
+public static String resolveURI(String path)
 {
   try
   {
@@ -146,7 +146,7 @@ public static String resolveURI(final String path)
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File used to create URI")
-public static String resolveURL(final String path)
+public static String resolveURL(String path)
 {
   try
   {

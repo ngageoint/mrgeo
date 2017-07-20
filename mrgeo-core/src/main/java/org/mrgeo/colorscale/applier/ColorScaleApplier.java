@@ -44,9 +44,9 @@ public abstract String[] getWmsFormats();
 
 public abstract int getBytesPerPixelPerBand();
 
-public abstract int getBands(final int sourceBands);
+public abstract int getBands(int sourceBands);
 
-protected void apply(final MrGeoRaster source, final MrGeoRaster dest, ColorScale colorScale)
+protected void apply(MrGeoRaster source, MrGeoRaster dest, ColorScale colorScale)
 {
   if (source.bands() == dest.bands() && (source.bands() == 3 || source.bands() == 4))
   {

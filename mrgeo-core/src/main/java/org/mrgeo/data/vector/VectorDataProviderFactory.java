@@ -37,7 +37,7 @@ public interface VectorDataProviderFactory
  * required for validating the data provider in the Configuration during
  * job setup so that it will be available in the mapper and reducer.
  */
-public boolean isValid(final Configuration conf);
+public boolean isValid(Configuration conf);
 
 /**
  * This method is called once when DataProviderFactory finds this factory.
@@ -85,27 +85,27 @@ public Map<String, String> getConfiguration();
  */
 public void setConfiguration(Map<String, String> properties);
 
-public VectorDataProvider createVectorDataProvider(final String prefix,
-    final String input,
-    final Configuration conf,
-    final ProviderProperties providerProperties);
+public VectorDataProvider createVectorDataProvider(String prefix,
+    String input,
+    Configuration conf,
+    ProviderProperties providerProperties);
 
-public String[] listVectors(final Configuration conf,
-                            final ProviderProperties providerProperties) throws IOException;
+public String[] listVectors(Configuration conf,
+                            ProviderProperties providerProperties) throws IOException;
 
-public boolean canOpen(final String input,
-                       final Configuration conf,
-                       final ProviderProperties providerProperties) throws IOException;
+public boolean canOpen(String input,
+                       Configuration conf,
+                       ProviderProperties providerProperties) throws IOException;
 
-public boolean canWrite(final String input,
-                        final Configuration conf,
-                        final ProviderProperties providerProperties) throws IOException;
+public boolean canWrite(String input,
+                        Configuration conf,
+                        ProviderProperties providerProperties) throws IOException;
 
-public boolean exists(final String name,
-                      final Configuration conf,
-                      final ProviderProperties providerProperties) throws IOException;
+public boolean exists(String name,
+                      Configuration conf,
+                      ProviderProperties providerProperties) throws IOException;
 
-public void delete(final String name,
-                   final Configuration conf,
-                   final ProviderProperties providerProperties) throws IOException;
+public void delete(String name,
+                   Configuration conf,
+                   ProviderProperties providerProperties) throws IOException;
 }

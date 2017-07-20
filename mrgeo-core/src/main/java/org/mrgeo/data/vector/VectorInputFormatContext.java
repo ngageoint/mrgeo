@@ -44,15 +44,15 @@ private ProviderProperties inputProviderProperties = new ProviderProperties();
 private long featureCount = -1L;
 private int minFeaturesPerSplit = -1;
 
-public VectorInputFormatContext(final Set<String> inputs,
-    final ProviderProperties inputProviderProperties)
+public VectorInputFormatContext(Set<String> inputs,
+    ProviderProperties inputProviderProperties)
 {
   this.inputs = inputs;
   this.inputProviderProperties = inputProviderProperties;
 }
 
-public VectorInputFormatContext(final Set<String> inputs,
-    final ProviderProperties inputProviderProperties, long featureCount,
+public VectorInputFormatContext(Set<String> inputs,
+    ProviderProperties inputProviderProperties, long featureCount,
     int minFeaturesPerSplit)
 {
   this(inputs, inputProviderProperties);
@@ -64,7 +64,7 @@ protected VectorInputFormatContext()
 {
 }
 
-public static VectorInputFormatContext load(final Configuration conf)
+public static VectorInputFormatContext load(Configuration conf)
 {
   VectorInputFormatContext context = new VectorInputFormatContext();
   context.inputs = new HashSet<>();
@@ -104,7 +104,7 @@ public int getMinFeaturesPerSplit()
   return minFeaturesPerSplit;
 }
 
-public void save(final Configuration conf)
+public void save(Configuration conf)
 {
   conf.setInt(INPUTS_COUNT, inputs.size());
   int inputIndex = 0;

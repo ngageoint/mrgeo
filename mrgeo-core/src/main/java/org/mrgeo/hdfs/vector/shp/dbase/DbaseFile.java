@@ -393,7 +393,7 @@ private List loadRow(SeekableDataInput is, int i) throws IOException
         Date date = null;
         try
         {
-          final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMdd");
+          SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMdd");
           date = dateFormatter.parse(tempStr);
         }
         catch (ParseException ignored)

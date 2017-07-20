@@ -51,47 +51,47 @@ private HadoopFileUtils()
 {
 }
 
-public static void cleanDirectory(final Path dir) throws IOException
+public static void cleanDirectory(Path dir) throws IOException
 {
   cleanDirectory(dir, true);
 }
 
-public static void cleanDirectory(final String dir) throws IOException
+public static void cleanDirectory(String dir) throws IOException
 {
   cleanDirectory(HadoopUtils.createConfiguration(), dir);
 }
 
-public static void cleanDirectory(final Configuration conf, final String dir) throws IOException
+public static void cleanDirectory(Configuration conf, String dir) throws IOException
 {
   cleanDirectory(conf, dir, true);
 }
 
-public static void cleanDirectory(final String dir, final boolean recursive) throws IOException
+public static void cleanDirectory(String dir, boolean recursive) throws IOException
 {
   cleanDirectory(HadoopUtils.createConfiguration(), dir, recursive);
 }
 
-public static void cleanDirectory(final Configuration conf, final String dir, final boolean recursive)
+public static void cleanDirectory(Configuration conf, String dir, boolean recursive)
     throws IOException
 {
   cleanDirectory(conf, new Path(dir), recursive);
 }
 
-public static void cleanDirectory(final Path dir, final boolean recursive) throws IOException
+public static void cleanDirectory(Path dir, boolean recursive) throws IOException
 {
   cleanDirectory(HadoopUtils.createConfiguration(), dir, recursive);
 }
 
-public static void cleanDirectory(final Configuration conf, final Path dir, final boolean recursive)
+public static void cleanDirectory(Configuration conf, Path dir, boolean recursive)
     throws IOException
 {
-  final FileSystem fs = getFileSystem(conf, dir);
+  FileSystem fs = getFileSystem(conf, dir);
 
   cleanDirectory(fs, dir);
   if (recursive)
   {
-    final FileStatus files[] = fs.listStatus(dir);
-    for (final FileStatus file : files)
+    FileStatus files[] = fs.listStatus(dir);
+    for (FileStatus file : files)
     {
       if (file.isDir())
       {
@@ -101,21 +101,21 @@ public static void cleanDirectory(final Configuration conf, final Path dir, fina
   }
 }
 
-public static void copyFileToHdfs(final String fromFile, final String toFile) throws IOException
+public static void copyFileToHdfs(String fromFile, String toFile) throws IOException
 {
   copyFileToHdfs(fromFile, toFile, true);
 }
 
 @SuppressWarnings("squid:S2095") // hadoop FileSystem cannot be closed, or else subsequent uses will fail
-public static void copyFileToHdfs(final String fromFile, final String toFile,
-    final boolean overwrite) throws IOException
+public static void copyFileToHdfs(String fromFile, String toFile,
+    boolean overwrite) throws IOException
 {
-  final Path toPath = new Path(toFile);
-  final Path fromPath = new Path(fromFile);
-  final FileSystem srcFS = HadoopFileUtils.getFileSystem(toPath);
-  final FileSystem dstFS = HadoopFileUtils.getFileSystem(fromPath);
+  Path toPath = new Path(toFile);
+  Path fromPath = new Path(fromFile);
+  FileSystem srcFS = getFileSystem(toPath);
+  FileSystem dstFS = getFileSystem(fromPath);
 
-  final Configuration conf = HadoopUtils.createConfiguration();
+  Configuration conf = HadoopUtils.createConfiguration();
   InputStream in = null;
   OutputStream out = null;
   try
@@ -125,7 +125,7 @@ public static void copyFileToHdfs(final String fromFile, final String toFile,
 
     IOUtils.copyBytes(in, out, conf, true);
   }
-  catch (final IOException e)
+  catch (IOException e)
   {
     IOUtils.closeStream(out);
     IOUtils.closeStream(in);
@@ -133,16 +133,16 @@ public static void copyFileToHdfs(final String fromFile, final String toFile,
   }
 }
 
-public static void copyToHdfs(final Path fromDir, final Path toDir, final String fileName)
+public static void copyToHdfs(Path fromDir, Path toDir, String fileName)
     throws IOException
 {
-  final FileSystem fs = getFileSystem(toDir);
+  FileSystem fs = getFileSystem(toDir);
   fs.mkdirs(toDir);
   fs.copyFromLocalFile(false, true, new Path(fromDir, fileName), new Path(toDir, fileName));
 }
 
-public static void copyToHdfs(final Path fromDir, final Path toDir, final String fileName,
-    final boolean overwrite) throws IOException
+public static void copyToHdfs(Path fromDir, Path toDir, String fileName,
+    boolean overwrite) throws IOException
 {
   if (overwrite)
   {
@@ -151,20 +151,20 @@ public static void copyToHdfs(final Path fromDir, final Path toDir, final String
   copyToHdfs(fromDir, toDir, fileName);
 }
 
-public static void copyToHdfs(final String fromDir, final Path toDir, final String fileName)
+public static void copyToHdfs(String fromDir, Path toDir, String fileName)
     throws IOException
 {
   copyToHdfs(new Path(fromDir), toDir, fileName);
 }
 
-public static void copyToHdfs(final String fromDir, final String toDir, final String fileName)
+public static void copyToHdfs(String fromDir, String toDir, String fileName)
     throws IOException
 {
   copyToHdfs(new Path(fromDir), new Path(toDir), fileName);
 }
 
-public static void copyToHdfs(final String fromDir, final Path toDir, final String fileName,
-    final boolean overwrite) throws IOException
+public static void copyToHdfs(String fromDir, Path toDir, String fileName,
+    boolean overwrite) throws IOException
 {
   if (overwrite)
   {
@@ -174,16 +174,16 @@ public static void copyToHdfs(final String fromDir, final Path toDir, final Stri
 }
 
 @SuppressWarnings("squid:S2095") // hadoop FileSystem cannot be closed, or else subsequent uses will fail
-public static void copyToHdfs(final String fromDir, final String toDir) throws IOException
+public static void copyToHdfs(String fromDir, String toDir) throws IOException
 {
-  final Path toPath = new Path(toDir);
-  final Path fromPath = new Path(fromDir);
-  final FileSystem fs = HadoopFileUtils.getFileSystem(toPath);
+  Path toPath = new Path(toDir);
+  Path fromPath = new Path(fromDir);
+  FileSystem fs = getFileSystem(toPath);
   fs.mkdirs(toPath);
   fs.copyFromLocalFile(false, true, fromPath, toPath);
 }
 
-public static void copyToHdfs(final String fromDir, final String toDir, final boolean overwrite)
+public static void copyToHdfs(String fromDir, String toDir, boolean overwrite)
     throws IOException
 {
   if (overwrite)
@@ -218,9 +218,9 @@ public static Path createUniqueTmp() throws IOException
 public static Path createUniqueTmp(Configuration conf) throws IOException
 {
   // create a corresponding tmp directory for the job
-  final Path tmp = createUniqueTmpPath(conf);
+  Path tmp = createUniqueTmpPath(conf);
 
-  final FileSystem fs = HadoopFileUtils.getFileSystem(tmp);
+  FileSystem fs = getFileSystem(tmp);
   if (!fs.exists(tmp))
   {
     fs.mkdirs(tmp);
@@ -245,25 +245,25 @@ public static Path createUniqueTmpPath(Configuration conf) throws IOException
   return new Path(getTempDir(conf), HadoopUtils.createRandomString(40));
 }
 
-public static void create(final Path path) throws IOException
+public static void create(Path path) throws IOException
 {
   create(HadoopUtils.createConfiguration(), path);
 }
 
-public static void create(final Path path, final String mode) throws IOException
+public static void create(Path path, String mode) throws IOException
 {
   create(HadoopUtils.createConfiguration(), path, mode);
 }
 
-public static void create(final Configuration conf, final Path path) throws IOException
+public static void create(Configuration conf, Path path) throws IOException
 {
   create(conf, path, null);
 }
 
 @SuppressWarnings("squid:S2095") // hadoop FileSystem cannot be closed, or else subsequent uses will fail
-public static void create(final Configuration conf, final Path path, final String mode) throws IOException
+public static void create(Configuration conf, Path path, String mode) throws IOException
 {
-  final FileSystem fs = HadoopFileUtils.getFileSystem(conf, path);
+  FileSystem fs = getFileSystem(conf, path);
 
   if (!fs.exists(path))
   {
@@ -279,27 +279,27 @@ public static void create(final Configuration conf, final Path path, final Strin
   }
 }
 
-public static void create(final String path, final String mode) throws IOException
+public static void create(String path, String mode) throws IOException
 {
   create(HadoopUtils.createConfiguration(), path, mode);
 }
 
-public static void create(final Configuration conf, final String path, final String mode) throws IOException
+public static void create(Configuration conf, String path, String mode) throws IOException
 {
   create(conf, new Path(path), mode);
 }
 
-public static void create(final String path) throws IOException
+public static void create(String path) throws IOException
 {
   create(HadoopUtils.createConfiguration(), path);
 }
 
-public static void create(final Configuration conf, final String path) throws IOException
+public static void create(Configuration conf, String path) throws IOException
 {
   create(conf, new Path(path));
 }
 
-public static void delete(final Path path) throws IOException
+public static void delete(Path path) throws IOException
 {
   delete(HadoopUtils.createConfiguration(), path);
 }
@@ -314,9 +314,9 @@ public static void delete(final Path path) throws IOException
  * @param path
  * @throws IOException
  */
-public static void delete(final Configuration conf, final Path path) throws IOException
+public static void delete(Configuration conf, Path path) throws IOException
 {
-  final FileSystem fs = getFileSystem(conf, path);
+  FileSystem fs = getFileSystem(conf, path);
   if (fs.exists(path))
   {
     log.info("Deleting path " + path.toString());
@@ -367,49 +367,49 @@ public static void delete(final Configuration conf, final Path path) throws IOEx
   }
 }
 
-public static void delete(final String path) throws IOException
+public static void delete(String path) throws IOException
 {
   delete(HadoopUtils.createConfiguration(), path);
 }
 
-public static void delete(final Configuration conf, final String path) throws IOException
+public static void delete(Configuration conf, String path) throws IOException
 {
   delete(conf, new Path(path));
 }
 
-public static boolean exists(final Configuration conf, final Path path) throws IOException
+public static boolean exists(Configuration conf, Path path) throws IOException
 {
-  final FileSystem fs = getFileSystem(conf, path);
+  FileSystem fs = getFileSystem(conf, path);
   return fs.exists(path);
 }
 
-public static boolean exists(final Configuration conf, final String path) throws IOException
+public static boolean exists(Configuration conf, String path) throws IOException
 {
   return exists(conf, new Path(path));
 }
 
-public static boolean exists(final Path path) throws IOException
+public static boolean exists(Path path) throws IOException
 {
   return exists(HadoopUtils.createConfiguration(), path);
 }
 
-public static boolean exists(final String path) throws IOException
+public static boolean exists(String path) throws IOException
 {
   return exists(HadoopUtils.createConfiguration(), new Path(path));
 }
 
-public static void get(final Configuration conf, final Path fromDir, final Path toDir,
-    final String fileName) throws IOException
+public static void get(Configuration conf, Path fromDir, Path toDir,
+    String fileName) throws IOException
 {
-  final FileSystem fs = getFileSystem(conf, fromDir);
+  FileSystem fs = getFileSystem(conf, fromDir);
 
-  final FileSystem fsTo = toDir.getFileSystem(conf);
+  FileSystem fsTo = toDir.getFileSystem(conf);
   fsTo.mkdirs(toDir);
 
   fs.copyToLocalFile(new Path(fromDir, fileName), new Path(toDir, fileName));
 }
 
-public static void get(final Path fromDir, final Path toDir, final String fileName)
+public static void get(Path fromDir, Path toDir, String fileName)
     throws IOException
 {
   get(HadoopUtils.createConfiguration(), fromDir, toDir, fileName);
@@ -435,12 +435,12 @@ public static FileSystem getFileSystem()
   return null;
 }
 
-public static FileSystem getFileSystem(final Configuration conf) throws IOException
+public static FileSystem getFileSystem(Configuration conf) throws IOException
 {
   return FileSystem.get(conf);
 }
 
-public static FileSystem getFileSystem(final Configuration conf, final Path path)
+public static FileSystem getFileSystem(Configuration conf, Path path)
     throws IOException
 {
   //return FileSystem.newInstance(path.toUri(), conf);
@@ -456,22 +456,22 @@ public static FileSystem getFileSystem(final Configuration conf, final Path path
  * @return
  * @throws IOException
  */
-public static FileSystem getFileSystem(final Path path) throws IOException
+public static FileSystem getFileSystem(Path path) throws IOException
 {
   return getFileSystem(HadoopUtils.createConfiguration(), path);
 }
 
-public static long getPathSize(final Configuration conf, final Path p) throws IOException
+public static long getPathSize(Configuration conf, Path p) throws IOException
 {
   long result = 0;
 
-  final FileSystem fs = getFileSystem(conf, p);
+  FileSystem fs = getFileSystem(conf, p);
 
-  final FileStatus status = fs.getFileStatus(p);
+  FileStatus status = fs.getFileStatus(p);
   if (status.isDir())
   {
-    final FileStatus[] list = fs.listStatus(p);
-    for (final FileStatus l : list)
+    FileStatus[] list = fs.listStatus(p);
+    for (FileStatus l : list)
     {
       result += getPathSize(conf, l.getPath());
     }
@@ -500,12 +500,12 @@ public static Path getTempDir() throws IOException
  * @return
  * @throws IOException
  */
-public static Path getTempDir(final Configuration conf) throws IOException
+public static Path getTempDir(Configuration conf) throws IOException
 {
-  final FileSystem fs = getFileSystem(conf);
+  FileSystem fs = getFileSystem(conf);
   Path parent;
   parent = fs.getHomeDirectory();
-  final Path tmp = new Path(parent, "tmp");
+  Path tmp = new Path(parent, "tmp");
   if (!fs.exists(tmp))
   {
     fs.mkdirs(tmp);
@@ -520,10 +520,10 @@ public static Path getTempDir(final Configuration conf) throws IOException
  * @param outputPath output path
  * @throws IOException if unable to move file
  */
-public static void move(final Configuration conf, final Path inputPath, final Path outputPath)
+public static void move(Configuration conf, Path inputPath, Path outputPath)
     throws IOException
 {
-  final FileSystem fs = getFileSystem(conf, inputPath);
+  FileSystem fs = getFileSystem(conf, inputPath);
 
   if (!fs.rename(inputPath, outputPath))
   {
@@ -537,7 +537,7 @@ public static void move(final Configuration conf, final Path inputPath, final Pa
 }
 
 public static void
-move(final Configuration conf, final String inputPath, final String outputPath)
+move(Configuration conf, String inputPath, String outputPath)
     throws IOException
 {
   move(conf, new Path(inputPath), new Path(outputPath));
@@ -552,34 +552,34 @@ move(final Configuration conf, final String inputPath, final String outputPath)
  * @param targetParent
  * @throws IOException
  */
-public static void moveChildDirectories(final Configuration conf, final Path srcParent,
-    final Path targetParent) throws IOException
+public static void moveChildDirectories(Configuration conf, Path srcParent,
+    Path targetParent) throws IOException
 {
   // We want to move each of the child directories of the output path
   // to the actual target directory (toPath). If any of the subdirs
   // already exists under the target path, we need to delete it first,
   // then perform the move.
 
-  final FileSystem fs = getFileSystem(conf, srcParent);
+  FileSystem fs = getFileSystem(conf, srcParent);
   if (!fs.exists(targetParent))
   {
     fs.mkdirs(targetParent);
   }
-  final FileStatus[] children = fs.listStatus(srcParent);
-  for (final FileStatus stat : children)
+  FileStatus[] children = fs.listStatus(srcParent);
+  for (FileStatus stat : children)
   {
     if (stat.isDir())
     {
-      final Path srcPath = stat.getPath();
-      final String name = srcPath.getName();
-      final Path target = new Path(targetParent, name);
+      Path srcPath = stat.getPath();
+      String name = srcPath.getName();
+      Path target = new Path(targetParent, name);
       if (fs.exists(target))
       {
         fs.delete(target, true);
       }
       if (fs.rename(srcPath, targetParent) == false)
       {
-        final String msg = MessageFormat.format(
+        String msg = MessageFormat.format(
             "Error moving temporary file {0} to output path {1}.", srcPath.toString(), target
                 .toString());
         throw new IOException(msg);
@@ -588,9 +588,9 @@ public static void moveChildDirectories(final Configuration conf, final Path src
   }
 }
 
-public static InputStream open(final Configuration conf, final Path path) throws IOException
+public static InputStream open(Configuration conf, Path path) throws IOException
 {
-  final FileSystem fs = getFileSystem(conf, path);
+  FileSystem fs = getFileSystem(conf, path);
 
   if (fs.exists(path))
   {
@@ -600,7 +600,7 @@ public static InputStream open(final Configuration conf, final Path path) throws
   throw new FileNotFoundException("File not found: " + path.toUri().toString());
 }
 
-public static InputStream open(final Path path) throws IOException
+public static InputStream open(Path path) throws IOException
 {
   return open(HadoopUtils.createConfiguration(), path);
 }
@@ -612,29 +612,29 @@ public static InputStream open(final Path path) throws IOException
  * @param path DFS path
  * @return e.g. for input: hdfs://localhost:9000/mrgeo/images/test-1, returns /mrgeo/images/test-1
  */
-public static Path unqualifyPath(final Path path)
+public static Path unqualifyPath(Path path)
 {
   return new Path(path.toUri().getPath());
 }
 
-public static String unqualifyPath(final String path)
+public static String unqualifyPath(String path)
 {
   return new Path((new Path(path)).toUri().getPath()).toString();
 }
 
-public static Path resolveName(final String input) throws IOException, URISyntaxException
+public static Path resolveName(String input) throws IOException, URISyntaxException
 {
   return resolveName(input, true);
 }
 
-public static Path resolveName(final String input, boolean checkForExistance) throws IOException, URISyntaxException
+public static Path resolveName(String input, boolean checkForExistance) throws IOException, URISyntaxException
 {
   return resolveName(HadoopUtils.createConfiguration(), input, checkForExistance);
 }
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "method only makes complete URI out of the name")
-public static Path resolveName(final Configuration conf, final String input,
+public static Path resolveName(Configuration conf, String input,
     boolean checkForExistance) throws IOException, URISyntaxException
 {
   // It could be either HDFS or local file system
@@ -658,15 +658,15 @@ public static Path resolveName(final Configuration conf, final String input,
   throw new IOException("Cannot find: " + input);
 }
 
-private static void cleanDirectory(final FileSystem fs, final Path dir) throws IOException
+private static void cleanDirectory(FileSystem fs, Path dir) throws IOException
 {
-  final Path temp = new Path(dir, "_temporary");
+  Path temp = new Path(dir, "_temporary");
   if (fs.exists(temp))
   {
     fs.delete(temp, true);
   }
 
-  final Path success = new Path(dir, "_SUCCESS");
+  Path success = new Path(dir, "_SUCCESS");
   if (fs.exists(success))
   {
     fs.delete(success, true);

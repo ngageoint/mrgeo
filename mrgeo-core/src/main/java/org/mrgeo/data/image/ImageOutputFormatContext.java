@@ -33,7 +33,7 @@ private String protectionLevel;
  *
  * @param output
  */
-public ImageOutputFormatContext(final String output, Bounds bounds, int zoomlevel, int tilesize, String protectionLevel)
+public ImageOutputFormatContext(String output, Bounds bounds, int zoomlevel, int tilesize, String protectionLevel)
 {
   this.output = output;
   if (bounds != null)
@@ -45,7 +45,7 @@ public ImageOutputFormatContext(final String output, Bounds bounds, int zoomleve
   this.protectionLevel = protectionLevel;
 }
 
-public ImageOutputFormatContext(final String output, Bounds bounds, int zoomlevel, int tilesize,
+public ImageOutputFormatContext(String output, Bounds bounds, int zoomlevel, int tilesize,
     String protectionLevel, int tiletype, int bands)
 {
   this.output = output;

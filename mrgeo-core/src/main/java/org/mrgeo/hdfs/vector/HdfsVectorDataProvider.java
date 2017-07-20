@@ -44,8 +44,8 @@ private Configuration conf;
 private Path resourcePath;
 private ProviderProperties providerProperties;
 
-public HdfsVectorDataProvider(final Configuration conf,
-    final String prefix, final String resourceName, final ProviderProperties providerProperties)
+public HdfsVectorDataProvider(Configuration conf,
+    String prefix, String resourceName, ProviderProperties providerProperties)
 {
   super(prefix, resourceName);
 
@@ -83,8 +83,8 @@ public static boolean isSourceShapefile(Path source)
 }
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled
-public static boolean canOpen(final Configuration conf, String input,
-    final ProviderProperties providerProperties) throws IOException
+public static boolean canOpen(Configuration conf, String input,
+    ProviderProperties providerProperties) throws IOException
 {
   Path p;
   try
@@ -105,14 +105,14 @@ public static boolean canOpen(final Configuration conf, String input,
   return false;
 }
 
-public static boolean exists(final Configuration conf, String input,
-    final ProviderProperties providerProperties) throws IOException
+public static boolean exists(Configuration conf, String input,
+    ProviderProperties providerProperties) throws IOException
 {
   return resolveNameToPath(conf, input, providerProperties, true) != null;
 }
 
-public static void delete(final Configuration conf, String input,
-    final ProviderProperties providerProperties) throws IOException
+public static void delete(Configuration conf, String input,
+    ProviderProperties providerProperties) throws IOException
 {
   Path p = resolveNameToPath(conf, input, providerProperties, false);
   if (p != null)
@@ -145,8 +145,8 @@ public static void delete(final Configuration conf, String input,
   }
 }
 
-public static boolean canWrite(final Configuration conf, String input,
-    final ProviderProperties providerProperties) throws IOException
+public static boolean canWrite(Configuration conf, String input,
+    ProviderProperties providerProperties) throws IOException
 {
   // The return value of resolveNameToPath will be null if the input
   // path does not exist. It wil throw an exception if there is a problem
@@ -155,7 +155,7 @@ public static boolean canWrite(final Configuration conf, String input,
   return (p == null);
 }
 
-static Path getBasePath(final Configuration conf)
+static Path getBasePath(Configuration conf)
 {
   String basePathKey = "hdfs." + MrGeoConstants.MRGEO_HDFS_VECTOR;
   Path basePath = null;
@@ -192,8 +192,8 @@ static Path getBasePath(final Configuration conf)
   return basePath;
 }
 
-private static Path resolveName(final Configuration conf, final String input,
-    final ProviderProperties providerProperties, final boolean mustExist) throws IOException
+private static Path resolveName(Configuration conf, String input,
+    ProviderProperties providerProperties, boolean mustExist) throws IOException
 {
   Path result = resolveNameToPath(conf, input, providerProperties, mustExist);
   // Check to see if the source is one of the supported formats
@@ -207,8 +207,8 @@ private static Path resolveName(final Configuration conf, final String input,
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "method only makes complete URI out of the name")
-private static Path resolveNameToPath(final Configuration conf, final String input,
-    final ProviderProperties providerProperties, final boolean mustExist) throws IOException
+private static Path resolveNameToPath(Configuration conf, String input,
+    ProviderProperties providerProperties, boolean mustExist) throws IOException
 {
   if (input.indexOf('/') >= 0)
   {
@@ -284,7 +284,7 @@ private static Path resolveNameToPath(final Configuration conf, final String inp
   }
 }
 
-public String getResolvedResourceName(final boolean mustExist) throws IOException
+public String getResolvedResourceName(boolean mustExist) throws IOException
 {
   return resolveNameToPath(conf, getResourceName(), providerProperties, mustExist).toUri().toString();
   //return new Path(getImageBasePath(), getResourceName()).toUri().toString();

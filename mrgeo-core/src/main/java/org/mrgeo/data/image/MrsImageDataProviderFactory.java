@@ -112,8 +112,8 @@ public void setConfiguration(Map<String, String> properties);
  *
  * @return
  */
-public MrsImageDataProvider createTempMrsImageDataProvider(final Configuration conf,
-                                                           final ProviderProperties providerProperties)
+public MrsImageDataProvider createTempMrsImageDataProvider(Configuration conf,
+                                                           ProviderProperties providerProperties)
     throws IOException;
 
 /**
@@ -125,9 +125,9 @@ public MrsImageDataProvider createTempMrsImageDataProvider(final Configuration c
  * @param input
  * @return
  */
-public MrsImageDataProvider createMrsImageDataProvider(final String input,
-                                                       final Configuration conf,
-                                                       final ProviderProperties providerProperties);
+public MrsImageDataProvider createMrsImageDataProvider(String input,
+                                                       Configuration conf,
+                                                       ProviderProperties providerProperties);
 
 /**
  * Return a list of all of the images that the data plugin knows about. This method
@@ -136,8 +136,8 @@ public MrsImageDataProvider createMrsImageDataProvider(final String input,
  * @return
  * @throws IOException
  */
-public String[] listImages(final Configuration conf,
-                           final ProviderProperties providerProperties) throws IOException;
+public String[] listImages(Configuration conf,
+                           ProviderProperties providerProperties) throws IOException;
 
 /**
  * Return true if this data plugin is capable of opening the specified
@@ -151,9 +151,9 @@ public String[] listImages(final Configuration conf,
  * @return
  * @throws IOException
  */
-public boolean canOpen(final String input,
-                       final Configuration conf,
-                       final ProviderProperties providerProperties) throws IOException;
+public boolean canOpen(String input,
+                       Configuration conf,
+                       ProviderProperties providerProperties) throws IOException;
 
 /**
  * Returns true if the data plugin is able to create the specified
@@ -166,9 +166,9 @@ public boolean canOpen(final String input,
  * @return
  * @throws IOException
  */
-public boolean canWrite(final String input,
-                        final Configuration conf,
-                        final ProviderProperties providerProperties) throws IOException;
+public boolean canWrite(String input,
+                        Configuration conf,
+                        ProviderProperties providerProperties) throws IOException;
 
 /**
  * Returns true if the data plugin determines that the specified resource
@@ -179,9 +179,9 @@ public boolean canWrite(final String input,
  * @return
  * @throws IOException
  */
-public boolean exists(final String name,
-                      final Configuration conf,
-                      final ProviderProperties providerProperties) throws IOException;
+public boolean exists(String name,
+                      Configuration conf,
+                      ProviderProperties providerProperties) throws IOException;
 
 /**
  * Deletes the specified resource. This method should only be called from
@@ -190,7 +190,7 @@ public boolean exists(final String name,
  * @param name
  * @throws IOException
  */
-public void delete(final String name,
-                   final Configuration conf,
-                   final ProviderProperties providerProperties) throws IOException;
+public void delete(String name,
+                   Configuration conf,
+                   ProviderProperties providerProperties) throws IOException;
 }

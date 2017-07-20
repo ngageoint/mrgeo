@@ -28,11 +28,11 @@ public class MeanAggregator implements Aggregator
 {
 
 @Override
-public double aggregate(final double[] values, final double nodata)
+public double aggregate(double[] values, double nodata)
 {
   double sum = 0;
   int count = 0;
-  for (final double value : values)
+  for (double value : values)
   {
     if (FloatUtils.isNotNodata(value, nodata))
     {
@@ -44,8 +44,8 @@ public double aggregate(final double[] values, final double nodata)
 }
 
 @Override
-public double aggregate(final double[][] values, final double weightx, final double weighty,
-    final double nodata)
+public double aggregate(double[][] values, double weightx, double weighty,
+    double nodata)
 {
 
   double s0;
@@ -93,11 +93,11 @@ public double aggregate(final double[][] values, final double weightx, final dou
 }
 
 @Override
-public float aggregate(final float[] values, final float nodata)
+public float aggregate(float[] values, float nodata)
 {
   float sum = 0;
   int count = 0;
-  for (final float value : values)
+  for (float value : values)
   {
     if (FloatUtils.isNotNodata(value, nodata))
     {
@@ -109,8 +109,8 @@ public float aggregate(final float[] values, final float nodata)
 }
 
 @Override
-public float aggregate(final float[][] values, final double weightx, final double weighty,
-    final float nodata)
+public float aggregate(float[][] values, double weightx, double weighty,
+    float nodata)
 {
   float s0;
   float s1;
@@ -157,11 +157,11 @@ public float aggregate(final float[][] values, final double weightx, final doubl
 }
 
 @Override
-public int aggregate(final int[] values, final int nodata)
+public int aggregate(int[] values, int nodata)
 {
   int sum = 0;
   int count = 0;
-  for (final int value : values)
+  for (int value : values)
   {
     if (value != nodata)
     {
@@ -174,8 +174,8 @@ public int aggregate(final int[] values, final int nodata)
 
 
 @Override
-public int aggregate(final int[][] values, final double weightx, final double weighty,
-    final int nodata)
+public int aggregate(int[][] values, double weightx, double weighty,
+    int nodata)
 {
 
   int s0;
@@ -222,11 +222,11 @@ public int aggregate(final int[][] values, final double weightx, final double we
 }
 
 @Override
-public short aggregate(final short[] values, final short nodata)
+public short aggregate(short[] values, short nodata)
 {
   short sum = 0;
   short count = 0;
-  for (final short value : values)
+  for (short value : values)
   {
     if (value != nodata)
     {
@@ -239,8 +239,8 @@ public short aggregate(final short[] values, final short nodata)
 
 
 @Override
-public short aggregate(final short[][] values, final double weightx, final double weighty,
-    final short nodata)
+public short aggregate(short[][] values, double weightx, double weighty,
+    short nodata)
 {
 
   short s0;
@@ -287,11 +287,11 @@ public short aggregate(final short[][] values, final double weightx, final doubl
 }
 
 @Override
-public byte aggregate(final byte[] values, final byte nodata)
+public byte aggregate(byte[] values, byte nodata)
 {
   byte sum = 0;
   byte count = 0;
-  for (final byte value : values)
+  for (byte value : values)
   {
     if (value != nodata)
     {
@@ -304,8 +304,8 @@ public byte aggregate(final byte[] values, final byte nodata)
 
 
 @Override
-public byte aggregate(final byte[][] values, final double weightx, final double weighty,
-    final byte nodata)
+public byte aggregate(byte[][] values, double weightx, double weighty,
+    byte nodata)
 {
 
   byte s0;

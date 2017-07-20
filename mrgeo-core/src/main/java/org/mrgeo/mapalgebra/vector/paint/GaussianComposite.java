@@ -164,7 +164,7 @@ private class GaussianCompositeContext implements CompositeContext
 
   private double calculateGaussian(double v, int x, int y, double multiplier)
   {
-    final Point2D.Double src = new Point2D.Double(x, y);
+    Point2D.Double src = new Point2D.Double(x, y);
 
     // transform in the src point from pixels to lat/lon
     try
@@ -177,7 +177,7 @@ private class GaussianCompositeContext implements CompositeContext
     }
 
     // calculate the lat/lon delta of the src point
-    final Point2D.Double delta = new Point2D.Double((src.getX() - center.getX()),
+    Point2D.Double delta = new Point2D.Double((src.getX() - center.getX()),
         (src.getY() - center.getY()));
 
     // transform the delta to the orientation of the ellipse

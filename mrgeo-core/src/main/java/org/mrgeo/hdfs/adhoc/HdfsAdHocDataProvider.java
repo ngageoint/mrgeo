@@ -45,24 +45,24 @@ private final List<Path> files = new java.util.concurrent.CopyOnWriteArrayList<>
 private Configuration conf;
 private Path resourcePath;
 
-public HdfsAdHocDataProvider(final Configuration conf,
-    final ProviderProperties providerProperties) throws IOException
+public HdfsAdHocDataProvider(Configuration conf,
+    ProviderProperties providerProperties) throws IOException
 {
   super(HadoopFileUtils.unqualifyPath(new Path(HadoopFileUtils.getTempDir(conf),
       HadoopUtils.createRandomString(10))).toString());
   this.conf = conf;
 }
 
-public HdfsAdHocDataProvider(final Configuration conf, final String resourceName,
-    final ProviderProperties providerProperties) throws IOException
+public HdfsAdHocDataProvider(Configuration conf, String resourceName,
+    ProviderProperties providerProperties) throws IOException
 {
   super(resourceName);
   this.conf = conf;
 }
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled
-public static boolean canOpen(final Configuration conf,
-    final String name, final ProviderProperties providerProperties) throws IOException
+public static boolean canOpen(Configuration conf,
+    String name, ProviderProperties providerProperties) throws IOException
 {
   try
   {
@@ -77,8 +77,8 @@ public static boolean canOpen(final Configuration conf,
   return false;
 }
 
-public static boolean canWrite(final String name, final Configuration conf,
-    final ProviderProperties providerProperties) throws IOException
+public static boolean canWrite(String name, Configuration conf,
+    ProviderProperties providerProperties) throws IOException
 {
   // I think Ad hoc should always be able to write...
 
@@ -95,8 +95,8 @@ public static boolean canWrite(final String name, final Configuration conf,
 }
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled
-public static boolean exists(final Configuration conf, String name,
-    final ProviderProperties providerProperties) throws IOException
+public static boolean exists(Configuration conf, String name,
+    ProviderProperties providerProperties) throws IOException
 {
   try
   {
@@ -109,8 +109,8 @@ public static boolean exists(final Configuration conf, String name,
   return false;
 }
 
-public static void delete(final Configuration conf, String name,
-    final ProviderProperties providerProperties) throws IOException
+public static void delete(Configuration conf, String name,
+    ProviderProperties providerProperties) throws IOException
 {
   try
   {
@@ -122,8 +122,8 @@ public static void delete(final Configuration conf, String name,
   }
 }
 
-private static Path determineResourcePath(final Configuration conf,
-    final String resourceName) throws IOException, URISyntaxException
+private static Path determineResourcePath(Configuration conf,
+    String resourceName) throws IOException, URISyntaxException
 {
   return HadoopFileUtils.resolveName(conf, resourceName, false);
 }
@@ -154,23 +154,23 @@ public OutputStream add() throws IOException
 
 @Override
 @SuppressWarnings("squid:S1166") // Exception caught and handled
-public OutputStream add(final String name) throws IOException
+public OutputStream add(String name) throws IOException
 {
   Path resource;
   try
   {
     resource = getResourcePath();
   }
-  catch (final IOException e)
+  catch (IOException e)
   {
     HadoopFileUtils.create(getConfiguration(), getResourceName());
     resource = getResourcePath();
   }
 
-  final FileSystem fs = HadoopFileUtils.getFileSystem(getConfiguration(), resource);
+  FileSystem fs = HadoopFileUtils.getFileSystem(getConfiguration(), resource);
 
-  final Path path = new Path(resource, name);
-  final OutputStream stream = fs.create(path, true);
+  Path path = new Path(resource, name);
+  OutputStream stream = fs.create(path, true);
 
   initializeFiles(getConfiguration());
   files.add(path);
@@ -185,7 +185,7 @@ public void delete() throws IOException
 }
 
 @Override
-public void move(final String toResource) throws IOException
+public void move(String toResource) throws IOException
 {
   try
   {
@@ -199,7 +199,7 @@ public void move(final String toResource) throws IOException
 }
 
 @Override
-public InputStream get(final int index) throws IOException
+public InputStream get(int index) throws IOException
 {
   initializeFiles(getConfiguration());
   if (index >= 0 && index < files.size())
@@ -212,7 +212,7 @@ public InputStream get(final int index) throws IOException
 
 @Override
 @SuppressFBWarnings(value = "WEAK_FILENAMEUTILS", justification = "adhoc provider, our class, we control the filenames")
-public InputStream get(final String name) throws IOException
+public InputStream get(String name) throws IOException
 {
   initializeFiles(getConfiguration());
 
@@ -263,18 +263,18 @@ public int size() throws IOException
   return files.size();
 }
 
-private void initializeFiles(final Configuration conf) throws IOException
+private void initializeFiles(Configuration conf) throws IOException
 {
   // read any existing files into the file list.
   files.clear();
 
-  final Path resource = getResourcePath();
+  Path resource = getResourcePath();
   if (HadoopFileUtils.exists(conf, resource))
   {
-    final FileSystem fs = HadoopFileUtils.getFileSystem(conf, resource);
-    final FileStatus[] status = fs.listStatus(resource);
+    FileSystem fs = HadoopFileUtils.getFileSystem(conf, resource);
+    FileStatus[] status = fs.listStatus(resource);
 
-    for (final FileStatus f : status)
+    for (FileStatus f : status)
     {
       files.add(f.getPath());
     }

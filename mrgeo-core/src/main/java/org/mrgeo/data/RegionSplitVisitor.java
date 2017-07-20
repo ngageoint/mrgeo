@@ -50,8 +50,8 @@ public boolean accept(TiledInputSplit split)
   return result;
 }
 
-boolean splitOverlapsTileBounds(final Tile splitStartTile,
-    final Tile splitEndTile, final TileBounds cropBounds)
+boolean splitOverlapsTileBounds(Tile splitStartTile,
+    Tile splitEndTile, TileBounds cropBounds)
 {
   // If the split is either before or beyond the crop, then skip this split
   if (splitEndTile.ty < cropBounds.s || (splitEndTile.ty == cropBounds.s && splitEndTile.tx < cropBounds.w))

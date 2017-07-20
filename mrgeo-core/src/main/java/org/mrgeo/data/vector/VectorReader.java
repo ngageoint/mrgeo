@@ -71,7 +71,7 @@ public abstract Geometry get(FeatureIdWritable featureId) throws IOException;
  *
  * @return
  */
-public abstract CloseableKVIterator<FeatureIdWritable, Geometry> get(final Bounds bounds) throws IOException;
+public abstract CloseableKVIterator<FeatureIdWritable, Geometry> get(Bounds bounds) throws IOException;
 
 /**
  * Returns the number of features.

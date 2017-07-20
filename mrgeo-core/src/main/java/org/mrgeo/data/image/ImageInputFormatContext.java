@@ -46,8 +46,8 @@ private ProviderProperties inputProviderProperties;
  * image pyramids. The map/reduce job will have access to all the tiles from those
  * input.
  */
-public ImageInputFormatContext(final int zoomlevel, final int tileSize,
-    final String input, final ProviderProperties inputProviderProperties)
+public ImageInputFormatContext(int zoomlevel, int tileSize,
+    String input, ProviderProperties inputProviderProperties)
 {
   this.zoomLevel = zoomlevel;
   this.tileSize = tileSize;
@@ -61,9 +61,9 @@ public ImageInputFormatContext(final int zoomlevel, final int tileSize,
  * image pyramids. The map/reduce job will have access to all the tiles from those
  * input.
  */
-public ImageInputFormatContext(final int zoomlevel, final int tileSize,
-    final String input, final Bounds bounds,
-    final ProviderProperties inputProviderProperties)
+public ImageInputFormatContext(int zoomlevel, int tileSize,
+    String input, Bounds bounds,
+    ProviderProperties inputProviderProperties)
 {
   this.zoomLevel = zoomlevel;
   this.tileSize = tileSize;
@@ -76,7 +76,7 @@ protected ImageInputFormatContext()
 {
 }
 
-public static ImageInputFormatContext load(final Configuration conf)
+public static ImageInputFormatContext load(Configuration conf)
 {
   ImageInputFormatContext context = new ImageInputFormatContext();
   context.input = conf.get(INPUT);
@@ -120,7 +120,7 @@ public Bounds getBounds()
   return bounds;
 }
 
-public void save(final Configuration conf)
+public void save(Configuration conf)
 {
   conf.set(INPUT, input);
   conf.setInt(ZOOM_LEVEL, zoomLevel);

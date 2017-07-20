@@ -86,7 +86,7 @@ public static void printMissingDependencies()
   }
 }
 
-public static Set<String> getDependencies(final Class<?> clazz) throws IOException
+public static Set<String> getDependencies(Class<?> clazz) throws IOException
 {
   Set<File> files = findDependencies(clazz);
 
@@ -100,7 +100,7 @@ public static Set<String> getDependencies(final Class<?> clazz) throws IOExcepti
 }
 
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File used for addinj to HDFS classpath")
-public static Set<String> copyDependencies(final Set<String> localDependencies, Configuration conf) throws IOException
+public static Set<String> copyDependencies(Set<String> localDependencies, Configuration conf) throws IOException
 {
   if (conf == null)
   {
@@ -137,14 +137,14 @@ public static Set<String> copyDependencies(final Set<String> localDependencies, 
 
 }
 
-public static String[] getAndCopyDependencies(final String clazz, Configuration conf)
+public static String[] getAndCopyDependencies(String clazz, Configuration conf)
     throws IOException, ClassNotFoundException
 {
   Class cl = Class.forName(clazz);
   return getAndCopyDependencies(cl, conf);
 }
 
-public static String[] getAndCopyDependencies(final String[] clazzes, Configuration conf)
+public static String[] getAndCopyDependencies(String[] clazzes, Configuration conf)
     throws IOException, ClassNotFoundException
 {
   if (conf == null)
@@ -161,7 +161,7 @@ public static String[] getAndCopyDependencies(final String[] clazzes, Configurat
   return qualified;
 }
 
-public static String[] getAndCopyDependencies(final Class<?> clazz, Configuration conf) throws IOException
+public static String[] getAndCopyDependencies(Class<?> clazz, Configuration conf) throws IOException
 {
   // get the list of dependencies
   Set<String> rawDeps = getDependencies(clazz);
@@ -171,7 +171,7 @@ public static String[] getAndCopyDependencies(final Class<?> clazz, Configuratio
   return strings.toArray(new String[strings.size()]);
 }
 
-public static String getMasterJar(final Class<?> clazz) throws IOException
+public static String getMasterJar(Class<?> clazz) throws IOException
 {
   Set<Dependency> properties = loadDependenciesByReflection(clazz);
   if (properties != null)
@@ -195,7 +195,7 @@ public static String getMasterJar(final Class<?> clazz) throws IOException
   return null;
 }
 
-public static Set<String> getUnqualifiedDependencies(final Class<?> clazz) throws IOException
+public static Set<String> getUnqualifiedDependencies(Class<?> clazz) throws IOException
 {
   Set<File> files = findDependencies(clazz);
 
@@ -208,7 +208,7 @@ public static Set<String> getUnqualifiedDependencies(final Class<?> clazz) throw
   return deps;
 }
 
-public static void addDependencies(final Job job, final Class<?> clazz) throws IOException
+public static void addDependencies(Job job, Class<?> clazz) throws IOException
 {
   if (HadoopUtils.isLocal(job.getConfiguration()))
   {
@@ -231,7 +231,7 @@ public static void addDependencies(final Job job, final Class<?> clazz) throws I
   }
 }
 
-public static void addDependencies(final Configuration conf, final Class<?> clazz) throws IOException
+public static void addDependencies(Configuration conf, Class<?> clazz) throws IOException
 {
   if (HadoopUtils.isLocal(conf))
   {
@@ -365,7 +365,7 @@ private static String makeJarFromDependency(Dependency dep)
 }
 
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File comes from classpath")
-private static Set<File> findJarsInClasspath(final Set<String> jars, boolean recurseDirectories) throws IOException
+private static Set<File> findJarsInClasspath(Set<String> jars, boolean recurseDirectories) throws IOException
 {
   Set<File> paths = new HashSet<>();
 
@@ -670,7 +670,7 @@ private static Set<Dependency> loadDependenciesByReflection(Class<?> clazz) thro
         .setUrls(ClasspathHelper.forPackage(ClassUtils.getPackageName(DependencyLoader.class)))
         .setScanners(new ResourcesScanner()));
 
-    final Set<String> resources = reflections.getResources(Pattern.compile(".*dependencies\\.properties"));
+    Set<String> resources = reflections.getResources(Pattern.compile(".*dependencies\\.properties"));
     for (String resource : resources)
     {
       log.debug("Loading dependency properties from: /" + resource);
@@ -773,7 +773,7 @@ private static Set<Dependency> readDependencies(InputStream is) throws IOExcepti
 }
 
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File used to create URI")
-private static Set<Dependency> loadDependenciesFromJar(final String jarname) throws IOException
+private static Set<Dependency> loadDependenciesFromJar(String jarname) throws IOException
 {
   try
   {

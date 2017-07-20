@@ -50,8 +50,8 @@ private HdfsMrsPyramidMetadataReader metaReader;
 private HdfsMrsPyramidMetadataWriter metaWriter;
 private Path resourcePath;
 
-public HdfsMrsImageDataProvider(final Configuration conf,
-    final String resourceName, final ProviderProperties providerProperties)
+public HdfsMrsImageDataProvider(Configuration conf,
+    String resourceName, ProviderProperties providerProperties)
 {
   super(resourceName);
   this.conf = conf;
@@ -59,8 +59,8 @@ public HdfsMrsImageDataProvider(final Configuration conf,
 }
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled
-public static boolean canOpen(final Configuration conf, String input,
-    final ProviderProperties providerProperties) throws IOException
+public static boolean canOpen(Configuration conf, String input,
+    ProviderProperties providerProperties) throws IOException
 {
   Path p;
   try
@@ -74,14 +74,14 @@ public static boolean canOpen(final Configuration conf, String input,
   return false;
 }
 
-public static boolean exists(final Configuration conf, String input,
-    final ProviderProperties providerProperties) throws IOException
+public static boolean exists(Configuration conf, String input,
+    ProviderProperties providerProperties) throws IOException
 {
   return resolveNameToPath(conf, input, providerProperties, true, false) != null;
 }
 
-public static void delete(final Configuration conf, String input,
-    final ProviderProperties providerProperties) throws IOException
+public static void delete(Configuration conf, String input,
+    ProviderProperties providerProperties) throws IOException
 {
   try
   {
@@ -99,8 +99,8 @@ public static void delete(final Configuration conf, String input,
 }
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled
-public static boolean canWrite(final Configuration conf, String input,
-    final ProviderProperties providerProperties) throws IOException
+public static boolean canWrite(Configuration conf, String input,
+    ProviderProperties providerProperties) throws IOException
 {
   // The return value of resolveNameToPath will be null if the input
   // path does not exist.
@@ -115,7 +115,7 @@ public static boolean canWrite(final Configuration conf, String input,
   return false;
 }
 
-public static Path getBasePath(final Configuration conf)
+public static Path getBasePath(Configuration conf)
 {
   String basePathKey = "hdfs." + MrGeoConstants.MRGEO_HDFS_IMAGE;
   Path basePath = null;
@@ -170,9 +170,9 @@ public static Path getBasePath(final Configuration conf)
 @SuppressWarnings("squid:S1166") // Exception caught and handled
 @SuppressFBWarnings(value = {"PATH_TRAVERSAL_IN", "WEAK_FILENAMEUTILS"},
     justification = "check will only be used for reading valid MrsPyramids")
-private static Path resolveNameToPath(final Configuration conf, final String input,
-    final ProviderProperties providerProperties, final boolean mustExist,
-    final boolean throwExceptionIfInvalid) throws IOException
+private static Path resolveNameToPath(Configuration conf, String input,
+    ProviderProperties providerProperties, boolean mustExist,
+    boolean throwExceptionIfInvalid) throws IOException
 {
   if (input.indexOf('/') >= 0)
   {
@@ -262,8 +262,8 @@ private static Path resolveNameToPath(final Configuration conf, final String inp
   }
 }
 
-private static Path resolveName(final Configuration conf, final String input,
-    final ProviderProperties providerProperties, final boolean mustExist) throws IOException
+private static Path resolveName(Configuration conf, String input,
+    ProviderProperties providerProperties, boolean mustExist) throws IOException
 {
   Path result = resolveNameToPath(conf, input, providerProperties, mustExist, false);
   if (result != null && (!mustExist || hasMetadata(conf, result)))
@@ -275,7 +275,7 @@ private static Path resolveName(final Configuration conf, final String input,
 }
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled
-private static boolean hasMetadata(final Configuration conf, final Path p)
+private static boolean hasMetadata(Configuration conf, Path p)
 {
   FileSystem fs;
   try
@@ -299,7 +299,7 @@ public String getSimpleResourceName() throws IOException
   return p.getName();
 }
 
-public String getResolvedResourceName(final boolean mustExist) throws IOException
+public String getResolvedResourceName(boolean mustExist) throws IOException
 {
   try
   {
@@ -392,7 +392,7 @@ public void delete() throws IOException
 }
 
 @Override
-public void move(final String toResource) throws IOException
+public void move(String toResource) throws IOException
 {
   try
   {
@@ -407,7 +407,7 @@ public void move(final String toResource) throws IOException
 }
 
 @Override
-public boolean validateProtectionLevel(final String protectionLevel)
+public boolean validateProtectionLevel(String protectionLevel)
 {
   // TODO: This method should validate that the protection level logical
   // expression passed in is formulated correctly - e.g. "A|B|C" is good

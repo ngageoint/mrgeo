@@ -44,7 +44,7 @@ public LatLng()
   this.lng = Double.NaN;
 }
 
-public LatLng(final double lat, final double lng)
+public LatLng(double lat, double lng)
 {
   this.lat = lat;
   this.lng = lng;
@@ -54,7 +54,7 @@ public LatLng(final double lat, final double lng)
  * Calculate the great circle distance in meters. See
  * http://en.wikipedia.org/wiki/Great_circle_distance for an explanation.
  */
-public static double calculateGreatCircleDistance(final LatLng p1, final LatLng p2)
+public static double calculateGreatCircleDistance(LatLng p1, LatLng p2)
 {
 
   if (FloatUtils.isEqual(p1.getLat(), p2.getLat()) &&
@@ -62,7 +62,7 @@ public static double calculateGreatCircleDistance(final LatLng p1, final LatLng 
   {
     return 0.0;
   }
-  final double dsigma = Math.acos(Math.cos(p1.getLatAsRadians()) *
+  double dsigma = Math.acos(Math.cos(p1.getLatAsRadians()) *
       Math.cos(p2.getLatAsRadians()) * Math.cos(p1.getLngAsRadians() - p2.getLngAsRadians()) +
       Math.sin(p1.getLatAsRadians()) * Math.sin(p2.getLatAsRadians()));
   return dsigma * EARTH_RADIUS;
@@ -88,7 +88,7 @@ public double getLat()
   return lat;
 }
 
-public void setLat(final double lat)
+public void setLat(double lat)
 {
   this.lat = lat;
 }
@@ -98,7 +98,7 @@ public double getLng()
   return lng;
 }
 
-public void setLng(final double lng)
+public void setLng(double lng)
 {
   this.lng = lng;
 }
@@ -124,7 +124,7 @@ double getX()
   return lng;
 }
 
-public void setX(final double x)
+public void setX(double x)
 {
   lng = x;
 }
@@ -134,7 +134,7 @@ double getY()
   return lat;
 }
 
-public void setY(final double y)
+public void setY(double y)
 {
   lat = y;
 }

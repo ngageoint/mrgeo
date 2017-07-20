@@ -472,18 +472,18 @@ public class S3Utils
     }
 
     @Override
-    public S3CacheEntry getEntry(final String key, final Path localPath, final File primaryFile,
-                                 final File secondaryFile) {
+    public S3CacheEntry getEntry(String key, Path localPath, File primaryFile,
+                                 File secondaryFile) {
       return s3FileCache.getIfPresent(key);
     }
 
     @Override
-    public void addEntry(final String key, final S3CacheEntry entry) {
+    public void addEntry(String key, S3CacheEntry entry) {
       s3FileCache.put(key, entry);
     }
 
     @Override
-    public S3CacheEntry createEntry(final Path localPath, final File primaryFile) {
+    public S3CacheEntry createEntry(Path localPath, File primaryFile) {
       return new S3MemoryCacheEntry(localPath, primaryFile);
     }
 
@@ -688,7 +688,7 @@ public class S3Utils
       }
       if (totalSize > 0) {
         long newSize = totalSize;
-        final java.util.Calendar c = GregorianCalendar.getInstance();
+        java.util.Calendar c = GregorianCalendar.getInstance();
         if (age > 0) {
           c.add(ageField, -age);
         }

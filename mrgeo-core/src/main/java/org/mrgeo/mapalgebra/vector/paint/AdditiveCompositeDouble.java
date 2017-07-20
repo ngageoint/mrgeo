@@ -37,7 +37,7 @@ public AdditiveCompositeDouble()
   super();
 }
 
-public AdditiveCompositeDouble(final double weight)
+public AdditiveCompositeDouble(double weight)
 {
   super(weight);
 }

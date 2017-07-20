@@ -61,7 +61,7 @@ private int tilesize = -1; // size of a tile (here for convenience, it is in the
 private MrsImageDataProvider provider;
 private MrsPyramidReaderContext context;
 
-private MrsImage(MrsImageDataProvider provider, final int zoomlevel)
+private MrsImage(MrsImageDataProvider provider, int zoomlevel)
 {
   context = new MrsPyramidReaderContext();
   context.setZoomlevel(zoomlevel);
@@ -79,20 +79,20 @@ private MrsImage(MrsImageDataProvider provider, final int zoomlevel)
 }
 
 @SuppressWarnings("squid:S1166") // Exceptions are ignored.  This is OK.
-public static MrsImage open(MrsImageDataProvider provider, final int zoomlevel) throws IOException
+public static MrsImage open(MrsImageDataProvider provider, int zoomlevel) throws IOException
 {
   try
   {
     MrsPyramidMetadata meta = provider.getMetadataReader(null).read();
     // Check to see if there is an image at this zoom level before opening
-    final String name = meta.getName(zoomlevel);
+    String name = meta.getName(zoomlevel);
     if (name != null)
     {
       return new MrsImage(provider, zoomlevel);
     }
   }
   // This seems weird to catch and eat these here...
-  catch (final MrsImageException | NullPointerException ignored)
+  catch (MrsImageException | NullPointerException ignored)
   {
   }
 
@@ -100,8 +100,8 @@ public static MrsImage open(MrsImageDataProvider provider, final int zoomlevel) 
 }
 
 
-public static MrsImage open(final String name, final int zoomlevel,
-    final ProviderProperties providerProperties) throws IOException
+public static MrsImage open(String name, int zoomlevel,
+    ProviderProperties providerProperties) throws IOException
 {
   if (name == null || name.length() == 0)
   {
@@ -112,22 +112,22 @@ public static MrsImage open(final String name, final int zoomlevel,
   return open(dp, zoomlevel);
 }
 
-public static Set<Long> getTileIdsFromBounds(final Bounds bounds, final int zoomlevel, final int tilesize)
+public static Set<Long> getTileIdsFromBounds(Bounds bounds, int zoomlevel, int tilesize)
 {
-  final TileBounds tb = TMSUtils.boundsToTile(bounds, zoomlevel, tilesize);
+  TileBounds tb = TMSUtils.boundsToTile(bounds, zoomlevel, tilesize);
 
   // we used to check if the tx/ty was within the image, but that was removed because when we
   // send in a bounds, we really need an image that matches those bounds (in tile space),
   // with nodata in the missing tile areas.
 
   // create a list of all tileIds for the given bounding box.
-  final Set<Long> tileIds = new HashSet<>();
+  Set<Long> tileIds = new HashSet<>();
 
   for (long tx = tb.w; tx <= tb.e; tx++)
   {
     for (long ty = tb.s; ty <= tb.n; ty++)
     {
-      final long tileid = TMSUtils.tileid(tx, ty, zoomlevel);
+      long tileid = TMSUtils.tileid(tx, ty, zoomlevel);
 
       log.debug("getRaster adding tile {}, {} ({})", tx, ty, tileid);
 
@@ -153,28 +153,28 @@ public void close()
   }
 }
 
-public LatLng convertToLatLng(final double px, final double py)
+public LatLng convertToLatLng(double px, double py)
 {
   return new LatLng(convertToWorldY(py), convertToWorldX(px));
 }
 
-public LatLng convertToPixelCenterLatLng(final double px, final double py)
+public LatLng convertToPixelCenterLatLng(double px, double py)
 {
   return new LatLng(convertToWorldY(py + 0.5), convertToWorldX(px + 0.5));
 }
 
-public final double convertToWorldX(final double px)
+public final double convertToWorldX(double px)
 {
-  final double resolution = TMSUtils.resolution(getZoomlevel(), getTilesize());
-  final Bounds bounds = getMetadata().getBounds();
+  double resolution = TMSUtils.resolution(getZoomlevel(), getTilesize());
+  Bounds bounds = getMetadata().getBounds();
 
   return bounds.w + (px * resolution);
 }
 
-public final double convertToWorldY(final double py)
+public final double convertToWorldY(double py)
 {
-  final double resolution = TMSUtils.resolution(getZoomlevel(), getTilesize());
-  final Bounds bounds = getMetadata().getBounds();
+  double resolution = TMSUtils.resolution(getZoomlevel(), getTilesize());
+  Bounds bounds = getMetadata().getBounds();
 
   return bounds.s + ((getPixelMaxY() - py) * resolution);
 }
@@ -185,7 +185,7 @@ public MrGeoRaster getAnyTile() throws IOException
   {
     openReader();
   }
-  final Iterator<MrGeoRaster> it = reader.get();
+  Iterator<MrGeoRaster> it = reader.get();
   try
   {
     return it.next();
@@ -206,9 +206,9 @@ public Bounds getBounds()
   return getMetadata().getBounds();
 }
 
-public Bounds getBounds(final int tx, final int ty)
+public Bounds getBounds(int tx, int ty)
 {
-  final double bounds[] = TMSUtils.tileSWNEBoundsArray(tx, ty, getZoomlevel(), getTilesize());
+  double bounds[] = TMSUtils.tileSWNEBoundsArray(tx, ty, getZoomlevel(), getTilesize());
 
   return new Bounds(bounds[0], bounds[1], bounds[2], bounds[3]);
 }
@@ -221,8 +221,8 @@ public Bounds getBounds(final int tx, final int ty)
  */
 public double[] getExtrema()
 {
-  final double[] extrema = new double[3];
-  final ImageStats stats = getMetadata().getImageStats(getZoomlevel(), 0);
+  double[] extrema = new double[3];
+  ImageStats stats = getMetadata().getImageStats(getZoomlevel(), 0);
   if (stats != null)
   {
     extrema[1] = stats.max;
@@ -322,11 +322,11 @@ public LongRectangle getPixelRect()
   return new LongRectangle(getPixelMinX(), getPixelMinY(), getWidth(), getHeight());
 }
 
-public MrGeoRaster getTile(final long tx, final long ty) throws TileNotFoundException
+public MrGeoRaster getTile(long tx, long ty) throws TileNotFoundException
 {
   if (tx < getMinTileX() || tx > getMaxTileX() || ty < getMinTileY() || ty > getMaxTileY())
   {
-    final String msg = String.format(
+    String msg = String.format(
         "Tile x/y out of range. (%d, %d) range: (%d, %d) to (%d, %d) (inclusive)", tx, ty,
         getMinTileX(), getMinTileY(), getMaxTileX(), getMaxTileY());
     throw new TileNotFoundException(msg);
@@ -338,7 +338,7 @@ public MrGeoRaster getTile(final long tx, final long ty) throws TileNotFoundExce
 
   MrGeoRaster result = reader.get(new TileIdWritable(TMSUtils.tileid(tx, ty, getZoomlevel())));
   if (result == null) {
-    final String msg = String.format("Tile (%d, %d) not found", tx, ty);
+    String msg = String.format("Tile (%d, %d) not found", tx, ty);
     throw new TileNotFoundException(msg);
   }
   return result;
@@ -363,7 +363,7 @@ public KVIterator<TileIdWritable, MrGeoRaster> getTiles()
   return reader.get();
 }
 
-public KVIterator<TileIdWritable, MrGeoRaster> getTiles(final LongRectangle tileBounds)
+public KVIterator<TileIdWritable, MrGeoRaster> getTiles(LongRectangle tileBounds)
 {
   if (reader == null)
   {
@@ -372,8 +372,8 @@ public KVIterator<TileIdWritable, MrGeoRaster> getTiles(final LongRectangle tile
   return reader.get(tileBounds);
 }
 
-public KVIterator<TileIdWritable, MrGeoRaster> getTiles(final TileIdWritable start,
-    final TileIdWritable end)
+public KVIterator<TileIdWritable, MrGeoRaster> getTiles(TileIdWritable start,
+    TileIdWritable end)
 {
   if (reader == null)
   {
@@ -419,7 +419,7 @@ public int getZoomlevel()
   return zoomlevel;
 }
 
-public boolean isTileEmpty(final long tx, final long ty)
+public boolean isTileEmpty(long tx, long ty)
 {
   if (reader == null)
   {
@@ -434,7 +434,7 @@ public String toString()
   return getClass().getSimpleName() + ": " + getMetadata().getPyramid() + ":" + getZoomlevel();
 }
 
-public Set<Long> getTileIdsFromBounds(final Bounds bounds)
+public Set<Long> getTileIdsFromBounds(Bounds bounds)
 {
   return getTileIdsFromBounds(bounds, getZoomlevel(), getTilesize());
 }
@@ -444,16 +444,16 @@ public MrGeoRaster getRaster() throws MrGeoRasterException
   return getRaster(getTileBounds());
 }
 
-public MrGeoRaster getRaster(final Bounds bounds) throws MrGeoRasterException
+public MrGeoRaster getRaster(Bounds bounds) throws MrGeoRasterException
 {
-  final TileBounds tb = TMSUtils.boundsToTile(bounds, getZoomlevel(), getTilesize());
+  TileBounds tb = TMSUtils.boundsToTile(bounds, getZoomlevel(), getTilesize());
 
   return getRaster(tb);
 }
 
-public MrGeoRaster getRaster(final long[] tiles) throws MrGeoRasterException
+public MrGeoRaster getRaster(long[] tiles) throws MrGeoRasterException
 {
-  final Tile[] tileids = new Tile[tiles.length];
+  Tile[] tileids = new Tile[tiles.length];
   for (int i = 0; i < tiles.length; i++)
   {
     tileids[i] = TMSUtils.tileid(tiles[i], getZoomlevel());
@@ -462,16 +462,16 @@ public MrGeoRaster getRaster(final long[] tiles) throws MrGeoRasterException
   return getRaster(tileids);
 }
 
-public MrGeoRaster getRaster(final LongRectangle tileBounds) throws MrGeoRasterException
+public MrGeoRaster getRaster(LongRectangle tileBounds) throws MrGeoRasterException
 {
-  final TileBounds tb = new TileBounds(tileBounds.getMinX(), tileBounds
+  TileBounds tb = new TileBounds(tileBounds.getMinX(), tileBounds
       .getMinY(), tileBounds.getMaxX(), tileBounds.getMaxY());
   return getRaster(tb);
 }
 
-public MrGeoRaster getRaster(final TileIdWritable[] tiles) throws MrGeoRasterException
+public MrGeoRaster getRaster(TileIdWritable[] tiles) throws MrGeoRasterException
 {
-  final Tile[] tileids = new Tile[tiles.length];
+  Tile[] tileids = new Tile[tiles.length];
   for (int i = 0; i < tiles.length; i++)
   {
     tileids[i] = TMSUtils.tileid(tiles[i].get(), getZoomlevel());
@@ -481,20 +481,20 @@ public MrGeoRaster getRaster(final TileIdWritable[] tiles) throws MrGeoRasterExc
 }
 
 @SuppressWarnings("squid:S1166") // TileNotFoundException exceptions are caught and ignored.  This is OK
-public MrGeoRaster getRaster(final Tile[] tiles) throws MrGeoRasterException
+public MrGeoRaster getRaster(Tile[] tiles) throws MrGeoRasterException
 {
   getMetadata(); // make sure metadata is loaded
 
-  final int tilesize = metadata.getTilesize();
+  int tilesize = metadata.getTilesize();
 
   // 1st calculate the pixel size of the merged image.
   Bounds imageBounds = null;
 
   int zoomlevel = getZoomlevel();
-  for (final Tile tile : tiles)
+  for (Tile tile : tiles)
   {
     log.debug("tx: {} ty: {}", tile.tx, tile.ty);
-    final Bounds tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoomlevel, tilesize);
+    Bounds tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoomlevel, tilesize);
     try
     {
       // expand the image bounds by the tile
@@ -508,7 +508,7 @@ public MrGeoRaster getRaster(final Tile[] tiles) throws MrGeoRasterException
       }
 
     }
-    catch (final TileNotFoundException e)
+    catch (TileNotFoundException e)
     {
       // bad tile - tile could be out of bounds - ignore it
     }
@@ -519,20 +519,20 @@ public MrGeoRaster getRaster(final Tile[] tiles) throws MrGeoRasterException
     throw new MrsImageException("Error, could not calculate the bounds of the tiles");
   }
 
-  final Pixel ul = TMSUtils.latLonToPixelsUL(imageBounds.n, imageBounds.w, zoomlevel, tilesize);
-  final Pixel lr = TMSUtils.latLonToPixelsUL(imageBounds.s, imageBounds.e, zoomlevel, tilesize);
+  Pixel ul = TMSUtils.latLonToPixelsUL(imageBounds.n, imageBounds.w, zoomlevel, tilesize);
+  Pixel lr = TMSUtils.latLonToPixelsUL(imageBounds.s, imageBounds.e, zoomlevel, tilesize);
 
   MrGeoRaster merged = MrGeoRaster.createEmptyRaster((int) (lr.px - ul.px), (int) (lr.py - ul.py),
       metadata.getBands(), metadata.getTileType());
   merged.fill(metadata.getDefaultValuesDouble());
 
-  for (final Tile tile : tiles)
+  for (Tile tile : tiles)
   {
-    final Bounds bounds = TMSUtils.tileBounds(tile.tx, tile.ty, zoomlevel, tilesize);
+    Bounds bounds = TMSUtils.tileBounds(tile.tx, tile.ty, zoomlevel, tilesize);
 
     // calculate the starting pixel for the source
     // make sure we use the upper-left lat/lon
-    final Pixel start = TMSUtils.latLonToPixelsUL(bounds.n, bounds.w, zoomlevel, tilesize);
+    Pixel start = TMSUtils.latLonToPixelsUL(bounds.n, bounds.w, zoomlevel, tilesize);
 
     try
     {
@@ -554,18 +554,18 @@ public MrGeoRaster getRaster(final Tile[] tiles) throws MrGeoRasterException
   return merged;
 }
 
-public MrGeoRaster getRaster(final TileBounds tileBounds) throws MrGeoRasterException
+public MrGeoRaster getRaster(TileBounds tileBounds) throws MrGeoRasterException
 {
   getMetadata(); // make sure metadata is loaded
 
-  final int tilesize = metadata.getTilesize();
+  int tilesize = metadata.getTilesize();
 
   int zoomlevel = getZoomlevel();
   // 1st calculate the pixel size of the merged image.
-  final Bounds imageBounds = TMSUtils.tileToBounds(tileBounds, zoomlevel, tilesize);
+  Bounds imageBounds = TMSUtils.tileToBounds(tileBounds, zoomlevel, tilesize);
 
-  final Pixel ul = TMSUtils.latLonToPixelsUL(imageBounds.n, imageBounds.w, zoomlevel, tilesize);
-  final Pixel lr = TMSUtils.latLonToPixelsUL(imageBounds.s, imageBounds.e, zoomlevel, tilesize);
+  Pixel ul = TMSUtils.latLonToPixelsUL(imageBounds.n, imageBounds.w, zoomlevel, tilesize);
+  Pixel lr = TMSUtils.latLonToPixelsUL(imageBounds.s, imageBounds.e, zoomlevel, tilesize);
 
 
   MrGeoRaster merged = MrGeoRaster.createEmptyRaster((int) (lr.px - ul.px), (int) (lr.py - ul.py),
@@ -582,22 +582,22 @@ public MrGeoRaster getRaster(final TileBounds tileBounds) throws MrGeoRasterExce
   // .convertToLongRectangle(tileBounds));
   for (long row = tileBounds.s; row <= tileBounds.n; row++)
   {
-    final TileIdWritable rowStart = new TileIdWritable(TMSUtils.tileid(tileBounds.w, row, zoomlevel));
-    final TileIdWritable rowEnd = new TileIdWritable(TMSUtils.tileid(tileBounds.e, row, zoomlevel));
+    TileIdWritable rowStart = new TileIdWritable(TMSUtils.tileid(tileBounds.w, row, zoomlevel));
+    TileIdWritable rowEnd = new TileIdWritable(TMSUtils.tileid(tileBounds.e, row, zoomlevel));
 
-    final KVIterator<TileIdWritable, MrGeoRaster> iter = getTiles(rowStart, rowEnd);
+    KVIterator<TileIdWritable, MrGeoRaster> iter = getTiles(rowStart, rowEnd);
     while (iter.hasNext())
     {
-      final MrGeoRaster source = iter.currentValue();
+      MrGeoRaster source = iter.currentValue();
       if (source != null)
       {
-        final Tile tile = TMSUtils.tileid(iter.currentKey().get(), zoomlevel);
+        Tile tile = TMSUtils.tileid(iter.currentKey().get(), zoomlevel);
 
-        final Bounds bounds = TMSUtils.tileBounds(tile.tx, tile.ty, zoomlevel, tilesize);
+        Bounds bounds = TMSUtils.tileBounds(tile.tx, tile.ty, zoomlevel, tilesize);
 
         // calculate the starting pixel for the source
         // make sure we use the upper-left lat/lon
-        final Pixel start = TMSUtils
+        Pixel start = TMSUtils
             .latLonToPixelsUL(bounds.n, bounds.w, zoomlevel, tilesize);
 
         log.debug("Tile {}, {} with bounds {}, {}, {}, {} pasted onto px {} py {}", tile.tx,

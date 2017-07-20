@@ -33,8 +33,8 @@ public class ProtectionLevelUtils
  * If the passed protection level is null or empty, and MrGeo is configured
  * such that protection level is not required, then return a blank string.
  */
-public static String getAndValidateProtectionLevel(final ProtectionLevelValidator validator,
-    final String protectionLevel) throws ProtectionLevelException
+public static String getAndValidateProtectionLevel(ProtectionLevelValidator validator,
+    String protectionLevel) throws ProtectionLevelException
 {
   String actualProtectionLevel = protectionLevel;
   if (actualProtectionLevel == null || actualProtectionLevel.isEmpty())
@@ -79,17 +79,17 @@ public static class ProtectionLevelException extends IOException
     super();
   }
 
-  public ProtectionLevelException(final String msg)
+  public ProtectionLevelException(String msg)
   {
     super(msg);
   }
 
-  public ProtectionLevelException(final String msg, final Throwable cause)
+  public ProtectionLevelException(String msg, Throwable cause)
   {
     super(msg, cause);
   }
 
-  public ProtectionLevelException(final Throwable cause)
+  public ProtectionLevelException(Throwable cause)
   {
     super(cause);
   }

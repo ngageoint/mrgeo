@@ -133,7 +133,7 @@ public short aggregate(short[][] values, double weightx, double weighty, short n
 }
 
 @Override
-public int aggregate(final int[][] values, final double weightx, final double weighty, final int nodata)
+public int aggregate(int[][] values, double weightx, double weighty, int nodata)
 {
   throw new NotImplementedException("Not yet implemented");
 }

@@ -26,17 +26,17 @@ public DataProviderNotFound()
   super();
 }
 
-public DataProviderNotFound(final String msg)
+public DataProviderNotFound(String msg)
 {
   super(msg);
 }
 
-public DataProviderNotFound(final String msg, final Throwable cause)
+public DataProviderNotFound(String msg, Throwable cause)
 {
   super(msg, cause);
 }
 
-public DataProviderNotFound(final Throwable cause)
+public DataProviderNotFound(Throwable cause)
 {
   super(cause);
 }

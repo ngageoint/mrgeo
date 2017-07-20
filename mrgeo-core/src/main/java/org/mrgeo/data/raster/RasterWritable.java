@@ -48,7 +48,7 @@ public RasterWritable()
   this.bytes = null;
 }
 
-protected RasterWritable(final byte[] bytes)
+protected RasterWritable(byte[] bytes)
 {
   this.bytes = bytes;
 }
@@ -59,24 +59,24 @@ public static RasterWritable fromBytes(byte[] bytes)
   return new RasterWritable(bytes);
 }
 
-public static MrGeoRaster toMrGeoRaster(final RasterWritable writable) throws IOException
+public static MrGeoRaster toMrGeoRaster(RasterWritable writable) throws IOException
 {
   int version = ByteArrayUtils.getByte(writable.bytes);
   if (version == 0)
   {
     // this is an old MrsPyramid v2 image, read it into a MrGeoRaster
-    return RasterWritable.convertFromV2(writable.bytes);
+    return convertFromV2(writable.bytes);
   }
   return MrGeoRaster.createRaster(writable.bytes);
 }
 
-public static MrGeoRaster toMrGeoRaster(final RasterWritable writable,
-    final CompressionCodec codec, final Decompressor decompressor) throws IOException
+public static MrGeoRaster toMrGeoRaster(RasterWritable writable,
+    CompressionCodec codec, Decompressor decompressor) throws IOException
 {
   decompressor.reset();
-  final ByteArrayInputStream bis = new ByteArrayInputStream(writable.bytes, 0, writable.getSize());
-  final CompressionInputStream gis = codec.createInputStream(bis, decompressor);
-  final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+  ByteArrayInputStream bis = new ByteArrayInputStream(writable.bytes, 0, writable.getSize());
+  CompressionInputStream gis = codec.createInputStream(bis, decompressor);
+  ByteArrayOutputStream baos = new ByteArrayOutputStream();
   IOUtils.copyBytes(gis, baos, 1024 * 1024 * 2, true);
 
   return toMrGeoRaster(new RasterWritable(baos.toByteArray()));
@@ -89,14 +89,14 @@ public static RasterWritable toWritable(MrGeoRaster raster) throws IOException
 
 private static MrGeoRaster convertFromV2(byte[] data) throws MrGeoRasterException
 {
-  final ByteBuffer rasterBuffer = ByteBuffer.wrap(data);
+  ByteBuffer rasterBuffer = ByteBuffer.wrap(data);
 
-  final int headersize = (rasterBuffer.getInt() + 1) * 4; // include the header! ( * sizeof(int) )
-  final int height = rasterBuffer.getInt();
-  final int width = rasterBuffer.getInt();
-  final int bands = rasterBuffer.getInt();
-  final int datatype = rasterBuffer.getInt();
-  final SampleModelType sampleModelType = SampleModelType.values()[rasterBuffer.getInt()];
+  int headersize = (rasterBuffer.getInt() + 1) * 4; // include the header! ( * sizeof(int) )
+  int height = rasterBuffer.getInt();
+  int width = rasterBuffer.getInt();
+  int bands = rasterBuffer.getInt();
+  int datatype = rasterBuffer.getInt();
+  SampleModelType sampleModelType = SampleModelType.values()[rasterBuffer.getInt()];
 
   MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, bands, datatype);
   int srclen = data.length - headersize;
@@ -331,7 +331,7 @@ public static class RasterWritableException extends RuntimeException
 //    this.origException = e;
 //  }
 
-  RasterWritableException(final String msg)
+  RasterWritableException(String msg)
   {
     this.origException = new Exception(msg);
   }

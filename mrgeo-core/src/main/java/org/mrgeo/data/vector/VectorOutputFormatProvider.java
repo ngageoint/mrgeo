@@ -40,12 +40,12 @@ public OutputFormat<FeatureIdWritable, Geometry> getOutputFormat(String input);
  * @param job
  * @throws IOException
  */
-public void setupJob(final Job job) throws DataProviderException, IOException;
+public void setupJob(Job job) throws DataProviderException, IOException;
 
 /**
  * Perform any processing required after the map/reduce has completed.
  *
  * @param job
  */
-public void teardown(final Job job) throws DataProviderException;
+public void teardown(Job job) throws DataProviderException;
 }

@@ -60,7 +60,7 @@ public VectorPainter(int zoom, AggregationType aggregationType, String valueColu
   this.tileSize = tileSize;
 }
 
-private static void averageRaster(final WritableRaster raster, final Raster count)
+private static void averageRaster(WritableRaster raster, Raster count)
 {
   for (int y = 0; y < raster.getHeight(); y++)
   {
@@ -69,7 +69,7 @@ private static void averageRaster(final WritableRaster raster, final Raster coun
       for (int b = 0; b < raster.getNumBands(); b++)
       {
         float v = raster.getSampleFloat(x, y, b);
-        final float c = count.getSampleFloat(x, y, b);
+        float c = count.getSampleFloat(x, y, b);
 
         if (!Float.isNaN(v))
         {
@@ -89,7 +89,7 @@ private static void averageRaster(final WritableRaster raster, final Raster coun
   }
 }
 
-public void beforePaintingTile(final long tileId)
+public void beforePaintingTile(long tileId)
 {
   if (aggregationType == AggregationType.MIN)
   {
@@ -134,15 +134,15 @@ public void beforePaintingTile(final long tileId)
 
   totalRaster = null;
 
-  final Tile tile = TMSUtils.tileid(tileId, zoom);
-  final Bounds tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tileSize);
+  Tile tile = TMSUtils.tileid(tileId, zoom);
+  Bounds tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoom, tileSize);
   Bounds b = new Bounds(tb.w, tb.s, tb.e, tb.n);
   if (aggregationType == AggregationType.AVERAGE)
   {
     totalRaster = raster.createCompatibleWritableRaster();
 
-    final BufferedImage bi = RasterUtils.makeBufferedImage(totalRaster);
-    final Graphics2D gr = bi.createGraphics();
+    BufferedImage bi = RasterUtils.makeBufferedImage(totalRaster);
+    Graphics2D gr = bi.createGraphics();
 
     gr.setComposite(new AdditiveComposite());
     gr.setStroke(new BasicStroke(0));
@@ -151,8 +151,8 @@ public void beforePaintingTile(final long tileId)
     totalPainter.setBounds(b);
   }
 
-  final BufferedImage bi = RasterUtils.makeBufferedImage(raster);
-  final Graphics2D gr = bi.createGraphics();
+  BufferedImage bi = RasterUtils.makeBufferedImage(raster);
+  Graphics2D gr = bi.createGraphics();
 
   gr.setComposite(composite);
   gr.setStroke(new BasicStroke(0));
@@ -170,10 +170,10 @@ public void paintGeometry(Geometry g)
   }
   else
   {
-    final String sv = g.getAttribute(valueColumn);
+    String sv = g.getAttribute(valueColumn);
     if (sv != null)
     {
-      final double v = Double.parseDouble(sv);
+      double v = Double.parseDouble(sv);
       ((WeightedComposite) composite).setWeight(v);
 
       rasterPainter.paint(g);

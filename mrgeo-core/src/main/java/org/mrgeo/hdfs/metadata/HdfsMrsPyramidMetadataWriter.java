@@ -84,10 +84,10 @@ public void write(MrsPyramidMetadata metadata) throws IOException
     throw new IOException("Expected an instance of HdfsMrsImageDataprovider instead of " +
         provider.getClass().getCanonicalName());
   }
-  final Path path = new Path(((HdfsMrsImageDataProvider) provider).getResolvedResourceName(true),
+  Path path = new Path(((HdfsMrsImageDataProvider) provider).getResolvedResourceName(true),
       HdfsMrsImageDataProvider.METADATA);
 
-  final FileSystem fs = HadoopFileUtils.getFileSystem(conf, path);
+  FileSystem fs = HadoopFileUtils.getFileSystem(conf, path);
   if (fs.exists(path))
   {
     fs.delete(path, false);

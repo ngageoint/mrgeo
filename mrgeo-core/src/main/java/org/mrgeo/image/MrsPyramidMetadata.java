@@ -171,10 +171,10 @@ public MrsPyramidMetadata(MrsPyramidMetadata copy)
  * @throws IOException
  */
 @Deprecated
-public static MrsPyramidMetadata load(final File file) throws IOException
+public static MrsPyramidMetadata load(File file) throws IOException
 {
-  final ObjectMapper mapper = new ObjectMapper();
-  final MrsPyramidMetadata metadata = mapper.readValue(file, MrsPyramidMetadata.class);
+  ObjectMapper mapper = new ObjectMapper();
+  MrsPyramidMetadata metadata = mapper.readValue(file, MrsPyramidMetadata.class);
 
   // make sure the name of the pyramid is set correctly for where the
   // metadata file was pulled
@@ -192,9 +192,9 @@ public static MrsPyramidMetadata load(final File file) throws IOException
  * @return a valid MrsPyramidMetadata object
  * @throws IOException
  */
-public static MrsPyramidMetadata load(final InputStream stream) throws IOException
+public static MrsPyramidMetadata load(InputStream stream) throws IOException
 {
-  final ObjectMapper mapper = new ObjectMapper();
+  ObjectMapper mapper = new ObjectMapper();
   return mapper.readValue(stream, MrsPyramidMetadata.class);
 } // end load - InputStream
 
@@ -203,12 +203,12 @@ public Bounds getBounds()
   return bounds;
 }
 
-public void setBounds(final Bounds bounds)
+public void setBounds(Bounds bounds)
 {
   this.bounds = bounds;
 }
 
-public String getName(final int zoomlevel)
+public String getName(int zoomlevel)
 {
   if (imageData != null && zoomlevel < imageData.length && imageData[zoomlevel].name != null)
   {
@@ -231,7 +231,7 @@ public int getMaxZoomLevel()
    * start set section
    */
 
-public void setMaxZoomLevel(final int zoomlevel)
+public void setMaxZoomLevel(int zoomlevel)
 {
   if (imageData == null)
   {
@@ -260,12 +260,12 @@ public String getPyramid()
   return pyramid;
 }
 
-public void setPyramid(final String pyramid)
+public void setPyramid(String pyramid)
 {
   this.pyramid = pyramid;
 }
 
-public LongRectangle getTileBounds(final int zoomlevel)
+public LongRectangle getTileBounds(int zoomlevel)
 {
   if (imageData != null)
   {
@@ -285,7 +285,7 @@ public int getTilesize()
   return tilesize;
 }
 
-public void setTilesize(final int size)
+public void setTilesize(int size)
 {
   tilesize = size;
 }
@@ -295,20 +295,20 @@ public Map<String, String> getTags()
   return tags;
 }
 
-public void setTags(final Map<String, String> tags)
+public void setTags(Map<String, String> tags)
 {
   // make a copy of the tags...
   this.tags = new HashMap<>(tags);
 }
 
 @JsonIgnore
-public String getTag(final String tag)
+public String getTag(String tag)
 {
   return getTag(tag, null);
 }
 
 @JsonIgnore
-public String getTag(final String tag, final String defaultValue)
+public String getTag(String tag, String defaultValue)
 {
   if (tags.containsKey(tag))
   {
@@ -323,7 +323,7 @@ public String getProtectionLevel()
   return protectionLevel;
 }
 
-public void setProtectionLevel(final String protectionLevel)
+public void setProtectionLevel(String protectionLevel)
 {
   this.protectionLevel = protectionLevel;
 }
@@ -445,12 +445,12 @@ public void setCategories(String[][] categories)
   }
 }
 
-public void setName(final int zoomlevel)
+public void setName(int zoomlevel)
 {
   setName(zoomlevel, Integer.toString(zoomlevel));
 }
 
-public void setName(final int zoomlevel, final String name)
+public void setName(int zoomlevel, String name)
 {
   if (imageData == null || zoomlevel > maxZoomLevel)
   {
@@ -460,7 +460,7 @@ public void setName(final int zoomlevel, final String name)
 }
 
 @JsonIgnore
-public void setTag(final String tag, final String value)
+public void setTag(String tag, String value)
 {
   if ((value == null || value.length() == 0) && tags.containsKey(tag))
   {
@@ -473,7 +473,7 @@ public void setTag(final String tag, final String value)
 }
 
 @JsonIgnore
-public void setQuantiles(final int band, final double[] quantiles)
+public void setQuantiles(int band, double[] quantiles)
 {
   if (this.quantiles == null)
   {
@@ -483,7 +483,7 @@ public void setQuantiles(final int band, final double[] quantiles)
 }
 
 @JsonIgnore
-public void setCategories(final int band, final String[] categories)
+public void setCategories(int band, String[] categories)
 {
   if (this.categories == null)
   {
@@ -525,7 +525,7 @@ public int getBands()
   return bands;
 }
 
-public void setBands(final int bands)
+public void setBands(int bands)
 {
   this.bands = bands;
 }
@@ -543,7 +543,7 @@ public double getPixelWidth(int zoom)
 }
 
 @JsonIgnore
-public double getDefaultValue(final int band)
+public double getDefaultValue(int band)
 {
   if (band < getBands())
   {
@@ -554,7 +554,7 @@ public double getDefaultValue(final int band)
 }
 
 @JsonIgnore
-public byte getDefaultValueByte(final int band)
+public byte getDefaultValueByte(int band)
 {
   if (band < getBands())
   {
@@ -565,13 +565,13 @@ public byte getDefaultValueByte(final int band)
 }
 
 @JsonIgnore
-public double getDefaultValueDouble(final int band)
+public double getDefaultValueDouble(int band)
 {
   return getDefaultValue(band);
 }
 
 @JsonIgnore
-public float getDefaultValueFloat(final int band)
+public float getDefaultValueFloat(int band)
 {
   if (band < getBands())
   {
@@ -582,7 +582,7 @@ public float getDefaultValueFloat(final int band)
 }
 
 @JsonIgnore
-public int getDefaultValueInt(final int band)
+public int getDefaultValueInt(int band)
 {
   if (band < getBands())
   {
@@ -593,7 +593,7 @@ public int getDefaultValueInt(final int band)
 }
 
 @JsonIgnore
-public long getDefaultValueLong(final int band)
+public long getDefaultValueLong(int band)
 {
   if (band < getBands())
   {
@@ -608,7 +608,7 @@ public double[] getDefaultValues()
   return ArrayUtils.clone(defaultValues);
 }
 
-public void setDefaultValues(final double[] defaultValues)
+public void setDefaultValues(double[] defaultValues)
 {
   this.defaultValues = ArrayUtils.clone(defaultValues);
 }
@@ -616,7 +616,7 @@ public void setDefaultValues(final double[] defaultValues)
 @JsonIgnore
 public byte[] getDefaultValuesByte()
 {
-  final byte[] defaults = new byte[bands];
+  byte[] defaults = new byte[bands];
   for (int i = 0; i < bands; i++)
   {
     defaults[i] = Double.valueOf(defaultValues[i]).byteValue();
@@ -636,7 +636,7 @@ public double[] getDefaultValuesDouble()
 @JsonIgnore
 public float[] getDefaultValuesFloat()
 {
-  final float[] defaults = new float[bands];
+  float[] defaults = new float[bands];
   for (int i = 0; i < bands; i++)
   {
     defaults[i] = Double.valueOf(defaultValues[i]).floatValue();
@@ -647,7 +647,7 @@ public float[] getDefaultValuesFloat()
 
 
 @JsonIgnore
-public short getDefaultValueShort(final int band)
+public short getDefaultValueShort(int band)
 {
   if (band < getBands())
   {
@@ -661,7 +661,7 @@ public short getDefaultValueShort(final int band)
 @JsonIgnore
 public int[] getDefaultValuesInt()
 {
-  final int[] defaults = new int[bands];
+  int[] defaults = new int[bands];
   for (int i = 0; i < bands; i++)
   {
     defaults[i] = Double.valueOf(defaultValues[i]).intValue();
@@ -674,7 +674,7 @@ public int[] getDefaultValuesInt()
 @JsonIgnore
 public long[] getDefaultValuesLong()
 {
-  final long[] defaults = new long[bands];
+  long[] defaults = new long[bands];
   for (int i = 0; i < bands; i++)
   {
     defaults[i] = Double.valueOf(defaultValues[i]).longValue();
@@ -687,7 +687,7 @@ public long[] getDefaultValuesLong()
 @JsonIgnore
 public short[] getDefaultValuesShort()
 {
-  final short[] defaults = new short[bands];
+  short[] defaults = new short[bands];
   for (int i = 0; i < bands; i++)
   {
     defaults[i] = Double.valueOf(defaultValues[i]).shortValue();
@@ -707,7 +707,7 @@ public ImageMetadata[] getImageMetadata()
   return ArrayUtils.clone(imageData);
 }
 
-public void setImageMetadata(final ImageMetadata[] metadata)
+public void setImageMetadata(ImageMetadata[] metadata)
 {
   // this will make sure the size of the image metadata matches the zoom, with empty levels as needed
   if (metadata == null)
@@ -743,7 +743,7 @@ public void setImageMetadata(final ImageMetadata[] metadata)
 
 }
 
-public LongRectangle getPixelBounds(final int zoomlevel)
+public LongRectangle getPixelBounds(int zoomlevel)
 {
   if (imageData != null)
   {
@@ -757,7 +757,7 @@ public LongRectangle getPixelBounds(final int zoomlevel)
 }
 
 @SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS", justification = "api")
-public ImageStats[] getImageStats(final int zoomlevel)
+public ImageStats[] getImageStats(int zoomlevel)
 {
   if (imageData != null)
   {
@@ -772,7 +772,7 @@ public ImageStats[] getImageStats(final int zoomlevel)
   return null;
 }
 
-public ImageStats getImageStats(final int zoomlevel, int band)
+public ImageStats getImageStats(int zoomlevel, int band)
 {
 
   if (imageData != null)
@@ -802,12 +802,12 @@ public ImageStats[] getStats()
   return ArrayUtils.clone(stats);
 }
 
-public void setStats(final ImageStats[] stats)
+public void setStats(ImageStats[] stats)
 {
   this.stats = ArrayUtils.clone(stats);
 }
 
-public LongRectangle getOrCreateTileBounds(final int zoomlevel)
+public LongRectangle getOrCreateTileBounds(int zoomlevel)
 {
   if (imageData != null && zoomlevel < imageData.length)
   {
@@ -818,7 +818,7 @@ public LongRectangle getOrCreateTileBounds(final int zoomlevel)
   return new LongRectangle(tb.w, tb.s, tb.e, tb.n);
 }
 
-public LongRectangle getOrCreatePixelBounds(final int zoomlevel)
+public LongRectangle getOrCreatePixelBounds(int zoomlevel)
 {
   if (imageData != null && zoomlevel < imageData.length)
   {
@@ -839,7 +839,7 @@ public int getTileType()
   return tileType;
 }
 
-public void setTileType(final int tileType)
+public void setTileType(int tileType)
 {
   this.tileType = tileType;
 }
@@ -873,7 +873,7 @@ public void setClassification(Classification classification)
  * @return array with position one containing the statistical minimum value and position two
  * containing the maximum value
  */
-public double[] getExtrema(final int zoomLevel)
+public double[] getExtrema(int zoomLevel)
 {
   double[] extrema = new double[3];
   ImageStats st = getImageStats(zoomLevel, 0);
@@ -912,9 +912,9 @@ public void setResamplingMethod(String resamplingMethod)
 }
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled
-public void save(final OutputStream stream) throws IOException
+public void save(OutputStream stream) throws IOException
 {
-  final ObjectMapper mapper = new ObjectMapper();
+  ObjectMapper mapper = new ObjectMapper();
   try
   {
     mapper.writerWithDefaultPrettyPrinter().writeValue(stream, this);
@@ -926,7 +926,7 @@ public void save(final OutputStream stream) throws IOException
   }
 }
 
-public void setPixelBounds(final int zoomlevel, final LongRectangle pixelBounds)
+public void setPixelBounds(int zoomlevel, LongRectangle pixelBounds)
 {
   if (imageData == null || zoomlevel > maxZoomLevel)
   {
@@ -936,7 +936,7 @@ public void setPixelBounds(final int zoomlevel, final LongRectangle pixelBounds)
 }
 
 
-public void setTileBounds(final int zoomlevel, final LongRectangle tileBounds)
+public void setTileBounds(int zoomlevel, LongRectangle tileBounds)
 {
   if (imageData == null || zoomlevel > maxZoomLevel)
   {
@@ -946,7 +946,7 @@ public void setTileBounds(final int zoomlevel, final LongRectangle tileBounds)
 }
 
 
-public void setImageStats(final int zoomlevel, final ImageStats[] stats)
+public void setImageStats(int zoomlevel, ImageStats[] stats)
 {
   if (imageData == null || zoomlevel > maxZoomLevel)
   {
@@ -1017,7 +1017,7 @@ public static class ImageMetadata extends TileMetadata
   // For backward compatibility with older image pyramids that
   // still have a reference to the "image" property. It was renamed
   // to "name".
-  public void setImage(final String image)
+  public void setImage(String image)
   {
     name = image;
   }

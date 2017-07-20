@@ -50,7 +50,7 @@ HdfsMrsImageWriter(HdfsMrsImageDataProvider provider, MrsPyramidWriterContext co
 }
 
 @Override
-public void append(final TileIdWritable k, final MrGeoRaster raster) throws IOException
+public void append(TileIdWritable k, MrGeoRaster raster) throws IOException
 {
   if (writer == null)
   {

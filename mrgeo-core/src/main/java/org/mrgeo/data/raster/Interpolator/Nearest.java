@@ -21,10 +21,10 @@ public class Nearest
 {
 final public static double EPSILON = 1e-6f;
 
-public static void scaleInt(final MrGeoRaster src, final MrGeoRaster dst)
+public static void scaleInt(MrGeoRaster src, MrGeoRaster dst)
 {
-  final double x_ratio = (double) src.width() / dst.width();
-  final double y_ratio = (double) src.height() / dst.height();
+  double x_ratio = (double) src.width() / dst.width();
+  double y_ratio = (double) src.height() / dst.height();
 
   double startX = 0.0;
   double startY = 0.0;
@@ -55,10 +55,10 @@ public static void scaleInt(final MrGeoRaster src, final MrGeoRaster dst)
   }
 }
 
-public static void scaleFloat(final MrGeoRaster src, final MrGeoRaster dst)
+public static void scaleFloat(MrGeoRaster src, MrGeoRaster dst)
 {
-  final double x_ratio = (double) src.width() / dst.width();
-  final double y_ratio = (double) src.height() / dst.height();
+  double x_ratio = (double) src.width() / dst.width();
+  double y_ratio = (double) src.height() / dst.height();
 
   double srcX;
   double srcY = 0;
@@ -79,10 +79,10 @@ public static void scaleFloat(final MrGeoRaster src, final MrGeoRaster dst)
   }
 }
 
-public static void scaleDouble(final MrGeoRaster src, final MrGeoRaster dst)
+public static void scaleDouble(MrGeoRaster src, MrGeoRaster dst)
 {
-  final double x_ratio = (double) src.width() / dst.width();
-  final double y_ratio = (double) src.height() / dst.height();
+  double x_ratio = (double) src.width() / dst.width();
+  double y_ratio = (double) src.height() / dst.height();
 
   double srcX;
   double srcY = 0;

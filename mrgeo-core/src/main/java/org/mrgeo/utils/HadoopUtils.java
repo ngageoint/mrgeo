@@ -108,14 +108,14 @@ public synchronized static Configuration createConfiguration()
   //OpImageRegistrar.registerMrGeoOps();
 
   Configuration config = new Configuration();
-  final Properties p = MrGeoProperties.getInstance();
-  final String hadoopParams = p.getProperty("hadoop.params");
+  Properties p = MrGeoProperties.getInstance();
+  String hadoopParams = p.getProperty("hadoop.params");
 
   // Usage of GenericOptionsParser was inspired by Hadoop's ToolRunner
   if (hadoopParams != null)
   {
-    final String[] hadoopParamsAsArray = hadoopParams.split(" ");
-    final GenericOptionsParser parser;
+    String[] hadoopParamsAsArray = hadoopParams.split(" ");
+    GenericOptionsParser parser;
     try
     {
       parser = new GenericOptionsParser(hadoopParamsAsArray);
@@ -130,7 +130,7 @@ public synchronized static Configuration createConfiguration()
   }
 
   // enables serialization of Serializable objects in Hadoop.
-  final String serializations = config.get("io.serializations");
+  String serializations = config.get("io.serializations");
   config.set("io.serializations", serializations + ",org.apache.hadoop.io.serializer.JavaSerialization");
   return config;
 }
@@ -139,7 +139,7 @@ public synchronized static Configuration createConfiguration()
 // to an interface. This method uses reflection to determine the appropriate class to create and
 // returns a JobContext appropriately constructed
 @SuppressWarnings("squid:S1166") // Exception caught and handled
-public static JobContext createJobContext(final Configuration conf, final JobID id)
+public static JobContext createJobContext(Configuration conf, JobID id)
 {
   if (jobContext == null)
   {
@@ -150,7 +150,7 @@ public static JobContext createJobContext(final Configuration conf, final JobID 
   {
     return (JobContext) jobContext.newInstance(conf, id);
   }
-  catch (final IllegalArgumentException | InstantiationException | IllegalAccessException | InvocationTargetException ignored)
+  catch (IllegalArgumentException | InstantiationException | IllegalAccessException | InvocationTargetException ignored)
   {
   }
 
@@ -160,7 +160,7 @@ public static JobContext createJobContext(final Configuration conf, final JobID 
 /**
  * Creates a random string filled with hex values.
  */
-public static synchronized String createRandomString(final int size)
+public static synchronized String createRandomString(int size)
 {
   // create a random string of hex characters. This will force the
   // sequence file to split appropriately. Certainly a hack, but shouldn't
@@ -177,8 +177,8 @@ public static synchronized String createRandomString(final int size)
 // to an interface. This method uses reflection to determine the appropriate class to create and
 // returns a TaskAttemptContext appropriately constructed
 @SuppressWarnings("squid:S1166") // Exception caught and handled
-public static TaskAttemptContext createTaskAttemptContext(final Configuration conf,
-    final TaskAttemptID id)
+public static TaskAttemptContext createTaskAttemptContext(Configuration conf,
+    TaskAttemptID id)
 {
   if (taskAttempt == null)
   {
@@ -189,7 +189,7 @@ public static TaskAttemptContext createTaskAttemptContext(final Configuration co
   {
     return (TaskAttemptContext) taskAttempt.newInstance(new Object[]{conf, id});
   }
-  catch (final IllegalArgumentException | InstantiationException | IllegalAccessException | InvocationTargetException ignored)
+  catch (IllegalArgumentException | InstantiationException | IllegalAccessException | InvocationTargetException ignored)
   {
   }
 
@@ -206,12 +206,12 @@ public static TaskAttemptContext createTaskAttemptContext(final Configuration co
 //    return job;
 //  }
 
-public static String createUniqueJobName(final String baseName)
+public static String createUniqueJobName(String baseName)
 {
   // create a new unique job name
-  final String now = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss").format(new Date());
+  String now = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss").format(new Date());
 
-  final String jobName = baseName + "_" + now + "_" + UUID.randomUUID().toString();
+  String jobName = baseName + "_" + now + "_" + UUID.randomUUID().toString();
 
   return jobName;
 }
@@ -221,9 +221,9 @@ public static String getDefaultColorScalesBaseDirectory()
   return getDefaultColorScalesBaseDirectory(MrGeoProperties.getInstance());
 }
 
-public static String getDefaultColorScalesBaseDirectory(final Properties props)
+public static String getDefaultColorScalesBaseDirectory(Properties props)
 {
-  final String dir = props.getProperty(MrGeoConstants.MRGEO_HDFS_COLORSCALE, null);
+  String dir = props.getProperty(MrGeoConstants.MRGEO_HDFS_COLORSCALE, null);
   return dir;
 }
 
@@ -233,19 +233,19 @@ public static String getDefaultImageBaseDirectory()
   return getDefaultImageBaseDirectory(MrGeoProperties.getInstance());
 }
 
-public static String getDefaultImageBaseDirectory(final Properties props)
+public static String getDefaultImageBaseDirectory(Properties props)
 {
   return props.getProperty(MrGeoConstants.MRGEO_HDFS_IMAGE, null);
 }
 
-public static String[] getDefaultVectorBaseDirectories(final Properties props)
+public static String[] getDefaultVectorBaseDirectories(Properties props)
 {
-  final String defaultDirs[] = null;
+  String defaultDirs[] = null;
 
-  final String listDirs = props.getProperty(MrGeoConstants.MRGEO_HDFS_VECTOR, null);
+  String listDirs = props.getProperty(MrGeoConstants.MRGEO_HDFS_VECTOR, null);
   if (listDirs != null)
   {
-    final String[] dirs = listDirs.split(",");
+    String[] dirs = listDirs.split(",");
     if (dirs.length != 0)
     {
       for (int i = 0; i < dirs.length; i++)
@@ -266,10 +266,10 @@ public static String getDefaultVectorBaseDirectory()
   return getDefaultVectorBaseDirectory(MrGeoProperties.getInstance());
 }
 
-public static String getDefaultVectorBaseDirectory(final Properties props)
+public static String getDefaultVectorBaseDirectory(Properties props)
 {
-  final String defaultVectorDir = null;
-  final String[] dirs = getDefaultVectorBaseDirectories(props);
+  String defaultVectorDir = null;
+  String[] dirs = getDefaultVectorBaseDirectories(props);
 
   if (dirs != null && dirs.length != 0)
   {
@@ -279,10 +279,10 @@ public static String getDefaultVectorBaseDirectory(final Properties props)
 }
 
 public static double[]
-getDoubleArraySetting(final Configuration config, final String propertyName)
+getDoubleArraySetting(Configuration config, String propertyName)
 {
-  final String[] strValues = getStringArraySetting(config, propertyName);
-  final double[] result = new double[strValues.length];
+  String[] strValues = getStringArraySetting(config, propertyName);
+  double[] result = new double[strValues.length];
   for (int ii = 0; ii < strValues.length; ii++)
   {
     // Note: this will throw an exception if parsing is unsuccessful
@@ -292,10 +292,10 @@ getDoubleArraySetting(final Configuration config, final String propertyName)
 }
 
 
-public static int[] getIntArraySetting(final Configuration config, final String propertyName)
+public static int[] getIntArraySetting(Configuration config, String propertyName)
 {
-  final String[] strValues = getStringArraySetting(config, propertyName);
-  final int[] result = new int[strValues.length];
+  String[] strValues = getStringArraySetting(config, propertyName);
+  int[] result = new int[strValues.length];
   for (int ii = 0; ii < strValues.length; ii++)
   {
     // Note: this will throw an exception if parsing is unsuccessful
@@ -305,14 +305,14 @@ public static int[] getIntArraySetting(final Configuration config, final String 
 }
 
 public static String[]
-getStringArraySetting(final Configuration config, final String propertyName)
+getStringArraySetting(Configuration config, String propertyName)
 {
-  final String str = config.get(propertyName);
+  String str = config.get(propertyName);
   if (str == null || str.length() == 0)
   {
     return new String[0];
   }
-  final String[] strValues = str.split(",");
+  String[] strValues = str.split(",");
   for (int ii = 0; ii < strValues.length; ii++)
   {
     strValues[ii] = strValues[ii].trim();
@@ -320,7 +320,7 @@ getStringArraySetting(final Configuration config, final String propertyName)
   return strValues;
 }
 
-public static void setJar(final Job job, Class clazz) throws IOException
+public static void setJar(Job job, Class clazz) throws IOException
 {
   Configuration conf = job.getConfiguration();
 
@@ -341,7 +341,7 @@ public static void setJar(final Job job, Class clazz) throws IOException
 }
 
 
-public static String getJar(final Configuration conf, Class clazz) throws IOException
+public static String getJar(Configuration conf, Class clazz) throws IOException
 {
 
   if (isLocal(conf))
@@ -358,7 +358,7 @@ public static String getJar(final Configuration conf, Class clazz) throws IOExce
   //setJar(job.getConfiguration());
 }
 
-public static boolean isLocal(final Configuration conf)
+public static boolean isLocal(Configuration conf)
 {
   // If we're running under YARN, then only check the YARN setting
   String yarnLocal = conf.get("mapreduce.framework.name", null);
@@ -371,7 +371,7 @@ public static boolean isLocal(final Configuration conf)
   return mr1Local.equals("local");
 }
 
-public static void setupLocalRunner(final Configuration config) throws IOException
+public static void setupLocalRunner(Configuration config) throws IOException
 {
   // hadoop v1 key
   config.set("mapred.job.tracker", "local");
@@ -489,27 +489,27 @@ private static void loadJobContextClass()
 {
   try
   {
-    final Class<?> jc = Class.forName("org.apache.hadoop.mapreduce.JobContext");
-    final Class<?>[] argTypes = {Configuration.class, JobID.class};
+    Class<?> jc = Class.forName("org.apache.hadoop.mapreduce.JobContext");
+    Class<?>[] argTypes = {Configuration.class, JobID.class};
 
     jobContext = jc.getDeclaredConstructor(argTypes);
 
     return;
   }
-  catch (final ClassNotFoundException | SecurityException | NoSuchMethodException ignored)
+  catch (ClassNotFoundException | SecurityException | NoSuchMethodException ignored)
   {
   }
 
   try
   {
-    final Class<?> jci = Class.forName("org.apache.hadoop.mapreduce.task.JobContextImpl");
-    final Class<?>[] argTypes = {Configuration.class, JobID.class};
+    Class<?> jci = Class.forName("org.apache.hadoop.mapreduce.task.JobContextImpl");
+    Class<?>[] argTypes = {Configuration.class, JobID.class};
 
     jobContext = jci.getDeclaredConstructor(argTypes);
 
     return;
   }
-  catch (final ClassNotFoundException | SecurityException | NoSuchMethodException ignored)
+  catch (ClassNotFoundException | SecurityException | NoSuchMethodException ignored)
   {
   }
 
@@ -522,29 +522,29 @@ private static void loadTaskAttemptClass()
 {
   try
   {
-    final Class<?> tac = Class.forName("org.apache.hadoop.mapreduce.TaskAttemptContext");
-    final Class<?>[] argTypes = {Configuration.class, TaskAttemptID.class};
+    Class<?> tac = Class.forName("org.apache.hadoop.mapreduce.TaskAttemptContext");
+    Class<?>[] argTypes = {Configuration.class, TaskAttemptID.class};
 
     taskAttempt = tac.getDeclaredConstructor(argTypes);
 
     return;
   }
-  catch (final ClassNotFoundException | NoSuchMethodException | SecurityException ignored)
+  catch (ClassNotFoundException | NoSuchMethodException | SecurityException ignored)
   {
   }
 
   try
   {
     // Class<?> taci = Class.forName("org.apache.hadoop.mapreduce.TaskAttemptContextImpl");
-    final Class<?> taci = Class
+    Class<?> taci = Class
         .forName("org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl");
-    final Class<?>[] argTypes = {Configuration.class, TaskAttemptID.class};
+    Class<?>[] argTypes = {Configuration.class, TaskAttemptID.class};
 
     taskAttempt = taci.getDeclaredConstructor(argTypes);
 
     return;
   }
-  catch (final ClassNotFoundException | SecurityException | NoSuchMethodException ignored)
+  catch (ClassNotFoundException | SecurityException | NoSuchMethodException ignored)
   {
   }
 

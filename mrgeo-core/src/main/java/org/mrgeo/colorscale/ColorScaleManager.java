@@ -53,7 +53,7 @@ static
   }
 }
 
-public static ColorScale fromJSON(final String colorScaleJSON) throws ColorScaleException
+public static ColorScale fromJSON(String colorScaleJSON) throws ColorScaleException
 {
   ColorScale cs = null;
   if (colorScaleJSON != null)
@@ -64,7 +64,7 @@ public static ColorScale fromJSON(final String colorScaleJSON) throws ColorScale
   return cs;
 }
 
-public static ColorScale fromName(final String colorScaleName) throws ColorScaleException
+public static ColorScale fromName(String colorScaleName) throws ColorScaleException
 {
   if (colorscales.containsKey(colorScaleName)) {
     return (ColorScale) colorscales.get(colorScaleName).clone();
@@ -95,7 +95,7 @@ private static synchronized void initializeColorscales() throws ColorScaleExcept
 
     Properties props = MrGeoProperties.getInstance();
 
-    final String colorScaleBase = HadoopUtils.getDefaultColorScalesBaseDirectory(props);
+    String colorScaleBase = HadoopUtils.getDefaultColorScalesBaseDirectory(props);
     if (colorScaleBase != null)
     {
       try

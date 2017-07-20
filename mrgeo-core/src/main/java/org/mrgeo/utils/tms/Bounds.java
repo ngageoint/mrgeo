@@ -32,7 +32,7 @@ final public double s;
 final public double n;
 final public double e;
 
-public Bounds(final double w, final double s, final double e, final double n)
+public Bounds(double w, double s, double e, double n)
 {
   this.n = n;
   this.s = s;
@@ -135,7 +135,7 @@ public Envelope toEnvelope()
   return new Envelope(w, e, s, n);
 }
 
-public boolean contains(final Bounds b)
+public boolean contains(Bounds b)
 {
   return contains(b, true);
 }
@@ -144,7 +144,7 @@ public boolean contains(final Bounds b)
  * Is the bounds fully contained within this bounds. Edges are included iff includeAdjacent is
  * true
  */
-public boolean contains(final Bounds b, final boolean includeAdjacent)
+public boolean contains(Bounds b, boolean includeAdjacent)
 {
   if (includeAdjacent)
   {
@@ -162,7 +162,7 @@ public boolean contains(double longitude, double latitude)
  * Is the bounds fully contained within this bounds. Edges are included iff includeAdjacent is
  * true
  */
-public boolean contains(double longitude, double latitude, final boolean includeAdjacent)
+public boolean contains(double longitude, double latitude, boolean includeAdjacent)
 {
   if (includeAdjacent)
   {
@@ -172,7 +172,7 @@ public boolean contains(double longitude, double latitude, final boolean include
 }
 
 @Override
-public boolean equals(final Object obj)
+public boolean equals(Object obj)
 {
   if (this == obj)
   {
@@ -186,7 +186,7 @@ public boolean equals(final Object obj)
   {
     return false;
   }
-  final Bounds other = (Bounds) obj;
+  Bounds other = (Bounds) obj;
 
   return Double.doubleToLongBits(e) == Double.doubleToLongBits(other.e) &&
       Double.doubleToLongBits(n) == Double.doubleToLongBits(other.n) &&
@@ -195,7 +195,7 @@ public boolean equals(final Object obj)
 
 }
 
-public Bounds expand(final Bounds b)
+public Bounds expand(Bounds b)
 {
   if (b != null)
   {
@@ -207,13 +207,13 @@ public Bounds expand(final Bounds b)
   }
 }
 
-public Bounds expand(final double x, final double y)
+public Bounds expand(double x, double y)
 {
   return expand(x, y, x, y);
 }
 
 public Bounds
-expand(final double west, final double south, final double east, final double north)
+expand(double west, double south, double east, double north)
 {
   double nn = n;
   double ns = s;
@@ -243,18 +243,18 @@ expand(final double west, final double south, final double east, final double no
 
 }
 
-public Bounds expandBy(final double v)
+public Bounds expandBy(double v)
 {
   return expandBy(v, v, v, v);
 }
 
-public Bounds expandBy(final double x, final double y)
+public Bounds expandBy(double x, double y)
 {
   return expandBy(x, y, x, y);
 }
 
 public Bounds
-expandBy(final double west, final double south, final double east, final double north)
+expandBy(double west, double south, double east, double north)
 {
   return new Bounds(w - west, s - south, e + east, n + north);
 }
@@ -262,7 +262,7 @@ expandBy(final double west, final double south, final double east, final double 
 @Override
 public int hashCode()
 {
-  final int prime = 31;
+  int prime = 31;
   int result = 1;
   long temp;
   temp = Double.doubleToLongBits(e);
@@ -276,12 +276,12 @@ public int hashCode()
   return result;
 }
 
-public boolean intersects(final Bounds b)
+public boolean intersects(Bounds b)
 {
   return intersects(b, true);
 }
 
-public boolean intersects(final double w, final double s, final double e, final double n)
+public boolean intersects(double w, double s, double e, double n)
 {
   return intersects(new Bounds(w, s, e, n));
 }
@@ -289,9 +289,9 @@ public boolean intersects(final double w, final double s, final double e, final 
 /**
  * If the two boundaries are adjacent, this would return true iff includeAdjacent is true
  */
-public boolean intersects(final Bounds b, final boolean includeAdjacent)
+public boolean intersects(Bounds b, boolean includeAdjacent)
 {
-  final Bounds
+  Bounds
       intersectBounds = new Bounds(Math.max(this.w, b.w), Math.max(this.s, b.s), Math
       .min(this.e, b.e), Math.min(this.n, b.n));
   if (includeAdjacent)
@@ -312,13 +312,13 @@ public String toCommaString()
   return w + "," + s + "," + e + "," + n;
 }
 
-public Bounds union(final Bounds b)
+public Bounds union(Bounds b)
 {
   return new Bounds(Math.min(this.w, b.w), Math.min(this.s, b.s), Math.max(
       this.e, b.e), Math.max(this.n, b.n));
 }
 
-public Bounds intersection(final Bounds b)
+public Bounds intersection(Bounds b)
 {
   return intersection(b, true);
 }
@@ -326,10 +326,10 @@ public Bounds intersection(final Bounds b)
 /**
  * If the two boundaries are adjacent, this would return true iff includeAdjacent is true
  */
-public Bounds intersection(final Bounds b, final boolean includeAdjacent)
+public Bounds intersection(Bounds b, boolean includeAdjacent)
 {
 
-  final Bounds
+  Bounds
       intersectBounds = new Bounds(Math.max(this.w, b.w), Math.max(this.s, b.s), Math
       .min(this.e, b.e), Math.min(this.n, b.n));
 

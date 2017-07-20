@@ -22,7 +22,7 @@ import java.io.IOException;
 
 public interface MrsImageWriter
 {
-public void append(final TileIdWritable k, final MrGeoRaster tile) throws IOException;
+public void append(TileIdWritable k, MrGeoRaster tile) throws IOException;
 
 public void close() throws IOException;
 

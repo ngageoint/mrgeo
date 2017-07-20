@@ -40,8 +40,8 @@ private static final Logger log = LoggerFactory.getLogger(PngColorScaleApplier.c
  * ColorScale, double[], double)
  */
 @Override
-public MrGeoRaster applyColorScale(final MrGeoRaster raster, ColorScale colorScale, final double[] extrema,
-    final double[] defaultValues, final double[][] quantiles) throws ColorScaleException
+public MrGeoRaster applyColorScale(MrGeoRaster raster, ColorScale colorScale, double[] extrema,
+    double[] defaultValues, double[][] quantiles) throws ColorScaleException
 {
   try
   {
@@ -67,7 +67,7 @@ public int getBytesPerPixelPerBand()
 }
 
 @Override
-public int getBands(final int sourceBands)
+public int getBands(int sourceBands)
 {
   return sourceBands == 3 ? 3 : 4;
 }

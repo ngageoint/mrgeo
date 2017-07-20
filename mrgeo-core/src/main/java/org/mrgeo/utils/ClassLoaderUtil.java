@@ -42,7 +42,7 @@ private static final Logger log = LoggerFactory.getLogger(ClassLoaderUtil.class)
 public static Collection<String> getMostJars()
 {
 
-  final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+  ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
   try
   {
     // this seems to populate more jars. Odd.
@@ -55,7 +55,7 @@ public static Collection<String> getMostJars()
     log.error("Exception thrown", e1);
   }
 
-  final TreeSet<String> result = new TreeSet<>();
+  TreeSet<String> result = new TreeSet<>();
   AccessController.doPrivileged(new PrivilegedAction<Object>()
   {
     public Boolean run()
@@ -207,11 +207,11 @@ public static List<URL> loadDirectory(String filePath) throws IOException
 }
 
 @SuppressWarnings("squid:S1166") // exceptions are caught and returned as false
-public static void addLibraryPath(final String pathToAdd)
+public static void addLibraryPath(String pathToAdd)
 {
   try
   {
-    final Field usrPathsField = ClassLoader.class.getDeclaredField("usr_paths");
+    Field usrPathsField = ClassLoader.class.getDeclaredField("usr_paths");
 
     AccessController.doPrivileged(new PrivilegedAction<Object>()
     {
@@ -222,7 +222,7 @@ public static void addLibraryPath(final String pathToAdd)
           usrPathsField.setAccessible(true);
 
           //get array of paths
-          final String[] paths = (String[]) usrPathsField.get(null);
+          String[] paths = (String[]) usrPathsField.get(null);
 
           //check if the path to add is already present
           for (String path : paths)
@@ -234,7 +234,7 @@ public static void addLibraryPath(final String pathToAdd)
           }
 
           //add the new path
-          final String[] newPaths = new String[paths.length + 1];
+          String[] newPaths = new String[paths.length + 1];
           System.arraycopy(paths, 0, newPaths, 1, paths.length);
           //final String[] newPaths = Arrays.copyOf(paths, paths.length + 1);
           newPaths[0] = pathToAdd;
@@ -242,7 +242,7 @@ public static void addLibraryPath(final String pathToAdd)
 
 
           System.setProperty("java.library.path", StringUtils.join(newPaths, ":"));
-          final Field sysPathsField = ClassLoader.class.getDeclaredField("sys_paths");
+          Field sysPathsField = ClassLoader.class.getDeclaredField("sys_paths");
           sysPathsField.setAccessible(true);
           sysPathsField.set(null, null);
 

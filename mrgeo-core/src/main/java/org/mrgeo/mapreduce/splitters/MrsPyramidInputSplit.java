@@ -42,7 +42,7 @@ public MrsPyramidInputSplit()
 {
 }
 
-public MrsPyramidInputSplit(final TiledInputSplit split, String name) throws IOException
+public MrsPyramidInputSplit(TiledInputSplit split, String name) throws IOException
 {
   super();
   this.wrappedInputSplit = split;
