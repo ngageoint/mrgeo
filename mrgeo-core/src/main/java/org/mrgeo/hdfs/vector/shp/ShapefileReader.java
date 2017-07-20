@@ -51,11 +51,11 @@ public class ShapefileReader implements GeometryInputStream, ShapefileGeometryCo
 {
 private static final long serialVersionUID = 1L;
 private static Logger log = LoggerFactory.getLogger(ShapefileReader.class);
-transient int currentIndex = 0;
+transient int currentIndex;
 // only one of these should be set at any time. If path is set, use Hadoop,
 // otherwise use
 // standard files.
-String fileName = null;
+String fileName;
 transient ESRILayer shpFile;
 Source source = Source.INVALID;
 
@@ -340,7 +340,7 @@ protected void finalize()
     {
       shpFile.close();
     }
-    catch (IOException e)
+    catch (IOException ignored)
     {
     }
   }
@@ -358,14 +358,9 @@ private void load(Path path) throws IOException
     SeekableHdfsInput shp = new SeekableHdfsInput(path);
     SeekableHdfsInput shx = new SeekableHdfsInput(new Path(baseName + ".shx"));
     SeekableHdfsInput dbf = new SeekableHdfsInput(new Path(baseName + ".dbf"));
-    FSDataInputStream prj = fs.open(new Path(baseName + ".prj"));
-    try
+    try (FSDataInputStream prj = fs.open(new Path(baseName + ".prj")))
     {
       shpFile = ESRILayer.open(shp, shx, dbf, prj);
-    }
-    finally
-    {
-      prj.close();
     }
   }
   catch (FormatException e)
@@ -438,7 +433,7 @@ private enum Source
 
 static class LocalIterator implements Iterator<WritableGeometry>
 {
-  private int currentIndex = 0;
+  private int currentIndex;
   private ShapefileReader parent;
 
   public LocalIterator(ShapefileReader parent)
@@ -472,7 +467,7 @@ static class LocalIterator implements Iterator<WritableGeometry>
 
 static class ReadOnlyLocalIterator implements Iterator<Geometry>
 {
-  private int currentIndex = 0;
+  private int currentIndex;
   private ShapefileReader parent;
 
   public ReadOnlyLocalIterator(ShapefileReader parent)

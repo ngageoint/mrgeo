@@ -1,10 +1,10 @@
 package org.mrgeo.hdfs.utils;
 
-import org.apache.hadoop.io.MapFile;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.image.HdfsMrsImageReader;
+import org.mrgeo.hdfs.utils.HadoopFileUtils.MapFileReaderWrapper;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -18,19 +18,19 @@ import static org.mockito.Mockito.when;
 public class HdfsMrsImageReaderBuilder
 {
 private HdfsMrsImageReader hdfsMrsImageReader;
-private List<HadoopFileUtils.MapFileReaderWrapper> mapFileReaderWrappers = new ArrayList<>();
+private List<MapFileReaderWrapper> mapFileReaderWrappers = new ArrayList<>();
 private boolean canBeCached;
 private int zoom;
 
 public HdfsMrsImageReaderBuilder()
 {
-  this.hdfsMrsImageReader = mock(HdfsMrsImageReader.class);
+  hdfsMrsImageReader = mock(HdfsMrsImageReader.class);
 }
 
-public HdfsMrsImageReaderBuilder mapFileReader(HadoopFileUtils.MapFileReaderWrapper mapFileReader)
+public HdfsMrsImageReaderBuilder mapFileReader(MapFileReaderWrapper mapFileReader)
 {
   // each call adds a new map file reader to the list
-  this.mapFileReaderWrappers.add(mapFileReader);
+  mapFileReaderWrappers.add(mapFileReader);
 
   return this;
 }
@@ -52,10 +52,10 @@ public HdfsMrsImageReaderBuilder zoom(int zoom)
 public HdfsMrsImageReader build() throws IOException
 {
   // Return the MapFile.Readers for the specified index
-  when(hdfsMrsImageReader.getReaderWrapper(anyInt())).thenAnswer(new Answer<HadoopFileUtils.MapFileReaderWrapper>()
+  when(hdfsMrsImageReader.getReaderWrapper(anyInt())).thenAnswer(new Answer<MapFileReaderWrapper>()
   {
     @Override
-    public HadoopFileUtils.MapFileReaderWrapper answer(InvocationOnMock invocationOnMock) throws Throwable
+    public MapFileReaderWrapper answer(InvocationOnMock invocationOnMock) throws Throwable
     {
       int index = (Integer) invocationOnMock.getArguments()[0];
       return mapFileReaderWrappers.get(index);

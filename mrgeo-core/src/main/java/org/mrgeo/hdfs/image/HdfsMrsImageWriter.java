@@ -18,7 +18,9 @@ package org.mrgeo.hdfs.image;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.MapFile;
+import org.apache.hadoop.io.MapFile.Writer;
 import org.apache.hadoop.io.SequenceFile;
+import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.mrgeo.data.image.MrsImageWriter;
@@ -35,7 +37,7 @@ class HdfsMrsImageWriter implements MrsImageWriter
 final private HdfsMrsImageDataProvider provider;
 final private MrsPyramidWriterContext context;
 
-private MapFile.Writer writer = null;
+private Writer writer;
 
 
 // image = path to mapfile directory- e.g., /hdfs/path/to/mapfile (will contain data and index
@@ -48,7 +50,7 @@ HdfsMrsImageWriter(HdfsMrsImageDataProvider provider, MrsPyramidWriterContext co
 }
 
 @Override
-public void append(final TileIdWritable k, final MrGeoRaster raster) throws IOException
+public void append(TileIdWritable k, MrGeoRaster raster) throws IOException
 {
   if (writer == null)
   {
@@ -99,10 +101,10 @@ private void openWriter() throws IOException
   // tile
   conf.set("dfs.client.write-packet-size", "786500");
 
-  writer = new MapFile.Writer(conf, imagePath,
-      MapFile.Writer.keyClass(TileIdWritable.class.asSubclass(WritableComparable.class)),
-      MapFile.Writer.valueClass(RasterWritable.class.asSubclass(Writable.class)),
-      MapFile.Writer.compression(SequenceFile.CompressionType.RECORD));
+  writer = new Writer(conf, imagePath,
+      Writer.keyClass(TileIdWritable.class.asSubclass(WritableComparable.class)),
+      Writer.valueClass(RasterWritable.class.asSubclass(Writable.class)),
+      Writer.compression(CompressionType.RECORD));
 
   writer.setIndexInterval(1);
 }

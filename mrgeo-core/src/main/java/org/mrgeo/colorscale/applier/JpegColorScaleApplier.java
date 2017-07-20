@@ -16,7 +16,9 @@
 package org.mrgeo.colorscale.applier;
 
 import org.mrgeo.colorscale.ColorScale;
+import org.mrgeo.colorscale.ColorScale.ColorScaleException;
 import org.mrgeo.data.raster.MrGeoRaster;
+import org.mrgeo.data.raster.MrGeoRaster.MrGeoRasterException;
 import org.mrgeo.data.raster.RasterUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,8 +34,8 @@ public class JpegColorScaleApplier extends ColorScaleApplier
 private static final Logger log = LoggerFactory.getLogger(JpegColorScaleApplier.class);
 
 @Override
-public MrGeoRaster applyColorScale(final MrGeoRaster raster, ColorScale colorScale, final double[] extrema,
-    final double[] defaultValues, final double[][] quantiles) throws ColorScale.ColorScaleException
+public MrGeoRaster applyColorScale(MrGeoRaster raster, ColorScale colorScale, double[] extrema,
+    double[] defaultValues, double[][] quantiles) throws ColorScaleException
 {
   try
   {
@@ -45,9 +47,9 @@ public MrGeoRaster applyColorScale(final MrGeoRaster raster, ColorScale colorSca
     apply(raster, colored, colorScale);
     return colored;
   }
-  catch (MrGeoRaster.MrGeoRasterException e)
+  catch (MrGeoRasterException e)
   {
-    throw new ColorScale.ColorScaleException(e);
+    throw new ColorScaleException(e);
   }
 
 }
@@ -59,7 +61,7 @@ public int getBytesPerPixelPerBand()
 }
 
 @Override
-public int getBands(final int sourceBands)
+public int getBands(int sourceBands)
 {
   return 3;
 }

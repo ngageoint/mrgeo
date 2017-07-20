@@ -26,5 +26,5 @@ boolean removeGeometry(Geometry g);
 
 void setRole(int index, String role);
 
-public void fromJTS(com.vividsolutions.jts.geom.GeometryCollection collection);
+void fromJTS(com.vividsolutions.jts.geom.GeometryCollection collection);
 }

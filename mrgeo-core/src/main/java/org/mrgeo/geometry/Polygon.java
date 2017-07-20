@@ -20,12 +20,12 @@ package org.mrgeo.geometry;
  */
 public interface Polygon extends Geometry
 {
-public LinearRing getExteriorRing();
+LinearRing getExteriorRing();
 
-public LinearRing getInteriorRing(int i);
+LinearRing getInteriorRing(int i);
 
-public int getNumInteriorRings();
+int getNumInteriorRings();
 
 @Override
-public com.vividsolutions.jts.geom.Polygon toJTS();
+com.vividsolutions.jts.geom.Polygon toJTS();
 }

@@ -25,7 +25,7 @@ private static final long serialVersionUID = 1L;
 final public long px;
 final public long py;
 
-public Pixel(final long px, final long py)
+public Pixel(long px, long py)
 
 {
   this.px = px;
@@ -43,11 +43,11 @@ public long getPx()
 }
 
 @Override
-public boolean equals(final Object obj)
+public boolean equals(Object obj)
 {
   if (obj instanceof Pixel)
   {
-    final Pixel other = (Pixel) obj;
+    Pixel other = (Pixel) obj;
     return (px == other.px) && (py == other.py);
   }
   return super.equals(obj);

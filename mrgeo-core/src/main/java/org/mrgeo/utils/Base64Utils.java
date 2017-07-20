@@ -55,9 +55,9 @@ public static String encodeDoubleArray(double[] noData) throws IOException
   {
     oos = new ObjectOutputStream(baos);
     oos.writeInt(noData.length);
-    for (int i = 0; i < noData.length; i++)
+    for (double nd : noData)
     {
-      oos.writeDouble(noData[i]);
+      oos.writeDouble(nd);
     }
     oos.flush();
     rawBytes = baos.toByteArray();

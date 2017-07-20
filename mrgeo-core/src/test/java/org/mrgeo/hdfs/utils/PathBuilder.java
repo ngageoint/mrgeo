@@ -21,7 +21,7 @@ private FileSystem fileSystem;
 
 public PathBuilder()
 {
-  this.path = mock(Path.class);
+  path = mock(Path.class);
 }
 
 public PathBuilder fileSystem(FileSystem fileSystem)

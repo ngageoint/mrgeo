@@ -24,7 +24,7 @@ import java.io.IOException;
  */
 public interface MrsPyramidMetadataWriter
 {
-public void write() throws IOException;
+void write() throws IOException;
 
-public void write(MrsPyramidMetadata metadata) throws IOException;
+void write(MrsPyramidMetadata metadata) throws IOException;
 }

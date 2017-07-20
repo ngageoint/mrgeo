@@ -28,8 +28,8 @@ public class Reprojector implements PointFilter
 {
 private static final long serialVersionUID = 1L;
 transient CoordinateTransformation coordinateTransformation;
-private String srcSRSWKT = null;
-private String dstSRSWKT = null;
+private String srcSRSWKT;
+private String dstSRSWKT;
 
 private Reprojector(SpatialReference sourceSrs, SpatialReference destSrs)
 {

@@ -39,15 +39,15 @@ import java.io.*;
  */
 public class ESRILayer
 {
-protected ShxFile index = null;
+protected ShxFile index;
 @SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD", justification = "used in subclasses")
-protected String mode = null; // RAF mode
-protected ShpFile shape = null;
-protected DbaseFile table = null;
-private double maxScale = Long.MAX_VALUE;
-private double minScale = 0;
+protected String mode; // RAF mode
+protected ShpFile shape;
+protected DbaseFile table;
+//private double maxScale = Long.MAX_VALUE;
+//private double minScale;
 private String projection = "";
-private boolean visible = true;
+//private boolean visible = true;
 
 /**
  * Opens an existing shapefile for read-only.
@@ -99,7 +99,7 @@ public static ESRILayer open(String fileName) throws FormatException, IOExceptio
   RandomAccessFile shpRaf = new RandomAccessFile(fileName, "r");
   RandomAccessFile dbfRaf = new RandomAccessFile(fileBase + ".dbf", "r");
   FileInputStream prjIs = null;
-  if (new File(fileBase + ".prj").exists() == true)
+  if (new File(fileBase + ".prj").exists())
   {
     prjIs = new FileInputStream(fileBase + ".prj");
   }
@@ -183,15 +183,15 @@ public int[] getDataWidths()
   return temp;
 }
 
-public double getMaxScale()
-{
-  return maxScale;
-}
-
-public double getMinScale()
-{
-  return minScale;
-}
+//public double getMaxScale()
+//{
+//  return maxScale;
+//}
+//
+//public double getMinScale()
+//{
+//  return minScale;
+//}
 
 public int getNumRecords()
 {
@@ -240,10 +240,10 @@ public DbaseFile getTable()
   return table;
 }
 
-public boolean isLayerVisible()
-{
-  return visible;
-}
+//public boolean isLayerVisible()
+//{
+//  return visible;
+//}
 
 @SuppressWarnings("squid:S00112")
 // I didn't write this code, so I'm not sure why it throws the RuntimeException.  Keeping it

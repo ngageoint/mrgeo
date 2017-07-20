@@ -34,7 +34,7 @@ private List<String> roles;
 
 public ProviderProperties()
 {
-  this("", new ArrayList<String>());
+  this("", new ArrayList<>());
 }
 
 public ProviderProperties(String userName, List<String> roles)
@@ -46,7 +46,7 @@ public ProviderProperties(String userName, List<String> roles)
 public ProviderProperties(String userName, String commaDelimitedRoles)
 {
   this.userName = userName;
-  roles = new ArrayList<String>();
+  roles = new ArrayList<>();
   String[] separated = commaDelimitedRoles.split(",");
   for (String r : separated)
   {
@@ -69,7 +69,7 @@ public static ProviderProperties fromDelimitedString(String value)
 {
   String[] values = value.split("\\|\\|");
   String userName = "";
-  List<String> roles = new ArrayList<String>();
+  List<String> roles = new ArrayList<>();
   if (values.length > 0)
   {
     userName = values[0];
@@ -112,7 +112,7 @@ public void readExternal(ObjectInput in) throws IOException, ClassNotFoundExcept
 {
   userName = in.readUTF();
   int roleCount = in.readInt();
-  roles = new ArrayList<String>();
+  roles = new ArrayList<>();
   for (int i = 0; i < roleCount; i++)
   {
     roles.add(in.readUTF());

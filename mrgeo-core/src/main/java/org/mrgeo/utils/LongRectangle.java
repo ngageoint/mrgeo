@@ -32,14 +32,14 @@ private static final long serialVersionUID = 1L;
 
 private long minX, minY;
 private long maxX, maxY;
-private boolean set = false;
+private boolean set;
 
 public LongRectangle()
 {
   set = false;
 }
 
-public LongRectangle(final long minX, final long minY, final long maxX, final long maxY)
+public LongRectangle(long minX, long minY, long maxX, long maxY)
 {
   this.minX = minX;
   this.minY = minY;
@@ -52,23 +52,23 @@ public LongRectangle(final long minX, final long minY, final long maxX, final lo
 
 public LongRectangle(LongRectangle copy)
 {
-  this.minX = copy.minX;
-  this.minY = copy.minY;
+  minX = copy.minX;
+  minY = copy.minY;
 
-  this.maxX = copy.maxX;
-  this.maxY = copy.maxY;
+  maxX = copy.maxX;
+  maxY = copy.maxY;
 
   set = true;
 }
 
 @SuppressWarnings("unused")
-static public void intersect(final LongRectangle src1, final LongRectangle src2,
-    final LongRectangle dest)
+static public void intersect(LongRectangle src1, LongRectangle src2,
+    LongRectangle dest)
 {
   throw new NotImplementedException("intersects() not implemented");
 }
 
-public static LongRectangle fromDelimitedString(final String rect)
+public static LongRectangle fromDelimitedString(String rect)
 {
   String[] args = rect.split(",");
   if (args.length != 4)
@@ -82,13 +82,13 @@ public static LongRectangle fromDelimitedString(final String rect)
 }
 
 @SuppressWarnings("unused")
-static void union(final LongRectangle src1, final LongRectangle src2, final LongRectangle dest)
+static void union(LongRectangle src1, LongRectangle src2, LongRectangle dest)
 {
   throw new NotImplementedException("union() not implemented");
 
 }
 
-public void add(final long x, final long y)
+public void add(long x, long y)
 {
   if (!set)
   {
@@ -120,7 +120,7 @@ public void add(final long x, final long y)
 
 }
 
-public void add(final LongRectangle r)
+public void add(LongRectangle r)
 {
   add(r.minX, r.minY);
   add(r.maxX, r.maxY);
@@ -133,34 +133,34 @@ public Object clone()
   return new LongRectangle(minX, minY, maxX, maxY);
 }
 
-public boolean contains(final long x, final long y)
+public boolean contains(long x, long y)
 {
   return outcode(x, y) == 0;
 }
 
-public boolean contains(final LongRectangle r)
+public boolean contains(LongRectangle r)
 {
   return outcode(r.minX, r.minY) == 0 && outcode(r.maxX, r.maxY) == 0;
 }
 
 @SuppressWarnings("unused")
-public LongRectangle createIntersection(final LongRectangle r)
+public LongRectangle createIntersection(LongRectangle r)
 {
   throw new NotImplementedException("createIntersection() not implemented");
 }
 
 @SuppressWarnings("unused")
-public LongRectangle createUnion(final LongRectangle r)
+public LongRectangle createUnion(LongRectangle r)
 {
   throw new NotImplementedException("createUnion() not implemented");
 }
 
 @Override
-public boolean equals(final Object obj)
+public boolean equals(Object obj)
 {
   if (obj instanceof LongRectangle)
   {
-    final LongRectangle r = (LongRectangle) obj;
+    LongRectangle r = (LongRectangle) obj;
 
     return (r.minX == minX && r.maxX == maxX && r.minY == minY && r.maxY == maxY);
   }
@@ -198,7 +198,7 @@ public long getMaxX()
   return maxX;
 }
 
-public void setMaxX(final long x)
+public void setMaxX(long x)
 {
   maxX = x;
 }
@@ -208,7 +208,7 @@ public long getMaxY()
   return maxY;
 }
 
-public void setMaxY(final long y)
+public void setMaxY(long y)
 {
   maxY = y;
 }
@@ -218,7 +218,7 @@ public long getMinX()
   return minX;
 }
 
-public void setMinX(final long x)
+public void setMinX(long x)
 {
   minX = x;
 }
@@ -228,7 +228,7 @@ public long getMinY()
   return minY;
 }
 
-public void setMinY(final long y)
+public void setMinY(long y)
 {
   minY = y;
 }
@@ -240,7 +240,7 @@ public long getWidth()
   return maxX - minX + 1;
 }
 
-public void grow(final long h, final long v)
+public void grow(long h, long v)
 {
   minX -= h;
   maxX += h;
@@ -250,19 +250,19 @@ public void grow(final long h, final long v)
 }
 
 @SuppressWarnings("unused")
-public boolean intersects(final long srcMinX, final long srcMinY, final long srcMaxX, final long srcMaxY)
+public boolean intersects(long srcMinX, long srcMinY, long srcMaxX, long srcMaxY)
 {
   throw new NotImplementedException("intersects() not implemented");
 }
 
 @SuppressWarnings("unused")
-public boolean intersects(final LongRectangle r)
+public boolean intersects(LongRectangle r)
 {
   throw new NotImplementedException("intersects() not implemented");
 }
 
 @SuppressWarnings("unused")
-public boolean intersectsLine(final long x1, final long y1, final long x2, final long y2)
+public boolean intersectsLine(long x1, long y1, long x2, long y2)
 {
   throw new NotImplementedException("intersectsLine() not implemented");
 }
@@ -273,7 +273,7 @@ public boolean isEmpty()
   return set;
 }
 
-public void setRect(final long minX, final long minY, final long maxX, final long maxY)
+public void setRect(long minX, long minY, long maxX, long maxY)
 {
   this.minX = minX;
   this.minY = minY;
@@ -301,7 +301,7 @@ public String toString()
   return "Rectangle: (" + minX + ", " + minY + ") (" + maxX + ", " + maxY + ")";
 }
 
-private int outcode(final long x, final long y)
+private int outcode(long x, long y)
 {
   int outcode = 0;
   if (x < minX)

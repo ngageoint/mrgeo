@@ -19,6 +19,7 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.geometry.Geometry;
 
 import java.io.IOException;
@@ -34,7 +35,7 @@ public void initialize(InputSplit inputSplit, TaskAttemptContext context) throws
   {
     VectorInputSplit vis = (VectorInputSplit) inputSplit;
     VectorDataProvider dp = DataProviderFactory.getVectorDataProvider(vis.getVectorName(),
-        DataProviderFactory.AccessMode.READ,
+        AccessMode.READ,
         context.getConfiguration());
     delegate = dp.getRecordReader();
     delegate.initialize(vis.getWrappedInputSplit(), context);

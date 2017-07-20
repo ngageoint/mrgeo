@@ -17,12 +17,14 @@ package org.mrgeo.mapreduce;
 
 import org.apache.hadoop.io.Writable;
 import org.mrgeo.geometry.*;
+import org.mrgeo.geometry.Geometry.Type;
 import org.mrgeo.utils.StringUtils;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Not to be confused with WritableGeometry the GeometryWritable class provides the ability to be
@@ -36,22 +38,22 @@ private static final String CHAR_ENCODING = "UTF8";
 
 // This is exposed for performance reasons. Be sure you understand all the
 // implications before you change the value.
-public Geometry geometry = null;
+public Geometry geometry;
 
 public GeometryWritable()
 {
 
 }
 
-public GeometryWritable(final Geometry g)
+public GeometryWritable(Geometry g)
 {
   geometry = g;
 }
 
-private static void readAttributes(final DataInput in, final WritableGeometry g)
+private static void readAttributes(DataInput in, WritableGeometry g)
     throws IOException
 {
-  final int size = in.readInt();
+  int size = in.readInt();
   for (int i = 0; i < size; i++)
   {
     String key = in.readUTF();
@@ -63,31 +65,31 @@ private static void readAttributes(final DataInput in, final WritableGeometry g)
   }
 }
 
-private static void readLineString(final DataInput in, final WritableLineString ls)
+private static void readLineString(DataInput in, WritableLineString ls)
     throws IOException
 {
-  final int size = in.readInt();
+  int size = in.readInt();
   for (int i = 0; i < size; i++)
   {
-    final WritablePoint p = GeometryFactory.createPoint();
+    WritablePoint p = GeometryFactory.createPoint();
     readPoint(in, p);
     ls.addPoint(p);
   }
 }
 
-private static void readPoint(final DataInput in, final WritablePoint result) throws IOException
+private static void readPoint(DataInput in, WritablePoint result) throws IOException
 {
   result.setX(in.readDouble());
   result.setY(in.readDouble());
   result.setZ(in.readDouble());
 }
 
-private static void readPolygon(final DataInput in, final WritablePolygon p) throws IOException
+private static void readPolygon(DataInput in, WritablePolygon p) throws IOException
 {
   WritableLinearRing lr = GeometryFactory.createLinearRing();
   readLineString(in, lr);
   p.setExteriorRing(lr);
-  final int interiorSize = in.readInt();
+  int interiorSize = in.readInt();
   for (int i = 0; i < interiorSize; i++)
   {
     lr = GeometryFactory.createLinearRing();
@@ -96,10 +98,10 @@ private static void readPolygon(final DataInput in, final WritablePolygon p) thr
   }
 }
 
-private static void writeAttributes(final DataOutput out, final Geometry g) throws IOException
+private static void writeAttributes(DataOutput out, Geometry g) throws IOException
 {
   out.writeInt(g.getAllAttributes().size());
-  for (Map.Entry attr : g.getAllAttributesSorted().entrySet())
+  for (Entry attr : g.getAllAttributesSorted().entrySet())
   {
     out.writeUTF(attr.getKey().toString());
     // Cannot use writeUTF for the value because there is a limit of 64K
@@ -110,7 +112,7 @@ private static void writeAttributes(final DataOutput out, final Geometry g) thro
   }
 }
 
-private static void writeLineString(final DataOutput out, final LineString ls) throws IOException
+private static void writeLineString(DataOutput out, LineString ls) throws IOException
 {
   out.writeInt(ls.getNumPoints());
   for (int i = 0; i < ls.getNumPoints(); i++)
@@ -119,14 +121,14 @@ private static void writeLineString(final DataOutput out, final LineString ls) t
   }
 }
 
-private static void writePoint(final DataOutput out, final Point p) throws IOException
+private static void writePoint(DataOutput out, Point p) throws IOException
 {
   out.writeDouble(p.getX());
   out.writeDouble(p.getY());
   out.writeDouble(p.getZ());
 }
 
-private static void writePolygon(final DataOutput out, final Polygon p) throws IOException
+private static void writePolygon(DataOutput out, Polygon p) throws IOException
 {
   writeLineString(out, p.getExteriorRing());
   out.writeInt(p.getNumInteriorRings());
@@ -142,13 +144,13 @@ public Geometry getGeometry()
 }
 
 @Override
-public void readFields(final DataInput in) throws IOException
+public void readFields(DataInput in) throws IOException
 {
   geometry = readGeometry(in);
   readAttributes(in, (WritableGeometry) geometry);
 }
 
-public void set(final WritableGeometry g)
+public void set(WritableGeometry g)
 {
   geometry = g;
 }
@@ -156,10 +158,10 @@ public void set(final WritableGeometry g)
 @Override
 public String toString()
 {
-  final StringBuffer result = new StringBuffer();
+  StringBuilder result = new StringBuilder();
   result.append("[ ");
-  final Map<String, String> attr = geometry.getAllAttributes();
-  for (final String key : geometry.getAllAttributes().keySet())
+  Map<String, String> attr = geometry.getAllAttributes();
+  for (String key : geometry.getAllAttributes().keySet())
   {
     result.append(key + ": " + attr.get(key));
     result.append(", ");
@@ -170,17 +172,17 @@ public String toString()
 }
 
 @Override
-public void write(final DataOutput out) throws IOException
+public void write(DataOutput out) throws IOException
 {
   writeGeometry(out, geometry);
   writeAttributes(out, geometry);
 }
 
-private WritableGeometry readGeometry(final DataInput in) throws IOException
+private WritableGeometry readGeometry(DataInput in) throws IOException
 {
   WritableGeometry result;
 
-  final Geometry.Type type = Geometry.Type.values()[in.readInt()];
+  Type type = Type.values()[in.readInt()];
   switch (type)
   {
   case COLLECTION:
@@ -207,7 +209,7 @@ private WritableGeometry readGeometry(final DataInput in) throws IOException
     throw new IllegalArgumentException("Unsupported geometry type");
   }
 
-  if (result.isValid() == false)
+  if (!result.isValid())
   {
     System.out.println("invalid geom");
   }
@@ -215,17 +217,17 @@ private WritableGeometry readGeometry(final DataInput in) throws IOException
   return result;
 }
 
-private void readGeometryCollection(final DataInput in, final WritableGeometryCollection g)
+private void readGeometryCollection(DataInput in, WritableGeometryCollection g)
     throws IOException
 {
-  final int size = in.readInt();
+  int size = in.readInt();
   for (int i = 0; i < size; i++)
   {
     g.addGeometry(readGeometry(in));
   }
 }
 
-private void writeGeometry(final DataOutput out, final Geometry g) throws IOException
+private void writeGeometry(DataOutput out, Geometry g) throws IOException
 {
   out.writeInt(g.type().ordinal());
   if (g instanceof Point)
@@ -254,11 +256,11 @@ private void writeGeometry(final DataOutput out, final Geometry g) throws IOExce
   }
 }
 
-private void writeGeometryCollection(final DataOutput out, final GeometryCollection gc)
+private void writeGeometryCollection(DataOutput out, GeometryCollection gc)
     throws IOException
 {
   out.writeInt(gc.getGeometries().size());
-  for (final Geometry g : gc.getGeometries())
+  for (Geometry g : gc.getGeometries())
   {
     writeGeometry(out, g);
   }

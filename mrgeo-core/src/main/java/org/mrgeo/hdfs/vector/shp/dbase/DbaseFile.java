@@ -34,16 +34,16 @@ public final static int DEFAULT_CACHE_SIZE = 1000;
 private final static byte ROW_DELETED = 42;
 private final static byte ROW_OK = 32;
 private static Logger log = LoggerFactory.getLogger(DbaseFile.class);
-protected DbaseHeader header = null;
+protected DbaseHeader header;
 @SuppressWarnings("rawtypes")
-protected List[] row = null; // data!
-private boolean cachemode = false; // cache mode indicator flag
+protected List[] row; // data!
+private boolean cachemode; // cache mode indicator flag
 private int cachepos; // cache position (inclusive); dynamic access only
 private int cachesize; // size of cache - represents all rows if not dynamic
 //protected File file = null;
-private byte[] flg = null; // row flags!
-private SeekableDataInput in = null;
-private boolean modData = false; // modified data
+private byte[] flg; // row flags!
+private SeekableDataInput in;
+private boolean modData; // modified data
 //private String mode = null;
 
 //protected boolean modStructure = false; // modified structure
@@ -139,12 +139,10 @@ public synchronized void addRow(List data)
     temp[row.length] = data;
     row = temp;
   }
-  {
-    byte[] temp = new byte[flg.length + 1];
-    System.arraycopy(flg, 0, temp, 0, flg.length);
-    temp[flg.length] = ROW_OK;
-    flg = temp;
-  }
+  byte[] temp = new byte[flg.length + 1];
+  System.arraycopy(flg, 0, temp, 0, flg.length);
+  temp[flg.length] = ROW_OK;
+  flg = temp;
 
   modData = true;
 }
@@ -393,7 +391,7 @@ private List loadRow(SeekableDataInput is, int i) throws IOException
         Date date = null;
         try
         {
-          final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMdd");
+          SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMdd");
           date = dateFormatter.parse(tempStr);
         }
         catch (ParseException ignored)

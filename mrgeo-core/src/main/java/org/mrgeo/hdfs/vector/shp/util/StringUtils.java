@@ -103,7 +103,7 @@ public static String insert(String str, int pos, String insertion)
   {
     return str;
   }
-  StringBuffer result = new StringBuffer();
+  StringBuilder result = new StringBuilder();
   result.append(str);
   result.insert(pos, insertion);
   return result.toString();
@@ -126,7 +126,7 @@ public static String removeExtraInnerSpaces(String str)
     return null;
   }
   String temp = "" + str;
-  while (temp.indexOf("  ") != -1)
+  while (temp.contains("  "))
   {
     temp = replace(temp, "  ", " ");
   }
@@ -146,7 +146,7 @@ public static String replace(String str, String pattern, String replace)
   }
   int s = 0;
   int e = 0;
-  StringBuffer result = new StringBuffer();
+  StringBuilder result = new StringBuilder();
   while ((e = str.indexOf(pattern, s)) >= 0)
   {
     result.append(str.substring(s, e));
@@ -157,39 +157,6 @@ public static String replace(String str, String pattern, String replace)
   return result.toString();
 }
 
-@SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS", justification = "API")
-public static String[] split(String str, String delimiter)
-{
-  if (str == null)
-  {
-    return null;
-  }
-  String[] temp = null;
-  if (delimiter == null || delimiter.length() == 0)
-  {
-    temp = new String[1];
-    temp[0] = str;
-  }
-  else
-  {
-    @SuppressWarnings("rawtypes")
-    Vector v = new Vector(1);
-    int pos = 0;
-    int next = str.indexOf(delimiter);
-    while (next != -1)
-    {
-      String fragment = str.substring(pos, next);
-      v.add(fragment);
-      pos += fragment.length() + delimiter.length();
-      next = str.indexOf(delimiter, pos);
-    }
-    v.add(str.substring(pos));
-    temp = new String[v.size()];
-    v.toArray(temp);
-  }
-  // return
-  return temp;
-}
 
 public static String trimExtended(String str)
 {
@@ -197,7 +164,7 @@ public static String trimExtended(String str)
   {
     return null;
   }
-  StringBuffer result = new StringBuffer();
+  StringBuilder result = new StringBuilder();
   str = str.trim();
   int s = 0;
   int e = 0;
@@ -220,7 +187,7 @@ public static String trimLeft(String str, int length)
   {
     return "";
   }
-  StringBuffer result = new StringBuffer();
+  StringBuilder result = new StringBuilder();
   result.append(str.substring(str.length() - length));
   return result.toString();
 }
@@ -239,7 +206,7 @@ public static String trimRight(String str, int length)
   {
     return "" + str;
   }
-  StringBuffer result = new StringBuffer();
+  StringBuilder result = new StringBuilder();
   result.append(str.substring(0, str.length() - length));
   return result.toString();
 }
@@ -293,7 +260,7 @@ static String pad(String str, int length, char padding)
   {
     return null;
   }
-  StringBuffer result = new StringBuffer();
+  StringBuilder result = new StringBuilder();
   result.append(str);
   if (result.length() < length)
   {

@@ -40,7 +40,7 @@ protected ImageInputFormatContext context;
 
 public MrsImageInputFormatProvider(ImageInputFormatContext config)
 {
-  this.context = config;
+  context = config;
 }
 
 /**
@@ -55,7 +55,7 @@ public MrsImageInputFormatProvider(ImageInputFormatContext config)
  * @param input
  * @return
  */
-public abstract InputFormat<TileIdWritable, RasterWritable> getInputFormat(final String input);
+public abstract InputFormat<TileIdWritable, RasterWritable> getInputFormat(String input);
 
 /**
  * Perform all Spark job setup required for your input format here. Typically that
@@ -86,7 +86,7 @@ public Configuration setupSparkJob(Configuration conf, MrsImageDataProvider prov
   }
   catch (IOException e)
   {
-    throw new DataProviderException("Failure configuring map/reduce job " + context.toString(), e);
+    throw new DataProviderException("Failure configuring map/reduce job " + context, e);
   }
 }
 
@@ -107,7 +107,7 @@ public Configuration setupSparkJob(Configuration conf, MrsImageDataProvider prov
  *
  * @param job
  */
-public void setupJob(Job job, final MrsImageDataProvider provider) throws DataProviderException
+public void setupJob(Job job, MrsImageDataProvider provider) throws DataProviderException
 {
   provider.setupJob(job);
   setupConfig(job, provider);
@@ -119,10 +119,10 @@ public void setupJob(Job job, final MrsImageDataProvider provider) throws DataPr
  *
  * @param job
  */
-public abstract void teardown(final Job job) throws DataProviderException;
+public abstract void teardown(Job job) throws DataProviderException;
 
-private void setupConfig(final Job job,
-    final MrsImageDataProvider provider)
+private void setupConfig(Job job,
+    MrsImageDataProvider provider)
     throws DataProviderException
 {
   Configuration conf = job.getConfiguration();

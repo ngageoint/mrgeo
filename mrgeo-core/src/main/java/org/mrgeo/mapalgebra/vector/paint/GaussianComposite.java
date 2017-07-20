@@ -42,7 +42,6 @@ private AffineTransform translate;
 
 public GaussianComposite()
 {
-  super();
 }
 
 public GaussianComposite(double weight)
@@ -58,16 +57,16 @@ public GaussianComposite(double weight, double nodata)
 public void setEllipse(Point center, double majorWidth, double minorWidth,
     double orientation, AffineTransform transform)
 {
-  this.major = majorWidth;
-  this.minor = minorWidth;
+  major = majorWidth;
+  minor = minorWidth;
 
   this.center = new Point2D.Double(center.getX(), center.getY());
 
   // translation from lat/lon to pixels
-  this.translate = new AffineTransform(transform);
+  translate = new AffineTransform(transform);
 
   // orientation of the ellipse
-  this.rotate = AffineTransform.getRotateInstance(-orientation);
+  rotate = AffineTransform.getRotateInstance(-orientation);
 }
 
 /*
@@ -164,7 +163,7 @@ private class GaussianCompositeContext implements CompositeContext
 
   private double calculateGaussian(double v, int x, int y, double multiplier)
   {
-    final Point2D.Double src = new Point2D.Double(x, y);
+    Point2D.Double src = new Point2D.Double(x, y);
 
     // transform in the src point from pixels to lat/lon
     try
@@ -177,7 +176,7 @@ private class GaussianCompositeContext implements CompositeContext
     }
 
     // calculate the lat/lon delta of the src point
-    final Point2D.Double delta = new Point2D.Double((src.getX() - center.getX()),
+    Point2D.Double delta = new Point2D.Double((src.getX() - center.getX()),
         (src.getY() - center.getY()));
 
     // transform the delta to the orientation of the ellipse

@@ -23,7 +23,7 @@ import java.io.IOException;
 
 public interface VectorReader
 {
-public abstract void close();
+void close();
 
 /**
  * Return an iterator that allows the caller to visit all features
@@ -33,7 +33,7 @@ public abstract void close();
  * @return
  * @throws IOException
  */
-public abstract CloseableKVIterator<FeatureIdWritable, Geometry> get() throws IOException;
+CloseableKVIterator<FeatureIdWritable, Geometry> get() throws IOException;
 
 /**
  * Returns true if there is a feature with the specified featureId.
@@ -45,7 +45,7 @@ public abstract CloseableKVIterator<FeatureIdWritable, Geometry> get() throws IO
  * @return
  * @throws IOException
  */
-public abstract boolean exists(FeatureIdWritable featureId) throws IOException;
+boolean exists(FeatureIdWritable featureId) throws IOException;
 
 /**
  * Returns the Geometry object corresponding to the featureId passed in.
@@ -58,7 +58,7 @@ public abstract boolean exists(FeatureIdWritable featureId) throws IOException;
  * @return
  * @throws IOException
  */
-public abstract Geometry get(FeatureIdWritable featureId) throws IOException;
+Geometry get(FeatureIdWritable featureId) throws IOException;
 
 /**
  * Return an iterator that allows the caller to visit all geometries
@@ -71,7 +71,7 @@ public abstract Geometry get(FeatureIdWritable featureId) throws IOException;
  *
  * @return
  */
-public abstract CloseableKVIterator<FeatureIdWritable, Geometry> get(final Bounds bounds) throws IOException;
+CloseableKVIterator<FeatureIdWritable, Geometry> get(Bounds bounds) throws IOException;
 
 /**
  * Returns the number of features.
@@ -79,7 +79,7 @@ public abstract CloseableKVIterator<FeatureIdWritable, Geometry> get(final Bound
  * @return
  * @throws IOException
  */
-public long count() throws IOException;
+long count() throws IOException;
 
 // TODO: Do we want to include some more advanced spatial query capability here?
 // We could handle that via a different interface that callers could use

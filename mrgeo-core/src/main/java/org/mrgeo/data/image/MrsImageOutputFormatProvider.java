@@ -44,7 +44,7 @@ public MrsImageOutputFormatProvider(ImageOutputFormatContext context)
 
 public abstract void save(RasterRDD raster, Configuration conf);
 
-public abstract void finalizeExternalSave(final Configuration conf) throws DataProviderException;
+public abstract void finalizeExternalSave(Configuration conf) throws DataProviderException;
 
 /**
  * For any additional Spark configuration besides setting

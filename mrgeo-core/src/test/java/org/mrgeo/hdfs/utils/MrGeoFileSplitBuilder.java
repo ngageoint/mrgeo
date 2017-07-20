@@ -1,6 +1,7 @@
 package org.mrgeo.hdfs.utils;
 
 import org.mrgeo.hdfs.tile.FileSplit;
+import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,23 +15,23 @@ import static org.mockito.Mockito.when;
 public class MrGeoFileSplitBuilder
 {
 private FileSplit fileSplit;
-private List<FileSplit.FileSplitInfo> splits = new ArrayList<>();
+private List<FileSplitInfo> splits = new ArrayList<>();
 
 public MrGeoFileSplitBuilder()
 {
-  this.fileSplit = mock(FileSplit.class);
+  fileSplit = mock(FileSplit.class);
 }
 
-public MrGeoFileSplitBuilder split(FileSplit.FileSplitInfo split)
+public MrGeoFileSplitBuilder split(FileSplitInfo split)
 {
-  this.splits.add(split);
+  splits.add(split);
 
   return this;
 }
 
 public FileSplit build()
 {
-  FileSplit.FileSplitInfo[] splitsArray = new FileSplit.FileSplitInfo[splits.size()];
+  FileSplitInfo[] splitsArray = new FileSplitInfo[splits.size()];
   when(fileSplit.getSplits()).thenReturn(splits.toArray(splitsArray));
   return fileSplit;
 }

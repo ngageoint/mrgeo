@@ -19,7 +19,7 @@ import java.io.IOException;
 
 public interface VectorMetadataReader
 {
-public VectorMetadata read() throws IOException;
+VectorMetadata read() throws IOException;
 
-public VectorMetadata reload() throws IOException;
+VectorMetadata reload() throws IOException;
 }

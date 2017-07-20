@@ -2,6 +2,7 @@ package org.mrgeo.hdfs.utils;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.SequenceFile;
+import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.image.ImageInputFormatContext;
 
@@ -28,14 +29,14 @@ private final Configuration configuration;
 private int zoomLevel;
 private int tileSize;
 private String boundsString;
-private boolean compressOutput = false;
-private String outputCompressionType = null;
-private String outputCompressionCodec = null;
-private String outputFilePath = null;
+private boolean compressOutput;
+private String outputCompressionType;
+private String outputCompressionCodec;
+private String outputFilePath;
 
 public ConfigurationBuilder()
 {
-  this.configuration = mock(Configuration.class);
+  configuration = mock(Configuration.class);
 }
 
 public ConfigurationBuilder zoomLevel(int zoomLevel)
@@ -93,7 +94,7 @@ public Configuration build()
   when(configuration.getInt(TILE_SIZE, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT_INT)).thenReturn(tileSize);
   when(configuration.get(BOUNDS)).thenReturn(boundsString);
   when(configuration.getBoolean(FILE_OUTPT_FORMAT_COMPRESS, false)).thenReturn(compressOutput);
-  when(configuration.get(FILE_OUTPUT_COMPRESSION_TYPE, SequenceFile.CompressionType.RECORD.toString()))
+  when(configuration.get(FILE_OUTPUT_COMPRESSION_TYPE, CompressionType.RECORD.toString()))
       .thenReturn(outputCompressionType);
   when(configuration.get(FILE_OUTPUT_COMPRESSION_CODEC)).thenReturn(outputCompressionCodec);
   when(configuration.get(FILE_OUTPUT_PATH)).thenReturn(outputFilePath);

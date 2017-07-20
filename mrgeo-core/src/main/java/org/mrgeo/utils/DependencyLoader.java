@@ -42,6 +42,7 @@ import java.net.URL;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -52,9 +53,9 @@ public class DependencyLoader
 private static final Logger log = LoggerFactory.getLogger(DependencyLoader.class);
 private static final String CLASSPATH_FILES = "mapred.job.classpath.files";
 
-private static boolean printedMrGeoHomeWarning = false;
+private static boolean printedMrGeoHomeWarning;
 
-private static boolean printMissingDependencies = false;
+private static boolean printMissingDependencies;
 private static Set<String> missingDependencyList = new HashSet<>();
 
 public static boolean getPrintMissingDependencies()
@@ -85,11 +86,11 @@ public static void printMissingDependencies()
   }
 }
 
-public static Set<String> getDependencies(final Class<?> clazz) throws IOException
+public static Set<String> getDependencies(Class<?> clazz) throws IOException
 {
   Set<File> files = findDependencies(clazz);
 
-  Set<String> deps = new HashSet<String>();
+  Set<String> deps = new HashSet<>();
   for (File f : files)
   {
     deps.add(f.getCanonicalPath());
@@ -99,7 +100,7 @@ public static Set<String> getDependencies(final Class<?> clazz) throws IOExcepti
 }
 
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File used for addinj to HDFS classpath")
-public static Set<String> copyDependencies(final Set<String> localDependencies, Configuration conf) throws IOException
+public static Set<String> copyDependencies(Set<String> localDependencies, Configuration conf) throws IOException
 {
   if (conf == null)
   {
@@ -136,14 +137,14 @@ public static Set<String> copyDependencies(final Set<String> localDependencies, 
 
 }
 
-public static String[] getAndCopyDependencies(final String clazz, Configuration conf)
+public static String[] getAndCopyDependencies(String clazz, Configuration conf)
     throws IOException, ClassNotFoundException
 {
   Class cl = Class.forName(clazz);
   return getAndCopyDependencies(cl, conf);
 }
 
-public static String[] getAndCopyDependencies(final String[] clazzes, Configuration conf)
+public static String[] getAndCopyDependencies(String[] clazzes, Configuration conf)
     throws IOException, ClassNotFoundException
 {
   if (conf == null)
@@ -151,7 +152,7 @@ public static String[] getAndCopyDependencies(final String[] clazzes, Configurat
     conf = HadoopUtils.createConfiguration();
   }
 
-  String[] qualified = new String[]{};
+  String[] qualified = {};
   for (String clazz : clazzes)
   {
     qualified = ArrayUtils.addAll(qualified, getAndCopyDependencies(clazz, conf));
@@ -160,7 +161,7 @@ public static String[] getAndCopyDependencies(final String[] clazzes, Configurat
   return qualified;
 }
 
-public static String[] getAndCopyDependencies(final Class<?> clazz, Configuration conf) throws IOException
+public static String[] getAndCopyDependencies(Class<?> clazz, Configuration conf) throws IOException
 {
   // get the list of dependencies
   Set<String> rawDeps = getDependencies(clazz);
@@ -170,7 +171,7 @@ public static String[] getAndCopyDependencies(final Class<?> clazz, Configuratio
   return strings.toArray(new String[strings.size()]);
 }
 
-public static String getMasterJar(final Class<?> clazz) throws IOException
+public static String getMasterJar(Class<?> clazz) throws IOException
 {
   Set<Dependency> properties = loadDependenciesByReflection(clazz);
   if (properties != null)
@@ -180,13 +181,11 @@ public static String getMasterJar(final Class<?> clazz) throws IOException
     {
       if (d.master)
       {
-        Set<Dependency> master = new HashSet<Dependency>();
+        Set<Dependency> master = new HashSet<>();
         master.add(d);
 
-        for (File m : getJarsFromProperties(master, !developmentMode))
-        {
-          return m.getCanonicalPath();
-        }
+        File m  = getJarsFromProperties(master, !developmentMode).iterator().next();
+        return m.getCanonicalPath();
       }
     }
   }
@@ -194,11 +193,11 @@ public static String getMasterJar(final Class<?> clazz) throws IOException
   return null;
 }
 
-public static Set<String> getUnqualifiedDependencies(final Class<?> clazz) throws IOException
+public static Set<String> getUnqualifiedDependencies(Class<?> clazz) throws IOException
 {
   Set<File> files = findDependencies(clazz);
 
-  Set<String> deps = new HashSet<String>();
+  Set<String> deps = new HashSet<>();
   for (File f : files)
   {
     deps.add(f.getName());
@@ -207,7 +206,7 @@ public static Set<String> getUnqualifiedDependencies(final Class<?> clazz) throw
   return deps;
 }
 
-public static void addDependencies(final Job job, final Class<?> clazz) throws IOException
+public static void addDependencies(Job job, Class<?> clazz) throws IOException
 {
   if (HadoopUtils.isLocal(job.getConfiguration()))
   {
@@ -230,7 +229,7 @@ public static void addDependencies(final Job job, final Class<?> clazz) throws I
   }
 }
 
-public static void addDependencies(final Configuration conf, final Class<?> clazz) throws IOException
+public static void addDependencies(Configuration conf, Class<?> clazz) throws IOException
 {
   if (HadoopUtils.isLocal(conf))
   {
@@ -253,7 +252,7 @@ public static void addDependencies(final Configuration conf, final Class<?> claz
     {
       if (d.master)
       {
-        Set<Dependency> master = new HashSet<Dependency>();
+        Set<Dependency> master = new HashSet<>();
         master.add(d);
 
         for (File m : getJarsFromProperties(master, !developmentMode))
@@ -283,7 +282,7 @@ private static Set<File> findDependencies(Class<?> clazz) throws IOException
   else
   {
     // properties not found... all we can do is load from the classpath
-    files = new HashSet<File>();
+    files = new HashSet<>();
     String cpstr = System.getProperty("java.class.path");
     for (String env : cpstr.split(":"))
     {
@@ -296,7 +295,7 @@ private static Set<File> findDependencies(Class<?> clazz) throws IOException
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File comes from classpath")
 private static Set<File> findFilesInClasspath(String base) throws IOException
 {
-  Set<File> files = new HashSet<File>();
+  Set<File> files = new HashSet<>();
   File f = new File(base);
   if (f.exists())
   {
@@ -327,7 +326,7 @@ private static Set<String> getClasspath(Configuration conf)
 {
   String cp = conf.get(CLASSPATH_FILES, "");
   String[] entries = cp.split(System.getProperty("path.separator"));
-  Set<String> results = new HashSet<String>(entries.length);
+  Set<String> results = new HashSet<>(entries.length);
   if (entries.length > 0)
   {
     for (String entry : entries)
@@ -343,7 +342,7 @@ private static Set<File> getJarsFromProperties(Set<Dependency> dependencies,
     throws IOException
 {
   // now build a list of jars to search for
-  Set<String> jars = new HashSet<String>();
+  Set<String> jars = new HashSet<>();
 
   for (Dependency dep : dependencies)
   {
@@ -364,16 +363,16 @@ private static String makeJarFromDependency(Dependency dep)
 }
 
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File comes from classpath")
-private static Set<File> findJarsInClasspath(final Set<String> jars, boolean recurseDirectories) throws IOException
+private static Set<File> findJarsInClasspath(Set<String> jars, boolean recurseDirectories) throws IOException
 {
-  Set<File> paths = new HashSet<File>();
+  Set<File> paths = new HashSet<>();
 
   if (jars.size() == 0)
   {
     return paths;
   }
 
-  Set<String> filesLeft = new HashSet<String>(jars);
+  Set<String> filesLeft = new HashSet<>(jars);
 
 
   // add the system classpath, including the cwd
@@ -432,7 +431,7 @@ private static Set<File> findJarsInClasspath(final Set<String> jars, boolean rec
   // now perform any variable replacement in the classpath
   Map<String, String> envMap = System.getenv();
 
-  for (Map.Entry<String, String> entry : envMap.entrySet())
+  for (Entry<String, String> entry : envMap.entrySet())
   {
     String key = entry.getKey();
     String value = entry.getValue();
@@ -669,7 +668,7 @@ private static Set<Dependency> loadDependenciesByReflection(Class<?> clazz) thro
         .setUrls(ClasspathHelper.forPackage(ClassUtils.getPackageName(DependencyLoader.class)))
         .setScanners(new ResourcesScanner()));
 
-    final Set<String> resources = reflections.getResources(Pattern.compile(".*dependencies\\.properties"));
+    Set<String> resources = reflections.getResources(Pattern.compile(".*dependencies\\.properties"));
     for (String resource : resources)
     {
       log.debug("Loading dependency properties from: /" + resource);
@@ -711,7 +710,7 @@ private static Set<Dependency> loadDependenciesByReflection(Class<?> clazz) thro
 
 private static Set<Dependency> readDependencies(InputStream is) throws IOException
 {
-  Set<Dependency> deps = new HashSet<Dependency>();
+  Set<Dependency> deps = new HashSet<>();
 
   BufferedReader reader = new BufferedReader(new InputStreamReader(is));
 
@@ -772,7 +771,7 @@ private static Set<Dependency> readDependencies(InputStream is) throws IOExcepti
 }
 
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File used to create URI")
-private static Set<Dependency> loadDependenciesFromJar(final String jarname) throws IOException
+private static Set<Dependency> loadDependenciesFromJar(String jarname) throws IOException
 {
   try
   {
@@ -840,7 +839,7 @@ private static class Dependency
   public String type;
   public String scope;
   public String classifier;
-  public boolean master = false;
+  public boolean master;
 
   @Override
   public String toString()

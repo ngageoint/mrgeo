@@ -31,7 +31,7 @@ import org.mrgeo.hdfs.tile.FileSplit;
 public class MapFileFilter implements PathFilter
 {
 @Override
-public boolean accept(final Path path)
+public boolean accept(Path path)
 {
   String name = path.getName();
   return !(name.equals("index") ||

@@ -24,5 +24,5 @@ public interface ProtectionLevelValidator
  * @param protectionLevel
  * @return
  */
-public boolean validateProtectionLevel(String protectionLevel);
+boolean validateProtectionLevel(String protectionLevel);
 }

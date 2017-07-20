@@ -17,6 +17,8 @@ package org.mrgeo.colorscale;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.io.FilenameUtils;
+import org.mrgeo.colorscale.ColorScale.BadSourceException;
+import org.mrgeo.colorscale.ColorScale.ColorScaleException;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.DataProviderFactory.AccessMode;
@@ -28,8 +30,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.Set;
 import java.util.TreeMap;
 
 public class ColorScaleManager
@@ -44,14 +46,14 @@ static
   {
     initializeColorscales();
   }
-  catch (ColorScale.ColorScaleException e)
+  catch (ColorScaleException e)
   {
     log.error("Unable to initialize color scales", e);
     throw new RuntimeException("Error initializing ColorScaleManager", e);
   }
 }
 
-public static ColorScale fromJSON(final String colorScaleJSON) throws ColorScale.ColorScaleException
+public static ColorScale fromJSON(String colorScaleJSON) throws ColorScaleException
 {
   ColorScale cs = null;
   if (colorScaleJSON != null)
@@ -62,7 +64,7 @@ public static ColorScale fromJSON(final String colorScaleJSON) throws ColorScale
   return cs;
 }
 
-public static ColorScale fromName(final String colorScaleName) throws ColorScale.ColorScaleException
+public static ColorScale fromName(String colorScaleName) throws ColorScaleException
 {
   if (colorscales.containsKey(colorScaleName)) {
     return (ColorScale) colorscales.get(colorScaleName).clone();
@@ -75,7 +77,7 @@ public static ColorScale[] getColorScaleList() throws IOException
   // for convenience and testing, we'll sort the list...
   ColorScale[] list = new ColorScale[colorscales.size()];
   int cnt = 0;
-  for (Map.Entry<String, ColorScale> entry: colorscales.entrySet())
+  for (Entry<String, ColorScale> entry: colorscales.entrySet())
   {
     list[cnt++] = entry.getValue();
   }
@@ -85,7 +87,7 @@ public static ColorScale[] getColorScaleList() throws IOException
 }
 
 @SuppressFBWarnings(value = "WEAK_FILENAMEUTILS", justification = "Using Java 1.7+, weak filenames are fixed")
-private static synchronized void initializeColorscales() throws ColorScale.ColorScaleException
+private static synchronized void initializeColorscales() throws ColorScaleException
 {
   if (colorscales == null)
   {
@@ -93,7 +95,7 @@ private static synchronized void initializeColorscales() throws ColorScale.Color
 
     Properties props = MrGeoProperties.getInstance();
 
-    final String colorScaleBase = HadoopUtils.getDefaultColorScalesBaseDirectory(props);
+    String colorScaleBase = HadoopUtils.getDefaultColorScalesBaseDirectory(props);
     if (colorScaleBase != null)
     {
       try
@@ -120,12 +122,12 @@ private static synchronized void initializeColorscales() throws ColorScale.Color
       }
       catch (IOException e)
       {
-        throw new ColorScale.BadSourceException(e);
+        throw new BadSourceException(e);
       }
     }
     else
     {
-      throw new ColorScale.ColorScaleException("No color scale base directory configured");
+      throw new ColorScaleException("No color scale base directory configured");
     }
 
     if (log.isInfoEnabled())
@@ -139,7 +141,7 @@ private static synchronized void initializeColorscales() throws ColorScale.Color
   }
 }
 
-protected static void resetColorscales() throws ColorScale.ColorScaleException
+protected static void resetColorscales() throws ColorScaleException
 {
   colorscales = null;
   initializeColorscales();

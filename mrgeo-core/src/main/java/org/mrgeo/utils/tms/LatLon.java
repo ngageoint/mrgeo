@@ -22,7 +22,7 @@ final public double lat;
 final public double lon;
 
 
-public LatLon(final double lat, final double lon)
+public LatLon(double lat, double lon)
 {
   this.lat = lat;
   this.lon = lon;

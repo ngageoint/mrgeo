@@ -22,8 +22,8 @@ import java.text.NumberFormat;
 
 public final class Convert
 {
-private static DecimalFormat ndf = null;
-private static DecimalFormat pdf = null;
+private static DecimalFormat ndf;
+private static DecimalFormat pdf;
 
 static
 {

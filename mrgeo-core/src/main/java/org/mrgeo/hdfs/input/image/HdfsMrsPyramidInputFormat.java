@@ -27,6 +27,7 @@ import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.image.HdfsMrsImageDataProvider;
 import org.mrgeo.hdfs.input.MapFileFilter;
+import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.mapreduce.splitters.TiledInputSplit;
@@ -56,13 +57,13 @@ public HdfsMrsPyramidInputFormat()
 {
 }
 
-public HdfsMrsPyramidInputFormat(final String input)
+public HdfsMrsPyramidInputFormat(String input)
 {
   this.input = input;
 }
 
-public static String getZoomName(final HdfsMrsImageDataProvider dp,
-    final int zoomLevel)
+public static String getZoomName(HdfsMrsImageDataProvider dp,
+    int zoomLevel)
 {
   try
   {
@@ -81,7 +82,7 @@ public static String getZoomName(final HdfsMrsImageDataProvider dp,
   return null;
 }
 
-public static void setInputInfo(final Job job, final String inputWithZoom) throws IOException
+public static void setInputInfo(Job job, String inputWithZoom) throws IOException
 {
 //    job.setInputFormatClass(HdfsMrsPyramidInputFormat.class);
 
@@ -93,8 +94,8 @@ public static void setInputInfo(final Job job, final String inputWithZoom) throw
 }
 
 @Override
-public RecordReader<TileIdWritable, RasterWritable> createRecordReader(final InputSplit split,
-    final TaskAttemptContext context)
+public RecordReader<TileIdWritable, RasterWritable> createRecordReader(InputSplit split,
+    TaskAttemptContext context)
     throws IOException
 {
   return new HdfsMrsPyramidRecordReader();
@@ -113,8 +114,8 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
   // partition info, then we break the partition into blocks, which become the
   // actual splits used.
   ImageInputFormatContext ifContext = ImageInputFormatContext.load(conf);
-  final int zoom = ifContext.getZoomLevel();
-  final int tilesize = ifContext.getTileSize();
+  int zoom = ifContext.getZoomLevel();
+  int tilesize = ifContext.getTileSize();
 
   HdfsMrsImageDataProvider dp = createHdfsMrsImageDataProvider(context.getConfiguration());
   Path inputWithZoom = new Path(dp.getResourcePath(true), "" + zoom);
@@ -129,28 +130,28 @@ public List<InputSplit> getSplits(JobContext context) throws IOException
   org.mrgeo.hdfs.tile.FileSplit fsplit = createFileSplit();
   fsplit.readSplits(inputWithZoom);
 
-  org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo[] splits =
-      (org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo[]) fsplit.getSplits();
+  FileSplitInfo[] splits =
+      (FileSplitInfo[]) fsplit.getSplits();
 
   List<InputSplit> result = new ArrayList<>(splits.length);
 
-  final Bounds requestedBounds = ifContext.getBounds();
-  for (org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo split : splits)
+  Bounds requestedBounds = ifContext.getBounds();
+  for (FileSplitInfo split : splits)
   {
-    final Path part = new Path(inputWithZoom, split.getName());
-    final Path dataFile = new Path(part, MapFile.DATA_FILE_NAME);
+    Path part = new Path(inputWithZoom, split.getName());
+    Path dataFile = new Path(part, MapFile.DATA_FILE_NAME);
 
-    final long endTileId = split.getEndId();
-    final long startTileId = split.getStartId();
+    long endTileId = split.getEndId();
+    long startTileId = split.getStartId();
 
     if (requestedBounds != null)
     {
       // Do not include splits that can't possibly intersect the requested bounds. This
       // is an HDFS-specific efficiency to avoid needlessly processing splits.
-      final Tile startTile = TMSUtils.tileid(startTileId, zoom);
-      final Bounds startTileBounds = TMSUtils.tileBounds(startTile, zoom, tilesize);
-      final Tile endTile = TMSUtils.tileid(endTileId, zoom);
-      final Bounds endTileBounds = TMSUtils.tileBounds(endTile, zoom, tilesize);
+      Tile startTile = TMSUtils.tileid(startTileId, zoom);
+      Bounds startTileBounds = TMSUtils.tileBounds(startTile, zoom, tilesize);
+      Tile endTile = TMSUtils.tileid(endTileId, zoom);
+      Bounds endTileBounds = TMSUtils.tileBounds(endTile, zoom, tilesize);
 
       if (startTileBounds.s > requestedBounds.n || endTileBounds.n < requestedBounds.s)
       {

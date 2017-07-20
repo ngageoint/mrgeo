@@ -48,19 +48,19 @@ public ImageStats()
 {
 }
 
-public ImageStats(final double min, final double max)
+public ImageStats(double min, double max)
 {
   this.min = min;
   this.max = max;
 }
 
-public ImageStats(final double min, final double max, final double sum, final long count)
+public ImageStats(double min, double max, double sum, long count)
 {
   this.min = min;
   this.max = max;
   this.sum = sum;
   this.count = count;
-  this.mean = sum / count;
+  mean = sum / count;
 }
 
 /**
@@ -69,7 +69,7 @@ public ImageStats(final double min, final double max, final double sum, final lo
  * @param listOfStats the stats arrays to aggregate
  * @return an array of ImageStats objects
  */
-static public ImageStats[] aggregateStats(final List<ImageStats[]> listOfStats)
+static public ImageStats[] aggregateStats(List<ImageStats[]> listOfStats)
 {
   ImageStats[] stats;
   if (listOfStats.isEmpty())
@@ -79,9 +79,9 @@ static public ImageStats[] aggregateStats(final List<ImageStats[]> listOfStats)
   else
   {
     // aggregate stats from each mapper or reducer
-    final int bands = listOfStats.get(0).length;
+    int bands = listOfStats.get(0).length;
     stats = initializeStatsArray(bands);
-    for (final ImageStats[] s : listOfStats)
+    for (ImageStats[] s : listOfStats)
     {
       for (int i = 0; i < s.length; i++)
       {
@@ -108,8 +108,8 @@ static public ImageStats[] aggregateStats(final List<ImageStats[]> listOfStats)
  * @param raster the raster to compute stats for
  * @param nodata the value to ignore
  */
-static public void computeAndUpdateStats(final ImageStats[] tileStats, final MrGeoRaster raster,
-    final double[] nodata)
+static public void computeAndUpdateStats(ImageStats[] tileStats, MrGeoRaster raster,
+    double[] nodata)
 {
   double sample;
   for (int y = 0; y < raster.height(); y++)
@@ -143,10 +143,10 @@ static public void computeAndUpdateStats(final ImageStats[] tileStats, final MrG
  * @param nodata the value to ignore
  * @return an array of ImageStats objects
  */
-static public ImageStats[] computeStats(final MrGeoRaster raster, final double[] nodata)
+static public ImageStats[] computeStats(MrGeoRaster raster, double[] nodata)
     throws RasterWritableException
 {
-  final ImageStats[] tileStats = initializeStatsArray(raster.bands());
+  ImageStats[] tileStats = initializeStatsArray(raster.bands());
   computeAndUpdateStats(tileStats, raster, nodata);
   return tileStats;
 }
@@ -158,9 +158,9 @@ static public ImageStats[] computeStats(final MrGeoRaster raster, final double[]
  * @param bands the number of bands in the image
  * @return an array of ImageStats objects
  */
-static public ImageStats[] initializeStatsArray(final int bands)
+static public ImageStats[] initializeStatsArray(int bands)
 {
-  final ImageStats[] stats = new ImageStats[bands];
+  ImageStats[] stats = new ImageStats[bands];
   for (int i = 0; i < bands; i++)
   {
     stats[i] = new ImageStats(Double.MAX_VALUE, -Double.MAX_VALUE);
@@ -173,7 +173,7 @@ static public ImageStats[] initializeStatsArray(final int bands)
 
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled
-static public void writeStats(final AdHocDataProvider provider, final ImageStats[] stats)
+static public void writeStats(AdHocDataProvider provider, ImageStats[] stats)
     throws IOException
 {
   OutputStream stream = null;
@@ -182,12 +182,12 @@ static public void writeStats(final AdHocDataProvider provider, final ImageStats
   {
     stream = provider.add();
 
-    final ObjectMapper mapper = new ObjectMapper();
+    ObjectMapper mapper = new ObjectMapper();
     try
     {
       mapper.writerWithDefaultPrettyPrinter().writeValue(stream, stats);
     }
-    catch (final NoSuchMethodError e)
+    catch (NoSuchMethodError e)
     {
       // if we don't have the pretty printer, just write the json
       mapper.writeValue(stream, stats);
@@ -207,13 +207,13 @@ static public void writeStats(final AdHocDataProvider provider, final ImageStats
 @SuppressFBWarnings(value = "CN_IDIOM_NO_SUPER_CALL", justification = "No super.clone() to call")
 public Object clone()
 {
-  final ImageStats s = new ImageStats(min, max, sum, count);
+  ImageStats s = new ImageStats(min, max, sum, count);
   s.mean = sum / count;
   return s;
 }
 
 @Override
-public boolean equals(final Object obj)
+public boolean equals(Object obj)
 {
   if (obj == null)
   {
@@ -228,7 +228,7 @@ public boolean equals(final Object obj)
     return false;
   }
 
-  final ImageStats rhs = (ImageStats) obj;
+  ImageStats rhs = (ImageStats) obj;
   return new EqualsBuilder()
       .
       // if deriving: appendSuper(super.equals(obj)).

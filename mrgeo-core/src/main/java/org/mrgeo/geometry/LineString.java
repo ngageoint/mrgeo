@@ -23,12 +23,12 @@ import java.util.Collection;
 public interface LineString extends Geometry
 {
 
-public int getNumPoints();
+int getNumPoints();
 
-public Point getPoint(int i);
+Point getPoint(int i);
 
-public Collection<Point> getPoints();
+Collection<Point> getPoints();
 
 @Override
-public com.vividsolutions.jts.geom.LineString toJTS();
+com.vividsolutions.jts.geom.LineString toJTS();
 }

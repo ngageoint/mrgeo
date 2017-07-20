@@ -153,7 +153,7 @@ public void debug()
 {
   if (extent != null)
   {
-    System.out.println("Extent: " + extent.toString());
+    System.out.println("Extent: " + extent);
   }
   System.out.println(toString());
   String extra = "";
@@ -176,7 +176,7 @@ public void debug()
       {
         extra = " < 0.0|0.0";
       }
-      System.out.println("  PointZ[" + i + "]: " + point[i].toString() + "," + zarr[i] + ","
+      System.out.println("  PointZ[" + i + "]: " + point[i] + "," + zarr[i] + ","
           + marr[i] + " " + extra);
       prev = point[i];
     }
@@ -348,27 +348,27 @@ public void updateExtent()
       Double.MIN_VALUE);
   double ax = 0;
   double ay = 0;
-  for (int i = 0; i < point.length; i++)
+  for (Coord coord : point)
   {
-    if (point[i].x < temp.min.x)
+    if (coord.x < temp.min.x)
     {
-      temp.min.x = point[i].x;
+      temp.min.x = coord.x;
     }
-    if (point[i].x > temp.max.x)
+    if (coord.x > temp.max.x)
     {
-      temp.max.x = point[i].x;
+      temp.max.x = coord.x;
     }
-    if (point[i].y < temp.min.y)
+    if (coord.y < temp.min.y)
     {
-      temp.min.y = point[i].y;
+      temp.min.y = coord.y;
     }
-    if (point[i].y > temp.max.y)
+    if (coord.y > temp.max.y)
     {
-      temp.max.y = point[i].y;
+      temp.max.y = coord.y;
     }
     // centroid
-    ax += point[i].x;
-    ay += point[i].y;
+    ax += coord.x;
+    ay += coord.y;
   }
   // calc centroid
   if (centroid == null)

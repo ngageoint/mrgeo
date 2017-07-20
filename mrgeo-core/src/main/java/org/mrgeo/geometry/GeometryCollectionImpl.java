@@ -16,6 +16,7 @@
 package org.mrgeo.geometry;
 
 import com.vividsolutions.jts.geom.GeometryFactory;
+import org.mrgeo.geometry.Geometry.Type;
 import org.mrgeo.utils.tms.Bounds;
 
 import java.io.*;
@@ -29,9 +30,9 @@ public class GeometryCollectionImpl extends GeometryImpl implements WritableGeom
 {
 private static final long serialVersionUID = 1L;
 
-List<WritableGeometry> geometries = new ArrayList<WritableGeometry>();
+List<WritableGeometry> geometries = new ArrayList<>();
 
-List<String> roles = new ArrayList<String>();
+List<String> roles = new ArrayList<>();
 
 GeometryCollectionImpl()
 {
@@ -89,7 +90,7 @@ public boolean isValid()
   boolean result = geometries.size() > 0;
   for (WritableGeometry g : geometries)
   {
-    if (g.isValid() == false)
+    if (!g.isValid())
     {
       result = false;
     }
@@ -123,10 +124,10 @@ public void read(DataInputStream stream) throws IOException
   int size = stream.readInt();
   geometries = new ArrayList<>(size);
 
-  Geometry.Type[] types = Geometry.Type.values();
+  Type[] types = Type.values();
   for (int i = 0; i < size; i++)
   {
-    Geometry.Type type = types[stream.readInt()];
+    Type type = types[stream.readInt()];
 
     WritableGeometry geometry = null;
     switch (type)
@@ -164,23 +165,23 @@ public void write(DataOutputStream stream) throws IOException
   {
     if (geometry instanceof Point)
     {
-      stream.writeInt(Geometry.Type.POINT.ordinal());
+      stream.writeInt(Type.POINT.ordinal());
     }
     else if (geometry instanceof LineString)
     {
-      stream.writeInt(Geometry.Type.LINESTRING.ordinal());
+      stream.writeInt(Type.LINESTRING.ordinal());
     }
     else if (geometry instanceof LinearRing)
     {
-      stream.writeInt(Geometry.Type.LINEARRING.ordinal());
+      stream.writeInt(Type.LINEARRING.ordinal());
     }
     else if (geometry instanceof Polygon)
     {
-      stream.writeInt(Geometry.Type.POLYGON.ordinal());
+      stream.writeInt(Type.POLYGON.ordinal());
     }
     else if (geometry instanceof GeometryCollection)
     {
-      stream.writeInt(Geometry.Type.COLLECTION.ordinal());
+      stream.writeInt(Type.COLLECTION.ordinal());
     }
     else
     {
@@ -193,7 +194,7 @@ public void write(DataOutputStream stream) throws IOException
 @Override
 public Type type()
 {
-  return Geometry.Type.COLLECTION;
+  return Type.COLLECTION;
 }
 
 @Override

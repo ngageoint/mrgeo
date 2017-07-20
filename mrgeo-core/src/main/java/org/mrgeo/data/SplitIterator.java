@@ -28,7 +28,7 @@ private SplitVisitor visitor;
 public SplitIterator(List<TiledInputSplit> splits, SplitVisitor visitor)
 {
   this.splits = splits;
-  this.splitIndex = 0;
+  splitIndex = 0;
   this.visitor = visitor;
 }
 

@@ -25,6 +25,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.SequenceFile;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsPyramidMetadataReader;
@@ -135,35 +136,35 @@ public class S3Utils
     @Override
     public void readLock() throws IOException {
       log.debug("Lock readLock lock from thread " + Thread.currentThread().getId() +
-              " on cacheEntry " + this.toString());
+              " on cacheEntry " + toString());
       rwLock.readLock().lock();
     }
 
     @Override
     public void writeLock() throws IOException {
       log.debug("Lock writeLock lock from thread " + Thread.currentThread().getId() +
-              " on cacheEntry " + this.toString());
+              " on cacheEntry " + toString());
       rwLock.writeLock().lock();
     }
 
     @Override
     public boolean tryWriteLock() throws IOException {
       log.debug("Lock writeLock lock from thread " + Thread.currentThread().getId() +
-              " on cacheEntry " + this.toString());
+              " on cacheEntry " + toString());
       return rwLock.writeLock().tryLock();
     }
 
     @Override
     public void releaseReadLock() {
       log.debug("Lock readLock unlock from thread " + Thread.currentThread().getId() +
-              " on cacheEntry " + this.toString());
+              " on cacheEntry " + toString());
       rwLock.readLock().unlock();
     }
 
     @Override
     public void releaseWriteLock() throws IOException {
       log.debug("Lock writeLock unlock from thread " + Thread.currentThread().getId() +
-              " on cacheEntry " + this.toString());
+              " on cacheEntry " + toString());
       rwLock.writeLock().unlock();
       // The lock is memory-based, but we want to make sure to close the file output stream
       // when we release the lock so we don't retain open files.
@@ -187,7 +188,7 @@ public class S3Utils
 
     S3FileCacheEntry(Path localPath, File localFile) {
       this.localPath = localPath;
-      this.primaryFile = localFile;
+      primaryFile = localFile;
     }
 
     S3FileCacheEntry(Path localPath, File primaryFile, File secondaryFile) {
@@ -210,7 +211,7 @@ public class S3Utils
       // Some operating systems do not support shared locks, so report that here. But
       // keep the lock active - the system will just run slower.
       if (!readFileLock.isShared()) {
-        log.warn("Unable to create a shared lock on " + getLocalPath().toString());
+        log.warn("Unable to create a shared lock on " + getLocalPath());
       }
     }
 
@@ -427,8 +428,8 @@ public class S3Utils
   private static class CacheCleanupOnElementRemoval implements RemovalListener<String, S3CacheEntry> {
     @Override
     public void onRemoval(RemovalNotification<String, S3CacheEntry> notification) {
-      log.debug("S3 cache removal key: " + notification.getKey() + " with cause " + notification.getCause().toString() + " from thread " + Thread.currentThread().getId());
-      log.debug("S3 cache removal value: " + notification.getValue().toString() + " from thread " + Thread.currentThread().getId());
+      log.debug("S3 cache removal key: " + notification.getKey() + " with cause " + notification.getCause() + " from thread " + Thread.currentThread().getId());
+      log.debug("S3 cache removal value: " + notification.getValue() + " from thread " + Thread.currentThread().getId());
       try {
         notification.getValue().cleanup();
       } catch (IOException e) {
@@ -471,18 +472,18 @@ public class S3Utils
     }
 
     @Override
-    public S3CacheEntry getEntry(final String key, final Path localPath, final File primaryFile,
-                                 final File secondaryFile) {
+    public S3CacheEntry getEntry(String key, Path localPath, File primaryFile,
+                                 File secondaryFile) {
       return s3FileCache.getIfPresent(key);
     }
 
     @Override
-    public void addEntry(final String key, final S3CacheEntry entry) {
+    public void addEntry(String key, S3CacheEntry entry) {
       s3FileCache.put(key, entry);
     }
 
     @Override
-    public S3CacheEntry createEntry(final Path localPath, final File primaryFile) {
+    public S3CacheEntry createEntry(Path localPath, File primaryFile) {
       return new S3MemoryCacheEntry(localPath, primaryFile);
     }
 
@@ -660,7 +661,7 @@ public class S3Utils
     File useCacheDir = getCacheDir();
     java.nio.file.Path startPath = Paths.get(useCacheDir.getAbsolutePath());
     // Scan all entries and sort by last access time.
-    List<MrGeoImageEntry> imageList = new ArrayList<MrGeoImageEntry>(500);
+    List<MrGeoImageEntry> imageList = new ArrayList<>(500);
     MrGeoImageCollection images = new MrGeoImageCollection(imageList);
     Files.walkFileTree(startPath, new MrGeoImageCacheFileVisitor(images));
     // Sort in ascending order by lastAccess then descending order by size.
@@ -687,13 +688,13 @@ public class S3Utils
       }
       if (totalSize > 0) {
         long newSize = totalSize;
-        final java.util.Calendar c = GregorianCalendar.getInstance();
+        java.util.Calendar c = GregorianCalendar.getInstance();
         if (age > 0) {
           c.add(ageField, -age);
         }
         Iterator<MrGeoImageEntry> iter = imageList.iterator();
         long deleteCount = 0L;
-        Map<String, Integer> tileSizes = new HashMap<String, Integer>();
+        Map<String, Integer> tileSizes = new HashMap<>();
         while (iter.hasNext()) {
           MrGeoImageEntry entry = iter.next();
           boolean deleteFile = false;
@@ -707,7 +708,7 @@ public class S3Utils
                 zoomLevel = Integer.parseInt(zoomName.toString());
               }
               catch(NumberFormatException nfe) {
-                log.error("Unable to parse zoom level from " + zoomName.toString());
+                log.error("Unable to parse zoom level from " + zoomName);
               }
             }
           }
@@ -738,7 +739,7 @@ public class S3Utils
             else if (bbox != null) {
               // Have to read the tiles from the partition and see if any of them
               // intersect the specified bbox.
-              Path indexPath = new Path("file://" + entry.imagePath.toString(), "index");
+              Path indexPath = new Path("file://" + entry.imagePath, "index");
               int tilesize = defaultTileSize;
               try {
                 // Get the image name
@@ -753,7 +754,7 @@ public class S3Utils
                   else {
                     MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(
                             "s3://" + strRelativeImagePath,
-                            DataProviderFactory.AccessMode.READ, providerProperties);
+                            AccessMode.READ, providerProperties);
                     MrsPyramidMetadataReader metadataReader = dp.getMetadataReader();
                     if (metadataReader != null) {
                       MrsPyramidMetadata metadata = metadataReader.read();
@@ -771,25 +772,23 @@ public class S3Utils
                   deleteFile = bbox.intersects(tb);
                   hasKey = indexReader.next(key);
                 }
-              } catch (IllegalAccessException e) {
-                log.error("Unable to check the bounds of " + indexPath.toString(), e);
-              } catch (InstantiationException e) {
-                log.error("Unable to check the bounds of " + indexPath.toString(), e);
+              } catch (IllegalAccessException | InstantiationException e) {
+                log.error("Unable to check the bounds of " + indexPath, e);
               }
             }
 
             if (deleteFile) {
               deleteCount++;
               if (dryrun) {
-                System.out.println("Would delete S3 cached file at " + entry.imagePath.toString());
+                System.out.println("Would delete S3 cached file at " + entry.imagePath);
               } else {
                 org.mrgeo.utils.FileUtils.deleteDir(entry.imagePath.toFile(), true);
-                System.out.println("Deleted S3 cached file at " + entry.imagePath.toString());
+                System.out.println("Deleted S3 cached file at " + entry.imagePath);
               }
             }
           }
           catch(IOException e) {
-            log.warn("Unable to clean cached S3 image at " + entry.imagePath.toString(), e);
+            log.warn("Unable to clean cached S3 image at " + entry.imagePath, e);
           }
         }
         System.out.println(((dryrun) ? "Would have deleted " : "Deleted ") + deleteCount + " cache entries");

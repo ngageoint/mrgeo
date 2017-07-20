@@ -19,8 +19,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.aggregators.MeanAggregator;
 import org.mrgeo.buildpyramid.BuildPyramid;
 import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.ProtectionLevelUtils;
+import org.mrgeo.data.ProtectionLevelUtils.ProtectionLevelException;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.job.JobResults;
@@ -39,8 +41,8 @@ private String protectionLevel;
 private ProviderProperties providerProperties;
 
 public MapAlgebraJob(String expression, String output,
-    final String protectionLevel,
-    final ProviderProperties providerProperties)
+    String protectionLevel,
+    ProviderProperties providerProperties)
 {
   this.expression = expression;
   this.output = output;
@@ -51,7 +53,7 @@ public MapAlgebraJob(String expression, String output,
 @Override
 public void setJobResults(JobResults jr)
 {
-  this.jobResults = jr;
+  jobResults = jr;
 }
 
 @Override
@@ -65,7 +67,7 @@ public void run()
     {
       MrsImageDataProvider dp =
           DataProviderFactory
-              .getMrsImageDataProvider(output, DataProviderFactory.AccessMode.OVERWRITE, providerProperties);
+              .getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerProperties);
       String useProtectionLevel = ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel);
       Configuration conf = HadoopUtils.createConfiguration();
       if (org.mrgeo.mapalgebra.MapAlgebra.mapalgebra(expression, output, conf,
@@ -76,7 +78,7 @@ public void run()
       }
     }
   }
-  catch (DataProviderNotFound | ProtectionLevelUtils.ProtectionLevelException e)
+  catch (DataProviderNotFound | ProtectionLevelException e)
   {
     _log.error("Exception occurred while processing mapalgebra job {}", e);
     jobResults.failed(e.getMessage());

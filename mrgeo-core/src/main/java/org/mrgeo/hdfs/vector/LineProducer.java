@@ -27,5 +27,5 @@ public interface LineProducer extends Closeable
  * @return next available line or null when there are no more
  * @throws IOException
  */
-public String nextLine() throws IOException;
+String nextLine() throws IOException;
 }

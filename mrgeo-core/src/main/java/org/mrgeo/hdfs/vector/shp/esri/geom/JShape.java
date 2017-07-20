@@ -107,11 +107,11 @@ public void addData(List v, boolean clear)
       data.clear();
     }
   }
-  for (int i = 0; i < v.size(); i++)
+  for (Object o : v)
   {
     try
     {
-      addData((Serializable) v.get(i));
+      addData((Serializable) o);
     }
     catch (Exception e)
     {
@@ -151,7 +151,7 @@ public void debug()
 {
   if (extent != null)
   {
-    System.out.println("Extent: " + extent.toString());
+    System.out.println("Extent: " + extent);
   }
 }
 
@@ -213,11 +213,7 @@ public boolean intersects(JExtent other)
 
 public boolean isSelected()
 {
-  if (status == SELECTED)
-  {
-    return true;
-  }
-  return false;
+  return status == SELECTED;
 }
 
 public void setSelected(boolean flag)

@@ -22,7 +22,7 @@ public class WktGeometryUtils
 {
 private static WKTReader wktReader = new WKTReader();
 
-static public String wktGeometryFixer(final String wktGeometry)
+static public String wktGeometryFixer(String wktGeometry)
 {
   String geometryStr = wktGeometry;
   String regex = "\\(|\\[|\\]|\\)";
@@ -79,13 +79,13 @@ static public String wktGeometryFixer(final String wktGeometry)
   }
   if (!geometryType.isEmpty() && fixedGeometry.length() != 0)
   {
-    return geometryType + "(" + fixedGeometry.toString() + ")";
+    return geometryType + "(" + fixedGeometry + ")";
   }
   return geometryStr;
 }
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled
-static public boolean isValidWktGeometry(final String wktGeometry)
+static public boolean isValidWktGeometry(String wktGeometry)
 {
   String fixedWktGeometry = wktGeometryFixer(wktGeometry);
   if (fixedWktGeometry.toUpperCase().contains("POINT") || fixedWktGeometry.toUpperCase().contains("LINESTRING")

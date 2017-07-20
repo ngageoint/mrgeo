@@ -22,7 +22,7 @@ public class Tile implements Comparable<Tile>
 final public long tx;
 final public long ty;
 
-public Tile(final long tx, final long ty)
+public Tile(long tx, long ty)
 {
   this.tx = tx;
   this.ty = ty;
@@ -39,13 +39,13 @@ public long getTy()
 }
 
 @Override
-public int compareTo(final Tile tile)
+public int compareTo(Tile tile)
 {
-  if (this.ty == tile.ty && this.tx == tile.tx)
+  if (ty == tile.ty && tx == tile.tx)
   {
     return 0;
   }
-  else if (this.ty < tile.ty || (this.ty == tile.ty && this.tx < tile.tx))
+  else if (ty < tile.ty || (ty == tile.ty && tx < tile.tx))
   {
     return -1;
   }
@@ -56,13 +56,13 @@ public int compareTo(final Tile tile)
 public boolean equals(Object obj)
 {
   return obj instanceof Tile &&
-      this.ty == ((Tile) obj).ty && this.tx == ((Tile) obj).tx;
+      ty == ((Tile) obj).ty && tx == ((Tile) obj).tx;
 }
 
 @Override
 public int hashCode()
 {
-  final int prime = 31;
+  int prime = 31;
   int result = 1;
   long temp;
   temp = tx;

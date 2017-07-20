@@ -22,6 +22,7 @@ import org.gdal.gdalconst.gdalconstConstants;
 import org.mrgeo.aggregators.Aggregator;
 import org.mrgeo.data.raster.Interpolator.Bilinear;
 import org.mrgeo.data.raster.Interpolator.Nearest;
+import org.mrgeo.data.raster.RasterWritable.RasterWritableException;
 import org.mrgeo.utils.ByteArrayUtils;
 import org.mrgeo.utils.FloatUtils;
 import org.mrgeo.utils.GDALUtils;
@@ -66,7 +67,7 @@ MrGeoRaster(int width, int height, int bands, int datatype, byte[] data, int dat
   this.data = data;
   this.dataoffset = dataoffset;
 
-  this.bandoffset = width * height;
+  bandoffset = width * height;
 }
 
 public static MrGeoRaster createEmptyRaster(int width, int height, int bands, int datatype) throws MrGeoRasterException
@@ -74,31 +75,19 @@ public static MrGeoRaster createEmptyRaster(int width, int height, int bands, in
   switch (datatype)
   {
   case DataBuffer.TYPE_BYTE:
-  {
     return MrGeoByteRaster.createEmptyRaster(width, height, bands);
-  }
   case DataBuffer.TYPE_FLOAT:
-  {
     return MrGeoFloatRaster.createEmptyRaster(width, height, bands);
-  }
   case DataBuffer.TYPE_DOUBLE:
-  {
     return MrGeoDoubleRaster.createEmptyRaster(width, height, bands);
-  }
   case DataBuffer.TYPE_INT:
-  {
     return MrGeoIntRaster.createEmptyRaster(width, height, bands);
-  }
   case DataBuffer.TYPE_SHORT:
-  {
     return MrGeoShortRaster.createEmptyRaster(width, height, bands);
-  }
   case DataBuffer.TYPE_USHORT:
-  {
     return MrGeoUShortRaster.createEmptyRaster(width, height, bands);
-  }
   default:
-    throw new RasterWritable.RasterWritableException("Error trying to read raster.  Bad raster data type");
+    throw new RasterWritableException("Error trying to read raster.  Bad raster data type");
   }
 }
 
@@ -123,35 +112,25 @@ public static MrGeoRaster createRaster(int width, int height, int bands, int dat
   switch (datatype)
   {
   case DataBuffer.TYPE_BYTE:
-  {
     return new MrGeoByteRaster(width, height, bands, data, dataOffset);
-  }
   case DataBuffer.TYPE_FLOAT:
-  {
     return new MrGeoFloatRaster(width, height, bands, data, dataOffset);
-  }
   case DataBuffer.TYPE_DOUBLE:
-  {
     return new MrGeoDoubleRaster(width, height, bands, data, dataOffset);
-  }
   case DataBuffer.TYPE_INT:
-  {
     return new MrGeoIntRaster(width, height, bands, data, dataOffset);
-  }
   case DataBuffer.TYPE_SHORT:
   case DataBuffer.TYPE_USHORT:
-  {
     return new MrGeoShortRaster(width, height, bands, data, dataOffset);
-  }
   default:
-    throw new RasterWritable.RasterWritableException("Error trying to read raster.  Bad raster data type");
+    throw new RasterWritableException("Error trying to read raster.  Bad raster data type");
   }
 }
 
 public static MrGeoRaster fromRaster(Raster raster) throws IOException
 {
-  MrGeoRaster mrgeo = MrGeoRaster
-      .createEmptyRaster(raster.getWidth(), raster.getHeight(), raster.getNumBands(), raster.getTransferType());
+  MrGeoRaster mrgeo =
+      createEmptyRaster(raster.getWidth(), raster.getHeight(), raster.getNumBands(), raster.getTransferType());
 
   for (int b = 0; b < raster.getNumBands(); b++)
   {
@@ -178,7 +157,7 @@ public static MrGeoRaster fromRaster(Raster raster) throws IOException
           mrgeo.setPixel(x, y, b, raster.getSampleDouble(x, y, b));
           break;
         default:
-          throw new RasterWritable.RasterWritableException("Error trying to read raster.  Bad raster data type");
+          throw new RasterWritableException("Error trying to read raster.  Bad raster data type");
         }
       }
     }
@@ -192,15 +171,15 @@ public static MrGeoRaster fromDataset(Dataset dataset) throws MrGeoRasterExcepti
   return fromDataset(dataset, 0, 0, dataset.GetRasterXSize(), dataset.GetRasterYSize());
 }
 
-public static MrGeoRaster fromDataset(final Dataset dataset, final int x, final int y, final int width,
-    final int height)
+public static MrGeoRaster fromDataset(Dataset dataset, int x, int y, int width,
+    int height)
     throws MrGeoRasterException
 {
   int gdaltype = dataset.GetRasterBand(1).getDataType();
   int bands = dataset.GetRasterCount();
   int datasize = gdal.GetDataTypeSize(gdaltype) / 8;
 
-  MrGeoRaster raster = MrGeoRaster.createEmptyRaster(width, height, bands, GDALUtils.toRasterDataBufferType(gdaltype));
+  MrGeoRaster raster = createEmptyRaster(width, height, bands, GDALUtils.toRasterDataBufferType(gdaltype));
 
   for (int b = 0; b < bands; b++)
   {
@@ -223,7 +202,7 @@ public static MrGeoRaster fromDataset(final Dataset dataset, final int x, final 
   return raster;
 }
 
-static int writeHeader(final int width, final int height, final int bands, final int datatype, byte[] data)
+static int writeHeader(int width, int height, int bands, int datatype, byte[] data)
 {
   ByteArrayUtils.setByte(VERSION, data, VERSION_OFFSET);
   ByteArrayUtils.setInt(width, data, WIDTH_OFFSET);
@@ -247,7 +226,7 @@ static int[] readHeader(byte[] data)
 
 static MrGeoRaster createRaster(byte[] data)
 {
-  final int[] header = MrGeoRaster.readHeader(data);
+  int[] header = readHeader(data);
   return createRaster(header[1], header[2], header[3], header[4], data, header[5]);
 }
 
@@ -260,7 +239,7 @@ final public MrGeoRaster createCompatibleEmptyRaster(int width, int height, doub
 {
   MrGeoRaster raster = createEmptyRaster(width, height, bands, datatype);
 
-  MrGeoRaster row = MrGeoRaster.createEmptyRaster(width, 1, 1, datatype);
+  MrGeoRaster row = createEmptyRaster(width, 1, 1, datatype);
   for (int x = 0; x < width; x++)
   {
     row.setPixel(x, 0, 0, nodata);
@@ -290,7 +269,7 @@ final public MrGeoRaster createCompatibleEmptyRaster(int width, int height, doub
 
   for (int b = 0; b < bands; b++)
   {
-    row = MrGeoRaster.createEmptyRaster(width, 1, 1, datatype);
+    row = createEmptyRaster(width, 1, 1, datatype);
 
     for (int x = 0; x < width; x++)
     {
@@ -348,7 +327,7 @@ final public int datalength()
 
 final public MrGeoRaster clip(int x, int y, int width, int height) throws MrGeoRasterException
 {
-  MrGeoRaster clipraster = MrGeoRaster.createEmptyRaster(width, height, bands, datatype);
+  MrGeoRaster clipraster = createEmptyRaster(width, height, bands, datatype);
 
   for (int b = 0; b < bands; b++)
   {
@@ -366,7 +345,7 @@ final public MrGeoRaster clip(int x, int y, int width, int height) throws MrGeoR
 
 final public MrGeoRaster clip(int x, int y, int width, int height, int band) throws MrGeoRasterException
 {
-  MrGeoRaster clipraster = MrGeoRaster.createEmptyRaster(width, height, 1, datatype);
+  MrGeoRaster clipraster = createEmptyRaster(width, height, 1, datatype);
 
   for (int yy = 0; yy < height; yy++)
   {
@@ -405,9 +384,9 @@ final public void copyFrom(int srcx, int srcy, int srcBand, int width, int heigh
   }
 }
 
-final public void fill(final double value) throws MrGeoRasterException
+final public void fill(double value) throws MrGeoRasterException
 {
-  MrGeoRaster row = MrGeoRaster.createEmptyRaster(width, 1, 1, datatype);
+  MrGeoRaster row = createEmptyRaster(width, 1, 1, datatype);
   for (int x = 0; x < width; x++)
   {
     row.setPixel(x, 0, 0, value);
@@ -427,13 +406,13 @@ final public void fill(final double value) throws MrGeoRasterException
 
 }
 
-final public void fill(final double[] values) throws MrGeoRasterException
+final public void fill(double[] values) throws MrGeoRasterException
 {
   MrGeoRaster row[] = new MrGeoRaster[bands];
 
   for (int b = 0; b < bands; b++)
   {
-    row[b] = MrGeoRaster.createEmptyRaster(width, 1, 1, datatype);
+    row[b] = createEmptyRaster(width, 1, 1, datatype);
 
     for (int x = 0; x < width; x++)
     {
@@ -456,9 +435,9 @@ final public void fill(final double[] values) throws MrGeoRasterException
   }
 }
 
-final public void fill(final int band, final double value) throws MrGeoRasterException
+final public void fill(int band, double value) throws MrGeoRasterException
 {
-  MrGeoRaster row = MrGeoRaster.createEmptyRaster(width, 1, 1, datatype);
+  MrGeoRaster row = createEmptyRaster(width, 1, 1, datatype);
   for (int x = 0; x < width; x++)
   {
     row.setPixel(x, 0, 0, value);
@@ -481,8 +460,8 @@ final public void fill(final int band, final double value) throws MrGeoRasterExc
 // Interpolated algorithm was http://tech-algorithm.com/articles/bilinear-image-scaling/
 // Also used was http://www.compuphase.com/graphic/scale.htm, explaining interpolated
 // scaling
-public MrGeoRaster scale(final int dstWidth,
-    final int dstHeight, final boolean interpolate, final double[] nodatas) throws MrGeoRasterException
+public MrGeoRaster scale(int dstWidth,
+    int dstHeight, boolean interpolate, double[] nodatas) throws MrGeoRasterException
 {
 
   MrGeoRaster src = this;
@@ -495,7 +474,7 @@ public MrGeoRaster scale(final int dstWidth,
     int dw;
     int dh;
 
-    final double scale = Math.max(scaleW, scaleH);
+    double scale = Math.max(scaleW, scaleH);
 
     // bresenham's scalar really doesn't like being scaled more than 2x or 1/2x without the
     // possibility of artifacts. But it turns out you can scale, then scale, etc. and get
@@ -525,7 +504,7 @@ public MrGeoRaster scale(final int dstWidth,
       dh = dstHeight;
     }
 
-    final MrGeoRaster dst = createCompatibleRaster(dw, dh);
+    MrGeoRaster dst = createCompatibleRaster(dw, dh);
 
     switch (datatype)
     {
@@ -563,7 +542,7 @@ public MrGeoRaster scale(final int dstWidth,
       }
       break;
     default:
-      throw new RasterWritable.RasterWritableException("Error trying to scale raster. Bad raster data type");
+      throw new RasterWritableException("Error trying to scale raster. Bad raster data type");
     }
 
     if (dst.width == dstWidth && dst.height == dstHeight)
@@ -578,17 +557,17 @@ public MrGeoRaster scale(final int dstWidth,
   }
 }
 
-final public MrGeoRaster reduce(final int xfactor, final int yfactor, Aggregator aggregator, double[] nodatas)
+final public MrGeoRaster reduce(int xfactor, int yfactor, Aggregator aggregator, double[] nodatas)
     throws MrGeoRasterException
 {
   MrGeoRaster child = createCompatibleRaster(width / xfactor, height / yfactor);
 
-  final int subsize = xfactor * yfactor;
-  final byte[] bytesamples = new byte[subsize];
-  final short[] shortsamples = new short[subsize];
-  final int[] intsamples = new int[subsize];
-  final float[] floatsamples = new float[subsize];
-  final double[] doublesamples = new double[subsize];
+  int subsize = xfactor * yfactor;
+  byte[] bytesamples = new byte[subsize];
+  short[] shortsamples = new short[subsize];
+  int[] intsamples = new int[subsize];
+  float[] floatsamples = new float[subsize];
+  double[] doublesamples = new double[subsize];
 
   int ndx;
 
@@ -676,7 +655,7 @@ final public MrGeoRaster reduce(final int xfactor, final int yfactor, Aggregator
           child.setPixel(x / xfactor, y / yfactor, b, doublesample);
           break;
         default:
-          throw new RasterWritable.RasterWritableException(
+          throw new RasterWritableException(
               "Error trying to get decimate pixels in the raster. Bad raster data type");
         }
       }
@@ -698,7 +677,7 @@ final public void mosaic(MrGeoRaster other, double[] nodata)
         {
         case DataBuffer.TYPE_BYTE:
         {
-          final byte p = other.getPixelByte(x, y, b);
+          byte p = other.getPixelByte(x, y, b);
           if (getPixelByte(x, y, b) == (byte) nodata[b])
           {
             setPixel(x, y, b, p);
@@ -707,7 +686,7 @@ final public void mosaic(MrGeoRaster other, double[] nodata)
         }
         case DataBuffer.TYPE_FLOAT:
         {
-          final float p = other.getPixelFloat(x, y, b);
+          float p = other.getPixelFloat(x, y, b);
           if (FloatUtils.isNotNodata(p, (float) nodata[b]))
           {
             setPixel(x, y, b, p);
@@ -717,7 +696,7 @@ final public void mosaic(MrGeoRaster other, double[] nodata)
         }
         case DataBuffer.TYPE_DOUBLE:
         {
-          final double p = other.getPixelDouble(x, y, b);
+          double p = other.getPixelDouble(x, y, b);
           if (FloatUtils.isNotNodata(p, nodata[b]))
           {
             setPixel(x, y, b, p);
@@ -727,7 +706,7 @@ final public void mosaic(MrGeoRaster other, double[] nodata)
         }
         case DataBuffer.TYPE_INT:
         {
-          final int p = other.getPixelInt(x, y, b);
+          int p = other.getPixelInt(x, y, b);
           if (getPixelInt(x, y, b) == (int) nodata[b])
           {
             setPixel(x, y, b, p);
@@ -737,7 +716,7 @@ final public void mosaic(MrGeoRaster other, double[] nodata)
         }
         case DataBuffer.TYPE_SHORT:
         {
-          final short p = other.getPixelShort(x, y, b);
+          short p = other.getPixelShort(x, y, b);
           if (getPixelShort(x, y, b) == (short) nodata[b])
           {
             setPixel(x, y, b, p);
@@ -746,17 +725,18 @@ final public void mosaic(MrGeoRaster other, double[] nodata)
           break;
         }
         case DataBuffer.TYPE_USHORT:
-        {
-          final int p = other.getPixeUShort(x, y, b);
+          int p = other.getPixeUShort(x, y, b);
           if (getPixeUShort(x, y, b) == (short) nodata[b])
           {
             setPixel(x, y, b, p);
           }
 
           break;
+        default:
+          throw new RasterWritableException(
+              "Error trying to get mosaic raster. Bad raster data type");
         }
 
-        }
       }
     }
   }
@@ -767,25 +747,25 @@ final public Dataset toDataset()
   return toDataset(null, null);
 }
 
-final public Dataset toDiskBasedDataset(final Bounds bounds, final double[] nodatas,
-                                        int xoffset, int yoffset, int outWidth, int outHeight)
+final public Dataset toDiskBasedDataset(Bounds bounds, double[] nodatas,
+    int xoffset, int yoffset, int outWidth, int outHeight)
 {
   int gdaltype = GDALUtils.toGDALDataType(datatype);
   Dataset ds = GDALUtils.createEmptyDiskBasedRaster(outWidth, outHeight, bands, gdaltype, nodatas);
   return toDataset(ds, gdaltype, bounds, xoffset, yoffset, outWidth, outHeight, nodatas);
 }
 
-final public Dataset toDataset(final Bounds bounds, final double[] nodatas)
+final public Dataset toDataset(Bounds bounds, double[] nodatas)
 {
   int gdaltype = GDALUtils.toGDALDataType(datatype);
   Dataset ds = GDALUtils.createEmptyMemoryRaster(width, height, bands, gdaltype, nodatas);
   return toDataset(ds, gdaltype, bounds, 0, 0, width, height, nodatas);
 }
 
-private Dataset toDataset(final Dataset ds, final int gdaltype, final Bounds bounds,
-                          final int xoffset, final int yoffset,
-                          final int outWidth, final int outHeight,
-                          final double[] nodatas)
+private Dataset toDataset(Dataset ds, int gdaltype, Bounds bounds,
+    int xoffset, int yoffset,
+    int outWidth, int outHeight,
+    double[] nodatas)
 {
   double[] xform = new double[6];
   if (bounds != null)
@@ -828,7 +808,7 @@ private Dataset toDataset(final Dataset ds, final int gdaltype, final Bounds bou
       }
     }
     for (int y=0; y < outHeight; y++) {
-      System.arraycopy(this.data, calculateByteOffset(xoffset, y + yoffset, b), rowdata, 0, rowdata.length);
+      System.arraycopy(data, calculateByteOffset(xoffset, y + yoffset, b), rowdata, 0, rowdata.length);
       int success = band.WriteRaster(0, y, outWidth, 1, outWidth, 1, gdaltype, rowdata);
       if (success != gdalconstConstants.CE_None)
       {
@@ -842,16 +822,16 @@ private Dataset toDataset(final Dataset ds, final int gdaltype, final Bounds bou
 }
 
 public void copyToDataset(Dataset ds, int dsWidth, int dsHeight, Bounds fullBounds, Bounds bounds,
-                          int tilesize, int zoomlevel, int gdaltype) throws IOException
+    int tilesize, int zoomlevel, int gdaltype) throws IOException
 {
-  final Pixel ulPixelTile = TMSUtils
-          .latLonToPixelsUL(bounds.n, bounds.w, zoomlevel, tilesize);
-  final Pixel ulPixelDS = TMSUtils
-          .latLonToPixelsUL(fullBounds.n, fullBounds.w, zoomlevel, tilesize);
-  final Pixel lrPixelTile = TMSUtils
-          .latLonToPixelsUL(bounds.s, bounds.e, zoomlevel, tilesize);
-  final Pixel lrPixelDS = TMSUtils
-          .latLonToPixelsUL(fullBounds.s, fullBounds.e, zoomlevel, tilesize);
+  Pixel ulPixelTile = TMSUtils
+      .latLonToPixelsUL(bounds.n, bounds.w, zoomlevel, tilesize);
+  Pixel ulPixelDS = TMSUtils
+      .latLonToPixelsUL(fullBounds.n, fullBounds.w, zoomlevel, tilesize);
+  Pixel lrPixelTile = TMSUtils
+      .latLonToPixelsUL(bounds.s, bounds.e, zoomlevel, tilesize);
+  Pixel lrPixelDS = TMSUtils
+      .latLonToPixelsUL(fullBounds.s, fullBounds.e, zoomlevel, tilesize);
 
   long leftPixel = Math.max(ulPixelDS.px, ulPixelTile.px);
   long rightPixel = Math.min(lrPixelDS.px, lrPixelTile.px);
@@ -868,7 +848,7 @@ public void copyToDataset(Dataset ds, int dsWidth, int dsHeight, Bounds fullBoun
   for (int b = 0; b < ds.GetRasterCount(); b++) {
     for (int y = 0; y < outHeight; y++) {
       Band band = ds.GetRasterBand(b + 1); // gdal bands are 1's based
-      System.arraycopy(this.data, calculateByteOffset(xoffset, y + yoffset, b), rowdata, 0, rowdata.length);
+      System.arraycopy(data, calculateByteOffset(xoffset, y + yoffset, b), rowdata, 0, rowdata.length);
       int success = band.WriteRaster(xoffsetWrite, y + yoffsetWrite, outWidth, 1, outWidth, 1, gdaltype, rowdata);
       if (success != gdalconstConstants.CE_None) {
         throw new IOException("Failed writing raster. gdal error: " + success);
@@ -881,7 +861,7 @@ final public Raster toRaster()
 {
   WritableRaster raster = RasterUtils.createEmptyRaster(width, height, bands, datatype);
 
-  final ByteBuffer rasterBuffer = ByteBuffer.wrap(data);
+  ByteBuffer rasterBuffer = ByteBuffer.wrap(data);
   rasterBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
   // skip over the header in the data buffer
@@ -895,58 +875,48 @@ final public Raster toRaster()
   switch (datatype)
   {
   case DataBuffer.TYPE_BYTE:
-  {
     // we can't use the byte buffer explicitly because the header info is
     // still in it...
-    final byte[] bytedata = new byte[databytes];
+    byte[] bytedata = new byte[databytes];
     rasterBuffer.get(bytedata);
 
     raster.setDataElements(0, 0, width, height, bytedata);
     break;
-  }
   case DataBuffer.TYPE_FLOAT:
-  {
-    final FloatBuffer floatbuff = rasterBuffer.asFloatBuffer();
-    final float[] floatdata = new float[databytes / bytesPerPixel()];
+    FloatBuffer floatbuff = rasterBuffer.asFloatBuffer();
+    float[] floatdata = new float[databytes / bytesPerPixel()];
 
     floatbuff.get(floatdata);
 
     raster.setDataElements(0, 0, width, height, floatdata);
     break;
-  }
   case DataBuffer.TYPE_DOUBLE:
-  {
-    final DoubleBuffer doublebuff = rasterBuffer.asDoubleBuffer();
-    final double[] doubledata = new double[databytes / bytesPerPixel()];
+    DoubleBuffer doublebuff = rasterBuffer.asDoubleBuffer();
+    double[] doubledata = new double[databytes / bytesPerPixel()];
 
     doublebuff.get(doubledata);
 
     raster.setDataElements(0, 0, width, height, doubledata);
 
     break;
-  }
   case DataBuffer.TYPE_INT:
-  {
-    final IntBuffer intbuff = rasterBuffer.asIntBuffer();
-    final int[] intdata = new int[databytes / bytesPerPixel()];
+    IntBuffer intbuff = rasterBuffer.asIntBuffer();
+    int[] intdata = new int[databytes / bytesPerPixel()];
 
     intbuff.get(intdata);
 
     raster.setDataElements(0, 0, width, height, intdata);
 
     break;
-  }
   case DataBuffer.TYPE_SHORT:
   case DataBuffer.TYPE_USHORT:
-  {
-    final ShortBuffer shortbuff = rasterBuffer.asShortBuffer();
-    final short[] shortdata = new short[databytes / bytesPerPixel()];
+    ShortBuffer shortbuff = rasterBuffer.asShortBuffer();
+    short[] shortdata = new short[databytes / bytesPerPixel()];
     shortbuff.get(shortdata);
     raster.setDataElements(0, 0, width, height, shortdata);
     break;
-  }
   default:
-    throw new RasterWritable.RasterWritableException("Error trying to read raster.  Bad raster data type");
+    throw new RasterWritableException("Error trying to read raster.  Bad raster data type");
   }
 
   return raster;
@@ -979,25 +949,25 @@ final byte[] data()
   return data;
 }
 
-final int calculateByteOffset(final int x, final int y, final int band)
+final int calculateByteOffset(int x, int y, int band)
 {
   return ((y * width + x) + band * bandoffset) * bytesPerPixel() + dataoffset;
 }
 
-final int[] calculateByteRangeOffset(final int startx, final int starty, final int endx, final int endy, final int band)
+final int[] calculateByteRangeOffset(int startx, int starty, int endx, int endy, int band)
 {
-  final int bpp = bytesPerPixel();
-  final int bandoffset = band * this.bandoffset;
+  int bpp = bytesPerPixel();
+  int bandoffset = band * this.bandoffset;
 
   return new int[]{
       ((starty * width + startx) + bandoffset) * bpp + dataoffset,
       ((endy * width + endx) + bandoffset) * bpp + dataoffset};
 }
 
-final int[] calculateByteRangeOffset(final int startx, final int starty, final int startband,
-    final int endx, final int endy, final int endband)
+final int[] calculateByteRangeOffset(int startx, int starty, int startband,
+    int endx, int endy, int endband)
 {
-  final int bpp = bytesPerPixel();
+  int bpp = bytesPerPixel();
 
   return new int[]{
       ((starty * width + startx) + (startband * bandoffset)) * bpp + dataoffset,
@@ -1012,9 +982,9 @@ public static class MrGeoRasterException extends IOException
 
   private final Exception origException;
 
-  MrGeoRasterException(final String msg)
+  MrGeoRasterException(String msg)
   {
-    this.origException = new Exception(msg);
+    origException = new Exception(msg);
   }
 
   @Override

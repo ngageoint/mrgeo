@@ -17,6 +17,7 @@ package org.mrgeo.geometry;
 
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.mrgeo.geometry.Geometry.Type;
 
 import java.util.Collection;
 import java.util.Map;
@@ -37,7 +38,7 @@ public static Class[] getClasses()
                   ArrayUtils.addAll(GeometryCollectionImpl.getClasses(), GeometryImpl.getClasses())))));
 }
 
-public static WritableGeometry createGeometry(final Geometry.Type type)
+public static WritableGeometry createGeometry(Type type)
 {
   switch (type)
   {
@@ -58,7 +59,7 @@ public static WritableGeometry createGeometry(final Geometry.Type type)
   return null;
 }
 
-public static WritableGeometry createGeometry(final String className)
+public static WritableGeometry createGeometry(String className)
 {
   if (className.equals(WritablePoint.class.getCanonicalName()))
   {
@@ -89,7 +90,7 @@ public static WritableGeometry createEmptyGeometry()
   return createPoint();
 }
 
-public static WritableGeometry createEmptyGeometry(final Map<String, String> attributes)
+public static WritableGeometry createEmptyGeometry(Map<String, String> attributes)
 {
   return createPoint(attributes);
 }
@@ -100,7 +101,7 @@ public static WritableGeometryCollection createGeometryCollection()
 }
 
 public static WritableGeometryCollection createGeometryCollection(
-    final Map<String, String> attributes)
+    Map<String, String> attributes)
 {
   return new GeometryCollectionImpl(attributes);
 }
@@ -110,17 +111,17 @@ public static WritableLinearRing createLinearRing()
   return new LinearRingImpl();
 }
 
-public static WritableLinearRing createLinearRing(final Map<String, String> attributes)
+public static WritableLinearRing createLinearRing(Map<String, String> attributes)
 {
   return new LinearRingImpl(attributes);
 }
 
-public static WritableLinearRing createLinearRing(final Point... points)
+public static WritableLinearRing createLinearRing(Point... points)
 {
   return new LinearRingImpl(points);
 }
 
-public static WritableLinearRing createLinearRing(final LineString lineString)
+public static WritableLinearRing createLinearRing(LineString lineString)
 {
   LinearRingImpl lr = new LinearRingImpl(lineString.getAllAttributes());
   lr.setPoints(lineString.getPoints());
@@ -132,12 +133,12 @@ public static WritableLineString createLineString()
   return new LineStringImpl();
 }
 
-public static WritableLineString createLineString(final Map<String, String> attributes)
+public static WritableLineString createLineString(Map<String, String> attributes)
 {
   return new LineStringImpl(attributes);
 }
 
-public static WritableLineString createLineString(final Point... points)
+public static WritableLineString createLineString(Point... points)
 {
   return new LineStringImpl(points);
 }
@@ -147,28 +148,28 @@ public static WritablePoint createPoint()
   return new PointImpl();
 }
 
-public static WritablePoint createPoint(final double x, final double y, final Map<String, String> attributes)
+public static WritablePoint createPoint(double x, double y, Map<String, String> attributes)
 {
   return new PointImpl(x, y, attributes);
 }
 
-public static WritablePoint createPoint(final double x, final double y)
+public static WritablePoint createPoint(double x, double y)
 {
   return new PointImpl(x, y);
 }
 
-public static WritablePoint createPoint(final double x, final double y, final double z)
+public static WritablePoint createPoint(double x, double y, double z)
 {
   return new PointImpl(x, y, z);
 }
 
-public static WritablePoint createPoint(final double x, final double y, final double z,
-    final Map<String, String> attributes)
+public static WritablePoint createPoint(double x, double y, double z,
+    Map<String, String> attributes)
 {
   return new PointImpl(x, y, z, attributes);
 }
 
-public static WritablePoint createPoint(final Map<String, String> attributes)
+public static WritablePoint createPoint(Map<String, String> attributes)
 {
   return new PointImpl(attributes);
 }
@@ -178,32 +179,32 @@ public static WritablePolygon createPolygon()
   return new PolygonImpl();
 }
 
-public static WritablePolygon createPolygon(final Collection<Point> points)
+public static WritablePolygon createPolygon(Collection<Point> points)
 {
   return new PolygonImpl(points);
 }
 
-public static WritablePolygon createPolygon(final Map<String, String> attributes)
+public static WritablePolygon createPolygon(Map<String, String> attributes)
 {
   return new PolygonImpl(attributes);
 }
 
-public static WritablePolygon createPolygon(final Point... points)
+public static WritablePolygon createPolygon(Point... points)
 {
   return new PolygonImpl(points);
 }
 
-public static WritableGeometry fromJTS(final com.vividsolutions.jts.geom.Geometry jtsGeometry)
+public static WritableGeometry fromJTS(com.vividsolutions.jts.geom.Geometry jtsGeometry)
 {
   return fromJTS(jtsGeometry, null);
 }
 
-public static WritableGeometry fromJTS(final com.vividsolutions.jts.geom.Geometry jtsGeometry,
-    final Map<String, String> attributes)
+public static WritableGeometry fromJTS(com.vividsolutions.jts.geom.Geometry jtsGeometry,
+    Map<String, String> attributes)
 {
   if (jtsGeometry instanceof com.vividsolutions.jts.geom.Point)
   {
-    final WritablePoint pt = createPoint();
+    WritablePoint pt = createPoint();
     pt.fromJTS((com.vividsolutions.jts.geom.Point) jtsGeometry);
     if (attributes != null)
     {
@@ -214,7 +215,7 @@ public static WritableGeometry fromJTS(final com.vividsolutions.jts.geom.Geometr
   // make sure LinearRing is before LineString!
   else if (jtsGeometry instanceof com.vividsolutions.jts.geom.LinearRing)
   {
-    final WritableLinearRing ring = createLinearRing();
+    WritableLinearRing ring = createLinearRing();
     ring.fromJTS((com.vividsolutions.jts.geom.LineString) jtsGeometry);
     if (attributes != null)
     {
@@ -224,7 +225,7 @@ public static WritableGeometry fromJTS(final com.vividsolutions.jts.geom.Geometr
   }
   else if (jtsGeometry instanceof com.vividsolutions.jts.geom.LineString)
   {
-    final WritableLineString line = createLineString();
+    WritableLineString line = createLineString();
     line.fromJTS((com.vividsolutions.jts.geom.LineString) jtsGeometry);
     if (attributes != null)
     {
@@ -234,7 +235,7 @@ public static WritableGeometry fromJTS(final com.vividsolutions.jts.geom.Geometr
   }
   else if (jtsGeometry instanceof com.vividsolutions.jts.geom.Polygon)
   {
-    final WritablePolygon polygon = createPolygon();
+    WritablePolygon polygon = createPolygon();
     polygon.fromJTS((com.vividsolutions.jts.geom.Polygon) jtsGeometry);
     if (attributes != null)
     {
@@ -251,7 +252,7 @@ public static WritableGeometry fromJTS(final com.vividsolutions.jts.geom.Geometr
           .getGeometryN(0), attributes);
     }
 
-    final WritableGeometryCollection collection = createGeometryCollection();
+    WritableGeometryCollection collection = createGeometryCollection();
     collection.fromJTS((com.vividsolutions.jts.geom.GeometryCollection) jtsGeometry);
     if (attributes != null)
     {

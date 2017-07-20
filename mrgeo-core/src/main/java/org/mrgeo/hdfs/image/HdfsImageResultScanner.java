@@ -15,13 +15,14 @@
 
 package org.mrgeo.hdfs.image;
 
-import org.apache.hadoop.io.MapFile;
 import org.mrgeo.data.CloseableKVIterator;
 import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.hdfs.tile.Splits;
+import org.mrgeo.hdfs.tile.Splits.SplitException;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.hdfs.utils.HadoopFileUtils.MapFileReaderWrapper;
 import org.mrgeo.image.MrsImageException;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.TMSUtils;
@@ -46,7 +47,7 @@ private final long rowStart;
 private final long rowEnd;
 private final int zoom;
 // hdfs specific reader
-private HadoopFileUtils.MapFileReaderWrapper mapfile;
+private MapFileReaderWrapper mapfile;
 // keep track of where the reader is
 private int curPartitionIndex;
 // return item
@@ -60,8 +61,8 @@ private TileIdWritable endKey;
 // workaround for MapFile.Reader.seek behavior
 private boolean readFirstKey;
 
-HdfsImageResultScanner(final LongRectangle bounds,
-    final HdfsMrsImageReader reader)
+HdfsImageResultScanner(LongRectangle bounds,
+    HdfsMrsImageReader reader)
 {
   this.reader = reader;
 
@@ -80,8 +81,8 @@ HdfsImageResultScanner(final LongRectangle bounds,
  * @param endKey   end (inclusive) of tile to pull
  * @param reader   the reader being used
  */
-HdfsImageResultScanner(final TileIdWritable startKey, final TileIdWritable endKey,
-    final HdfsMrsImageReader reader)
+HdfsImageResultScanner(TileIdWritable startKey, TileIdWritable endKey,
+    HdfsMrsImageReader reader)
 {
   // this.partitions = partitions;
   this.reader = reader;
@@ -123,7 +124,7 @@ public MrGeoRaster currentValue()
   {
     return RasterWritable.toMrGeoRaster(currentValue);
   }
-  catch (final IOException e)
+  catch (IOException e)
   {
     throw new MrsImageException(e);
   }
@@ -166,7 +167,7 @@ public boolean hasNext()
     {
       // TODO eaw - The contract on java.util.Iterator requires that this method implementation not advance the iterator.
       //            This code should be on next()
-      final boolean found = mapfile.getReader().next(currentKey, currentValue);
+      boolean found = mapfile.getReader().next(currentKey, currentValue);
       if (found)
       {
         if (currentKey.compareTo(endKey) <= 0)
@@ -176,7 +177,7 @@ public boolean hasNext()
           {
             // if we fall within the boundries return positive, otherwise slerp up the tile and
             // try the next one.
-            final Tile t = TMSUtils.tileid(currentKey.get(), zoom);
+            Tile t = TMSUtils.tileid(currentKey.get(), zoom);
             if (t.tx >= rowStart && t.tx <= rowEnd)
             {
               return true;
@@ -207,7 +208,7 @@ public boolean hasNext()
       }
     }
   }
-  catch (final IOException e)
+  catch (IOException e)
   {
     throw new MrsImageException(e);
   }
@@ -228,7 +229,7 @@ public MrGeoRaster next()
   {
     return RasterWritable.toMrGeoRaster(currentValue);
   }
-  catch (final IOException e)
+  catch (IOException e)
   {
     throw new MrsImageException(e);
   }
@@ -252,7 +253,7 @@ private boolean inRange(TileIdWritable key)
     {
       // if we fall within the boundries return positive, otherwise slerp up the tile and
       // try the next one.
-      final Tile t = TMSUtils.tileid(key.get(), zoom);
+      Tile t = TMSUtils.tileid(key.get(), zoom);
       if (t.tx >= rowStart && t.tx <= rowEnd)
       {
         return true;
@@ -267,7 +268,7 @@ private boolean inRange(TileIdWritable key)
 }
 
 @SuppressWarnings({"unchecked", "squid:S1166"}) // Splits.SplitException is caught and handled
-private void primeScanner(final long startTileId, final long endTileId)
+private void primeScanner(long startTileId, long endTileId)
 {
     /*
      * Workaround for MapFile.Reader.seek ----------------------------------- Normally,
@@ -340,11 +341,11 @@ private void primeScanner(final long startTileId, final long endTileId)
     }
   }
   // if the tiles are out of bounds, this exception will be thrown.
-  catch (Splits.SplitException se)
+  catch (SplitException se)
   {
     currentKey = null;
   }
-  catch (final IOException e)
+  catch (IOException e)
   {
     throw new MrsImageException(e);
   }

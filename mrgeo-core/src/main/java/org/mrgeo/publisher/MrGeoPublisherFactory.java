@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Created by ericwood on 8/15/16.
@@ -71,7 +72,7 @@ static void loadPublishersFromConfig()
 {
   // Get all Publisher properties for each profile.  Put them in a map by profile name
   Map<String, Properties> mapPublisherProps = PublisherProfileConfigProperties.getPropertiesByProfileName();
-  for (Map.Entry<String, Properties> publisherPropEntry : mapPublisherProps.entrySet())
+  for (Entry<String, Properties> publisherPropEntry : mapPublisherProps.entrySet())
   {
     String profileName = publisherPropEntry.getKey();
     Properties publisherProps = publisherPropEntry.getValue();

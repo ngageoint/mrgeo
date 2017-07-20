@@ -28,6 +28,7 @@ trait RasterMapOpTestVerifySupport extends RasterMapOpTestSupport {
           verifier(RasterWritable.toMrGeoRaster(raster))
           // Record the key
           idsToVerify = idsToVerify - tileId.get()
+        case _ =>
       }
       case None =>
     }

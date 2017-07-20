@@ -33,7 +33,7 @@ private Map<Class<? extends JexlNode>, String> twoArgFunctions;
 
 public JexlParserAdapter()
 {
-  twoArgFunctions = new HashMap<Class<? extends JexlNode>, String>();
+  twoArgFunctions = new HashMap<>();
   twoArgFunctions.put(ASTAssignment.class, "=");
   twoArgFunctions.put(ASTLTNode.class, "<");
   twoArgFunctions.put(ASTLTNode.class, "lt");
@@ -81,7 +81,7 @@ public void afterFunctionsLoaded()
 @Override
 public List<String> getFunctionNames()
 {
-  List<String> result = new ArrayList<String>();
+  List<String> result = new ArrayList<>();
   for (String functionName : twoArgFunctions.values())
   {
     result.add(functionName);
@@ -192,7 +192,7 @@ private ParserNode convertToMrGeoNode(JexlNode node)
   {
     ParserConstantNode cn = new ParserConstantNode();
     cn.setNativeNode(node);
-    cn.setValue(Boolean.valueOf(true));
+    cn.setValue(Boolean.TRUE);
     cn.setName(cn.getValue().toString());
     n = cn;
   }
@@ -200,7 +200,7 @@ private ParserNode convertToMrGeoNode(JexlNode node)
   {
     ParserConstantNode cn = new ParserConstantNode();
     cn.setNativeNode(node);
-    cn.setValue(Boolean.valueOf(false));
+    cn.setValue(Boolean.FALSE);
     cn.setName(cn.getValue().toString());
     n = cn;
   }

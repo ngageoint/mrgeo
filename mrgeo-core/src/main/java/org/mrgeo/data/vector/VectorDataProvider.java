@@ -32,13 +32,13 @@ protected ProviderProperties providerProperties;
 private String resourcePrefix;
 private String resourceName;
 
-public VectorDataProvider(final String inputPrefix, final String input)
+public VectorDataProvider(String inputPrefix, String input)
 {
   resourcePrefix = inputPrefix;
   resourceName = input;
 }
 
-public VectorDataProvider(final String inputPrefix, final String input, ProviderProperties providerProps)
+public VectorDataProvider(String inputPrefix, String input, ProviderProperties providerProps)
 {
   resourcePrefix = inputPrefix;
   resourceName = input;
@@ -126,7 +126,7 @@ public abstract RecordWriter<FeatureIdWritable, Geometry> getRecordWriter();
  * @return
  */
 public abstract VectorInputFormatProvider getVectorInputFormatProvider(
-    final VectorInputFormatContext context) throws IOException;
+    VectorInputFormatContext context) throws IOException;
 
 /**
  * Return an instance of an OutputFormat class to be used in map/reduce jobs for producing
@@ -135,7 +135,7 @@ public abstract VectorInputFormatProvider getVectorInputFormatProvider(
  * @return
  */
 public abstract VectorOutputFormatProvider getVectorOutputFormatProvider(
-    final VectorOutputFormatContext context) throws IOException;
+    VectorOutputFormatContext context) throws IOException;
 
 public abstract void delete() throws IOException;
 

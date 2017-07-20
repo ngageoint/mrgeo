@@ -110,12 +110,12 @@ public static MrsPyramidMetadata getCroppedMetadata(MrsPyramidMetadata origMetad
       zoomLevel,
       origMetadata.getTilesize());
 
-  final Pixel lowerPx = TMSUtils.latLonToPixels(newImageBounds.s, newImageBounds.w,
+  Pixel lowerPx = TMSUtils.latLonToPixels(newImageBounds.s, newImageBounds.w,
       zoomLevel, origMetadata.getTilesize());
-  final Pixel upperPx = TMSUtils.latLonToPixels(newImageBounds.n, newImageBounds.e,
+  Pixel upperPx = TMSUtils.latLonToPixels(newImageBounds.n, newImageBounds.e,
       zoomLevel, origMetadata.getTilesize());
 
-  final LongRectangle pixelBounds = new LongRectangle(0, 0, upperPx.px - lowerPx.px,
+  LongRectangle pixelBounds = new LongRectangle(0, 0, upperPx.px - lowerPx.px,
       upperPx.py - lowerPx.py);
 
   // time to create the new metadata

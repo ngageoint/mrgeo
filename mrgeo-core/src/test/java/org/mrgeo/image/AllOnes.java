@@ -28,7 +28,7 @@ public class AllOnes extends TestFiles
 {
 public AllOnes() throws JsonGenerationException, JsonMappingException, IOException
 {
-  super.setup(org.mrgeo.core.Defs.CWD + "/" + org.mrgeo.core.Defs.INPUT + "/" + "all-ones",
+  setup(org.mrgeo.core.Defs.CWD + "/" + org.mrgeo.core.Defs.INPUT + "/" + "all-ones",
       (ProviderProperties) null);
 }
 
@@ -38,8 +38,8 @@ public static void main(String args[]) throws JsonGenerationException, JsonMappi
   int zoom = allOnes.getMetadata().getMaxZoomLevel();
 
   LongRectangle tb = allOnes.getMetadata().getTileBounds(zoom);
-  final long minX = tb.getMinX();
-  final long minY = tb.getMinY();
+  long minX = tb.getMinX();
+  long minY = tb.getMinY();
 
   for (int ty = 0; ty < allOnes.getRows(); ty++)
   {

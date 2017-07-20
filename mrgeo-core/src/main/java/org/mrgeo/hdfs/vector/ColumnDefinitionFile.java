@@ -39,9 +39,9 @@ import java.util.Vector;
 
 public class ColumnDefinitionFile
 {
-Vector<Column> columns = new Vector<Column>();
+Vector<Column> columns = new Vector<>();
 
-boolean firstLineHeader = false;
+boolean firstLineHeader;
 
 public ColumnDefinitionFile()
 {
@@ -101,13 +101,13 @@ public Vector<Column> getColumns()
 
 public void setColumns(Collection<Column> columns)
 {
-  this.columns = new Vector<Column>();
+  this.columns = new Vector<>();
   this.columns.addAll(columns);
 }
 
 public void setColumns(List<String> names)
 {
-  this.columns = new Vector<>();
+  columns = new Vector<>();
   for (String name : names)
   {
     Column col = new Column(name, FactorType.Unknown);
@@ -204,7 +204,7 @@ private void load(InputStream is) throws IOException
   try
   {
     String firstLineHeaderStr = xp.evaluate("/AllColumns/@firstLineHeader", doc);
-    if (firstLineHeaderStr != null && firstLineHeaderStr.equals("true"))
+    if ("true".equals(firstLineHeaderStr))
     {
       firstLineHeader = true;
     }
@@ -220,7 +220,7 @@ private void load(InputStream is) throws IOException
       {
         type = FactorType.Unknown.toString();
       }
-      c.setType(Column.FactorType.valueOf(type));
+      c.setType(FactorType.valueOf(type));
       String tmp = s.getAttribute("min");
       if (!tmp.isEmpty())
       {

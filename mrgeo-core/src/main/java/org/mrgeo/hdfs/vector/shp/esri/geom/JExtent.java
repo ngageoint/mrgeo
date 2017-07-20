@@ -169,6 +169,6 @@ public void setExtent(JExtent src)
 @Override
 public String toString()
 {
-  return min.toString() + "|" + max.toString();
+  return min + "|" + max;
 }
 }

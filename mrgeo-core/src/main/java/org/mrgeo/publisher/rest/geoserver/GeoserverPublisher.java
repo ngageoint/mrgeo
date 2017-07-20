@@ -20,6 +20,12 @@ import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.publisher.MrGeoPublisher;
 import org.mrgeo.publisher.MrGeoPublisherException;
 import org.mrgeo.publisher.rest.RestClient;
+import org.mrgeo.publisher.rest.geoserver.GeoserverJsonUtils.GeoserverBoundingBoxBuilder;
+import org.mrgeo.publisher.rest.geoserver.GeoserverJsonUtils.GeoserverCoverageBuilder;
+import org.mrgeo.publisher.rest.geoserver.GeoserverJsonUtils.GeoserverCoverageDimensionBuilder;
+import org.mrgeo.publisher.rest.geoserver.GeoserverJsonUtils.GeoserverGridBuilder;
+import org.mrgeo.publisher.rest.geoserver.GeoserverJsonUtils.GeoserverGridRangeBuilder;
+import org.mrgeo.publisher.rest.geoserver.GeoserverJsonUtils.GeoserverTransformBuilder;
 import org.mrgeo.utils.GDALUtils;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
@@ -202,9 +208,9 @@ protected String getCoverageJsonForImage(String coverageName, MrsPyramidMetadata
   int zoomLevel = imageMetadata.getMaxZoomLevel();
   LongRectangle pixelBounds = imageMetadata.getPixelBounds(zoomLevel);
   double resolution = TMSUtils.resolution(zoomLevel, imageMetadata.getTilesize());
-  GeoserverJsonUtils.GeoserverCoverageBuilder coverageBuilder = GeoserverJsonUtils.createCoverage(coverageName);
-  GeoserverJsonUtils.GeoserverBoundingBoxBuilder boundingBoxBuilder =
-      new GeoserverJsonUtils.GeoserverBoundingBoxBuilder();
+  GeoserverCoverageBuilder coverageBuilder = GeoserverJsonUtils.createCoverage(coverageName);
+  GeoserverBoundingBoxBuilder boundingBoxBuilder =
+      new GeoserverBoundingBoxBuilder();
   coverageBuilder
       .nativeName(coverageName)
       .title(coverageName)
@@ -222,13 +228,13 @@ protected String getCoverageJsonForImage(String coverageName, MrsPyramidMetadata
       .latLonBoundingBox(boundingBoxBuilder.build())
       .enabled(true)
       .nativeFormat(NATIVE_FORMAT)
-      .grid(new GeoserverJsonUtils.GeoserverGridBuilder()
+      .grid(new GeoserverGridBuilder()
           .dimension(2)
-          .range(new GeoserverJsonUtils.GeoserverGridRangeBuilder()
+          .range(new GeoserverGridRangeBuilder()
               .low(0, 0)
               .high(pixelBounds.getMaxX(), pixelBounds.getMaxY())
               .build())
-          .transform(new GeoserverJsonUtils.GeoserverTransformBuilder()
+          .transform(new GeoserverTransformBuilder()
               .scaleX(resolution)
               .scaleY(resolution)
               .shearX(0.0)
@@ -254,7 +260,7 @@ protected String getCoverageJsonForImage(String coverageName, MrsPyramidMetadata
 }
 
 private void addCoverageDimension(int band, MrsPyramidMetadata imageMetadata,
-    GeoserverJsonUtils.GeoserverCoverageBuilder coverageBuilder)
+    GeoserverCoverageBuilder coverageBuilder)
 {
   ImageStats stats = imageMetadata.getImageStats(imageMetadata.getMaxZoomLevel(), band);
   String dimensionType = null;
@@ -291,7 +297,7 @@ private void addCoverageDimension(int band, MrsPyramidMetadata imageMetadata,
   }
 
   // Don't use the cached builder for each dimension
-  coverageBuilder.coverageDimension(new GeoserverJsonUtils.GeoserverCoverageDimensionBuilder()
+  coverageBuilder.coverageDimension(new GeoserverCoverageDimensionBuilder()
       .name("band " + band)
       .range(stats.min, stats.max)
       .type(dimensionType)

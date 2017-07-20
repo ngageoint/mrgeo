@@ -21,16 +21,16 @@ package org.mrgeo.geometry;
 public interface LinearRing extends LineString
 {
 @Override
-public com.vividsolutions.jts.geom.LinearRing toJTS();
+com.vividsolutions.jts.geom.LinearRing toJTS();
 
-public boolean isCW();
+boolean isCW();
 
-public boolean isCCW();
+boolean isCCW();
 
-public LinearRing reverse();
+LinearRing reverse();
 
-public LinearRing ccw();
+LinearRing ccw();
 
-public LinearRing cw();
+LinearRing cw();
 
 }

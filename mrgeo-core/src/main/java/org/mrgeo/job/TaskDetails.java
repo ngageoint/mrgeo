@@ -25,7 +25,7 @@ public final static String CANCELLED = "Cancelled";
 
 long _jobId;
 String _name;
-String _status = null;
+String _status;
 long _started = -1;
 long _duration = -1; //time in ms that job ran
 String _message;
@@ -108,12 +108,8 @@ public void setMessage(String msg)
 
 public boolean isFinished()
 {
-  if (_status != null && (_status.equals(COMPLETE) ||
+  return _status != null && (_status.equals(COMPLETE) ||
       _status.equals(FAILED) ||
-      _status.equals(CANCELLED)))
-  {
-    return true;
-  }
-  return false;
+      _status.equals(CANCELLED));
 }
 }

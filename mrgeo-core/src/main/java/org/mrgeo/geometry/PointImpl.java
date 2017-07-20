@@ -18,6 +18,7 @@ package org.mrgeo.geometry;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
+import org.mrgeo.geometry.Geometry.Type;
 import org.mrgeo.utils.GeoHash;
 import org.mrgeo.utils.tms.Bounds;
 
@@ -36,7 +37,7 @@ double x;
 double y;
 double z;
 
-boolean hash = false;
+boolean hash;
 long geohash;
 
 PointImpl(Map<String, String> attributes)
@@ -47,16 +48,16 @@ PointImpl(Map<String, String> attributes)
 
 PointImpl()
 {
-  this.x = Double.NaN;
-  this.y = Double.NaN;
-  this.z = 0.0;
+  x = Double.NaN;
+  y = Double.NaN;
+  z = 0.0;
 }
 
 PointImpl(double x, double y)
 {
   this.x = x;
   this.y = y;
-  this.z = 0;
+  z = 0;
 }
 
 PointImpl(double x, double y, double z)
@@ -81,7 +82,7 @@ PointImpl(double x, double y, Map<String, String> attributes)
 {
   this.x = x;
   this.y = y;
-  this.z = 0;
+  z = 0;
 
   this.attributes.clear();
   this.attributes.putAll(attributes);
@@ -181,7 +182,7 @@ public void setZ(double z)
 @Override
 public boolean isValid()
 {
-  return Double.isNaN(x) == false && Double.isNaN(y) == false && Double.isNaN(z) == false;
+  return !Double.isNaN(x) && !Double.isNaN(y) && !Double.isNaN(z);
 }
 
 @Override
@@ -204,7 +205,7 @@ public void read(DataInputStream stream) throws IOException
 @Override
 public Type type()
 {
-  return Geometry.Type.POINT;
+  return Type.POINT;
 }
 
 @Override

@@ -27,7 +27,7 @@ import java.io.ObjectOutput;
 public abstract class Splits implements Externalizable
 {
 @SuppressFBWarnings(value = "UWF_NULL_FIELD", justification = "Set in child classes")
-SplitInfo[] splits = null;
+SplitInfo[] splits;
 
 public abstract String findSplitFile(Path parent) throws IOException;
 
@@ -177,7 +177,6 @@ public static class SplitException extends IOException
 
   public SplitException()
   {
-    super();
   }
 
   public SplitException(String message)
@@ -222,7 +221,6 @@ public static class SplitNotFoundException extends IOException
 {
   public SplitNotFoundException()
   {
-    super();
   }
 
   public SplitNotFoundException(String message)
