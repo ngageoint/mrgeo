@@ -35,12 +35,12 @@ private static int BITS[] = {16, 8, 4, 2, 1};
 
 private static String BASE32 = "0123456789bcdefghjkmnpqrstuvwxyz";
 
-private static int RIGHT;
+private static int RIGHT = 0;
 private static int LEFT = 1;
 private static int TOP = 2;
 private static int BOTTOM = 3;
 
-private static int EVEN;
+private static int EVEN = 0;
 private static int ODD = 1;
 
 private static String[][] NEIGHBORS;

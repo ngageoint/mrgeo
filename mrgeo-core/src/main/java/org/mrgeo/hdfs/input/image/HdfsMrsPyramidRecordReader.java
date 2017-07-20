@@ -136,6 +136,9 @@ public boolean nextKeyValue() throws IOException, InterruptedException
       key = null;
       value = null;
     }
+    else {
+      recordCount++;
+    }
   }
   return more;
 }

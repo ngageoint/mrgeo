@@ -146,7 +146,11 @@ static public class CsvRecordWriter extends RecordWriter<FeatureIdWritable, Geom
       log.info("In init, setting columnsOutputPath = " + columnsOutputPath + ", this: " + this);
       this.columnsOutputPath = columnsOutputPath;
     }
-    this.writer = new PrintWriter(os);
+    else
+    {
+      writeHeader = true;
+    }
+    writer = new PrintWriter(os);
   }
 
   @Override
