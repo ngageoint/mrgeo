@@ -74,14 +74,14 @@ static public class CsvRecordWriter extends RecordWriter<FeatureIdWritable, Geom
   //Vector<String> columns = new Vector<String>();
   PrintWriter writer;
   boolean first = true;
-  boolean writeHeader = false;
+  boolean writeHeader;
   boolean writeGeometry = true;
   private OutputStream externalColumnsOutput;
-  private OutputStream output = null;
+  private OutputStream output;
   private Path columnsOutputPath;
   private char encapsulator = '\"';
   private char delimiter = ',';
-  private Path _outputPath = null;
+  private Path _outputPath;
   private List<String> attributes;
 
   public CsvRecordWriter(Path columnsOutput, Path output) throws IOException
@@ -100,7 +100,7 @@ static public class CsvRecordWriter extends RecordWriter<FeatureIdWritable, Geom
 
     FileSystem fs = HadoopFileUtils.getFileSystem(columnsOutput);
 
-    log.info("columnsOutput path: " + columnsOutput.toString() + ", this: " + this);
+    log.info("columnsOutput path: " + columnsOutput + ", this: " + this);
     if (output.toString().endsWith(".tsv"))
     {
       delimiter = '\t';
@@ -115,16 +115,9 @@ static public class CsvRecordWriter extends RecordWriter<FeatureIdWritable, Geom
   // This constructor is used when only one CsvRecordWriter is being used to
   public CsvRecordWriter(OutputStream columnsOutput, OutputStream output)
   {
-    if (System.getProperty("mrgeo.profile", "false").compareToIgnoreCase("true") == 0)
-    {
-      profile = true;
-    }
-    else
-    {
-      profile = false;
-    }
+    profile = System.getProperty("mrgeo.profile", "false").compareToIgnoreCase("true") == 0;
 
-    this.externalColumnsOutput = columnsOutput;
+    externalColumnsOutput = columnsOutput;
     init(null, output);
   }
 
@@ -146,7 +139,11 @@ static public class CsvRecordWriter extends RecordWriter<FeatureIdWritable, Geom
       log.info("In init, setting columnsOutputPath = " + columnsOutputPath + ", this: " + this);
       this.columnsOutputPath = columnsOutputPath;
     }
-    this.writer = new PrintWriter(os);
+    else
+    {
+      writeHeader = true;
+    }
+    writer = new PrintWriter(os);
   }
 
   @Override
@@ -244,12 +241,12 @@ static public class CsvRecordWriter extends RecordWriter<FeatureIdWritable, Geom
         writer.print("GEOMETRY");
         delim = "" + delimiter;
       }
-      for (int i = 0; i < attributes.size(); i++)
+      for (String attribute : attributes)
       {
         writer.print(delim);
         delim = "" + delimiter;
 
-        writeCell(attributes.get(i));
+        writeCell(attribute);
       }
 
       writer.println("");
@@ -285,7 +282,7 @@ static public class CsvRecordWriter extends RecordWriter<FeatureIdWritable, Geom
         ColumnDefinitionFile cdf = new ColumnDefinitionFile();
         if (writeGeometry)
         {
-          List<String> modified = new ArrayList();
+          List<String> modified = new ArrayList<>();
           modified.add("GEOMETRY");
           modified.addAll(attributes);
 

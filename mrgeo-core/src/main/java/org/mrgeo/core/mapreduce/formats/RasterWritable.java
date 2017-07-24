@@ -31,10 +31,9 @@ private static final long serialVersionUID = 1L;
 
 public RasterWritable()
 {
-  super();
 }
 
-public RasterWritable(final byte[] bytes)
+public RasterWritable(byte[] bytes)
 {
   super(bytes);
 }

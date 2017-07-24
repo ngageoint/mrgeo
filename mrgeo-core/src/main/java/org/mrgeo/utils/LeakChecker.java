@@ -21,7 +21,7 @@ import java.util.Map;
 
 public class LeakChecker
 {
-private static LeakChecker checker = null;
+private static LeakChecker checker;
 
 private final Map<Integer, String> leaks = Collections
     .synchronizedMap(new HashMap<Integer, String>());
@@ -35,7 +35,7 @@ public synchronized static LeakChecker instance()
   return checker;
 }
 
-public void add(final Object obj, final String stack)
+public void add(Object obj, String stack)
 {
   int id = System.identityHashCode(obj);
   if (!leaks.containsKey(id))
@@ -45,7 +45,7 @@ public void add(final Object obj, final String stack)
   }
 }
 
-public void remove(final Object obj)
+public void remove(Object obj)
 {
   int id = System.identityHashCode(obj);
   if (leaks.containsKey(id))

@@ -20,16 +20,16 @@ import java.util.Iterator;
 
 public interface GeometryCollection extends Geometry
 {
-public Collection<? extends Geometry> getGeometries();
+Collection<? extends Geometry> getGeometries();
 
-public Iterator<? extends Geometry> iterator();
+Iterator<? extends Geometry> iterator();
 
-public int getNumGeometries();
+int getNumGeometries();
 
-public Geometry getGeometry(int index);
+Geometry getGeometry(int index);
 
-public String getRole(int index);
+String getRole(int index);
 
 @Override
-public com.vividsolutions.jts.geom.GeometryCollection toJTS();
+com.vividsolutions.jts.geom.GeometryCollection toJTS();
 }

@@ -10,6 +10,7 @@ class MrGeoStartTests(TestCase):
     def setUpClass(cls):
         print("*** MrGeoStartTests.setUpClass()")
         cls.mrgeo = MrGeo()
+        # cls.mrgeo = MrGeo(host="localhost", port=12345)  # already running, remote mrgeo
 
     @classmethod
     def tearDownClass(cls):

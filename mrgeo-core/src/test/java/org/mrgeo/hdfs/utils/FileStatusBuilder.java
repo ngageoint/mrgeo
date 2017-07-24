@@ -16,7 +16,7 @@ private Path path;
 
 public FileStatusBuilder()
 {
-  this.fileStatus = mock(FileStatus.class);
+  fileStatus = mock(FileStatus.class);
 }
 
 public FileStatusBuilder path(Path path)

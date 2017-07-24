@@ -16,12 +16,12 @@ private InputSplit wrappedSplit;
 
 public TiledInputSplitBuilder()
 {
-  this.tiledInputSplit = mock(TiledInputSplit.class);
+  tiledInputSplit = mock(TiledInputSplit.class);
 }
 
 public TiledInputSplitBuilder wrappedSplit(InputSplit inputSplit)
 {
-  this.wrappedSplit = inputSplit;
+  wrappedSplit = inputSplit;
 
   return this;
 }

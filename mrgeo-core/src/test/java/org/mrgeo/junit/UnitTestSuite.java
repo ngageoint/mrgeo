@@ -17,12 +17,15 @@
 package org.mrgeo.junit;
 
 import org.junit.experimental.categories.Categories;
+import org.junit.experimental.categories.Categories.ExcludeCategory;
+import org.junit.experimental.categories.Categories.IncludeCategory;
 import org.junit.runner.RunWith;
+import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Categories.class)
-@Categories.ExcludeCategory(org.mrgeo.junit.IntegrationTest.class)
-@Categories.IncludeCategory(org.mrgeo.junit.UnitTest.class)
-@org.junit.runners.Suite.SuiteClasses({AllTests.class})
+@ExcludeCategory(org.mrgeo.junit.IntegrationTest.class)
+@IncludeCategory(org.mrgeo.junit.UnitTest.class)
+@SuiteClasses({AllTests.class})
 public class UnitTestSuite
 {
 }

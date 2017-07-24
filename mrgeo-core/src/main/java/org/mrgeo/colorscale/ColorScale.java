@@ -15,7 +15,9 @@
 
 package org.mrgeo.colorscale;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.mrgeo.utils.FloatUtils;
 import org.mrgeo.utils.XmlUtils;
@@ -50,17 +52,16 @@ import java.util.*;
  */
 public class ColorScale extends TreeMap<Double, Color>
 {
-  private static final Logger log = LoggerFactory.getLogger(ColorScale.class);
+private static final Logger log = LoggerFactory.getLogger(ColorScale.class);
 private static final long serialVersionUID = 1L;
 private int CACHE_SIZE = 1024;
 private static final int A = 3;
 private static final int B = 2;
 private static final int G = 1;
 private static final int R = 0;
-private static final Object lock = new Object();
-private static ColorScale _colorScale = null;
-private static ColorScale _grayScale = null;
-private int[][] cache = null;
+private static ColorScale _colorScale;
+private static ColorScale _grayScale;
+private int[][] cache;
 private boolean interpolate;
 private Double min, max;
 private int[] nullColor = {0, 0, 0, 0};
@@ -68,9 +69,9 @@ private boolean reliefShading;
 private Scaling scaling = Scaling.Absolute;
 private boolean forceValuesIntoRange;
 private double transparent = Double.NaN;
-private String name = null;
-private String title = null;
-private String description = null;
+private String name;
+private String title;
+private String description;
 private double[] quantiles;
 private ColorScale[] quantileSubScales;
 
@@ -167,7 +168,7 @@ public synchronized static ColorScale createDefaultGrayScale()
  *
  * @param colorScale The URI of the color xml file.
  */
-public synchronized static void setDefault(final ColorScale colorScale)
+public synchronized static void setDefault(ColorScale colorScale)
 {
   _colorScale = colorScale;
 
@@ -190,10 +191,10 @@ private static int parseOpacity(String opacityStr)
   }
 }
 
-private static void parseColor(final String colorStr, final String opacityStr, final int[] color)
+private static void parseColor(String colorStr, String opacityStr, int[] color)
     throws IOException
 {
-  final String[] colors = colorStr.split(",");
+  String[] colors = colorStr.split(",");
   if (colors.length == 3) {
     color[0] = Integer.parseInt(colors[0]);
     color[1] = Integer.parseInt(colors[1]);
@@ -202,7 +203,7 @@ private static void parseColor(final String colorStr, final String opacityStr, f
   }
   else if (colors.length == 1) {
     // Allows colors to be specified in hex as #0F0F0F for example
-    int c = Integer.decode(colors[0]).intValue();
+    int c = Integer.decode(colors[0]);
     color[0] = (c & 0xFF0000) >> 16;
     color[1] = (c & 0x00FF00) >> 8;
     color[2] = (c & 0x0000FF);
@@ -290,7 +291,7 @@ public Object clone()
 {
   super.clone();
 
-  final ColorScale result = new ColorScale();
+  ColorScale result = new ColorScale();
   result.cache = null;
   result.interpolate = interpolate;
   result.min = min;
@@ -327,7 +328,7 @@ public int hashCode()
       .append(description).toHashCode();
 }
 
-public boolean equals(final ColorScale cs)
+public boolean equals(ColorScale cs)
 {
   if (min == null && cs.min != null || min != null && cs.min == null)
   {
@@ -376,10 +377,10 @@ public boolean equals(final ColorScale cs)
   {
     return false;
   }
-  final Iterator<Double> iterator2 = cs.keySet().iterator();
+  Iterator<Double> iterator2 = cs.keySet().iterator();
   for (Map.Entry<Double, Color> iterator1 : entrySet())
   {
-    final Double d2 = iterator2.next();
+    Double d2 = iterator2.next();
     if (iterator1.getKey().compareTo(d2) != 0)
     {
       return false;
@@ -393,11 +394,7 @@ public boolean equals(final ColorScale cs)
   if (!Arrays.equals(quantiles, cs.quantiles)) {
     return false;
   }
-  if (!Arrays.equals(quantileSubScales, cs.quantileSubScales)) {
-    return false;
-  }
-
-  return true;
+  return Arrays.equals(quantileSubScales, cs.quantileSubScales);
 }
 
 public boolean getForceValuesIntoRange()
@@ -412,7 +409,7 @@ public boolean getForceValuesIntoRange()
  *
  * @param i If true interpolation is enabled.
  */
-public void setForceValuesIntoRange(final boolean i)
+public void setForceValuesIntoRange(boolean i)
 {
   forceValuesIntoRange = i;
 }
@@ -429,7 +426,7 @@ public boolean getInterpolate()
  *
  * @param i If true interpolation is enabled.
  */
-public void setInterpolate(final boolean i)
+public void setInterpolate(boolean i)
 {
   interpolate = i;
   cache = null;
@@ -450,7 +447,7 @@ public int[] getNullColor()
   return nullColor.clone();
 }
 
-public void setNullColor(final int[] color)
+public void setNullColor(int[] color)
 {
   nullColor = color.clone();
 }
@@ -465,7 +462,7 @@ public Scaling getScaling()
   return scaling;
 }
 
-public void setScaling(final Scaling s)
+public void setScaling(Scaling s)
 {
   scaling = s;
   cache = null;
@@ -476,72 +473,72 @@ public double getTransparent()
   return transparent;
 }
 
-public void setTransparent(final double transparent)
+public void setTransparent(double transparent)
 {
   this.transparent = transparent;
 }
 
-public void fromXML(final Document doc) throws ColorScaleException
+public void fromXML(Document doc) throws ColorScaleException
 {
   try
   {
     clear();
 
-    final XPath xpath = XmlUtils.createXPath();
+    XPath xpath = XmlUtils.createXPath();
 
     name = xpath.evaluate("/ColorMap/@name", doc);
 
-    final Node nodeTitle = (Node) xpath.evaluate("/ColorMap/Title", doc, XPathConstants.NODE);
+    Node nodeTitle = (Node) xpath.evaluate("/ColorMap/Title", doc, XPathConstants.NODE);
     if (nodeTitle != null)
     {
       title = xpath.evaluate("text()", nodeTitle);
     }
 
-    final Node nodeDesc = (Node) xpath.evaluate("/ColorMap/Description", doc, XPathConstants.NODE);
+    Node nodeDesc = (Node) xpath.evaluate("/ColorMap/Description", doc, XPathConstants.NODE);
     if (nodeDesc != null)
     {
       description = xpath.evaluate("text()", nodeDesc);
     }
 
     scaling = Scaling.valueOf(xpath.evaluate("/ColorMap/Scaling/text()", doc));
-    final String reliefShadingStr = xpath.evaluate("/ColorMap/ReliefShading/text()", doc)
+    String reliefShadingStr = xpath.evaluate("/ColorMap/ReliefShading/text()", doc)
         .toLowerCase();
     reliefShading = reliefShadingStr.equals("1") || reliefShadingStr.equals("true");
 
-    final String interpolateStr = xpath.evaluate("/ColorMap/Interpolate/text()", doc)
+    String interpolateStr = xpath.evaluate("/ColorMap/Interpolate/text()", doc)
         .toLowerCase();
     interpolate = interpolateStr.isEmpty() || (interpolateStr.equals("1") || interpolateStr.equals("true"));
 
-    final String forceStr = xpath.evaluate("/ColorMap/ForceValuesIntoRange/text()", doc)
+    String forceStr = xpath.evaluate("/ColorMap/ForceValuesIntoRange/text()", doc)
         .toLowerCase();
     forceValuesIntoRange = (forceStr.equals("1") || forceStr.equals("true"));
 
-    final Node nullColorNode = (Node) xpath.evaluate("/ColorMap/NullColor", doc,
+    Node nullColorNode = (Node) xpath.evaluate("/ColorMap/NullColor", doc,
         XPathConstants.NODE);
     if (nullColorNode != null)
     {
-      final String colorStr = xpath.evaluate("@color", nullColorNode);
-      final String opacityStr = xpath.evaluate("@opacity", nullColorNode);
+      String colorStr = xpath.evaluate("@color", nullColorNode);
+      String opacityStr = xpath.evaluate("@opacity", nullColorNode);
       parseColor(colorStr, opacityStr, nullColor);
     }
 
-    final int[] color = new int[4];
-    final XPathExpression expr = xpath.compile("/ColorMap/Color");
-    final NodeList nodes = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+    int[] color = new int[4];
+    XPathExpression expr = xpath.compile("/ColorMap/Color");
+    NodeList nodes = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
     for (int i = 0; i < nodes.getLength(); i++)
     {
-      final Node node = nodes.item(i);
+      Node node = nodes.item(i);
 
-      final String valueStr = xpath.evaluate("@value", node);
-      final String colorStr = xpath.evaluate("@color", node);
-      final String opacityStr = xpath.evaluate("@opacity", node);
+      String valueStr = xpath.evaluate("@value", node);
+      String colorStr = xpath.evaluate("@color", node);
+      String opacityStr = xpath.evaluate("@opacity", node);
 
       if (valueStr.isEmpty())
       {
         throw new IOException("Error parsing XML: A value must be specified for a color element.");
       }
 
-      final double value = Double.valueOf(valueStr);
+      double value = Double.valueOf(valueStr);
       parseColor(colorStr, opacityStr, color);
       put(value, color);
     }
@@ -554,13 +551,13 @@ public void fromXML(final Document doc) throws ColorScaleException
   }
 }
 
-public void fromXML(final InputStream strm) throws ColorScaleException
+public void fromXML(InputStream strm) throws ColorScaleException
 {
   try
   {
     fromXML(XmlUtils.parseInputStream(strm));
   }
-  catch (final Exception e)
+  catch (Exception e)
   {
     log.error("Got exception while parsing color scale " + e.getMessage(), e);
     throw new ColorScaleException(e);
@@ -579,7 +576,7 @@ public void fromXML(final InputStream strm) throws ColorScaleException
 //    }
 //  }
 
-public void fromJSON(final InputStream stream) throws ColorScaleException
+public void fromJSON(InputStream stream) throws ColorScaleException
 {
   try
   {
@@ -602,49 +599,52 @@ public void fromJSON(final InputStream stream) throws ColorScaleException
 }
 
 // load color scale from json
-public void fromJSON(final String json) throws ColorScaleException
+@SuppressFBWarnings(value = "SIC_INNER_SHOULD_BE_STATIC_ANON", justification = "TypeReference<> is for Jackson")
+public void fromJSON(String json) throws ColorScaleException
 {
   try
   {
-    final ObjectMapper mapper = new ObjectMapper();
-    final Map<String, Object> colorScaleMap = mapper.readValue(json, Map.class);
-    final String scalingStr = (String) colorScaleMap.get("Scaling");
+    ObjectMapper mapper = new ObjectMapper();
+    TypeReference<Map<String, Object>> typeRef = new TypeReference<Map<String, Object>>(){};
+
+    Map<String, Object> colorScaleMap = mapper.readValue(json, typeRef);
+
+    String scalingStr = (String) colorScaleMap.get("Scaling");
     if (scalingStr != null)
     {
       scaling = Scaling.valueOf(scalingStr);
     }
-    final String reliefShadingStr = (String) colorScaleMap.get("ReliefShading");
+    String reliefShadingStr = (String) colorScaleMap.get("ReliefShading");
     reliefShading = ("1").equals(reliefShadingStr) || ("true").equalsIgnoreCase(reliefShadingStr);
 
-    final String interpolateStr = (String) colorScaleMap.get("Interpolate");
+    String interpolateStr = (String) colorScaleMap.get("Interpolate");
     interpolate = (interpolateStr == null) || interpolateStr.isEmpty() || ("1").equals(interpolateStr) ||
         ("true").equalsIgnoreCase(interpolateStr);
 
-    final String forceStr = (String) colorScaleMap.get("ForceValuesIntoRange");
+    String forceStr = (String) colorScaleMap.get("ForceValuesIntoRange");
     forceValuesIntoRange = ("1").equals(forceStr) || ("true").equalsIgnoreCase(forceStr);
 
-    final Map<String, String> nullColorMap = (Map<String, String>) colorScaleMap.get("NullColor");
-    final String nullColorStr = nullColorMap.get("color");
+    Map<?,?> nullColorMap = (Map<?,?>) colorScaleMap.get("NullColor");
+
+    String nullColorStr = (String) nullColorMap.get("color");
     if (nullColorStr != null)
     {
-      parseColor(nullColorStr, nullColorMap.get("opacity"), nullColor);
+      parseColor(nullColorStr, (String) nullColorMap.get("opacity"), nullColor);
     }
 
-    final ArrayList<Map<String, String>> colorsList = (ArrayList<Map<String, String>>) colorScaleMap
-        .get("Colors");
-    if (colorsList != null)
+    ArrayList<?> colorsList = (ArrayList<?>) colorScaleMap.get("Colors");
+    for (Object obj : colorsList)
     {
-      for (final Map<String, String> color : colorsList)
+      Map<?,?> color = (Map<?, ?>) obj;
+
+      int[] colorArr = new int[4];
+      String colorStr = (String) color.get("color");
+      String valueStr = (String) color.get("value");
+      Double value = Double.valueOf(valueStr);
+      if (colorStr != null)
       {
-        final int[] colorArr = new int[4];
-        final String colorStr = color.get("color");
-        final String valueStr = color.get("value");
-        final Double value = Double.valueOf(valueStr);
-        if (colorStr != null)
-        {
-          parseColor(colorStr, color.get("opacity"), colorArr);
-          put(value, colorArr);
-        }
+        parseColor(colorStr, (String) color.get("opacity"), colorArr);
+        put(value, colorArr);
       }
     }
   }
@@ -654,7 +654,7 @@ public void fromJSON(final String json) throws ColorScaleException
   }
 }
 
-final public int[] lookup(final double v)
+final public int[] lookup(double v)
 {
   if (scaling == Scaling.Quantile) {
     // Lookup the sub-scale for the value, then call it's lookup
@@ -692,65 +692,65 @@ final public int[] lookup(final double v)
   }
   else
   {
-    final int i = (int) ((v - min) / (max - min) * (CACHE_SIZE - 1) + 0.5);
+    int i = (int) ((v - min) / (max - min) * (CACHE_SIZE - 1) + 0.5);
     // int i = (int) ((v - min) / (max - min) * (CACHE_SIZE - 1));
     return cache[i];
   }
 }
 
-final public void lookup(final double v, final int[] color)
+final public void lookup(double v, int[] color)
 {
-  final int[] c = lookup(v);
+  int[] c = lookup(v);
   System.arraycopy(c, 0, color, 0, 4);
 }
 
-final public void lookup(final double v, final int[] colors, final int offset)
+final public void lookup(double v, int[] colors, int offset)
 {
-  final int[] c = lookup(v);
+  int[] c = lookup(v);
   System.arraycopy(c, 0, colors, offset, 4);
 }
 
-final public int[] lookupRGB(final double v)
+final public int[] lookupRGB(double v)
 {
-  final int[] c = lookup(v);
+  int[] c = lookup(v);
 
-  final int[] mapped = new int[3];
+  int[] mapped = new int[3];
   System.arraycopy(c, 0, c, 0, 3);
 
   return mapped;
 }
 
-final public void lookupRGB(final double v, final int[] color)
+final public void lookupRGB(double v, int[] color)
 {
-  final int[] c = lookup(v);
+  int[] c = lookup(v);
   System.arraycopy(c, 0, color, 0, 3);
 }
 
-final public void lookupRGB(final double v, final int[] colors, final int offset)
+final public void lookupRGB(double v, int[] colors, int offset)
 {
-  final int[] c = lookup(v);
+  int[] c = lookup(v);
   System.arraycopy(c, 0, colors, offset, 3);
 }
 
-public void put(final double key, final Color c)
+public void put(double key, Color c)
 {
   put(Double.valueOf(key), c);
   cache = null;
 }
 
-public void put(final double key, final int r, final int g, final int b)
+public void put(double key, int r, int g, int b)
 {
   put(Double.valueOf(key), new Color(r, g, b));
   cache = null;
 }
 
-public void put(final double key, final int r, final int g, final int b, final int a)
+public void put(double key, int r, int g, int b, int a)
 {
   put(Double.valueOf(key), new Color(r, g, b, a));
   cache = null;
 }
 
-public void put(final double key, final int[] c)
+public void put(double key, int[] c)
 {
   put(Double.valueOf(key), new Color(c[0], c[1], c[2], c[3]));
   cache = null;
@@ -763,7 +763,7 @@ public void put(final double key, final int[] c)
 public void setDefaultGrayScaleValues()
 {
   clear();
-  setScaling(ColorScale.Scaling.MinMax);
+  setScaling(Scaling.MinMax);
   put(0.0, new Color(0, 0, 0));
   put(0.1, new Color(26, 26, 26));
   put(0.2, new Color(52, 52, 52));
@@ -786,7 +786,7 @@ public void setDefaultGrayScaleValues()
 public void setDefaultValues()
 {
   clear();
-  setScaling(ColorScale.Scaling.MinMax);
+  setScaling(Scaling.MinMax);
   put(0.0, new Color(0, 0, 0, 0));
   put(1e-12, new Color(255, 255, 255, 128));
   put(0.1, new Color(247, 252, 253));
@@ -813,7 +813,7 @@ public void setDefaultValues()
  * @param min The minimum value to be expected (smaller values will just be forced to min.
  * @param max The maximum value to be expected (larger values will just be forced to max.
  */
-public void setScaleRange(final double min, final double max)
+public void setScaleRange(double min, double max)
 {
   this.min = min;
   this.max = max;
@@ -825,7 +825,7 @@ public void setScaleRange(final double min, final double max)
   buildCache();
 }
 
-public void setScaleRangeWithQuantiles(final double min, final double max, final double[] quantiles)
+public void setScaleRangeWithQuantiles(double min, double max, double[] quantiles)
 {
   this.min = min;
   this.max = max;
@@ -849,7 +849,7 @@ protected void buildCache()
   }
   else if (scaling == Scaling.Quantile) {
     // If there are no quantiles for the image, then revert to an Absolute scale
-    if (this.quantiles == null || this.quantiles.length < 1) {
+    if (quantiles == null || quantiles.length < 1) {
       // Revert to interpolated Absolute scale.
       scaling = Scaling.Absolute;
       interpolate = true;
@@ -915,7 +915,7 @@ protected void buildCache()
         // of the colors to the data bins.
         float colorsPerQuantileBin = (float)(colors.length - 2) / (float)(quantiles.length + 1);
         for (int q = 1; q <= quantiles.length; q++) {
-          int index = (int) Math.round(colorsPerQuantileBin * q);
+          int index = Math.round(colorsPerQuantileBin * q);
           quantileColors[q] = colors[index];
         }
         allQuantilesHaveColors = true;
@@ -939,10 +939,10 @@ protected void buildCache()
           float slotFactor = 1.0f / ((float)numSlots + 1);
           for (int slot = 1; slot <= numSlots; slot++) {
             quantileColors[lastAssignedQuantile + slot] = new Color(
-                    interpolateValue(color1.getRed(), color2.getRed(), slotFactor * slot),
-                    interpolateValue(color1.getGreen(), color2.getGreen(), slotFactor * slot),
-                    interpolateValue(color1.getBlue(), color2.getBlue(), slotFactor * slot),
-                    interpolateValue(color1.getAlpha(), color2.getAlpha(), slotFactor * slot));
+                interpolateValue(color1.getRed(), color2.getRed(), slotFactor * slot),
+                interpolateValue(color1.getGreen(), color2.getGreen(), slotFactor * slot),
+                interpolateValue(color1.getBlue(), color2.getBlue(), slotFactor * slot),
+                interpolateValue(color1.getAlpha(), color2.getAlpha(), slotFactor * slot));
           }
           lastAssignedQuantile = q;
         }
@@ -985,7 +985,7 @@ protected void buildCache()
   }
   else {
     for (int i = 0; i < CACHE_SIZE; i++) {
-      final double v = min + (max - min) * ((double) i / (double) (CACHE_SIZE - 1));
+      double v = min + (max - min) * ((double) i / (double) (CACHE_SIZE - 1));
       if (interpolate) {
         interpolateColor(v, cache[i]);
       } else {
@@ -1006,12 +1006,10 @@ private int interpolateValue(int v1, int v2, float factor)
 /**
  * Find the color band that this value falls in and assign that color.
  *
- * @param v
- * @param color
  */
-final private void absoluteColor(final double v, final int[] color)
+private void absoluteColor(double v, int[] color)
 {
-  final double search;
+  double search;
   switch (scaling)
   {
   case Absolute:
@@ -1029,7 +1027,7 @@ final private void absoluteColor(final double v, final int[] color)
     break;
   }
 
-  final Map.Entry<Double, Color> lower = floorEntry(search);
+  Map.Entry<Double, Color> lower = floorEntry(search);
 
   Color c;
   if (lower == null)
@@ -1050,13 +1048,10 @@ final private void absoluteColor(final double v, final int[] color)
 /**
  * Interpolate the color value for the given scalar value. The result is placed in color.
  *
- * @param v
- * @param color
- * @return
  */
-final private void interpolateColor(final double v, final int[] color)
+private void interpolateColor(double v, int[] color)
 {
-  final double search;
+  double search;
   switch (scaling)
   {
   case Absolute:
@@ -1074,14 +1069,14 @@ final private void interpolateColor(final double v, final int[] color)
     break;
   }
 
-  final Map.Entry<Double, Color> lower = floorEntry(search);
-  final Map.Entry<Double, Color> upper = higherEntry(search);
+  Map.Entry<Double, Color> lower = floorEntry(search);
+  Map.Entry<Double, Color> upper = higherEntry(search);
 
   assert (upper != null || lower != null);
 
   if (upper == null)
   {
-    final Color c = lower.getValue();
+    Color c = lower.getValue();
     color[R] = c.getRed();
     color[G] = c.getGreen();
     color[B] = c.getBlue();
@@ -1089,7 +1084,7 @@ final private void interpolateColor(final double v, final int[] color)
   }
   else if (lower == null)
   {
-    final Color c = upper.getValue();
+    Color c = upper.getValue();
     color[R] = c.getRed();
     color[G] = c.getGreen();
     color[B] = c.getBlue();
@@ -1097,12 +1092,12 @@ final private void interpolateColor(final double v, final int[] color)
   }
   else
   {
-    final double diff = upper.getKey().doubleValue() - lower.getKey().doubleValue();
-    final double lw = 1.0 - ((search - lower.getKey().doubleValue()) / diff);
-    final double uw = 1.0 - lw;
+    double diff = upper.getKey() - lower.getKey();
+    double lw = 1.0 - ((search - lower.getKey()) / diff);
+    double uw = 1.0 - lw;
 
-    final Color lc = lower.getValue();
-    final Color uc = upper.getValue();
+    Color lc = lower.getValue();
+    Color uc = upper.getValue();
     color[R] = (int) Math.round(lc.getRed() * lw + uc.getRed() * uw);
     color[G] = (int) Math.round(lc.getGreen() * lw + uc.getGreen() * uw);
     color[B] = (int) Math.round(lc.getBlue() * lw + uc.getBlue() * uw);
@@ -1119,7 +1114,7 @@ public static class BadSourceException extends ColorScaleException
 {
   private static final long serialVersionUID = 1L;
 
-  public BadSourceException(final Exception e)
+  public BadSourceException(Exception e)
   {
     super(e);
   }
@@ -1130,7 +1125,7 @@ public static class BadJSONException extends ColorScaleException
 {
   private static final long serialVersionUID = 1L;
 
-  public BadJSONException(final Exception e)
+  public BadJSONException(Exception e)
   {
     super(e);
   }
@@ -1141,7 +1136,7 @@ public static class BadXMLException extends ColorScaleException
 {
   private static final long serialVersionUID = 1L;
 
-  public BadXMLException(final Exception e)
+  public BadXMLException(Exception e)
   {
     super(e);
   }
@@ -1153,16 +1148,15 @@ public static class ColorScaleException extends Exception
   private static final long serialVersionUID = 1L;
   private final Exception origException;
 
-  public ColorScaleException(final Exception e)
+  public ColorScaleException(Exception e)
   {
-    this.origException = e;
+    origException = e;
     // printStackTrace();
   }
 
-  public ColorScaleException(final String msg)
+  public ColorScaleException(String msg)
   {
-    final Exception e = new Exception(msg);
-    this.origException = e;
+    origException = new Exception(msg);
   }
 
   @Override

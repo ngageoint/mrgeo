@@ -37,10 +37,10 @@ public TiledInputSplit()
 {
 }
 
-public TiledInputSplit(final InputSplit inputSplit, long startTileId,
+public TiledInputSplit(InputSplit inputSplit, long startTileId,
     long endTileId, int zoomLevel, int tileSize)
 {
-  this.wrappedInputSplit = inputSplit;
+  wrappedInputSplit = inputSplit;
   this.startTileId = startTileId;
   this.endTileId = endTileId;
   this.zoomLevel = zoomLevel;

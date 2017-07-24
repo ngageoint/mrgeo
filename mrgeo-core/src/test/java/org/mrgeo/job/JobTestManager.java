@@ -20,7 +20,6 @@ public class JobTestManager extends JobManager
 {
 protected JobTestManager()
 {
-  super();
 }
 
 synchronized public static JobManager getInstance()

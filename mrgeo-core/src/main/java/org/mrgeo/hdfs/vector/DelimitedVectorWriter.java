@@ -66,7 +66,7 @@ public void append(FeatureIdWritable key, Geometry value) throws IOException
     // Store a list of attribute names so that we can write them in the
     // same order for every feature. At the same time, we build up the
     // attribute header.
-    StringBuffer header = new StringBuffer();
+    StringBuilder header = new StringBuilder();
     header.append("GEOMETRY");
     int i = 0;
     for (String attributeName : sortedAttributes.navigableKeySet())
@@ -89,10 +89,10 @@ public void append(FeatureIdWritable key, Geometry value) throws IOException
       i++;
     }
     // Write the header line which is a delimited list of attribute names
-    out.println(header.toString());
+    out.println(header);
   }
 
-  StringBuffer strFeature = new StringBuffer();
+  StringBuilder strFeature = new StringBuilder();
   strFeature.append(WktConverter.toWkt(value));
   for (String attributeName : attributeNames)
   {
@@ -115,7 +115,7 @@ public void append(FeatureIdWritable key, Geometry value) throws IOException
       }
     }
   }
-  out.println(strFeature.toString());
+  out.println(strFeature);
 }
 
 @Override

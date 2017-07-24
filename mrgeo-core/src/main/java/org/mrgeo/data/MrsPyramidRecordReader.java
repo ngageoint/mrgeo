@@ -19,6 +19,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.image.ImageInputFormatContext;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.raster.RasterWritable;
@@ -78,7 +79,7 @@ public void initialize(InputSplit split, TaskAttemptContext context) throws IOEx
 {
   if (split instanceof MrsPyramidInputSplit)
   {
-    final MrsPyramidInputSplit fsplit = (MrsPyramidInputSplit) split;
+    MrsPyramidInputSplit fsplit = (MrsPyramidInputSplit) split;
 
     ifContext = ImageInputFormatContext.load(context.getConfiguration());
     if (ifContext.getBounds() != null)
@@ -101,10 +102,10 @@ public boolean nextKeyValue() throws IOException, InterruptedException
 {
   while (scannedInputReader.nextKeyValue())
   {
-    final long id = scannedInputReader.getCurrentKey().get();
+    long id = scannedInputReader.getCurrentKey().get();
 
-    final Tile tile = TMSUtils.tileid(id, zoomLevel);
-    final Bounds tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoomLevel, tilesize);
+    Tile tile = TMSUtils.tileid(id, zoomLevel);
+    Bounds tb = TMSUtils.tileBounds(tile.tx, tile.ty, zoomLevel, tilesize);
     if (inputBounds.intersects(tb.w, tb.s, tb.e, tb.n))
     {
       setNextKeyValue(id, scannedInputReader.getCurrentValue());
@@ -115,15 +116,15 @@ public boolean nextKeyValue() throws IOException, InterruptedException
 }
 
 private RecordReader<TileIdWritable, RasterWritable> getRecordReader(
-    final String name, final Configuration conf) throws DataProviderNotFound
+    String name, Configuration conf) throws DataProviderNotFound
 {
   MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(name,
-      DataProviderFactory.AccessMode.READ, conf);
+      AccessMode.READ, conf);
   return dp.getRecordReader();
 }
 
 private RecordReader<TileIdWritable, RasterWritable> createRecordReader(
-    final MrsPyramidInputSplit split, final TaskAttemptContext context)
+    MrsPyramidInputSplit split, TaskAttemptContext context)
     throws IOException
 {
   InputSplit initializeWithSplit;
@@ -144,7 +145,7 @@ private RecordReader<TileIdWritable, RasterWritable> createRecordReader(
   return recordReader;
 }
 
-private void setNextKeyValue(final long tileid, final RasterWritable tileValue)
+private void setNextKeyValue(long tileid, RasterWritable tileValue)
 {
   key = new TileIdWritable(tileid);
   // The copy operation is required below for Spark RDD creation to prevent all the

@@ -29,6 +29,7 @@ import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.Version;
 import org.mrgeo.services.mrspyramid.rendering.*;
+import org.mrgeo.services.utils.RequestUtils;
 import org.mrgeo.utils.XmlUtils;
 import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
@@ -46,12 +47,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.dom.DOMSource;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 //import javax.servlet.http.HttpServlet;
 //import javax.servlet.http.HttpServletRequest;
@@ -82,26 +79,6 @@ public WmsGenerator()
 {
 }
 
-/*
- * Returns a list of all MrsPyramid version 2 data in the home data directory
- */
-private static MrsImageDataProvider[] getPyramidFilesList(
-    final ProviderProperties providerProperties) throws IOException
-{
-  String[] images = DataProviderFactory.listImages(providerProperties);
-
-  Arrays.sort(images);
-
-  MrsImageDataProvider[] providers = new MrsImageDataProvider[images.length];
-
-  for (int i = 0; i < images.length; i++)
-  {
-    providers[i] = DataProviderFactory.getMrsImageDataProvider(images[i],
-        DataProviderFactory.AccessMode.READ, providerProperties);
-  }
-
-  return providers;
-}
 
 private static MrGeoRaster colorRaster(String layer, String style, String imageFormat, ImageRenderer renderer,
     MrGeoRaster result, ProviderProperties providerProperties) throws WmsGeneratorException
@@ -155,15 +132,15 @@ private static MrGeoRaster colorRaster(String layer, String style, String imageF
 }
 
 @GET
-public Response doGet(@Context UriInfo uriInfo)
+public Response doGet(@Context UriInfo uriInfo, @Context HttpHeaders headers)
 {
-  return handleRequest(uriInfo);
+  return handleRequest(uriInfo, headers);
 }
 
 @POST
-public Response doPost(@Context UriInfo uriInfo)
+public Response doPost(@Context UriInfo uriInfo, @Context HttpHeaders headers)
 {
-  return handleRequest(uriInfo);
+  return handleRequest(uriInfo, headers);
 }
 
 /**
@@ -217,18 +194,6 @@ private boolean paramExists(MultivaluedMap<String, String> allParams,
   return false;
 }
 
-private String getActualQueryParamName(MultivaluedMap<String, String> allParams,
-    String paramName)
-{
-  for (String key : allParams.keySet())
-  {
-    if (key.equalsIgnoreCase(paramName))
-    {
-      return key;
-    }
-  }
-  return null;
-}
 
 /**
  * Returns the int value for the specified paramName case-insensitively. If
@@ -276,9 +241,12 @@ private double getQueryParamAsDouble(MultivaluedMap<String, String> allParams,
   return defaultValue;
 }
 
-private Response handleRequest(@Context UriInfo uriInfo)
+private Response handleRequest(@Context UriInfo uriInfo, @Context HttpHeaders headers)
 {
   long start = System.currentTimeMillis();
+
+  String uri = RequestUtils.buildBaseURI(uriInfo, headers);
+
   try
   {
     MultivaluedMap<String, String> allParams = uriInfo.getQueryParameters();
@@ -309,11 +277,11 @@ private Response handleRequest(@Context UriInfo uriInfo)
     }
     else if (request.equalsIgnoreCase("getcapabilities"))
     {
-      return getCapabilities(uriInfo, allParams, providerProperties);
+      return getCapabilities(uri, allParams, providerProperties);
     }
     else if (request.equalsIgnoreCase("describetiles"))
     {
-      return describeTiles(uriInfo, allParams, providerProperties);
+      return describeTiles(uri, allParams, providerProperties);
     }
     return writeError(Response.Status.BAD_REQUEST, "Invalid request");
   }
@@ -458,11 +426,6 @@ private Response getMap(MultivaluedMap<String, String> allParams, ProviderProper
   catch (ImageRendererException e) {
     log.error("Unable to render the image in getMap", e);
     return writeError(Response.Status.BAD_REQUEST, "Unable to render the image in getMap");
-  }
-  catch (IllegalAccessException | InstantiationException | WmsGeneratorException e)
-  {
-    log.error("Unable to render the image in getMap", e);
-    return writeError(Response.Status.INTERNAL_SERVER_ERROR, "Unable to render the image in getMap");
   }
   catch (Throwable e) {
     log.error("Unable to render the image in getMap", e);
@@ -698,7 +661,7 @@ private Response getTile(MultivaluedMap<String, String> allParams,
 /*
  * DescribeTiles implementation
  */
-private Response describeTiles(UriInfo uriInfo,
+private Response describeTiles(String baseURI,
     MultivaluedMap<String, String> allParams,
     final ProviderProperties providerProperties)
 {
@@ -712,8 +675,8 @@ private Response describeTiles(UriInfo uriInfo,
   try
   {
     final DescribeTilesDocumentGenerator docGen = new DescribeTilesDocumentGenerator();
-    final Document doc = docGen.generateDoc(version, uriInfo.getRequestUri().toString(),
-        getPyramidFilesList(providerProperties));
+    final Document doc = docGen.generateDoc(version, baseURI,
+        RequestUtils.getPyramidFilesList(providerProperties));
 
     DOMSource source = new DOMSource(doc);
     return Response.ok(source, MediaType.APPLICATION_XML).build();
@@ -728,30 +691,25 @@ private Response describeTiles(UriInfo uriInfo,
 /*
  * GetCapabilities implementation
  */
-private Response getCapabilities(UriInfo uriInfo, MultivaluedMap<String, String> allParams,
+private Response getCapabilities(String baseURI, MultivaluedMap<String, String> allParams,
     ProviderProperties providerProperties)
 {
-  // The versionParamName will be null if the request did not include the
-  // version parameter.
-  String versionParamName = getActualQueryParamName(allParams, "version");
-  String versionStr = getQueryParam(allParams, "version", "1.1.1");
-  Version version = new Version(versionStr);
+  Version version =  new Version(getQueryParam(allParams, "version", "1.1.1"));
   // conform to the version negotiation standards of WMS.
   if (version.isLess("1.3.0"))
   {
-    versionStr = "1.1.1";
-    version = new Version(versionStr);
+    version = new Version("1.1.1");
   }
   else if (version.isLess("1.4.0"))
   {
-    versionStr = "1.3.0";
-    version = new Version(versionStr);
+    version = new Version("1.3.0");
   }
   else
   {
-    versionStr = "1.4.0";
-    version = new Version(versionStr);
+    version = new Version("1.4.0");
   }
+
+  allParams = RequestUtils.replaceParam("VERSION", version.toString(), allParams);
 
   final GetCapabilitiesDocumentGenerator docGen = new GetCapabilitiesDocumentGenerator();
   try
@@ -761,29 +719,8 @@ private Response getCapabilities(UriInfo uriInfo, MultivaluedMap<String, String>
     // predictable order. The reason for this is so that test cases can compare XML
     // golden files against the XML generated here without worrying about parameters
     // shifting locations in the URI.
-    Set<String> keys = uriInfo.getQueryParameters().keySet();
-    String[] sortedKeys = new String[keys.size()];
-    keys.toArray(sortedKeys);
-    Arrays.sort(sortedKeys);
-    UriBuilder builder = uriInfo.getBaseUriBuilder().path(uriInfo.getPath());
-    for (String key : sortedKeys)
-    {
-      // Only include the VERSION parameter in the URI used in GetCapabilities
-      // if it was included in the original URI request.
-      if (key.equalsIgnoreCase("version"))
-      {
-        if (versionParamName != null)
-        {
-          builder = builder.queryParam(versionParamName, versionStr);
-        }
-      }
-      else
-      {
-        builder = builder.queryParam(key, getQueryParam(allParams, key));
-      }
-    }
-    final Document doc = docGen.generateDoc(version, builder.build().toString(),
-        getPyramidFilesList(providerProperties));
+    final Document doc = docGen.generateDoc(version, baseURI, allParams,
+        RequestUtils.getPyramidFilesList(providerProperties));
 
     DOMSource source = new DOMSource(doc);
     return Response.ok(source, MediaType.APPLICATION_XML).build();
@@ -829,22 +766,22 @@ public static class WmsGeneratorException extends IOException
 {
   private static final long serialVersionUID = 1L;
 
-  public WmsGeneratorException()
+  WmsGeneratorException()
   {
     super();
   }
 
-  public WmsGeneratorException(final String msg)
+  WmsGeneratorException(final String msg)
   {
     super(msg);
   }
 
-  public WmsGeneratorException(final String msg, final Throwable cause)
+  WmsGeneratorException(final String msg, final Throwable cause)
   {
     super(msg, cause);
   }
 
-  public WmsGeneratorException(final Throwable cause)
+  WmsGeneratorException(final Throwable cause)
   {
     super(cause);
   }

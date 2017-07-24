@@ -23,20 +23,19 @@ private static final long serialVersionUID = 1L;
 
 public DataProviderException()
 {
-  super();
 }
 
-public DataProviderException(final String msg)
+public DataProviderException(String msg)
 {
   super(msg);
 }
 
-public DataProviderException(final String msg, final Throwable cause)
+public DataProviderException(String msg, Throwable cause)
 {
   super(msg, cause);
 }
 
-public DataProviderException(final Throwable cause)
+public DataProviderException(Throwable cause)
 {
   super(cause);
 }

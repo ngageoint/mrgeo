@@ -19,7 +19,7 @@ public class VectorOutputFormatContext
 {
 private String output;
 
-public VectorOutputFormatContext(final String output)
+public VectorOutputFormatContext(String output)
 {
   this.output = output;
 }

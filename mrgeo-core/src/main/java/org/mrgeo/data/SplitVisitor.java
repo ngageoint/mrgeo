@@ -19,5 +19,5 @@ import org.mrgeo.mapreduce.splitters.TiledInputSplit;
 
 public interface SplitVisitor
 {
-public boolean accept(TiledInputSplit split);
+boolean accept(TiledInputSplit split);
 }

@@ -27,7 +27,6 @@ public class MaxCompositeDouble extends WeightedComposite
 
 public MaxCompositeDouble()
 {
-  super();
 }
 
 public MaxCompositeDouble(double weight)

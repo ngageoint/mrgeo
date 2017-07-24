@@ -26,7 +26,7 @@ import java.util.Map;
 public class HdfsAdHocDataProviderFactory implements AdHocDataProviderFactory
 {
 @Override
-public boolean isValid(final Configuration conf)
+public boolean isValid(Configuration conf)
 {
   return true;
 }
@@ -55,48 +55,48 @@ public void setConfiguration(Map<String, String> properties)
 }
 
 @Override
-public AdHocDataProvider createAdHocDataProvider(final String name,
-                                                 final Configuration conf,
-                                                 final ProviderProperties providerProperties) throws IOException
+public AdHocDataProvider createAdHocDataProvider(String name,
+                                                 Configuration conf,
+                                                 ProviderProperties providerProperties) throws IOException
 {
   return new HdfsAdHocDataProvider(conf, name, providerProperties);
 }
 
 @Override
-public AdHocDataProvider createAdHocDataProvider(final Configuration conf,
-                                                 final ProviderProperties providerProperties) throws IOException
+public AdHocDataProvider createAdHocDataProvider(Configuration conf,
+                                                 ProviderProperties providerProperties) throws IOException
 {
   return new HdfsAdHocDataProvider(conf, providerProperties);
 }
 
 @Override
-public boolean canOpen(final String name,
-                       final Configuration conf,
-                       final ProviderProperties providerProperties) throws IOException
+public boolean canOpen(String name,
+                       Configuration conf,
+                       ProviderProperties providerProperties) throws IOException
 {
   return HdfsAdHocDataProvider.canOpen(conf, name, providerProperties);
 }
 
 @Override
-public boolean canWrite(final String name,
-                        final Configuration conf,
-                        final ProviderProperties providerProperties) throws IOException
+public boolean canWrite(String name,
+                        Configuration conf,
+                        ProviderProperties providerProperties) throws IOException
 {
   return HdfsAdHocDataProvider.canWrite(name, conf, providerProperties);
 }
 
 @Override
-public boolean exists(final String name,
-                      final Configuration conf,
-                      final ProviderProperties providerProperties) throws IOException
+public boolean exists(String name,
+                      Configuration conf,
+                      ProviderProperties providerProperties) throws IOException
 {
   return HdfsAdHocDataProvider.exists(conf, name, providerProperties);
 }
 
 @Override
-public void delete(final String name,
-                   final Configuration conf,
-                   final ProviderProperties providerProperties) throws IOException
+public void delete(String name,
+                   Configuration conf,
+                   ProviderProperties providerProperties) throws IOException
 {
   HdfsAdHocDataProvider.delete(conf, name, null);
 }

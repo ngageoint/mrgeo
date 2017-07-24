@@ -26,7 +26,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
-import org.mrgeo.core.MrGeoPropertiesTest;
 import org.mrgeo.junit.UnitTest;
 import org.mrgeo.test.TestUtils;
 

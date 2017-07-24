@@ -16,6 +16,7 @@
 package org.mrgeo.geometry;
 
 import com.vividsolutions.jts.geom.Coordinate;
+import org.mrgeo.geometry.Geometry.Type;
 import org.mrgeo.utils.tms.Bounds;
 
 import java.io.*;
@@ -131,7 +132,7 @@ public Point getPoint(int i)
 @Override
 public Vector<Point> getPoints()
 {
-  Vector<Point> result = new Vector<Point>();
+  Vector<Point> result = new Vector<>();
   for (Point p : points)
   {
     result.add(p);
@@ -188,7 +189,7 @@ public void write(DataOutputStream stream) throws IOException
 @Override
 public Type type()
 {
-  return Geometry.Type.LINESTRING;
+  return Type.LINESTRING;
 }
 
 @Override

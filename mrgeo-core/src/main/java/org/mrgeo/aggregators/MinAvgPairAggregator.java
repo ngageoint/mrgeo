@@ -41,7 +41,7 @@ public double aggregate(double[] values, double nodata)
   boolean data2 = FloatUtils.isNotNodata(values[2], nodata);
   boolean data3 = FloatUtils.isNotNodata(values[3], nodata);
 
-  Collection<Double> averages = new ArrayList<Double>();
+  Collection<Double> averages = new ArrayList<>();
   if (data0 && data1)
   {
     averages.add((values[0] + values[1]) / 2);
@@ -78,7 +78,7 @@ public float aggregate(float[] values, float nodata)
   boolean data2 = FloatUtils.isNotNodata(values[2], nodata);
   boolean data3 = FloatUtils.isNotNodata(values[3], nodata);
 
-  Collection<Float> averages = new ArrayList<Float>();
+  Collection<Float> averages = new ArrayList<>();
   if (data0 && data1)
   {
     averages.add((values[0] + values[1]) / 2);
@@ -115,7 +115,7 @@ public int aggregate(int[] values, int nodata)
   boolean data2 = values[2] != nodata;
   boolean data3 = values[3] != nodata;
 
-  Collection<Integer> averages = new ArrayList<Integer>();
+  Collection<Integer> averages = new ArrayList<>();
   if (data0 && data1)
   {
     averages.add((values[0] + values[1]) / 2);
@@ -152,7 +152,7 @@ public short aggregate(short[] values, short nodata)
   boolean data2 = values[2] != nodata;
   boolean data3 = values[3] != nodata;
 
-  Collection<Integer> averages = new ArrayList<Integer>();
+  Collection<Integer> averages = new ArrayList<>();
   if (data0 && data1)
   {
     averages.add((values[0] + values[1]) / 2);
@@ -189,7 +189,7 @@ public byte aggregate(byte[] values, byte nodata)
   boolean data2 = values[2] != nodata;
   boolean data3 = values[3] != nodata;
 
-  Collection<Integer> averages = new ArrayList<Integer>();
+  Collection<Integer> averages = new ArrayList<>();
   if (data0 && data1)
   {
     averages.add((values[0] + values[1]) / 2);
@@ -243,7 +243,7 @@ public short aggregate(short[][] values, double weightx, double weighty, short n
 }
 
 @Override
-public int aggregate(final int[][] values, final double weightx, final double weighty, final int nodata)
+public int aggregate(int[][] values, double weightx, double weighty, int nodata)
 {
   throw new NotImplementedException("Not yet implemented");
 }

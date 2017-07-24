@@ -23,7 +23,7 @@ import java.util.List;
 
 public class VectorMetadata
 {
-private List<String> attributes = new ArrayList<String>();
+private List<String> attributes = new ArrayList<>();
 private Bounds bounds;
 
 public VectorMetadata()
@@ -35,7 +35,7 @@ public Bounds getBounds()
   return bounds;
 }
 
-public void setBounds(final Bounds bounds)
+public void setBounds(Bounds bounds)
 {
   this.bounds = bounds;
 }
@@ -53,7 +53,7 @@ public void addAttribute(String attribute)
   }
 }
 
-public boolean hasAttribute(final String fieldName)
+public boolean hasAttribute(String fieldName)
 {
   return attributes.contains(fieldName);
 }

@@ -62,15 +62,15 @@ public void setConfiguration(Map<String, String> properties)
 }
 
 @Override
-public MrsImageDataProvider createMrsImageDataProvider(final String input,
-    final Configuration conf,
-    final ProviderProperties providerProperties)
+public MrsImageDataProvider createMrsImageDataProvider(String input,
+    Configuration conf,
+    ProviderProperties providerProperties)
 {
   return new HdfsMrsImageDataProvider(conf, input, providerProperties);
 }
 
 @Override
-public MrsImageDataProvider createTempMrsImageDataProvider(final Configuration conf, final ProviderProperties providerProperties)
+public MrsImageDataProvider createTempMrsImageDataProvider(Configuration conf, ProviderProperties providerProperties)
     throws IOException
 {
   return createMrsImageDataProvider(HadoopFileUtils.createUniqueTmpPath().toUri().toString(),
@@ -78,24 +78,24 @@ public MrsImageDataProvider createTempMrsImageDataProvider(final Configuration c
 }
 
 @Override
-public boolean canOpen(final String input,
-                       final Configuration conf,
-                       final ProviderProperties providerProperties) throws IOException
+public boolean canOpen(String input,
+                       Configuration conf,
+                       ProviderProperties providerProperties) throws IOException
 {
   return HdfsMrsImageDataProvider.canOpen(conf, input, providerProperties);
 }
 
 @Override
-public boolean canWrite(final String input,
-                        final Configuration conf,
-                        final ProviderProperties providerProperties) throws IOException
+public boolean canWrite(String input,
+                        Configuration conf,
+                        ProviderProperties providerProperties) throws IOException
 {
   return HdfsMrsImageDataProvider.canWrite(conf, input, providerProperties);
 }
 
 @Override
-public String[] listImages(final Configuration conf,
-                           final ProviderProperties providerProperties) throws IOException
+public String[] listImages(Configuration conf,
+                           ProviderProperties providerProperties) throws IOException
 {
   // TODO: Extract user name and authorizations from providerProperties
   // and pass them along.
@@ -104,17 +104,17 @@ public String[] listImages(final Configuration conf,
 }
 
 @Override
-public boolean exists(final String input,
-                      final Configuration conf,
-                      final ProviderProperties providerProperties) throws IOException
+public boolean exists(String input,
+                      Configuration conf,
+                      ProviderProperties providerProperties) throws IOException
 {
   return HdfsMrsImageDataProvider.exists(conf, input, providerProperties);
 }
 
 @Override
-public void delete(final String name,
-                   final Configuration conf,
-                   final ProviderProperties providerProperties) throws IOException
+public void delete(String name,
+                   Configuration conf,
+                   ProviderProperties providerProperties) throws IOException
 {
   if (exists(name, conf, providerProperties))
   {
@@ -122,7 +122,7 @@ public void delete(final String name,
   }
 }
 
-private String[] listImages(final Configuration conf, Path usePath, String userName,
+private String[] listImages(Configuration conf, Path usePath, String userName,
     String[] authorizations,
     ProviderProperties providerProperties) throws IOException
 {
@@ -130,7 +130,7 @@ private String[] listImages(final Configuration conf, Path usePath, String userN
   FileStatus[] fileStatuses = fs.listStatus(usePath, new OnlyDirectoriesFilter(fs));
   if (fileStatuses != null)
   {
-    List<String> results = new ArrayList<String>(fileStatuses.length);
+    List<String> results = new ArrayList<>(fileStatuses.length);
     for (FileStatus status : fileStatuses)
     {
       if (canOpen(status.getPath().toString(), conf, providerProperties))
@@ -144,7 +144,7 @@ private String[] listImages(final Configuration conf, Path usePath, String userN
   return new String[0];
 }
 
-private Path getBasePath(final Configuration conf)
+private Path getBasePath(Configuration conf)
 {
   return HdfsMrsImageDataProvider.getBasePath(conf);
 }

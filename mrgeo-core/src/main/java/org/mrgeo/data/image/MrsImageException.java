@@ -20,16 +20,16 @@ public class MrsImageException extends RuntimeException
 private static final long serialVersionUID = 1L;
 private final Exception origException;
 
-public MrsImageException(final Exception e)
+public MrsImageException(Exception e)
 {
-  this.origException = e;
+  origException = e;
   printStackTrace();
 }
 
-public MrsImageException(final String msg)
+public MrsImageException(String msg)
 {
-  final Exception e = new Exception(msg);
-  this.origException = e;
+  Exception e = new Exception(msg);
+  origException = e;
 }
 
 @Override

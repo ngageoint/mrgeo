@@ -30,7 +30,7 @@ private TileBounds region;
 public RegionSplitVisitor(TileBounds region)
 {
   this.region = region;
-  log.debug("Created RegionSplitVisitor with region: " + region.toString());
+  log.debug("Created RegionSplitVisitor with region: " + region);
 }
 
 @Override
@@ -50,8 +50,8 @@ public boolean accept(TiledInputSplit split)
   return result;
 }
 
-boolean splitOverlapsTileBounds(final Tile splitStartTile,
-    final Tile splitEndTile, final TileBounds cropBounds)
+boolean splitOverlapsTileBounds(Tile splitStartTile,
+    Tile splitEndTile, TileBounds cropBounds)
 {
   // If the split is either before or beyond the crop, then skip this split
   if (splitEndTile.ty < cropBounds.s || (splitEndTile.ty == cropBounds.s && splitEndTile.tx < cropBounds.w))
@@ -75,14 +75,7 @@ boolean splitOverlapsTileBounds(final Tile splitStartTile,
   }
   else if (yDelta == 0)
   {
-    if (splitEndTile.tx < cropBounds.w || splitStartTile.tx > cropBounds.e)
-    {
-      intersect = false;
-    }
-    else
-    {
-      intersect = true;
-    }
+    intersect = splitEndTile.tx >= cropBounds.w && splitStartTile.tx <= cropBounds.e;
   }
   else
   {

@@ -21,7 +21,7 @@ public class TMSUtils
 public final static int MAXZOOMLEVEL = 22; // max zoom level (the highest X value can be as an int)
 
 // limits bounds to +=180, +=90
-public static Bounds limit(final Bounds bounds)
+public static Bounds limit(Bounds bounds)
 {
   double n, s, e, w;
 
@@ -82,10 +82,10 @@ public static Bounds limit(final Bounds bounds)
 
 
 // Converts lat/lon bounds to the correct tile bounds for a zoom level
-public static TileBounds boundsToTile(final Bounds bounds, final int zoom,
-    final int tilesize)
+public static TileBounds boundsToTile(Bounds bounds, int zoom,
+    int tilesize)
 {
-  final Tile ll = latLonToTile(bounds.s, bounds.w, zoom, tilesize, false);
+  Tile ll = latLonToTile(bounds.s, bounds.w, zoom, tilesize, false);
   Tile ur = latLonToTile(bounds.n, bounds.e, zoom, tilesize, true);
 
   // this takes care of the case where the bounds is a vert or horiz "line" and also on the tile
@@ -105,10 +105,10 @@ public static TileBounds boundsToTile(final Bounds bounds, final int zoom,
 // Converts lat/lon bounds to the correct tile bounds for a zoom level. Use this function
 // to compute the tile bounds when working with vector data because it does not use the
 // excludeEdge feature of the latLonToTile() function when computing the upper right tile.
-public static TileBounds boundsToTileExact(final Bounds bounds, final int zoom,
-    final int tilesize)
+public static TileBounds boundsToTileExact(Bounds bounds, int zoom,
+    int tilesize)
 {
-  final Tile ll = latLonToTile(bounds.s, bounds.w, zoom, tilesize, false);
+  Tile ll = latLonToTile(bounds.s, bounds.w, zoom, tilesize, false);
   Tile ur = latLonToTile(bounds.n, bounds.e, zoom, tilesize, false);
 
   // If the east coordinate is 180, the computed tx will be one larger than the max number
@@ -136,15 +136,15 @@ public static TileBounds boundsToTileExact(final Bounds bounds, final int zoom,
   return new TileBounds(ll.tx, ll.ty, ur.tx, ur.ty);
 }
 
-public static Tile calculateTile(final Tile tile, final int srcZoom, final int dstZoom,
-    final int tilesize)
+public static Tile calculateTile(Tile tile, int srcZoom, int dstZoom,
+    int tilesize)
 {
-  final Bounds bounds = TMSUtils.tileBounds(tile.tx, tile.ty, srcZoom, tilesize);
+  Bounds bounds = tileBounds(tile.tx, tile.ty, srcZoom, tilesize);
 
-  return TMSUtils.latLonToTile(bounds.s, bounds.w, dstZoom, tilesize);
+  return latLonToTile(bounds.s, bounds.w, dstZoom, tilesize);
 }
 
-public static boolean isValidTile(final long tx, final long ty, final int zoomlevel)
+public static boolean isValidTile(long tx, long ty, int zoomlevel)
 {
   return tx >= 0 && tx < (long) Math.pow(2.0, zoomlevel - 1.0) * 2 && ty >= 0 &&
       ty < (long) Math.pow(2.0, zoomlevel - 1.0);
@@ -152,20 +152,20 @@ public static boolean isValidTile(final long tx, final long ty, final int zoomle
 
 // Converts lat/lon to pixel coordinates in given zoom of the EPSG:4326
 // pyramid
-public static Pixel latLonToPixels(final double lat, final double lon, final int zoom,
-    final int tilesize)
+public static Pixel latLonToPixels(double lat, double lon, int zoom,
+    int tilesize)
 {
-  final double res = resolution(zoom, tilesize);
+  double res = resolution(zoom, tilesize);
 
   return new Pixel((long) ((180.0 + lon) / res), (long) ((90.0 + lat) / res));
 }
 
 // Converts lat/lon to pixel coordinates in given zoom of the EPSG:4326
 // pyramid in an upper-left as 0,0 coordinate grid
-public static Pixel latLonToPixelsUL(final double lat, final double lon, final int zoom,
-    final int tilesize)
+public static Pixel latLonToPixelsUL(double lat, double lon, int zoom,
+    int tilesize)
 {
-  final Pixel p = latLonToPixels(lat, lon, zoom, tilesize);
+  Pixel p = latLonToPixels(lat, lon, zoom, tilesize);
   return new Pixel(p.px, (numYTiles(zoom) * tilesize) - p.py - 1);
   // final double res = resolution(zoom, tilesize);
   //
@@ -173,8 +173,8 @@ public static Pixel latLonToPixelsUL(final double lat, final double lon, final i
 }
 
 // Returns the tile for zoom which covers given lat/lon coordinates"
-public static Tile latLonToTile(final double lat, final double lon, final int zoom,
-    final int tilesize)
+public static Tile latLonToTile(double lat, double lon, int zoom,
+    int tilesize)
 {
   return latLonToTile(lat, lon, zoom, tilesize, false);
 }
@@ -183,12 +183,12 @@ public static Tile latLonToTile(final double lat, final double lon, final int zo
  * Returns the pixel within a tile (where 0, 0 is anchored at the bottom left of the tile) for
  * zoom which covers given lat/lon coordinates
  */
-public static Pixel latLonToTilePixel(final double lat, final double lon, final long tx,
-    final long ty, final int zoom, final int tilesize)
+public static Pixel latLonToTilePixel(double lat, double lon, long tx,
+    long ty, int zoom, int tilesize)
 {
-  final Pixel p = latLonToPixels(lat, lon, zoom, tilesize);
-  final Bounds b = tileBounds(tx, ty, zoom, tilesize);
-  final Pixel ll = latLonToPixels(b.s, b.w, zoom, tilesize);
+  Pixel p = latLonToPixels(lat, lon, zoom, tilesize);
+  Bounds b = tileBounds(tx, ty, zoom, tilesize);
+  Pixel ll = latLonToPixels(b.s, b.w, zoom, tilesize);
   return new Pixel(p.px - ll.px, p.py - ll.py);
 }
 
@@ -196,21 +196,21 @@ public static Pixel latLonToTilePixel(final double lat, final double lon, final 
  * Returns the pixel within a tile (where 0, 0 is anchored at the top left of the tile) for zoom
  * which covers given lat/lon coordinates
  */
-public static Pixel latLonToTilePixelUL(final double lat, final double lon, final long tx,
-    final long ty, final int zoom, final int tilesize)
+public static Pixel latLonToTilePixelUL(double lat, double lon, long tx,
+    long ty, int zoom, int tilesize)
 {
-  final Pixel p = latLonToTilePixel(lat, lon, tx, ty, zoom, tilesize);
+  Pixel p = latLonToTilePixel(lat, lon, tx, ty, zoom, tilesize);
   return new Pixel(p.px, tilesize - p.py - 1);
 }
 
 // formulae taken from GDAL's gdal2tiles.py GlobalGeodetic() src code...
 
-public static long numXTiles(final int zoomlevel)
+public static long numXTiles(int zoomlevel)
 {
   return (long) Math.pow(2.0, zoomlevel);
 }
 
-public static long numYTiles(final int zoomlevel)
+public static long numYTiles(int zoomlevel)
 {
   return (long) Math.pow(2.0, zoomlevel - 1.0);
 }
@@ -219,7 +219,7 @@ public static long numYTiles(final int zoomlevel)
  * Compute the worldwide tile in which the specified pixel resides. The pixel coordinates are
  * provided based on 0, 0 being bottom, left.
  */
-public static Tile pixelsToTile(final double px, final double py, final int tilesize)
+public static Tile pixelsToTile(double px, double py, int tilesize)
 {
   return new Tile((long) (px / tilesize), (long) (py / tilesize));
 }
@@ -228,10 +228,10 @@ public static Tile pixelsToTile(final double px, final double py, final int tile
  * Compute the worldwide tile in which the specified pixel resides. The pixel coordinates are
  * provided based on 0, 0 being top, left.
  */
-public static Tile pixelsULToTile(final double px, final double py, final int zoom,
-    final int tilesize)
+public static Tile pixelsULToTile(double px, double py, int zoom,
+    int tilesize)
 {
-  final Tile tileFromBottom = pixelsToTile(px, py, tilesize);
+  Tile tileFromBottom = pixelsToTile(px, py, tilesize);
   return new Tile(tileFromBottom.tx, numYTiles(zoom) - tileFromBottom.ty - 1);
   // long numYTiles = numYTiles(zoom);
   // long numXTiles = numXTiles(zoom);
@@ -240,56 +240,56 @@ public static Tile pixelsULToTile(final double px, final double py, final int zo
   // return new Tile((long) (px / tilesize), maxYTile - (long) (py / tilesize));
 }
 
-public static LatLon pixelToLatLon(final long px, final long py, final int zoom,
-    final int tilesize)
+public static LatLon pixelToLatLon(long px, long py, int zoom,
+    int tilesize)
 {
-  final Tile tile = pixelsToTile(px, py, tilesize);
-  final Bounds bounds = tileBounds(tile.tx, tile.ty, zoom, tilesize);
-  final Pixel tilepx = latLonToPixels(bounds.s, bounds.w, zoom, tilesize);
+  Tile tile = pixelsToTile(px, py, tilesize);
+  Bounds bounds = tileBounds(tile.tx, tile.ty, zoom, tilesize);
+  Pixel tilepx = latLonToPixels(bounds.s, bounds.w, zoom, tilesize);
 
-  final double resolution = resolution(zoom, tilesize);
-  final long pixelsFromTileLeft = px - tilepx.px;
-  final long pixelsFromTileBottom = py - tilepx.py;
+  double resolution = resolution(zoom, tilesize);
+  long pixelsFromTileLeft = px - tilepx.px;
+  long pixelsFromTileBottom = py - tilepx.py;
   return new LatLon(bounds.s + (pixelsFromTileBottom * resolution), bounds.w +
       (pixelsFromTileLeft * resolution));
 }
 
-public static LatLon pixelToLatLonUL(final long px, final long py, final int zoom,
-    final int tilesize)
+public static LatLon pixelToLatLonUL(long px, long py, int zoom,
+    int tilesize)
 {
-  final Tile tile = pixelsULToTile(px, py, zoom, tilesize);
-  final Bounds bounds = tileBounds(tile.tx, tile.ty, zoom, tilesize);
-  final Pixel tilepx = latLonToPixelsUL(bounds.n, bounds.w, zoom, tilesize);
+  Tile tile = pixelsULToTile(px, py, zoom, tilesize);
+  Bounds bounds = tileBounds(tile.tx, tile.ty, zoom, tilesize);
+  Pixel tilepx = latLonToPixelsUL(bounds.n, bounds.w, zoom, tilesize);
 
-  final double resolution = resolution(zoom, tilesize);
-  final long pixelsFromTileLeft = px - tilepx.px;
-  final long pixelsFromTileTop = py - tilepx.py;
+  double resolution = resolution(zoom, tilesize);
+  long pixelsFromTileLeft = px - tilepx.px;
+  long pixelsFromTileTop = py - tilepx.py;
   return new LatLon(bounds.n - (pixelsFromTileTop * resolution), bounds.w +
       (pixelsFromTileLeft * resolution));
 }
 
-public static LatLon tilePixelToLatLon(final long px, final long py, final Tile tile, final int zoom,
-    final int tilesize)
+public static LatLon tilePixelToLatLon(long px, long py, Tile tile, int zoom,
+    int tilesize)
 {
-  final Bounds bounds = tileBounds(tile.tx, tile.ty, zoom, tilesize);
+  Bounds bounds = tileBounds(tile.tx, tile.ty, zoom, tilesize);
 
-  final double resolution = resolution(zoom, tilesize);
+  double resolution = resolution(zoom, tilesize);
   return new LatLon(bounds.s + (py * resolution), bounds.w +
       (px * resolution));
 }
 
-public static LatLon tilePixelULToLatLon(final long px, final long py, final Tile tile, final int zoom,
-    final int tilesize)
+public static LatLon tilePixelULToLatLon(long px, long py, Tile tile, int zoom,
+    int tilesize)
 {
-  final Bounds bounds = tileBounds(tile.tx, tile.ty, zoom, tilesize);
+  Bounds bounds = tileBounds(tile.tx, tile.ty, zoom, tilesize);
 
-  final double resolution = resolution(zoom, tilesize);
+  double resolution = resolution(zoom, tilesize);
   return new LatLon(bounds.n - (py * resolution), bounds.w +
       (px * resolution));
 }
 
 // Resolution (deg/pixel) for given zoom level (measured at Equator)"
-public static double resolution(final int zoom, final int tilesize)
+public static double resolution(int zoom, int tilesize)
 {
   if (zoom > 0)
   {
@@ -299,9 +299,9 @@ public static double resolution(final int zoom, final int tilesize)
   return 0.0;
 }
 
-public static Bounds tileBounds(final long tx, final long ty, final int zoom, final int tilesize)
+public static Bounds tileBounds(long tx, long ty, int zoom, int tilesize)
 {
-  final double res = resolution(zoom, tilesize);
+  double res = resolution(zoom, tilesize);
 
   return new Bounds(tx * tilesize * res - 180.0, // left/west (lon, x)
       ty * tilesize * res - 90.0, // lower/south (lat, y)
@@ -310,25 +310,25 @@ public static Bounds tileBounds(final long tx, final long ty, final int zoom, fi
 
 }
 
-public static Bounds tileBounds(final Tile tile, final int zoom, final int tilesize)
+public static Bounds tileBounds(Tile tile, int zoom, int tilesize)
 {
   return tileBounds(tile.tx, tile.ty, zoom, tilesize);
 }
 
 // Converts lat/lon bounds to the correct tile bounds, in lat/lon for a zoom level
-public static Bounds tileBounds(final Bounds bounds, final int zoom, final int tilesize)
+public static Bounds tileBounds(Bounds bounds, int zoom, int tilesize)
 {
-  final TileBounds tb = boundsToTile(bounds, zoom, tilesize);
-  return TMSUtils.tileToBounds(tb, zoom, tilesize);
+  TileBounds tb = boundsToTile(bounds, zoom, tilesize);
+  return tileToBounds(tb, zoom, tilesize);
 }
 
 // Returns bounds of the given tile
-public static double[] tileBoundsArray(final long tx, final long ty, final int zoom,
-    final int tilesize)
+public static double[] tileBoundsArray(long tx, long ty, int zoom,
+    int tilesize)
 {
-  final Bounds b = tileBounds(tx, ty, zoom, tilesize);
+  Bounds b = tileBounds(tx, ty, zoom, tilesize);
 
-  final double bounds[] = new double[4];
+  double bounds[] = new double[4];
 
   bounds[0] = b.w;
   bounds[1] = b.s;
@@ -338,32 +338,32 @@ public static double[] tileBoundsArray(final long tx, final long ty, final int z
   return bounds;
 }
 
-public static Tile tileid(final long tileid, final int zoomlevel)
+public static Tile tileid(long tileid, int zoomlevel)
 {
-  final long width = (long) Math.pow(2, zoomlevel);
-  final long ty = tileid / width;
-  final long tx = tileid - (ty * width);
+  long width = (long) Math.pow(2, zoomlevel);
+  long ty = tileid / width;
+  long tx = tileid - (ty * width);
 
   return new Tile(tx, ty);
 }
 
-public static long tileid(final long tx, final long ty, final int zoomlevel)
+public static long tileid(long tx, long ty, int zoomlevel)
 {
   return (ty * (long) Math.pow(2, zoomlevel)) + tx;
 }
 
-public static long maxTileId(final int zoomlevel)
+public static long maxTileId(int zoomlevel)
 {
   return numXTiles(zoomlevel) * numYTiles(zoomlevel) - 1;
 }
 
 // Returns bounds of the given tile in the SWNE form
-public static double[] tileSWNEBoundsArray(final long tx, final long ty, final int zoom,
-    final int tilesize)
+public static double[] tileSWNEBoundsArray(long tx, long ty, int zoom,
+    int tilesize)
 {
-  final Bounds b = tileBounds(tx, ty, zoom, tilesize);
+  Bounds b = tileBounds(tx, ty, zoom, tilesize);
 
-  final double bounds[] = new double[4];
+  double bounds[] = new double[4];
 
   bounds[0] = b.s;
   bounds[1] = b.w;
@@ -374,19 +374,19 @@ public static double[] tileSWNEBoundsArray(final long tx, final long ty, final i
 }
 
 // Converts tile bounds to the correct lat/lon bounds for a zoom level
-public static Bounds tileToBounds(final TileBounds bounds, final int zoom,
-    final int tilesize)
+public static Bounds tileToBounds(TileBounds bounds, int zoom,
+    int tilesize)
 {
-  final Bounds ll = tileBounds(bounds.w, bounds.s, zoom, tilesize);
-  final Bounds ur = tileBounds(bounds.e, bounds.n, zoom, tilesize);
+  Bounds ll = tileBounds(bounds.w, bounds.s, zoom, tilesize);
+  Bounds ur = tileBounds(bounds.e, bounds.n, zoom, tilesize);
 
   return new Bounds(ll.w, ll.s, ur.e, ur.n);
 }
 
 // Maximal scaledown zoom of the pyramid closest to the pixelSize."
-public static int zoomForPixelSize(final double pixelSize, final int tilesize)
+public static int zoomForPixelSize(double pixelSize, int tilesize)
 {
-  final double pxep = pixelSize + 0.00000001; // pixelsize + epsilon
+  double pxep = pixelSize + 0.00000001; // pixelsize + epsilon
   for (int i = 1; i <= MAXZOOMLEVEL; i++)
   {
     if (pxep >= resolution(i, tilesize))
@@ -401,15 +401,15 @@ public static int zoomForPixelSize(final double pixelSize, final int tilesize)
 }
 
 // Returns the tile for zoom which covers given lat/lon coordinates"
-private static Tile latLonToTile(final double lat, final double lon, final int zoom,
-    final int tilesize, final boolean excludeEdge)
+private static Tile latLonToTile(double lat, double lon, int zoom,
+    int tilesize, boolean excludeEdge)
 {
-  final Pixel p = latLonToPixels(lat, lon, zoom, tilesize);
+  Pixel p = latLonToPixels(lat, lon, zoom, tilesize);
 
   if (excludeEdge)
   {
     Tile tile = pixelsToTile(p.px, p.py, tilesize);
-    final Tile t = pixelsToTile(p.px - 1, p.py - 1, tilesize);
+    Tile t = pixelsToTile(p.px - 1, p.py - 1, tilesize);
 
     // lon is on an x tile boundary, so we'll move it to the left
     if (t.tx < tile.tx)

@@ -20,5 +20,5 @@ import java.io.Serializable;
 public interface PointFilter extends Serializable
 {
 
-public void filter(WritablePoint p);
+void filter(WritablePoint p);
 }

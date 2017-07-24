@@ -22,6 +22,7 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.services.Configuration;
+import org.mrgeo.services.utils.RequestUtils;
 import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -159,33 +160,6 @@ public static String getKmlBodyAsString(String service, String url, Bounds input
   return kmlBody;
 }
 
-/*
-* Returns a list of all MrsPyramid version 2 data in the home data directory
-*/
-private static MrsImageDataProvider[] getPyramidFilesList(
-    final ProviderProperties providerProperties) throws IOException
-{
-  String[] images = DataProviderFactory.listImages(providerProperties);
-
-  Arrays.sort(images);
-
-  MrsImageDataProvider[] providers = new MrsImageDataProvider[images.length];
-
-  for (int i = 0; i < images.length; i++)
-  {
-    // original code looked for a MrsPyramid.toc file, not sure why, it wasn't used anywhere else...
-//      Path toc = new Path(f.getPath(), "MrsPyramid.toc");
-//      if (fs.exists(toc))
-//      {
-//        files.add(f);
-//      }
-
-    providers[i] = DataProviderFactory.getMrsImageDataProvider(images[i],
-        DataProviderFactory.AccessMode.READ, providerProperties);
-  }
-
-  return providers;
-}
 
 public Element createElement(Element parent, String tagName)
 {
@@ -380,7 +354,7 @@ private void addLayersToCapability(Element capability, Version kmlVersion,
     final ProviderProperties providerProperties) throws IOException
 {
 
-  MrsImageDataProvider[] providers = getPyramidFilesList(providerProperties);
+  MrsImageDataProvider[] providers = RequestUtils.getPyramidFilesList(providerProperties);
 
   Arrays.sort(providers, new MrsImageComparator());
 

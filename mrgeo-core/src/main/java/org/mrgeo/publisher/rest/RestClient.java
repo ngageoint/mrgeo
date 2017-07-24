@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Created by ericwood on 8/11/16.
@@ -65,7 +66,7 @@ public RestClient(String baseUrl, String username, String password)
 
 private static Request setHeaders(Request request, Map<String, String> requestHeaders)
 {
-  for (Map.Entry<String, String> headerEntry : requestHeaders.entrySet())
+  for (Entry<String, String> headerEntry : requestHeaders.entrySet())
   {
     request.setHeader(headerEntry.getKey(), headerEntry.getValue());
   }
@@ -89,9 +90,8 @@ private static String getResponse(HttpResponse response, ContentType expectedCon
     ClientProtocolException
 {
   StringBuilder sbJson = new StringBuilder();
-  BufferedReader in = new BufferedReader(new InputStreamReader(
-      getResponseContent(response, expectedContentType)));
-  try
+  try (BufferedReader in = new BufferedReader(new InputStreamReader(
+      getResponseContent(response, expectedContentType))))
   {
 
     String inputLine;
@@ -101,10 +101,6 @@ private static String getResponse(HttpResponse response, ContentType expectedCon
     }
     in.close();
     return sbJson.toString();
-  }
-  finally
-  {
-    in.close();
   }
 }
 
@@ -235,7 +231,7 @@ private Response execute(Request request) throws IOException
 
 private static class JsonResponseHandler implements org.apache.http.client.ResponseHandler<String>
 {
-  public String handleResponse(final HttpResponse response) throws IOException, HttpResponseException,
+  public String handleResponse(HttpResponse response) throws IOException, HttpResponseException,
       ClientProtocolException
   {
     return getResponseAsJson(response);
@@ -244,7 +240,7 @@ private static class JsonResponseHandler implements org.apache.http.client.Respo
 
 private static class ResponseHandler implements org.apache.http.client.ResponseHandler<String>
 {
-  public String handleResponse(final HttpResponse response) throws IOException, HttpResponseException,
+  public String handleResponse(HttpResponse response) throws IOException, HttpResponseException,
       ClientProtocolException
   {
     return getResponse(response);

@@ -27,11 +27,7 @@ public static boolean isEqual(float a, float b, int bitsprecision)
 {
   if (bitsprecision >= 32 || bitsprecision < 0)
   {
-    if (bitsprecision == 32)
-    {
-      return true;
-    }
-    return false;
+    return bitsprecision == 32;
   }
 
   Floater fa = new Floater(a);
@@ -58,11 +54,7 @@ public static boolean isEqual(double a, double b, int bitsprecision)
 {
   if (bitsprecision >= 64 || bitsprecision < 0)
   {
-    if (bitsprecision == 64)
-    {
-      return true;
-    }
-    return false;
+    return bitsprecision == 64;
   }
 
   Doubler da = new Doubler(a);

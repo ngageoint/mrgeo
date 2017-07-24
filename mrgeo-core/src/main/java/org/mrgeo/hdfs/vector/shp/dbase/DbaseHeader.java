@@ -35,7 +35,6 @@ private int recordLength;
 
 DbaseHeader()
 {
-  super();
   fields = new Vector<>();
   format = 3; // DBASE III is default for now
   langDriverID = 27; // default, not sure what it means
@@ -121,10 +120,10 @@ public synchronized void insertField(DbaseField field, int position)
 }
 
 
-public synchronized Vector<DbaseField> getFieldsCopy()
-{
-  return (Vector<DbaseField>) fields.clone();
-}
+//public synchronized Vector<DbaseField> getFieldsCopy()
+//{
+//  return (Vector<DbaseField>) fields.clone();
+//}
 
 public synchronized void save(RandomAccessFile os) throws IOException
 {
@@ -141,10 +140,9 @@ public synchronized void save(RandomAccessFile os) throws IOException
   // write core
   os.write(header, 0, 32);
   // field headers
-  for (int j = 0; j < fields.size(); j++)
+  for (DbaseField field : fields)
   {
     header = new byte[32];
-    DbaseField field = fields.get(j);
     // set field header
     Convert.setString(header, 0, 11, field.name);
     header[11] = (byte) field.type;
@@ -172,7 +170,7 @@ public synchronized String toString()
   for (int i = 0; i < fields.size(); i++)
   {
     DbaseField field = fields.get(i);
-    s = s + "  " + StringUtils.pad(i + ")", 5) + field.toString() + "\n";
+    s = s + "  " + StringUtils.pad(i + ")", 5) + field + "\n";
   }
   return s;
 }
@@ -230,9 +228,8 @@ protected synchronized void load(SeekableDataInput is) throws IOException, Dbase
 protected synchronized int update()
 {
   recordLength = 1; // deleted/un-deleted flag is a byte, so we start with 1!
-  for (int j = 0; j < fields.size(); j++)
+  for (DbaseField field : fields)
   {
-    DbaseField field = fields.get(j);
     field.offset = recordLength;
     recordLength += field.length;
   }

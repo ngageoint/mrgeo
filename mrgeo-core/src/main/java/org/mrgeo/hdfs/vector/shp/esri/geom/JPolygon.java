@@ -195,19 +195,19 @@ public byte check(boolean clean)
 public boolean contains(Coord c)
 {
   // fast answer (test MBR)
-  if (c.x < this.extent.min.x)
+  if (c.x < extent.min.x)
   {
     return false;
   }
-  if (c.x > this.extent.max.x)
+  if (c.x > extent.max.x)
   {
     return false;
   }
-  if (c.y < this.extent.min.y)
+  if (c.y < extent.min.y)
   {
     return false;
   }
-  if (c.y > this.extent.max.y)
+  if (c.y > extent.max.y)
   {
     return false;
   }
@@ -261,7 +261,7 @@ public void debug()
 {
   if (extent != null)
   {
-    System.out.println("Extent: " + extent.toString());
+    System.out.println("Extent: " + extent);
   }
   System.out.println(toString());
   for (int p = 0; p < part.length; p++)
@@ -270,7 +270,7 @@ public void debug()
     int limit = ((p + 1) == part.length) ? point.length : part[p + 1];
     for (int i = part[p]; i < limit; i++)
     {
-      System.out.println("  Point[" + i + "]: " + point[i].toString());
+      System.out.println("  Point[" + i + "]: " + point[i]);
     }
   }
 }
@@ -302,7 +302,7 @@ public double getArea()
     area = tempArea;
   }
 
-  return area.doubleValue();
+  return area;
 }
 
 public Coord getCentroid()

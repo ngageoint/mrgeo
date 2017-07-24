@@ -22,7 +22,7 @@ public class ParserNode
 {
 Object nativeNode;
 private String name;
-private List<ParserNode> children = new ArrayList<ParserNode>();
+private List<ParserNode> children = new ArrayList<>();
 
 public Object getNativeNode()
 {

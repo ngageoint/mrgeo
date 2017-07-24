@@ -20,23 +20,23 @@ import org.mrgeo.utils.FloatUtils;
 
 public class Bilinear
 {
-public static void scaleInt(final MrGeoRaster src, final MrGeoRaster dst, final double[] nodatas)
+public static void scaleInt(MrGeoRaster src, MrGeoRaster dst, double[] nodatas)
 {
-  final int srcW = src.width();
-  final int srcH = src.height();
+  int srcW = src.width();
+  int srcH = src.height();
 
   int A, B, C, D;
   int r1, r2;
 
   int x, y, x2, y2;
-  final float x_ratio = (float) srcW / dst.width();
-  final float y_ratio = (float) srcH / dst.height();
+  float x_ratio = (float) srcW / dst.width();
+  float y_ratio = (float) srcH / dst.height();
   float x_diff, y_diff;
 
 
   for (int b = 0; b < src.bands(); b++)
   {
-    final int nodata = (int) nodatas[b];
+    int nodata = (int) nodatas[b];
 
     for (int i = 0; i < dst.width(); i++)
     {
@@ -116,17 +116,17 @@ public static void scaleInt(final MrGeoRaster src, final MrGeoRaster dst, final 
   }
 }
 
-public static void scaleFloat(final MrGeoRaster src, final MrGeoRaster dst, final double[] nodatas)
+public static void scaleFloat(MrGeoRaster src, MrGeoRaster dst, double[] nodatas)
 {
-  final int srcW = src.width();
-  final int srcH = src.height();
+  int srcW = src.width();
+  int srcH = src.height();
 
   float A, B, C, D;
   float r1, r2;
 
   int x, y, x2, y2;
-  final float x_ratio = (float) srcW / dst.width();
-  final float y_ratio = (float) srcH / dst.height();
+  float x_ratio = (float) srcW / dst.width();
+  float y_ratio = (float) srcH / dst.height();
   float x_diff, y_diff;
 
 
@@ -211,17 +211,17 @@ public static void scaleFloat(final MrGeoRaster src, final MrGeoRaster dst, fina
   }
 }
 
-public static void scaleDouble(final MrGeoRaster src, final MrGeoRaster dst, final double[] nodatas)
+public static void scaleDouble(MrGeoRaster src, MrGeoRaster dst, double[] nodatas)
 {
-  final int srcW = src.width();
-  final int srcH = src.height();
+  int srcW = src.width();
+  int srcH = src.height();
 
   double A, B, C, D;
   double r1, r2;
 
   int x, y, x2, y2;
-  final float x_ratio = (float) srcW / dst.width();
-  final float y_ratio = (float) srcH / dst.height();
+  float x_ratio = (float) srcW / dst.width();
+  float y_ratio = (float) srcH / dst.height();
   float x_diff, y_diff;
 
 

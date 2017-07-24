@@ -34,10 +34,9 @@ private static final Logger log = LoggerFactory.getLogger(AdditiveCompositeDoubl
 
 public AdditiveCompositeDouble()
 {
-  super();
 }
 
-public AdditiveCompositeDouble(final double weight)
+public AdditiveCompositeDouble(double weight)
 {
   super(weight);
 }

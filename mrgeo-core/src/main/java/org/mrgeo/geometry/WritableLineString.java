@@ -22,11 +22,11 @@ import java.util.Collection;
  */
 public interface WritableLineString extends LineString, WritableGeometry
 {
-public void addPoint(Point p);
+void addPoint(Point p);
 
-public void addPoint(double x, double y);
+void addPoint(double x, double y);
 
-public void setPoints(Collection<Point> points);
+void setPoints(Collection<Point> points);
 
 void fromJTS(com.vividsolutions.jts.geom.LineString jtsLine);
 }

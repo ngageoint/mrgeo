@@ -46,8 +46,8 @@ private String currLine;
 private boolean currLineAvailable;
 private DelimitedParser delimitedParser;
 private DelimitedReaderVisitor visitor;
-private boolean stopReading = false;
-private long featureId = 0L;
+private boolean stopReading;
+private long featureId;
 private boolean firstLine = true;
 
 public DelimitedReader(LineProducer lineProducer, DelimitedParser delimitedParser)
@@ -65,9 +65,9 @@ public DelimitedReader(LineProducer lineProducer, DelimitedParser delimitedParse
 
 static String[] split(String line, char delimiter, char encapsulator)
 {
-  ArrayList<String> result = new ArrayList<String>();
+  ArrayList<String> result = new ArrayList<>();
 
-  StringBuffer buf = new StringBuffer();
+  StringBuilder buf = new StringBuilder();
 
   for (int i = 0; i < line.length(); i++)
   {
@@ -131,7 +131,7 @@ private static String nextLine(LineProducer lineProducer) throws IllegalArgument
   }
   catch (IOException e1)
   {
-    log.error("Got IOException while reading delimited file: " + lineProducer.toString());
+    log.error("Got IOException while reading delimited file: " + lineProducer);
     throw new IllegalArgumentException(e1);
   }
 }
@@ -234,8 +234,8 @@ private void cacheNextLine()
 
 public interface DelimitedReaderVisitor
 {
-  public boolean accept(long id, Geometry geometry);
+  boolean accept(long id, Geometry geometry);
 
-  public boolean stopReading(long id, Geometry geometry);
+  boolean stopReading(long id, Geometry geometry);
 }
 }

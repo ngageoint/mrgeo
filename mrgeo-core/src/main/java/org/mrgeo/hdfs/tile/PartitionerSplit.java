@@ -40,10 +40,10 @@ public String findSplitFile(Path parent) throws IOException
   }
   catch (IOException e)
   {
-    throw new IOException("Error opening split file: " + file.toString(), e);
+    throw new IOException("Error opening split file: " + file, e);
   }
 
-  throw new IOException("Split file not found: " + file.toString());
+  throw new IOException("Split file not found: " + file);
 }
 
 @Override
@@ -179,31 +179,31 @@ public static class PartitionerSplitInfo extends SplitInfo
   @Override
   boolean compareEQ(long tileId)
   {
-    return tileId == this.tileid;
+    return tileId == tileid;
   }
 
   @Override
   boolean compareLE(long tileId)
   {
-    return tileId <= this.tileid;
+    return tileId <= tileid;
   }
 
   @Override
   boolean compareLT(long tileId)
   {
-    return tileId < this.tileid;
+    return tileId < tileid;
   }
 
   @Override
   boolean compareGE(long tileId)
   {
-    return tileId >= this.tileid;
+    return tileId >= tileid;
   }
 
   @Override
   boolean compareGT(long tileId)
   {
-    return tileId > this.tileid;
+    return tileId > tileid;
   }
 }
 

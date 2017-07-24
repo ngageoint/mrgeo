@@ -19,6 +19,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.SequenceFile;
+import org.apache.hadoop.io.SequenceFile.Reader;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -31,12 +32,12 @@ import java.io.IOException;
 
 public class HdfsMrsPyramidRecordReader extends RecordReader<TileIdWritable, RasterWritable>
 {
-private SequenceFile.Reader reader;
+private Reader reader;
 private TileIdWritable key;
 private RasterWritable value;
 private long startTileId;
 private long endTileId;
-private long recordCount = 0;
+private long recordCount;
 private boolean more = true;
 
 // Factory for creating instances of SequenceFile.Reader
@@ -45,7 +46,7 @@ private ReaderFactory readerFactory;
 // Default constructor injects Default Reader Factory
 public HdfsMrsPyramidRecordReader()
 {
-  this.readerFactory = new ReaderFactory();
+  readerFactory = new ReaderFactory();
 }
 
 // Constructor for injecting a ReaderFactory implementation
@@ -104,12 +105,12 @@ public void initialize(InputSplit split, TaskAttemptContext context) throws IOEx
 
     // Use a factory to create the reader reader to make this class easier to test and support decoupling the reader
     // lifecycle from this object's lifecycle.
-    this.reader = readerFactory.createReader(fs, path, conf);
+    reader = readerFactory.createReader(fs, path, conf);
 
     try
     {
-      this.key = (TileIdWritable) reader.getKeyClass().newInstance();
-      this.value = (RasterWritable) reader.getValueClass().newInstance();
+      key = (TileIdWritable) reader.getKeyClass().newInstance();
+      value = (RasterWritable) reader.getValueClass().newInstance();
     }
     catch (InstantiationException | IllegalAccessException e)
     {
@@ -135,6 +136,9 @@ public boolean nextKeyValue() throws IOException, InterruptedException
       key = null;
       value = null;
     }
+    else {
+      recordCount++;
+    }
   }
   return more;
 }
@@ -142,9 +146,9 @@ public boolean nextKeyValue() throws IOException, InterruptedException
 // Default ReaderFactory
 static class ReaderFactory
 {
-  public SequenceFile.Reader createReader(FileSystem fs, Path path, Configuration config) throws IOException
+  public Reader createReader(FileSystem fs, Path path, Configuration config) throws IOException
   {
-    return new SequenceFile.Reader(fs, path, config);
+    return new Reader(fs, path, config);
   }
 }
 }

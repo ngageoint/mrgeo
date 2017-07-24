@@ -27,6 +27,7 @@ import org.apache.hadoop.mapreduce.lib.input.LineRecordReader;
 import org.mrgeo.data.vector.FeatureIdWritable;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.hdfs.vector.Column.FactorType;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,7 +51,7 @@ public static DelimitedParser getDelimitedParser(String input, Configuration con
     delimiter = '\t';
   }
   Path columnsPath = new Path(input + ".columns");
-  List<String> attributeNames = new ArrayList<String>();
+  List<String> attributeNames = new ArrayList<>();
   int xCol = -1;
   int yCol = -1;
   int geometryCol = -1;
@@ -62,7 +63,7 @@ public static DelimitedParser getDelimitedParser(String input, Configuration con
     // a map/reduce operation. In that case "output.csv" is a directory
     // containing multiple part*.csv files. And the .columns file is
     // stored as output.tsv.columns at the parent level.
-    columnsPath = new Path(columnsPath.getParent().toString() + ".columns");
+    columnsPath = new Path(columnsPath.getParent() + ".columns");
   }
   if (fs.exists(columnsPath))
   {
@@ -78,7 +79,7 @@ public static DelimitedParser getDelimitedParser(String input, Configuration con
       {
         String c = col.getName();
 
-        if (col.getType() == Column.FactorType.Numeric)
+        if (col.getType() == FactorType.Numeric)
         {
           if (c.equals("x"))
           {
@@ -111,7 +112,7 @@ public static DelimitedParser getDelimitedParser(String input, Configuration con
   }
   else
   {
-    throw new IOException("Column file was not found: " + columnsPath.toString());
+    throw new IOException("Column file was not found: " + columnsPath);
   }
   DelimitedParser delimitedParser = new DelimitedParser(attributeNames,
       xCol, yCol, geometryCol, delimiter, '\"', skipFirstLine);
@@ -193,7 +194,7 @@ public static class VectorLineProducer implements LineProducer
 
   public VectorLineProducer(LineRecordReader recordReader)
   {
-    this.lineRecordReader = recordReader;
+    lineRecordReader = recordReader;
   }
 
   @Override

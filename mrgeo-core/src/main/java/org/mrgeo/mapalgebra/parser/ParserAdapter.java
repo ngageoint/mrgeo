@@ -26,23 +26,23 @@ import java.util.List;
  */
 public interface ParserAdapter
 {
-public void initialize();
+void initialize();
 
-public void initializeForTesting();
+void initializeForTesting();
 
-public void afterFunctionsLoaded();
+void afterFunctionsLoaded();
 
 /**
  * Return all of the functions recognized by the parser.
  *
  * @return
  */
-public List<String> getFunctionNames();
+List<String> getFunctionNames();
 
-public void addFunction(String functionName);
+void addFunction(String functionName);
 
-public ParserNode parse(String expression) throws ParserException;
+ParserNode parse(String expression) throws ParserException;
 
 //  public ParserNode parse(String expression) throws ParserException;
-public Object evaluate(ParserNode node) throws ParserException;
+Object evaluate(ParserNode node) throws ParserException;
 }

@@ -48,7 +48,7 @@ static
   initializeForReal();
 }
 
-public static void setLogLevel(final String className, final String level)
+public static void setLogLevel(String className, String level)
 {
   String loggerClassName = log.getClass().getSimpleName();
 
@@ -90,17 +90,17 @@ public static void setLogLevel(final String className, final String level)
   }
 }
 
-public static void setLogLevel(final Class<?> clazz, final String level)
+public static void setLogLevel(Class<?> clazz, String level)
 {
   setLogLevel(clazz.getName(), level);
 }
 
-public static String getLogLevel(final Class<?> clazz)
+public static String getLogLevel(Class<?> clazz)
 {
   return getLogLevel(clazz.getName());
 }
 
-public static String getLogLevel(final String className)
+public static String getLogLevel(String className)
 {
   String loggerClassName = log.getClass().getSimpleName();
 
@@ -158,7 +158,7 @@ public static String getDefaultLogLevel()
   return defaultLevel;
 }
 
-public static void setDefaultLogLevel(final String level)
+public static void setDefaultLogLevel(String level)
 {
   defaultLevel = level;
 
@@ -233,7 +233,7 @@ public static void redirect()
 
 }
 
-public static void setLoggerToFile(final String file)
+public static void setLoggerToFile(String file)
 {
   String loggerClass = log.getClass().getSimpleName();
 
@@ -423,7 +423,7 @@ public static void initialize()
   // No need to do anything - just need to invoke static initializer when class is loaded
 }
 
-private static String getSlf4jLevel(final Object levelEnum)
+private static String getSlf4jLevel(Object levelEnum)
 {
   try
   {
@@ -442,7 +442,7 @@ private static String getSlf4jLevel(final Object levelEnum)
   return null;
 }
 
-private static Object getLog4JLevel(final String level)
+private static Object getLog4JLevel(String level)
 {
   try
   {

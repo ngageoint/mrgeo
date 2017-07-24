@@ -86,7 +86,7 @@ protected void setResourceName(String resourceName)
  * @param job
  * @throws DataProviderException
  */
-public void setupJob(final Job job) throws DataProviderException
+public void setupJob(Job job) throws DataProviderException
 {
 }
 
@@ -129,7 +129,7 @@ public abstract OutputStream add() throws IOException;
  * @return
  * @throws IOException
  */
-public abstract OutputStream add(final String name) throws IOException;
+public abstract OutputStream add(String name) throws IOException;
 
 /**
  * Give back the number of data resources that have been added to this ad hoc
@@ -150,7 +150,7 @@ public abstract int size() throws IOException;
  * @return
  * @throws IOException
  */
-public abstract InputStream get(final int index) throws IOException;
+public abstract InputStream get(int index) throws IOException;
 
 /**
  * Give back an InputStream to the named resource from this provider. This will
@@ -160,7 +160,7 @@ public abstract InputStream get(final int index) throws IOException;
  * @return
  * @throws IOException
  */
-public abstract InputStream get(final String name) throws IOException;
+public abstract InputStream get(String name) throws IOException;
 
 /**
  * Give back the name of the specified item in this provider. The index
@@ -171,6 +171,6 @@ public abstract InputStream get(final String name) throws IOException;
  * @return
  * @throws IOException
  */
-public abstract String getName(final int index) throws IOException;
+public abstract String getName(int index) throws IOException;
 
 }

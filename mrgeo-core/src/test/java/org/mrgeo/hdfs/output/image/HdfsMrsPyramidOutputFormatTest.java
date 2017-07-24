@@ -21,7 +21,6 @@ import org.mrgeo.hdfs.utils.ConfigurationBuilder;
 import org.mrgeo.hdfs.utils.TaskAttemptContextBuilder;
 import org.mrgeo.junit.UnitTest;
 
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 @SuppressWarnings("all") // test code, not included in production

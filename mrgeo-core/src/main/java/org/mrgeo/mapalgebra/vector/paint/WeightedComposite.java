@@ -28,12 +28,12 @@ public WeightedComposite()
 {
 }
 
-public WeightedComposite(final double weight)
+public WeightedComposite(double weight)
 {
   this.weight = weight;
 }
 
-public WeightedComposite(final double weight, final double nodata)
+public WeightedComposite(double weight, double nodata)
 {
   this.weight = weight;
   setNodata(nodata);
@@ -57,7 +57,7 @@ public double getNodata()
 public void setNodata(double nodata)
 {
   this.nodata = nodata;
-  this.isNodataNaN = Double.isNaN(nodata);
+  isNodataNaN = Double.isNaN(nodata);
 }
 
 @Override

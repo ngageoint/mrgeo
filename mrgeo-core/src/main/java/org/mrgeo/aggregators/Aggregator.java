@@ -39,9 +39,9 @@ double aggregate(double[][] values, double weightx, double weighty, double nodat
 
 float aggregate(float[][] values, double weightx, double weighty, float nodata);
 
-byte aggregate(final byte[][] values, final double weightx, final double weighty, final byte nodata);
+byte aggregate(byte[][] values, double weightx, double weighty, byte nodata);
 
-short aggregate(final short[][] values, final double weightx, final double weighty, final short nodata);
+short aggregate(short[][] values, double weightx, double weighty, short nodata);
 
-int aggregate(final int[][] values, final double weightx, final double weighty, final int nodata);
+int aggregate(int[][] values, double weightx, double weighty, int nodata);
 }

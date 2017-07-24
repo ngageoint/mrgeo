@@ -72,13 +72,13 @@ public List<InputSplit> getSplits(JobContext context) throws IOException, Interr
     int numSplits = conf.getInt("mapred.map.tasks", 2);
 
     // make sure there are at least 10k features per node.
-    final int MIN_FEATURES_PER_SPLIT = 10000;
+    int MIN_FEATURES_PER_SPLIT = 10000;
     if (gc.size() / MIN_FEATURES_PER_SPLIT < numSplits)
     {
       numSplits = (int) Math.ceil((double) gc.size() / (double) MIN_FEATURES_PER_SPLIT);
     }
 
-    List<InputSplit> result = new LinkedList<InputSplit>();
+    List<InputSplit> result = new LinkedList<>();
 
     for (int i = 0; i < numSplits; i++)
     {
@@ -163,7 +163,7 @@ static public class ShpRecordReader extends RecordReader<FeatureIdWritable, Geom
   private ShapefileGeometryCollection gc;
   private int start;
   private FeatureIdWritable key = new FeatureIdWritable();
-  private Geometry value = null;
+  private Geometry value;
 
   ShpRecordReader()
   {
@@ -207,8 +207,8 @@ static public class ShpRecordReader extends RecordReader<FeatureIdWritable, Geom
 
       GeometryInputSplit gis = (GeometryInputSplit) split;
 
-      this.start = gis.startIndex;
-      this.end = gis.endIndex;
+      start = gis.startIndex;
+      end = gis.endIndex;
       currentIndex = start - 1;
     }
     else

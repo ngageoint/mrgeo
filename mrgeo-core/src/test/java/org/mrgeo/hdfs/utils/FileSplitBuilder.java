@@ -16,7 +16,7 @@ private Path path;
 
 public FileSplitBuilder()
 {
-  this.fileSplit = mock(FileSplit.class);
+  fileSplit = mock(FileSplit.class);
 }
 
 public FileSplitBuilder path(Path path)

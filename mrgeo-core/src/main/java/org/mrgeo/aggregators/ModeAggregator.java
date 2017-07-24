@@ -23,6 +23,7 @@ import org.mrgeo.utils.FloatUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Returns the mode of pixel values.
@@ -34,7 +35,7 @@ public class ModeAggregator implements Aggregator
 @Override
 public double aggregate(double[] values, double nodata)
 {
-  HashMap<Double, Integer> freqs = new HashMap<Double, Integer>();
+  HashMap<Double, Integer> freqs = new HashMap<>();
 
   for (double val : values)
   {
@@ -48,7 +49,7 @@ public double aggregate(double[] values, double nodata)
   double mode = nodata;
   int maxFreq = 0;
 
-  for (Map.Entry<Double, Integer> entry : freqs.entrySet())
+  for (Entry<Double, Integer> entry : freqs.entrySet())
   {
     int freq = entry.getValue();
     if (freq > maxFreq)
@@ -64,7 +65,7 @@ public double aggregate(double[] values, double nodata)
 @Override
 public float aggregate(float[] values, float nodata)
 {
-  HashMap<Float, Integer> freqs = new HashMap<Float, Integer>();
+  HashMap<Float, Integer> freqs = new HashMap<>();
 
   for (float val : values)
   {
@@ -78,7 +79,7 @@ public float aggregate(float[] values, float nodata)
   float mode = nodata;
   int maxFreq = 0;
 
-  for (Map.Entry<Float, Integer> entry : freqs.entrySet())
+  for (Entry<Float, Integer> entry : freqs.entrySet())
   {
     int freq = entry.getValue();
     if (freq > maxFreq)
@@ -94,7 +95,7 @@ public float aggregate(float[] values, float nodata)
 @Override
 public int aggregate(int[] values, int nodata)
 {
-  HashMap<Integer, Integer> freqs = new HashMap<Integer, Integer>();
+  HashMap<Integer, Integer> freqs = new HashMap<>();
 
   for (int val : values)
   {
@@ -108,7 +109,7 @@ public int aggregate(int[] values, int nodata)
   int mode = nodata;
   int maxFreq = 0;
 
-  for (Map.Entry<Integer, Integer> entry : freqs.entrySet())
+  for (Entry<Integer, Integer> entry : freqs.entrySet())
   {
     int freq = entry.getValue();
     if (freq > maxFreq)
@@ -138,7 +139,7 @@ public short aggregate(short[] values, short nodata)
   short mode = nodata;
   int maxFreq = 0;
 
-  for (Map.Entry<Short, Integer> entry : freqs.entrySet())
+  for (Entry<Short, Integer> entry : freqs.entrySet())
   {
     int freq = entry.getValue();
     if (freq > maxFreq)
@@ -168,7 +169,7 @@ public byte aggregate(byte[] values, byte nodata)
   byte mode = nodata;
   int maxFreq = 0;
 
-  for (Map.Entry<Byte, Integer> entry : freqs.entrySet())
+  for (Entry<Byte, Integer> entry : freqs.entrySet())
   {
     int freq = entry.getValue();
     if (freq > maxFreq)
@@ -206,7 +207,7 @@ public short aggregate(short[][] values, double weightx, double weighty, short n
 }
 
 @Override
-public int aggregate(final int[][] values, final double weightx, final double weighty, final int nodata)
+public int aggregate(int[][] values, double weightx, double weighty, int nodata)
 {
   throw new NotImplementedException("Not yet implemented");
 }

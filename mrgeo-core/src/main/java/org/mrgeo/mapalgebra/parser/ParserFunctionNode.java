@@ -19,7 +19,7 @@ import org.mrgeo.mapalgebra.MapOp;
 
 public class ParserFunctionNode extends ParserNode
 {
-MapOp mapop = null;
+MapOp mapop;
 
 public final MapOp getMapOp()
 {

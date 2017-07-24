@@ -29,14 +29,14 @@ public interface WritableGeometry extends Geometry
  *
  * @param pf
  */
-public void filter(PointFilter pf);
+void filter(PointFilter pf);
 
-public void setAttribute(String key, String value);
+void setAttribute(String key, String value);
 
-public void setAttributes(Map<String, String> attrs);
+void setAttributes(Map<String, String> attrs);
 
-public void read(DataInputStream stream) throws IOException;
+void read(DataInputStream stream) throws IOException;
 
-public void readAttributes(DataInputStream stream) throws IOException;
+void readAttributes(DataInputStream stream) throws IOException;
 
 }

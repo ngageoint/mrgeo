@@ -16,6 +16,7 @@
 package org.mrgeo.data;
 
 import org.apache.hadoop.mapreduce.*;
+import org.mrgeo.data.DataProviderFactory.AccessMode;
 import org.mrgeo.data.image.ImageInputFormatContext;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.image.MrsImageInputFormatProvider;
@@ -91,12 +92,12 @@ public List<InputSplit> getSplits(JobContext context) throws IOException, Interr
  * It ensures that the native splits returned from the data provider are
  * instances of TiledInputSplit.
  */
-protected List<TiledInputSplit> getNativeSplits(final JobContext context,
-    final ImageInputFormatContext ifContext,
-    final String input) throws IOException, InterruptedException
+protected List<TiledInputSplit> getNativeSplits(JobContext context,
+    ImageInputFormatContext ifContext,
+    String input) throws IOException, InterruptedException
 {
   MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(input,
-      DataProviderFactory.AccessMode.READ, context.getConfiguration());
+      AccessMode.READ, context.getConfiguration());
   MrsImageInputFormatProvider ifProvider = dp.getImageInputFormatProvider(ifContext);
   List<InputSplit> splits = ifProvider.getInputFormat(input).getSplits(context);
   // In order to work with MrGeo and input bounds cropping, the splits must be
@@ -122,9 +123,9 @@ protected List<TiledInputSplit> getNativeSplits(final JobContext context,
  * logic is common to all pyramid input formats, regardless of the data provider,
  * so there should be no need to override it in sub-classes.
  */
-List<TiledInputSplit> filterInputSplits(final ImageInputFormatContext ifContext,
-    final List<TiledInputSplit> splits,
-    final int tileSize)
+List<TiledInputSplit> filterInputSplits(ImageInputFormatContext ifContext,
+    List<TiledInputSplit> splits,
+    int tileSize)
 {
   // If there are no splits or no crop region, just return the splits
   if (splits.size() == 0 || ifContext.getBounds() == null)

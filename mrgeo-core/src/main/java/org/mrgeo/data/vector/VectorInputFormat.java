@@ -35,7 +35,7 @@ public List<InputSplit> getSplits(JobContext context) throws IOException, Interr
 {
   boolean debugEnabled = log.isDebugEnabled();
   VectorInputFormatContext ifContext = VectorInputFormatContext.load(context.getConfiguration());
-  List<InputSplit> results = new ArrayList<InputSplit>();
+  List<InputSplit> results = new ArrayList<>();
   if (debugEnabled)
   {
     log.debug("Number of inputs to get splits for: " + ifContext.getInputs().size());

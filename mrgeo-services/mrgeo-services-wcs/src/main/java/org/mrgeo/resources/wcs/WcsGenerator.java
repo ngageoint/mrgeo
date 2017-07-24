@@ -17,9 +17,7 @@ package org.mrgeo.resources.wcs;
 
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
-import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
-import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.Version;
@@ -28,6 +26,7 @@ import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
 import org.mrgeo.services.mrspyramid.rendering.ImageRendererException;
 import org.mrgeo.services.mrspyramid.rendering.ImageResponseWriter;
 import org.mrgeo.services.utils.DocumentUtils;
+import org.mrgeo.services.utils.RequestUtils;
 import org.mrgeo.services.wcs.DescribeCoverageDocumentGenerator;
 import org.mrgeo.services.wcs.WcsCapabilities;
 import org.mrgeo.utils.XmlUtils;
@@ -49,7 +48,6 @@ import javax.xml.transform.TransformerException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,117 +62,87 @@ private static final Logger log = LoggerFactory.getLogger(WcsGenerator.class);
 private static final String WCS_VERSION = "1.1.0";
 private static final String WCS_SERVICE = "wcs";
 private static Map<Version, Document> capabilities = new HashMap<>();
-private static UriInfo baseURI = null;
+private static String baseURI = null;
 
 static
 {
   if (MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_WCS_CAPABILITIES_CACHE, "true").equals("true"))
   {
-    new Thread()
+    new Thread(() ->
     {
-      public void run()
-      {
-        long sleeptime = 60L * 1000L *
-            Integer.parseInt(
-                MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_WCS_CAPABILITIES_REFRESH, "5"));
+      long sleeptime = 60L * 1000L *
+          Integer.parseInt(
+              MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_WCS_CAPABILITIES_REFRESH, "5"));
 
-        boolean stop = false;
-        while (!stop)
+      boolean stop = false;
+      while (!stop)
+      {
+        try
         {
-          try
+          for (Version version : capabilities.keySet())
           {
-            for (Version version : capabilities.keySet())
+            try
             {
-              try
-              {
-                log.info("refreshing capabilities for version {}", version);
-                ProviderProperties providerProperties = SecurityUtils.getProviderProperties();
-                Document doc = generateCapabilities(version, baseURI, providerProperties);
-                capabilities.put(version, doc);
-              }
-              catch (ParserConfigurationException | IOException e)
-              {
-                log.error("Exception thrown", e);
-              }
+              log.info("refreshing capabilities for version {}", version);
+              ProviderProperties providerProperties = SecurityUtils.getProviderProperties();
+              Document doc = generateCapabilities(version, baseURI, providerProperties);
+              capabilities.put(version, doc);
             }
-            Thread.sleep(sleeptime);
+            catch (ParserConfigurationException | IOException e)
+            {
+              log.error("Exception thrown", e);
+            }
           }
-          catch (InterruptedException e)
-          {
-            log.error("Thread Inturrupted...  stopping {}", e);
-            stop = true;
-          }
+          Thread.sleep(sleeptime);
+        }
+        catch (InterruptedException e)
+        {
+          log.error("Thread Inturrupted...  stopping {}", e);
+          stop = true;
         }
       }
-    }.start();
+    }).start();
   }
 
 }
 
 private Version version = new Version(WCS_VERSION);
 
-private static Document generateCapabilities(Version version, UriInfo uriInfo, ProviderProperties providerProperties)
+private static Document generateCapabilities(Version version, String baseURI, ProviderProperties providerProperties)
     throws IOException, ParserConfigurationException, InterruptedException
 {
   final WcsCapabilities docGen = new WcsCapabilities();
 
-  // The following code re-builds the request URI to include in the GetCapabilities
-  // output. It sorts the parameters so that they are included in the URI in a
-  // predictable order. The reason for this is so that test cases can compare XML
-  // golden files against the XML generated here without worrying about parameters
-  // shifting locations in the URI.
-//  Set<String> keys = uriInfo.getQueryParameters().keySet();
-//  String[] sortedKeys = new String[keys.size()];
-//  keys.toArray(sortedKeys);
-//  Arrays.sort(sortedKeys);
-
-  UriBuilder builder = uriInfo.getBaseUriBuilder().path(uriInfo.getPath());
-
-  return docGen.generateDoc(version, builder.build().toString() + "?",
-      getPyramidFilesList(providerProperties));
+  return docGen.generateDoc(version, baseURI + "?", RequestUtils.getPyramidFilesList(providerProperties));
 }
 
-/*
- * Returns a list of all MrsPyramid version 2 data in the home data directory
- */
-private static MrsImageDataProvider[] getPyramidFilesList(
-    final ProviderProperties providerProperties) throws IOException
-{
-  String[] images = DataProviderFactory.listImages(providerProperties);
-
-  Arrays.sort(images);
-
-  MrsImageDataProvider[] providers = new MrsImageDataProvider[images.length];
-
-  for (int i = 0; i < images.length; i++)
-  {
-    providers[i] = DataProviderFactory.getMrsImageDataProvider(images[i],
-        DataProviderFactory.AccessMode.READ,
-        providerProperties);
-  }
-
-  return providers;
-}
 
 @GET
-public Response doGet(@Context UriInfo uriInfo)
+public Response doGet(@Context UriInfo uriInfo, @Context HttpHeaders headers)
 {
+  log.info("headers:");
+  for (MultivaluedMap.Entry header: headers.getRequestHeaders().entrySet())
+  {
+    log.info("  {}: {}", header.getKey().toString(), header.getValue().toString());
+  }
+
   log.info("GET URI: {}", uriInfo.getRequestUri().toString());
-  return handleRequest(uriInfo);
+  return handleRequest(uriInfo, headers);
 }
 
 @POST
-public Response doPost(@Context UriInfo uriInfo)
+public Response doPost(@Context UriInfo uriInfo, @Context HttpHeaders headers)
 {
   log.info("POST URI: {}", uriInfo.getRequestUri().toString());
-  return handleRequest(uriInfo);
+  return handleRequest(uriInfo, headers);
 }
 
-private Response handleRequest(UriInfo uriInfo)
+private Response handleRequest(UriInfo uriInfo, HttpHeaders headers)
 {
   long start = System.currentTimeMillis();
 
-  baseURI = uriInfo;
+  String uri = RequestUtils.buildBaseURI(uriInfo, headers);
+  baseURI = uri;
 
   MultivaluedMap<String, String> allParams = uriInfo.getQueryParameters();
   String request = getQueryParam(allParams, "request", "GetCapabilities");
@@ -194,11 +162,11 @@ private Response handleRequest(UriInfo uriInfo)
 
     if (request.equalsIgnoreCase("getcapabilities"))
     {
-      return getCapabilities(uriInfo, allParams, providerProperties);
+      return getCapabilities(uri, allParams, providerProperties);
     }
     else if (request.equalsIgnoreCase("describecoverage"))
     {
-      return describeCoverage(uriInfo, allParams, providerProperties);
+      return describeCoverage(uri, allParams, providerProperties);
     }
     else if (request.equalsIgnoreCase("getcoverage"))
     {
@@ -241,7 +209,7 @@ private String getQueryParam(MultivaluedMap<String, String> allParams, String pa
   return null;
 }
 
-private Response describeCoverage(UriInfo uriInfo,
+private Response describeCoverage(String baseURI,
     MultivaluedMap<String, String> allParams,
     final ProviderProperties providerProperties)
 {
@@ -270,7 +238,7 @@ private Response describeCoverage(UriInfo uriInfo,
   try
   {
     final DescribeCoverageDocumentGenerator docGen = new DescribeCoverageDocumentGenerator();
-    final Document doc = docGen.generateDoc(version, uriInfo.getRequestUri().toString(), layers);
+    final Document doc = docGen.generateDoc(version, baseURI, layers);
 
     ByteArrayOutputStream xmlStream = new ByteArrayOutputStream();
     final PrintWriter out = new PrintWriter(xmlStream);
@@ -286,7 +254,7 @@ private Response describeCoverage(UriInfo uriInfo,
   }
 }
 
-private Response getCapabilities(UriInfo uriInfo, MultivaluedMap<String, String> allParams,
+private Response getCapabilities(String baseURI, MultivaluedMap<String, String> allParams,
     ProviderProperties providerProperties)
 {
   // The versionParamName will be null if the request did not include the
@@ -322,7 +290,7 @@ private Response getCapabilities(UriInfo uriInfo, MultivaluedMap<String, String>
     {
       log.warn("*** NOT cached!");
 
-      doc = generateCapabilities(version, uriInfo, providerProperties);
+      doc = generateCapabilities(version, baseURI, providerProperties);
       capabilities.put(version, doc);
     }
 
@@ -620,22 +588,22 @@ public static class WcsGeneratorException extends IOException
 {
   private static final long serialVersionUID = 1L;
 
-  public WcsGeneratorException()
+  WcsGeneratorException()
   {
     super();
   }
 
-  public WcsGeneratorException(final String msg)
+  WcsGeneratorException(final String msg)
   {
     super(msg);
   }
 
-  public WcsGeneratorException(final String msg, final Throwable cause)
+  WcsGeneratorException(final String msg, final Throwable cause)
   {
     super(msg, cause);
   }
 
-  public WcsGeneratorException(final Throwable cause)
+  WcsGeneratorException(final Throwable cause)
   {
     super(cause);
   }

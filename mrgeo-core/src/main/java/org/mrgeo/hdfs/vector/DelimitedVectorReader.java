@@ -25,6 +25,8 @@ import org.mrgeo.data.vector.VectorReader;
 import org.mrgeo.data.vector.VectorReaderContext;
 import org.mrgeo.geometry.Geometry;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.hdfs.vector.Column.FactorType;
+import org.mrgeo.hdfs.vector.DelimitedReader.DelimitedReaderVisitor;
 import org.mrgeo.utils.tms.Bounds;
 
 import java.io.BufferedReader;
@@ -45,7 +47,7 @@ public DelimitedVectorReader(HdfsVectorDataProvider dp,
     VectorReaderContext context,
     Configuration conf)
 {
-  this.provider = dp;
+  provider = dp;
   this.context = context;
   this.conf = conf;
 }
@@ -134,7 +136,7 @@ private DelimitedParser getDelimitedParser() throws IOException
     // a map/reduce operation. In that case "output.csv" is a directory
     // containing multiple part*.csv files. And the .columns file is
     // stored as output.tsv.columns at the parent level.
-    columnsPath = new Path(columnsPath.getParent().toString() + ".columns");
+    columnsPath = new Path(columnsPath.getParent() + ".columns");
   }
   if (fs.exists(columnsPath))
   {
@@ -150,7 +152,7 @@ private DelimitedParser getDelimitedParser() throws IOException
       {
         String c = col.getName();
 
-        if (col.getType() == Column.FactorType.Numeric)
+        if (col.getType() == FactorType.Numeric)
         {
           if (c.equalsIgnoreCase("x"))
           {
@@ -229,7 +231,7 @@ public static class HdfsFileReader implements LineProducer
 
   public void initialize(Configuration conf, Path p) throws IOException
   {
-    this.sourcePath = p;
+    sourcePath = p;
     InputStream is = HadoopFileUtils.open(conf, p);
     reader = new BufferedReader(new InputStreamReader(is));
   }
@@ -255,7 +257,7 @@ public static class HdfsFileReader implements LineProducer
   }
 }
 
-public static class FeatureIdRangeVisitor implements DelimitedReader.DelimitedReaderVisitor
+public static class FeatureIdRangeVisitor implements DelimitedReaderVisitor
 {
   private long minFeatureId = -1;
   private long maxFeatureId = -1;
@@ -300,7 +302,7 @@ public static class FeatureIdRangeVisitor implements DelimitedReader.DelimitedRe
   }
 }
 
-public static class BoundsVisitor implements DelimitedReader.DelimitedReaderVisitor
+public static class BoundsVisitor implements DelimitedReaderVisitor
 {
   private Bounds bounds;
 

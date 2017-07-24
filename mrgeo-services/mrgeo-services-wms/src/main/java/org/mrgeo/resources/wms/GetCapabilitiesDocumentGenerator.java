@@ -24,6 +24,7 @@ import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.services.Version;
 import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;
 import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
+import org.mrgeo.services.utils.RequestUtils;
 import org.mrgeo.utils.FloatUtils;
 import org.mrgeo.utils.LatLng;
 import org.mrgeo.utils.XmlUtils;
@@ -32,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import javax.ws.rs.core.MultivaluedMap;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -83,7 +85,7 @@ private static void addHttpElement(Element parent, String requestUrl, Version ve
  * Generates an XML document for a DescribeTiles request
  *
  */
-Document generateDoc(Version version, String requestUrl,
+Document generateDoc(Version version, String requestUrl, MultivaluedMap<String, String> allParams,
     MrsImageDataProvider[] pyramidFiles) throws IOException, InterruptedException,
     ParserConfigurationException
 {
@@ -138,6 +140,7 @@ Document generateDoc(Version version, String requestUrl,
   {
     XmlUtils.createTextElement2(service, "OnlineResource", requestUrl);
   }
+
   XmlUtils.createTextElement2(service, "Fees", "none");
   XmlUtils.createTextElement2(service, "AccessConstraints", "none");
 
@@ -152,9 +155,16 @@ Document generateDoc(Version version, String requestUrl,
   Element getCapabilities = XmlUtils.createElement(requestTag, "GetCapabilities");
   XmlUtils.createTextElement2(getCapabilities, "Format", "application/vnd.ogc.wms_xml");
   Element gcDcpType = XmlUtils.createElement(getCapabilities, "DCPType");
-  addHttpElement(gcDcpType, requestUrl, version);
-  addCapability(requestTag, "GetMap", version, requestUrl);
-  addCapability(requestTag, "GetMosaic", version, requestUrl);
+  addHttpElement(gcDcpType, RequestUtils.buildURI(requestUrl,
+      RequestUtils.replaceParam("REQUEST", "GetCapabilities", allParams)), version);
+
+  addCapability(requestTag, "GetMap", version,
+      RequestUtils.buildURI(requestUrl,
+          RequestUtils.replaceParam("REQUEST", "GetMap", allParams)));
+
+  addCapability(requestTag, "GetMosaic", version,
+      RequestUtils.buildURI(requestUrl,
+          RequestUtils.replaceParam("REQUEST", "GetMosaic", allParams)));
 
 
   // Tiled extensions
@@ -165,7 +175,9 @@ Document generateDoc(Version version, String requestUrl,
     Element dtDcpType = XmlUtils.createElement(describeTiles, "DCPType");
     addHttpElement(dtDcpType, requestUrl, version);
 
-    addCapability(requestTag, "GetTile", version, requestUrl);
+    addCapability(requestTag, "GetTile", version,
+        RequestUtils.buildURI(requestUrl,
+            RequestUtils.replaceParam("REQUEST", "GetTile", allParams)));
   }
 
   // not supported at this time.
@@ -219,14 +231,7 @@ private void addLayersToCapability(Element capability, Version version,
   double miny = Double.MAX_VALUE;
   double maxy = -Double.MAX_VALUE;
 
-  Arrays.sort(providers, new Comparator<MrsImageDataProvider>()
-  {
-    @Override
-    public int compare(MrsImageDataProvider o1, MrsImageDataProvider o2)
-    {
-      return o1.getResourceName().compareTo(o2.getResourceName());
-    }
-  });
+  Arrays.sort(providers, Comparator.comparing(MrsImageDataProvider::getResourceName));
 
   for (MrsImageDataProvider provider : providers)
   {

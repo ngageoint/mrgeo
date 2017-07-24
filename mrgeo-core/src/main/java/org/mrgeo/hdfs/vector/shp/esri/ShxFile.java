@@ -25,15 +25,14 @@ import java.io.IOException;
 public class ShxFile
 {
 public final static int DEFAULT_CACHE_SIZE = 500;
-protected boolean cachemode = false; // cache mode indicator flag
+protected boolean cachemode; // cache mode indicator flag
 protected int cachepos; // cache position (inclusive); dynamic access only
 protected int cachesize; // size of cache - represents all rows if not dynamic
-protected int[] contentLength = null;
-protected Header header = null;
-protected boolean modData = false;
-protected int[] offset = null;
+protected int[] contentLength;
+protected Header header;
+protected int[] offset;
 protected int recordCount;
-private SeekableDataInput in = null;
+private SeekableDataInput in;
 
 /**
  * Opens a SHX file as read-only. Made private for clarity's sake.
@@ -145,10 +144,6 @@ public int getContentLength(int i)
   {
     if (i < cachepos || i > (cachepos + contentLength.length - 1))
     {
-      if (modData)
-      {
-        saveRows(cachepos);
-      }
       loadData(i);
     }
     return contentLength[i - cachepos];
@@ -177,10 +172,6 @@ public int getOffset(int i)
   {
     if (i < cachepos || i > (cachepos + offset.length - 1))
     {
-      if (modData)
-      {
-        saveRows(cachepos);
-      }
       loadData(i);
     }
     return offset[i - cachepos];
@@ -227,10 +218,6 @@ public void saveRows(int i)
 @Override
 protected void finalize() throws IOException
 {
-  if (modData)
-  {
-    save();
-  }
   if (in != null)
   {
     in.close();

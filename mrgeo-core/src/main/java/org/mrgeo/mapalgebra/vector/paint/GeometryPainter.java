@@ -50,8 +50,8 @@ private Color fillColor;
 private Color backgroundColor;
 private AffineTransform transform = new AffineTransform();
 
-public GeometryPainter(final Graphics2D gr, final WritableRaster raster, final Color fillColor,
-    final Color backgroundColor)
+public GeometryPainter(Graphics2D gr, WritableRaster raster, Color fillColor,
+    Color backgroundColor)
 {
   this.gr = gr;
 
@@ -79,7 +79,7 @@ public Color getFillColor()
   return fillColor;
 }
 
-public void setFillColor(final Color color)
+public void setFillColor(Color color)
 {
   fillColor = color;
 }
@@ -89,7 +89,7 @@ public AffineTransform getTransform()
   return transform;
 }
 
-public void paint(final Geometry g)
+public void paint(Geometry g)
 {
   if (g instanceof Polygon)
   {
@@ -109,23 +109,23 @@ public void paint(final Geometry g)
   }
   else
   {
-    throw new IllegalArgumentException("Geometry type not implemented " + g.getClass().toString());
+    throw new IllegalArgumentException("Geometry type not implemented " + g.getClass());
   }
 }
 
-public void paint(final GeometryCollection gc)
+public void paint(GeometryCollection gc)
 {
   for (int i = 0; i < gc.getNumGeometries(); i++)
   {
-    final Geometry g = gc.getGeometry(i);
+    Geometry g = gc.getGeometry(i);
     paint(g);
   }
 }
 
-public void paint(final LineString ls)
+public void paint(LineString ls)
 {
-  final Path2D.Double path = new Path2D.Double();
-  final Point2D.Double dst = new Point2D.Double();
+  Path2D.Double path = new Path2D.Double();
+  Point2D.Double dst = new Point2D.Double();
 
   Point c = ls.getPoint(0);
 
@@ -151,12 +151,12 @@ public void paint(final LineString ls)
 
 }
 
-public void paint(final Point p)
+public void paint(Point p)
 {
   gr.setColor(fillColor);
   gr.setStroke(new BasicStroke(1));
 
-  final Point2D.Double dst = new Point2D.Double();
+  Point2D.Double dst = new Point2D.Double();
   transform.transform(new Point2D.Double(p.getX(), p.getY()), dst);
 
   // System.out.println("p: x: " + p.getX() + " y: " + p.getY() + " xform: x: " + (int)dst.x +
@@ -166,7 +166,7 @@ public void paint(final Point p)
   gr.drawLine((int) dst.x, (int) dst.y, (int) dst.x, (int) dst.y);
 }
 
-public void paint(final Polygon polygon)
+public void paint(Polygon polygon)
 {
   Path2D.Double path = new Path2D.Double();
 
@@ -192,7 +192,7 @@ public void paint(final Polygon polygon)
   }
 }
 
-public void paintRings(final GeometryCollection gc)
+public void paintRings(GeometryCollection gc)
 {
   if (gc.getNumGeometries() != 2)
   {
@@ -201,12 +201,12 @@ public void paintRings(final GeometryCollection gc)
   }
   for (int i = 0; i < gc.getNumGeometries(); i++)
   {
-    final Geometry g = gc.getGeometry(i);
+    Geometry g = gc.getGeometry(i);
     if (g instanceof Polygon)
     {
-      final Path2D.Double path = new Path2D.Double();
-      final Polygon polygon = (Polygon) g;
-      final LineString ring = polygon.getExteriorRing();
+      Path2D.Double path = new Path2D.Double();
+      Polygon polygon = (Polygon) g;
+      LineString ring = polygon.getExteriorRing();
 
       buildRing(path, ring);
 
@@ -231,10 +231,10 @@ public void paintEllipse(Point center, double major, double minor, double orient
   gr.setColor(fillColor);
   gr.setStroke(new BasicStroke(1));
 
-  final double width = major * transform.getScaleX();
-  final double height = minor * -transform.getScaleY();
+  double width = major * transform.getScaleX();
+  double height = minor * -transform.getScaleY();
 
-  final Point2D.Double dst = new Point2D.Double();
+  Point2D.Double dst = new Point2D.Double();
 
   transform.transform(new Point2D.Double(center.getX(), center.getY()), dst);
 
@@ -253,7 +253,7 @@ public void paintEllipse(Point center, double major, double minor, double orient
   }
 }
 
-public void setBackGroundColor(final Color color)
+public void setBackGroundColor(Color color)
 {
   backgroundColor = color;
 }
@@ -262,15 +262,15 @@ public void setBackGroundColor(final Color color)
  * Set the real world boundary (e.g. lat/lng) of the image that is being painted. This
  * reconfigures the matrix of the graphics object to make painting in real coordinates work.
  */
-public void setBounds(final Bounds b)
+public void setBounds(Bounds b)
 {
-  final Rectangle r = raster.getBounds();
+  Rectangle r = raster.getBounds();
 
-  final double scaleX = r.getWidth() / b.width();
-  final double scaleY = r.getHeight() / b.height();
+  double scaleX = r.getWidth() / b.width();
+  double scaleY = r.getHeight() / b.height();
 
-  final double xlateX = -scaleX * b.w;
-  final double xlateY = scaleY * b.s + r.getHeight();
+  double xlateX = -scaleX * b.w;
+  double xlateY = scaleY * b.s + r.getHeight();
 
   // the -1 in scaleY mirrors the values, so 0,0 is the upper left corner, not the lower left.
   transform = new AffineTransform(scaleX, 0.0, 0.0, -scaleY, xlateX, xlateY);
@@ -278,9 +278,9 @@ public void setBounds(final Bounds b)
   // System.out.println("xform: " + transform);
 }
 
-private void buildRing(final Path2D.Double path, final LineString ring)
+private void buildRing(Path2D.Double path, LineString ring)
 {
-  final Point2D.Double dst = new Point2D.Double();
+  Point2D.Double dst = new Point2D.Double();
 
   Point c = ring.getPoint(0);
 

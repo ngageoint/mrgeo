@@ -31,7 +31,7 @@ public interface VectorOutputFormatProvider
  *
  * @return
  */
-public OutputFormat<FeatureIdWritable, Geometry> getOutputFormat(String input);
+OutputFormat<FeatureIdWritable, Geometry> getOutputFormat(String input);
 
 /**
  * Providers must perform any required Hadoop job setup when outputting
@@ -40,12 +40,12 @@ public OutputFormat<FeatureIdWritable, Geometry> getOutputFormat(String input);
  * @param job
  * @throws IOException
  */
-public void setupJob(final Job job) throws DataProviderException, IOException;
+void setupJob(Job job) throws DataProviderException, IOException;
 
 /**
  * Perform any processing required after the map/reduce has completed.
  *
  * @param job
  */
-public void teardown(final Job job) throws DataProviderException;
+void teardown(Job job) throws DataProviderException;
 }

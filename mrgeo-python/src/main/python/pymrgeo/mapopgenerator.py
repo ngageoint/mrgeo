@@ -173,8 +173,8 @@ def generate(mrgeo, gateway, gateway_client):
 
                 if ooCodes is not None:
                     for method_name, code in ooCodes.items():
-                        # if method_name == "rasterizevector":
-                        #    print(code.generate())
+                        # if method_name == "export":
+                        #     print(code.generate(), file=sys.stderr)
 
                         if instance == 'RasterMapOp':
                             _rastermapop_code[method_name] = code
@@ -378,15 +378,15 @@ def _generate_run(generator, instance, is_export=False):
 def _generate_saveraster():
     generator = CodeGenerator()
 
-    generator.write("cls = JavaClass('org.mrgeo.mapalgebra.ExportMapOp', gateway_client=self.gateway._gateway_client)")
-    generator.write(
-        "if hasattr(self, 'mapop') and self.is_instance_of(self.mapop, 'org.mrgeo.mapalgebra.raster.RasterMapOp') and type(name) is str and isinstance(singleFile, (int, long, float, str)) and isinstance(zoom, (int, long, float)) and isinstance(numTiles, (int, long, float)) and isinstance(mosaic, (int, long, float)) and type(format) is str and isinstance(randomTiles, (int, long, float, str)) and isinstance(tms, (int, long, float, str)) and type(colorscale) is str and type(tileids) is str and type(bounds) is str and isinstance(allLevels, (int, long, float, str)) and isinstance(overridenodata, (int, long, float)):",
-        post_indent=True)
-    generator.write(
-        "op = cls.create(self.mapop, str(name), True if singleFile else False, int(zoom), int(numTiles), int(mosaic), str(format), True if randomTiles else False, True if tms else False, str(colorscale), str(tileids), str(bounds), True if allLevels else False, float(overridenodata))",
-        post_unindent=True)
-    generator.write("else:", post_indent=True)
-    generator.write("raise Exception('input types differ (TODO: expand this message!)')", post_unindent=True)
+    # generator.write("cls = JavaClass('org.mrgeo.mapalgebra.ExportMapOp', gateway_client=self.gateway._gateway_client)")
+    # generator.write(
+    #     "if hasattr(self, 'mapop') and self.is_instance_of(self.mapop, 'org.mrgeo.mapalgebra.raster.RasterMapOp') and type(name) is str and isinstance(singleFile, (int, long, float, str)) and isinstance(zoom, (int, long, float)) and isinstance(numTiles, (int, long, float)) and isinstance(mosaic, (int, long, float)) and type(format) is str and isinstance(randomTiles, (int, long, float, str)) and isinstance(tms, (int, long, float, str)) and type(colorscale) is str and type(tileids) is str and type(bounds) is str and isinstance(allLevels, (int, long, float, str)) and isinstance(overridenodata, (int, long, float)):",
+    #     post_indent=True)
+    # generator.write(
+    #     "op = cls.create(self.mapop, str(name), True if singleFile else False, str(""), int(zoom), int(numTiles), int(mosaic), str(format), True if randomTiles else False, True if tms else False, str(colorscale), str(tileids), str(bounds), True if allLevels else False, float(overridenodata))",
+    #     post_unindent=True)
+    # generator.write("else:", post_indent=True)
+    # generator.write("raise Exception('input types differ (TODO: expand this message!)')", post_unindent=True)
     generator.write("if (op.setup(self.job, self.context.getConf()) and", post_indent=True)
     generator.write("op.execute(self.context) and")
     generator.write("op.teardown(self.job, self.context.getConf())):")

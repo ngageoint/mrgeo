@@ -16,6 +16,7 @@
 package org.mrgeo.geometry;
 
 
+import org.mrgeo.geometry.Geometry.Type;
 import org.mrgeo.utils.tms.Bounds;
 
 import java.io.*;
@@ -29,7 +30,7 @@ public class PolygonImpl extends GeometryImpl implements WritablePolygon
 {
 private static final long serialVersionUID = 1L;
 
-WritableLinearRing exteriorRing = null;
+WritableLinearRing exteriorRing;
 List<WritableLinearRing> interiorRings = new ArrayList<>();
 
 PolygonImpl()
@@ -192,7 +193,7 @@ public void write(DataOutputStream stream) throws IOException
 @Override
 public Type type()
 {
-  return Geometry.Type.POLYGON;
+  return Type.POLYGON;
 }
 
 @Override

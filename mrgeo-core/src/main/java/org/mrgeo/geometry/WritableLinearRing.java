@@ -20,6 +20,6 @@ package org.mrgeo.geometry;
  */
 public interface WritableLinearRing extends LinearRing, WritableLineString
 {
-public void closeRing();
+void closeRing();
 
 }

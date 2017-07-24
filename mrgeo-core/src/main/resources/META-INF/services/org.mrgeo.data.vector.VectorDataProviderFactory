@@ -14,4 +14,3 @@
 #
 
 org.mrgeo.hdfs.vector.HdfsVectorDataProviderFactory
-org.mrgeo.data.vector.pg.PgVectorDataProviderFactory

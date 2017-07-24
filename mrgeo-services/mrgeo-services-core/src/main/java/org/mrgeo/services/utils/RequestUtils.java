@@ -15,12 +15,29 @@
 
 package org.mrgeo.services.utils;
 
+import org.apache.http.client.utils.URIBuilder;
 import org.gdal.osr.CoordinateTransformation;
 import org.gdal.osr.SpatialReference;
+import org.glassfish.jersey.internal.util.collection.MultivaluedStringMap;
+import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.ProviderProperties;
+import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.utils.GDALUtils;
 import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * General utilities for dealing with WMS requests
@@ -29,9 +46,100 @@ public class RequestUtils
 {
 private static final Logger log = LoggerFactory.getLogger(RequestUtils.class);
 
+static
 {
   GDALUtils.register();
 }
+
+public static String buildBaseURI(UriInfo uriInfo, HttpHeaders headers)
+{
+  URI base = uriInfo.getBaseUriBuilder().path(uriInfo.getPath()).build();
+
+  List<String> proxies = headers.getRequestHeader("X-Forwarded-For");
+  if (proxies == null || proxies.size() < 1)
+  {
+    return base.toASCIIString();
+  }
+  else
+  {
+    try
+    {
+      URI proxy = new URI("http://" + proxies.get(0));  // the 1st proxy is the original one...
+
+      return new URI(base.getScheme(), base.getRawUserInfo(), proxy.getHost(), proxy.getPort(),
+          base.getRawPath(), base.getRawQuery(), base.getRawFragment()).toASCIIString();
+    }
+    catch (URISyntaxException e)
+    {
+      return base.toASCIIString();
+    }
+  }
+}
+
+public static String buildURI(String baseUri, MultivaluedMap<String, String> params)
+{
+  UriBuilder builder = UriBuilder.fromUri(baseUri);
+
+  for (MultivaluedMap.Entry<String, List<String>> param : params.entrySet())
+  {
+    for (String v: param.getValue())
+    {
+      builder.queryParam(param.getKey(), v);
+    }
+  }
+
+  return builder.build().toASCIIString();
+}
+
+public static MultivaluedMap<String, String> replaceParam(String name, String value, MultivaluedMap<String, String> params)
+{
+  return replaceParam(name, Collections.singletonList(value), params);
+
+}
+
+public static MultivaluedMap<String, String> replaceParam(String name, List<String> values,
+    MultivaluedMap<String, String> params)
+{
+
+  MultivaluedStringMap sm = new MultivaluedStringMap(params);
+
+  for (Map.Entry<String, List<String>> es : params.entrySet())
+  {
+    if (es.getKey().equalsIgnoreCase(name))
+    {
+      sm.remove(es.getKey());
+      break;
+    }
+  }
+
+  sm.putIfAbsent(name, values);
+
+  return sm;
+}
+
+
+/*
+ * Returns a list of all MrsPyramid version 2 data in the home data directory
+ */
+public static MrsImageDataProvider[] getPyramidFilesList(
+    final ProviderProperties providerProperties) throws IOException
+{
+  String[] images = DataProviderFactory.listImages(providerProperties);
+
+  Arrays.sort(images);
+
+  MrsImageDataProvider[] providers = new MrsImageDataProvider[images.length];
+
+  for (int i = 0; i < images.length; i++)
+  {
+    providers[i] = DataProviderFactory.getMrsImageDataProvider(images[i],
+        DataProviderFactory.AccessMode.READ,
+        providerProperties);
+  }
+
+  return providers;
+}
+
 
 /**
  * Parses a geographic bounds from a request parameter value
@@ -39,7 +147,7 @@ private static final Logger log = LoggerFactory.getLogger(RequestUtils.class);
  * @param param request parameter value
  * @return geographic bounds
  */
-public static Bounds boundsFromParam(final String param)
+static Bounds boundsFromParam(final String param)
 {
   if (param == null)
   {

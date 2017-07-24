@@ -26,6 +26,17 @@ class RasterMapOp(object):
     def is_instance_of(self, java_object, java_class):
         return iio(self.gateway, java_object, java_class)
 
+    def rdd(self):
+        if self.mapop is None:
+            return None
+
+        rdd = self.mapop.rdd()
+
+        if (not rdd.isDefined()) or rdd.isEmpty():
+            return None
+        return rdd.get()
+
+
     def metadata(self):
         if self.mapop is None:
             return None
