@@ -76,10 +76,8 @@ static void loadPublishersFromConfig()
   {
     String profileName = publisherPropEntry.getKey();
     Properties publisherProps = publisherPropEntry.getValue();
-    String publisherClassKey = MRGEO_PUBLISHER_CLASS_PROP;
-    String publisherConfiguratorClassKey = MRGEO_PUBLISHER_CONFIGURATOR_CLASS_PROP;
-    String publisherClassName = (String) publisherProps.get(publisherClassKey);
-    String publisherConfiguratorClassName = (String) publisherProps.get(publisherConfiguratorClassKey);
+    String publisherClassName = (String) publisherProps.get(MRGEO_PUBLISHER_CLASS_PROP);
+    String publisherConfiguratorClassName = (String) publisherProps.get(MRGEO_PUBLISHER_CONFIGURATOR_CLASS_PROP);
     if (publisherClassName == null || publisherClassName.isEmpty())
     {
       logger.error(String.format("Invalid publisher profile %1$s - Missing publisher proprty %2$s.",

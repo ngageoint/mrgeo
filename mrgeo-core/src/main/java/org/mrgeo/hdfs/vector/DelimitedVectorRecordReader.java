@@ -114,9 +114,8 @@ public static DelimitedParser getDelimitedParser(String input, Configuration con
   {
     throw new IOException("Column file was not found: " + columnsPath);
   }
-  DelimitedParser delimitedParser = new DelimitedParser(attributeNames,
+  return new DelimitedParser(attributeNames,
       xCol, yCol, geometryCol, delimiter, '\"', skipFirstLine);
-  return delimitedParser;
 }
 
 @Override
@@ -158,8 +157,7 @@ public boolean nextKeyValue() throws IOException, InterruptedException
 @Override
 public FeatureIdWritable getCurrentKey() throws IOException, InterruptedException
 {
-  FeatureIdWritable key = new FeatureIdWritable(recordReader.getCurrentKey().get());
-  return key;
+  return new FeatureIdWritable(recordReader.getCurrentKey().get());
 }
 
 @Override

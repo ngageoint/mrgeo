@@ -1,6 +1,5 @@
 package org.mrgeo.hdfs.utils;
 
-import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.io.MapFile.Reader;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;

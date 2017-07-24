@@ -78,8 +78,7 @@ public static String getBaseName(String fileName)
 public static ESRILayer open(SeekableDataInput shp, SeekableDataInput shx, SeekableDataInput dbf,
     InputStream prj) throws FormatException, IOException, DbaseException
 {
-  ESRILayer result = new ESRILayer(shp, shx, dbf, prj);
-  return result;
+  return new ESRILayer(shp, shx, dbf, prj);
 }
 
 /**

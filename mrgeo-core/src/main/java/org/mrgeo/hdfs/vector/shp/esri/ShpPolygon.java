@@ -16,12 +16,9 @@
 package org.mrgeo.hdfs.vector.shp.esri;
 
 import org.mrgeo.hdfs.vector.shp.esri.geom.Coord;
-import org.mrgeo.hdfs.vector.shp.esri.geom.JPolyLine;
 import org.mrgeo.hdfs.vector.shp.esri.geom.JPolygon;
 import org.mrgeo.hdfs.vector.shp.esri.geom.JShape;
 import org.mrgeo.hdfs.vector.shp.util.Convert;
-
-import java.io.IOException;
 
 
 public class ShpPolygon extends ShpShape

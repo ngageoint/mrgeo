@@ -15,9 +15,7 @@
 
 package org.mrgeo.hdfs.partitioners;
 
-import org.mrgeo.hdfs.tile.FileSplit;
 import org.mrgeo.hdfs.tile.FileSplit.FileSplitInfo;
-import org.mrgeo.hdfs.tile.PartitionerSplit;
 import org.mrgeo.hdfs.tile.PartitionerSplit.PartitionerSplitInfo;
 import org.mrgeo.hdfs.tile.SplitInfo;
 import org.mrgeo.utils.LongRectangle;

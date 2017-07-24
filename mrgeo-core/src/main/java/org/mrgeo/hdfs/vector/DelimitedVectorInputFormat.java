@@ -116,8 +116,7 @@ public List<InputSplit> getSplits(JobContext context) throws IOException, Interr
   }
   else
   {
-    List<InputSplit> splits = new TextInputFormat().getSplits(context);
-    return splits;
+    return new TextInputFormat().getSplits(context);
   }
 }
 }
