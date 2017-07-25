@@ -217,7 +217,7 @@ private void addCapability(Element parent, String capability, Version version, S
 @SuppressWarnings("squid:S1166") // Exception caught and handled
 @SuppressFBWarnings(value = "SIC_INNER_SHOULD_BE_STATIC_ANON", justification = "Just a simple inline comparator")
 private void addLayersToCapability(Element capability, Version version,
-    MrsImageDataProvider[] providers) throws InterruptedException, IOException
+    MrsImageDataProvider[] providers)
 {
   Element rootLayer = XmlUtils.createElement(capability, "Layer");
   rootLayer.setAttribute("queryable", "0");
