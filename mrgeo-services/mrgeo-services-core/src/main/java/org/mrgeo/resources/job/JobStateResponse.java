@@ -34,7 +34,7 @@ public Date getStartTime()
 
 public void setStartTime(Date startTime)
 {
-  this._startTime = (Date) startTime.clone();
+  _startTime = (Date) startTime.clone();
 }
 
 public String getState()
@@ -44,7 +44,7 @@ public String getState()
 
 public void setState(String state)
 {
-  this._state = state;
+  _state = state;
 }
 
 public long getDuration()
@@ -54,7 +54,7 @@ public long getDuration()
 
 public void setDuration(long duration)
 {
-  this._duration = duration;
+  _duration = duration;
 }
 
 public String getMessage()

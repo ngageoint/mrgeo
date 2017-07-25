@@ -32,7 +32,7 @@ public TiffImageRenderer()
   super();
 }
 
-public TiffImageRenderer(final SpatialReference srs)
+public TiffImageRenderer(SpatialReference srs)
 {
   super(srs);
 }

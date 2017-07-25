@@ -47,23 +47,23 @@ public String getMimeType()
 
 @Override
 @SuppressWarnings("squid:S1166") // Exception caught and handled
-public Response getResponse(final String pyrName, final Bounds bounds, final int width,
-    final int height, final ColorScale cs, final String reqUrl, final int zoomLevel,
-    final ProviderProperties providerProperties)
+public Response getResponse(String pyrName, Bounds bounds, int width,
+    int height, ColorScale cs, String reqUrl, int zoomLevel,
+    ProviderProperties providerProperties)
 {
   try
   {
-    final String kmlBody = ImageRendererAbstract
+    String kmlBody = ImageRendererAbstract
         .asKml(pyrName, bounds, reqUrl, providerProperties);
-    final String type = new MimetypesFileTypeMap().getContentType(getFormatSuffix());
-    final String headerInfo = "attachment; filename=" + pyrName + "." + getFormatSuffix();
+    String type = new MimetypesFileTypeMap().getContentType(getFormatSuffix());
+    String headerInfo = "attachment; filename=" + pyrName + "." + getFormatSuffix();
     return Response.ok()
         .entity(kmlBody)
         .encoding(type)
         .header("Content-Disposition", headerInfo)
         .header("Content-type", getMimeType()).build();
   }
-  catch (final IOException e)
+  catch (IOException e)
   {
     if (e.getMessage() != null)
     {

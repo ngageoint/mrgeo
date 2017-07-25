@@ -32,7 +32,7 @@ public JpegImageRenderer()
   super();
 }
 
-public JpegImageRenderer(final SpatialReference srs)
+public JpegImageRenderer(SpatialReference srs)
 {
   super(srs);
 }

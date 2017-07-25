@@ -57,7 +57,7 @@ static {
 //    return getHandler(format, handlerType);
 //  }
 @SuppressWarnings("unused")
-public static Object getHandler(String imageFormat, final Class<?> handlerType)
+public static Object getHandler(String imageFormat, Class<?> handlerType)
     throws IllegalAccessException, InstantiationException
 {
 
@@ -77,7 +77,7 @@ public static Object getHandler(String imageFormat, final Class<?> handlerType)
   // first look in the mime types
   if (mimeTypeHandlers.containsKey(handlerType))
   {
-    final Map<String, Class<?>> handlers = mimeTypeHandlers.get(handlerType);
+    Map<String, Class<?>> handlers = mimeTypeHandlers.get(handlerType);
 
     if (handlers.containsKey(imageFormat))
     {
@@ -91,7 +91,7 @@ public static Object getHandler(String imageFormat, final Class<?> handlerType)
   // now look in the formats
   if (imageFormatHandlers.containsKey(handlerType))
   {
-    final Map<String, Class<?>> handlers = imageFormatHandlers.get(handlerType);
+    Map<String, Class<?>> handlers = imageFormatHandlers.get(handlerType);
 
     if (handlers.containsKey(imageFormat))
     {
@@ -105,12 +105,12 @@ public static Object getHandler(String imageFormat, final Class<?> handlerType)
   throw new IllegalArgumentException("Unsupported image format - " + imageFormat);
 }
 
-public static String[] getImageFormats(final Class<?> handlerType)
+public static String[] getImageFormats(Class<?> handlerType)
 {
 
   if (imageFormatHandlers.containsKey(handlerType))
   {
-    final Map<String, Class<?>> handlers = imageFormatHandlers.get(handlerType);
+    Map<String, Class<?>> handlers = imageFormatHandlers.get(handlerType);
 
     return handlers.keySet().toArray(new String[0]);
   }
@@ -119,12 +119,12 @@ public static String[] getImageFormats(final Class<?> handlerType)
       ". Not supported.");
 }
 
-public static String[] getMimeFormats(final Class<?> handlerType)
+public static String[] getMimeFormats(Class<?> handlerType)
 {
 
   if (mimeTypeHandlers.containsKey(handlerType))
   {
-    final Map<String, Class<?>> handlers = mimeTypeHandlers.get(handlerType);
+    Map<String, Class<?>> handlers = mimeTypeHandlers.get(handlerType);
 
     return handlers.keySet().toArray(new String[0]);
   }
@@ -133,7 +133,7 @@ public static String[] getMimeFormats(final Class<?> handlerType)
       ". Not supported.");
 }
 
-private static void addFormatHandlers(final Map<String, Class<?>> handlers, final Class<?> clazz)
+private static void addFormatHandlers(Map<String, Class<?>> handlers, Class<?> clazz)
 {
   try
   {
@@ -142,21 +142,21 @@ private static void addFormatHandlers(final Map<String, Class<?>> handlers, fina
 
     Method method;
     method = clazz.getMethod("getWmsFormats");
-    final Object o = method.invoke(cl);
+    Object o = method.invoke(cl);
 
     String[] formats;
     if (o != null)
     {
       formats = (String[]) o;
 
-      for (final String format : formats)
+      for (String format : formats)
       {
         handlers.put(format, clazz);
         log.info("      {}", format);
       }
     }
   }
-  catch (final InstantiationException ignored)
+  catch (InstantiationException ignored)
   {
   }
   catch (InvocationTargetException |
@@ -166,7 +166,7 @@ private static void addFormatHandlers(final Map<String, Class<?>> handlers, fina
   }
 }
 
-private static void addMimeHandlers(final Map<String, Class<?>> handlers, final Class<?> clazz)
+private static void addMimeHandlers(Map<String, Class<?>> handlers, Class<?> clazz)
 {
   try
   {
@@ -176,21 +176,21 @@ private static void addMimeHandlers(final Map<String, Class<?>> handlers, final 
 
     Method method;
     method = clazz.getMethod("getMimeTypes");
-    final Object o = method.invoke(cl);
+    Object o = method.invoke(cl);
 
     String[] formats;
     if (o != null)
     {
       formats = (String[]) o;
 
-      for (final String format : formats)
+      for (String format : formats)
       {
         handlers.put(format, clazz);
         log.info("      {}", format);
       }
     }
   }
-  catch (final InstantiationException | InvocationTargetException |
+  catch (InstantiationException | InvocationTargetException |
       IllegalArgumentException | NoSuchMethodException | SecurityException | IllegalAccessException e)
   {
     log.debug("Exception thrown", e);
@@ -205,22 +205,22 @@ private static synchronized void loadHandlers()
 {
   if (imageFormatHandlers == null)
   {
-    imageFormatHandlers = new HashMap<Class<?>, Map<String, Class<?>>>();
-    mimeTypeHandlers = new HashMap<Class<?>, Map<String, Class<?>>>();
+    imageFormatHandlers = new HashMap<>();
+    mimeTypeHandlers = new HashMap<>();
 
     Reflections reflections = new Reflections("org.mrgeo"); // ClassUtils.getPackageName(ImageRenderer.class));
 
     // image format renderers
-    mimeTypeHandlers.put(ImageRenderer.class, new HashMap<String, Class<?>>());
-    imageFormatHandlers.put(ImageRenderer.class, new HashMap<String, Class<?>>());
+    mimeTypeHandlers.put(ImageRenderer.class, new HashMap<>());
+    imageFormatHandlers.put(ImageRenderer.class, new HashMap<>());
 
     Map<String, Class<?>> mimeHandlers = mimeTypeHandlers.get(ImageRenderer.class);
     Map<String, Class<?>> formatHandlers = imageFormatHandlers.get(ImageRenderer.class);
 
-    final Set<Class<? extends ImageRenderer>> imageRenderers = reflections
+    Set<Class<? extends ImageRenderer>> imageRenderers = reflections
         .getSubTypesOf(ImageRenderer.class);
 
-    for (final Class<? extends ImageRenderer> clazz : imageRenderers)
+    for (Class<? extends ImageRenderer> clazz : imageRenderers)
     {
       log.info("Registering Image Renderer: {}", clazz.getCanonicalName());
 
@@ -234,16 +234,16 @@ private static synchronized void loadHandlers()
     //reflections = new Reflections(ClassUtils.getPackageName(ColorScaleApplier.class));
 
     // Color scale appliers
-    mimeTypeHandlers.put(ColorScaleApplier.class, new HashMap<String, Class<?>>());
-    imageFormatHandlers.put(ColorScaleApplier.class, new HashMap<String, Class<?>>());
+    mimeTypeHandlers.put(ColorScaleApplier.class, new HashMap<>());
+    imageFormatHandlers.put(ColorScaleApplier.class, new HashMap<>());
 
     mimeHandlers = mimeTypeHandlers.get(ColorScaleApplier.class);
     formatHandlers = imageFormatHandlers.get(ColorScaleApplier.class);
 
-    final Set<Class<? extends ColorScaleApplier>> colorscaleappliers = reflections
+    Set<Class<? extends ColorScaleApplier>> colorscaleappliers = reflections
         .getSubTypesOf(ColorScaleApplier.class);
 
-    for (final Class<? extends ColorScaleApplier> clazz : colorscaleappliers)
+    for (Class<? extends ColorScaleApplier> clazz : colorscaleappliers)
     {
       log.info("Registering Color Scale Applier: {}", clazz.getCanonicalName());
       log.info("  Mime Types");
@@ -256,15 +256,15 @@ private static synchronized void loadHandlers()
     //reflections = new Reflections(ClassUtils.getPackageName(ImageResponseWriter.class));
 
     // image response writers
-    mimeTypeHandlers.put(ImageResponseWriter.class, new HashMap<String, Class<?>>());
-    imageFormatHandlers.put(ImageResponseWriter.class, new HashMap<String, Class<?>>());
+    mimeTypeHandlers.put(ImageResponseWriter.class, new HashMap<>());
+    imageFormatHandlers.put(ImageResponseWriter.class, new HashMap<>());
 
     mimeHandlers = mimeTypeHandlers.get(ImageResponseWriter.class);
     formatHandlers = imageFormatHandlers.get(ImageResponseWriter.class);
-    final Set<Class<? extends ImageResponseWriter>> imageresponsewriters = reflections
+    Set<Class<? extends ImageResponseWriter>> imageresponsewriters = reflections
         .getSubTypesOf(ImageResponseWriter.class);
 
-    for (final Class<? extends ImageResponseWriter> clazz : imageresponsewriters)
+    for (Class<? extends ImageResponseWriter> clazz : imageresponsewriters)
     {
       log.info("Registering Image Response Writer: {}", clazz.getCanonicalName());
       log.info("  Mime Types");

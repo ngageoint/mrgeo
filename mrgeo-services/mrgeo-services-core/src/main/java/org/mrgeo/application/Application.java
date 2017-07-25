@@ -59,7 +59,7 @@ public Set<Class<?>> getClasses()
 @SuppressWarnings("squid:S1166") // Can't actually throw the Exceptions, so we'll just print them
 public Set<Object> getSingletons()
 {
-  Set<Object> retval = new HashSet<Object>();
+  Set<Object> retval = new HashSet<>();
   Reflections reflections = new Reflections("org.mrgeo.resources");
   Set<Class<?>> results = reflections.getTypesAnnotatedWith(javax.ws.rs.ext.Provider.class);
   for (Class<?> clz : results)
