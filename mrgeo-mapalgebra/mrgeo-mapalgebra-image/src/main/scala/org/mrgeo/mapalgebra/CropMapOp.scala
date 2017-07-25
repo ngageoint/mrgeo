@@ -52,20 +52,19 @@ object CropMapOp extends MapOpRegistrar {
 
 class CropMapOp extends RasterMapOp with Externalizable {
   protected var rasterForBoundsMapOp:Option[RasterMapOp] = None
-  protected var bounds:TileBounds = null
+  protected var bounds:TileBounds = _
   protected var requestedZoom:Option[Int] = None
-  protected var cropBounds:Bounds = null
+  protected var cropBounds:Bounds = _
   private var rasterRDD:Option[RasterRDD] = None
   private var inputMapOp:Option[RasterMapOp] = None
   private var doFiltering = true
 
-  override def context(cont:SparkContext) = {
+  override def context(cont:SparkContext):Unit = {
     super.context(cont)
     this.inputMapOp match {
-      case Some(op) => {
+      case Some(op) =>
         op.context(cont)
-      }
-      case None => {}
+      case None =>
     }
   }
 
@@ -147,7 +146,7 @@ class CropMapOp extends RasterMapOp with Externalizable {
     out.writeUTF(cropBounds.toCommaString)
   }
 
-  protected def parseChildren(node:ParserNode, variables:String => Option[ParserNode]) = {
+  protected def parseChildren(node:ParserNode, variables:String => Option[ParserNode]):Unit = {
     if (node.getNumChildren == 2 || node.getNumChildren == 3) {
       rasterForBoundsMapOp = RasterMapOp.decodeToRaster(node.getChild(1), variables)
       if (node.getNumChildren == 3) {
@@ -181,29 +180,25 @@ class CropMapOp extends RasterMapOp with Externalizable {
     */
   protected def setInputMapOp(inputMapOp:Option[RasterMapOp]):Unit = {
     inputMapOp match {
-      case Some(op) => {
+      case Some(op) =>
         op match {
-          case op:MrsPyramidMapOp => {
+          case op:MrsPyramidMapOp =>
             rasterForBoundsMapOp match {
-              case Some(bmo) => {
+              case Some(bmo) =>
                 val clonedOp = op.clone
                 clonedOp.asInstanceOf[MrsPyramidMapOp].setBounds(bmo)
                 this.inputMapOp = Some(clonedOp)
                 doFiltering = false
-              }
-              case None => {
+              case None =>
                 if (cropBounds != null) {
                   val clonedOp = op.clone
                   clonedOp.asInstanceOf[MrsPyramidMapOp].setBounds(cropBounds)
                   this.inputMapOp = Some(clonedOp)
                   doFiltering = false
                 }
-              }
             }
-          }
           case _ => this.inputMapOp = inputMapOp
         }
-      }
       case _ => this.inputMapOp = inputMapOp
     }
   }

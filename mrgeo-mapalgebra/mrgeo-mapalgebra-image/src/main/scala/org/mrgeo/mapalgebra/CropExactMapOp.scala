@@ -105,7 +105,7 @@ class CropExactMapOp extends CropMapOp {
     }
   }
 
-  override def getOutputBounds(zoom:Int, tilesize:Int) = {
+  override def getOutputBounds(zoom:Int, tilesize:Int):Bounds = {
     // Use the exact bounds that were passed in through map algebra
     cropBounds
   }

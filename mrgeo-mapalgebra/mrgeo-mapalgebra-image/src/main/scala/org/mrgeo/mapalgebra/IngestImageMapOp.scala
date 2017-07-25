@@ -96,10 +96,9 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
     val cpDir = context.getCheckpointDir
     cpDir match {
       case Some(ctxdir) => // nothing to do
-      case None => {
+      case None =>
         val checkpointDir = HadoopFileUtils.createJobTmp(context.hadoopConfiguration).toString
         context.setCheckpointDir(checkpointDir)
-      }
     }
     val inputfiles = inputs.getOrElse(throw new IOException("Inputs not set"))
     val iip = new IngestInputProcessor(context.hadoopConfiguration,
@@ -108,7 +107,7 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
         case Some(ndo) => ndo
       }, zoom, skipPreprocessing)
     inputfiles.foreach(input => {
-      iip.processInput(input, true)
+      iip.processInput(input, recurse = true)
     })
     val result = IngestImage.ingest(context, iip.getInputs.toArray, iip.getZoomlevel, skipPreprocessing, iip.tilesize,
       categorical, skipCategoryLoad, iip.getNodata, protectionLevel)
@@ -194,14 +193,13 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
       if (str.trim.length > 0) {
         val strElements = str.split(",")
         val nodataOverrideValues = Array.ofDim[Double](strElements.length)
-        for (i <- 0 until nodataOverrideValues.length) {
+        for (i <- nodataOverrideValues.indices) {
           try {
-            nodataOverrideValues(i) = parseNoData(strElements(i));
+            nodataOverrideValues(i) = parseNoData(strElements(i))
           }
           catch {
-            case nfe:NumberFormatException => {
+            case nfe:NumberFormatException =>
               throw new ParserException("Invalid nodata value " + strElements(i))
-            }
           }
         }
         nodataOverride = Some(nodataOverrideValues)
@@ -226,12 +224,12 @@ class IngestImageMapOp extends RasterMapOp with Externalizable {
   }
 
   private def parseNoData(fromArg:String):Double = {
-    val arg = fromArg.trim();
+    val arg = fromArg.trim()
     if (arg.compareToIgnoreCase("nan") != 0) {
-      return arg.toDouble
+      arg.toDouble
     }
     else {
-      return Double.NaN;
+      Double.NaN
     }
   }
 

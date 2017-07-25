@@ -45,27 +45,24 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
 
   override def getZoomLevel(): Int = {
     varA match {
-      case Some(a) => {
+      case Some(a) =>
         val azoom = a.getZoomLevel()
         varB match {
-          case Some(b) => {
+          case Some(b) =>
             if (azoom != b.getZoomLevel()) {
               throw new IOException("Zoom levels do not match for " +
                 this.getClass.getName)
             }
             azoom
-          }
           case None => azoom
         }
-      }
-      case None => {
+      case None =>
         varB match {
           case Some(b) => b.getZoomLevel()
           case None => throw new IOException(
             "No inputs from which to get the zoom level for " +
               this.getClass.getName)
         }
-      }
     }
   }
 
@@ -113,12 +110,12 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
       varA = RasterMapOp.decodeToRaster(childA, variables)
     }
     catch {
-      case e:ParserException =>
+      case _:ParserException =>
         try {
           constA = MapOp.decodeDouble(childA, variables)
         }
         catch {
-          case e:ParserException => throw new ParserException(
+          case _:ParserException => throw new ParserException(
             "First term \"" + childA + "\" is not a raster or constant")
         }
     }
@@ -126,12 +123,12 @@ abstract class RawBinaryMathMapOp extends RasterMapOp with Externalizable {
       varB = RasterMapOp.decodeToRaster(childB, variables)
     }
     catch {
-      case e:ParserException =>
+      case _:ParserException =>
         try {
           constB = MapOp.decodeDouble(childB, variables)
         }
         catch {
-          case e:ParserException => throw new ParserException(
+          case _:ParserException => throw new ParserException(
             "Second term \"" + childB + "\" is not a raster or constant")
         }
     }

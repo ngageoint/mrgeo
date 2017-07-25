@@ -50,28 +50,26 @@ object BandCombineMapOp extends MapOpRegistrar {
 class BandCombineMapOp extends RasterMapOp with Externalizable {
 
   private var rasterRDD:Option[RasterRDD] = None
-  private var inputs:Array[Option[RasterMapOp]] = null
+  private var inputs:Array[Option[RasterMapOp]] = _
 
   override def rdd():Option[RasterRDD] = rasterRDD
 
   override def getZoomLevel(): Int = {
     var zoom: Option[Int] = None
-    inputs.foreach(input=> {
-      input match {
-        case Some(rmo) => {
-          val mapOpZoom = rmo.getZoomLevel()
-          zoom match {
-            case Some(z) => {
-              if (z != mapOpZoom) {
-                throw new IOException("Input zoom levels do not match for " +
-                  this.getClass.getName)
-              }
+    inputs.foreach {
+      case Some(rmo) =>
+        val mapOpZoom = rmo.getZoomLevel()
+        zoom match {
+          case Some(z) =>
+            if (z != mapOpZoom) {
+              throw new IOException("Input zoom levels do not match for " +
+                                    this.getClass.getName)
             }
-            case None => zoom = Some(mapOpZoom)
-          }
+          case None => zoom = Some(mapOpZoom)
         }
-      }
-    })
+      case _ =>
+    }
+
     zoom match {
       case Some(z) => z
       case None => throw new IOException("No raster input specified")
