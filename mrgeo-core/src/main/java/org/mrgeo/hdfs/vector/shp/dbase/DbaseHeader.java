@@ -160,19 +160,19 @@ public synchronized void save(RandomAccessFile os) throws IOException
 @Override
 public synchronized String toString()
 {
-  String s = "\n";
-  s = s + StringUtils.pad("format: ", 15) + format + "\n";
-  s = s + StringUtils.pad("recordCount: ", 15) + recordCount + "\n";
-  s = s + StringUtils.pad("headerLength: ", 15) + headerLength + "\n";
-  s = s + StringUtils.pad("recordLength: ", 15) + recordLength + "\n";
-  s = s + StringUtils.pad("fieldCount: ", 15) + fields.size() + "\n";
-  s = s + StringUtils.pad("langDriverID:", 15) + langDriverID + "\n\n";
+  StringBuilder s = new StringBuilder("\n");
+  s.append(StringUtils.pad("format: ", 15)).append(format).append("\n");
+  s.append(StringUtils.pad("recordCount: ", 15)).append(recordCount).append("\n");
+  s.append(StringUtils.pad("headerLength: ", 15)).append(headerLength).append("\n");
+  s.append(StringUtils.pad("recordLength: ", 15)).append(recordLength).append("\n");
+  s.append(StringUtils.pad("fieldCount: ", 15)).append(fields.size()).append("\n");
+  s.append(StringUtils.pad("langDriverID:", 15)).append(langDriverID).append("\n\n");
   for (int i = 0; i < fields.size(); i++)
   {
     DbaseField field = fields.get(i);
-    s = s + "  " + StringUtils.pad(i + ")", 5) + field + "\n";
+    s.append("  ").append(StringUtils.pad(i + ")", 5)).append(field).append("\n");
   }
-  return s;
+  return s.toString();
 }
 
 protected synchronized void load(SeekableDataInput is) throws IOException, DbaseException

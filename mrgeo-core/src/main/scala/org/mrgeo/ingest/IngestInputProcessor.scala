@@ -74,14 +74,10 @@ class IngestInputProcessor extends Logging {
     bands
   }
 
-  def getBounds = {
-    bounds.getOrElse(null)
-  }
+  def getBounds = bounds.orNull
 
   @CheckForNull
-  def getNodata = {
-    nodata.getOrElse(null)
-  }
+  def getNodata = nodata.orNull
 
   def processInput(arg:String, recurse:Boolean):Unit = {
     processInput(arg, recurse, true, false)
