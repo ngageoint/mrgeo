@@ -24,9 +24,8 @@ private static WKTReader wktReader = new WKTReader();
 
 static public String wktGeometryFixer(String wktGeometry)
 {
-  String geometryStr = wktGeometry;
   String regex = "\\(|\\[|\\]|\\)";
-  String[] geometryArray = geometryStr.split(regex);
+  String[] geometryArray = wktGeometry.split(regex);
   StringBuilder fixedGeometry = new StringBuilder();
   String geometryType = "";
   if (geometryArray.length > 1)
@@ -81,7 +80,7 @@ static public String wktGeometryFixer(String wktGeometry)
   {
     return geometryType + "(" + fixedGeometry + ")";
   }
-  return geometryStr;
+  return wktGeometry;
 }
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled

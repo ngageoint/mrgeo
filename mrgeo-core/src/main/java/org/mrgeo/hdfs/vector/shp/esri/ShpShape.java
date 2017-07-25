@@ -1,6 +1,5 @@
 package org.mrgeo.hdfs.vector.shp.esri;
 
-import org.mrgeo.hdfs.vector.shp.esri.geom.JPoint;
 import org.mrgeo.hdfs.vector.shp.esri.geom.JShape;
 
 import java.io.IOException;

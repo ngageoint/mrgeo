@@ -22,7 +22,6 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.mrgeo.utils.FloatUtils;
 
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Map.Entry;
 
 /**

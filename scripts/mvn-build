@@ -23,6 +23,7 @@ usage() {
     echo "  apache250 - Apache hadoop, version 2.5.0"
     echo "  apache241 - Apache hadoop, version 2.4.1"
     echo "  apache240 - Apache hadoop, version 2.4.0"
+    echo "  cdh5120   - Cloudera hadoop 5.12.0"
     echo "  cdh5111   - Cloudera hadoop 5.11.1"
     echo "  cdh5110   - Cloudera hadoop 5.11.0"
     echo "  cdh5101   - Cloudera hadoop 5.10.1"
@@ -69,7 +70,7 @@ usage() {
     echo "  -y  --yarn                     - use hadoop YARN (for hadoop 2+, instead of mr1)"
     echo "  -q  --quiet                    - quiet (no prints from this script)"
     echo "other:"
-    echo "  buildtype  - return the build type (apache260, cdh560, etc.), no further processing is done"
+    echo "  buildtype  - return the build type (apache272, cdh5120, etc.), no further processing is done"
     echo " "
     echo "  all other args will be passed to maven directly"
     echo " "
@@ -295,6 +296,9 @@ while [ $# -gt 0 ] ; do
         BUILD=$1
         ;;
     "cdh5111" | "cdh5111-yarn")
+        BUILD=$1
+        ;;
+    "cdh5120" | "cdh5120-yarn")
         BUILD=$1
         ;;
     "build")

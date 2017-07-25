@@ -567,7 +567,6 @@ public static void delete(String resource,
   {
     vectorProvider.delete();
     vectorProviderCache.invalidate(resource);
-    return;
   }
 }
 

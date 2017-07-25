@@ -113,40 +113,25 @@ public static int parseLiteral(String literal)
     return UNKNOWN;
   }
   String letter = literal.trim().toUpperCase().substring(0, 1);
-  if (letter.equals("B"))
+  switch (letter)
   {
+  case "B":
     return BINARY;
-  }
-  else if (letter.equals("C"))
-  {
+  case "C":
     return CHARACTER;
-  }
-  else if (letter.equals("D"))
-  {
+  case "D":
     return DATE;
-  }
-  else if (letter.equals("F"))
-  {
+  case "F":
     return FLOAT;
-  }
-  else if (letter.equals("G"))
-  {
+  case "G":
     return GENERAL;
-  }
-  else if (letter.equals("L"))
-  {
+  case "L":
     return LOGICAL;
-  }
-  else if (letter.equals("M"))
-  {
+  case "M":
     return MEMO;
-  }
-  else if (letter.equals("N"))
-  {
+  case "N":
     return NUMERIC;
-  }
-  else
-  {
+  default:
     return UNKNOWN;
   }
 }

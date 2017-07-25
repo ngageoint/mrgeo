@@ -1,6 +1,5 @@
 package org.mrgeo.hdfs.utils;
 
-import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.SequenceFile.Reader;
 import org.apache.hadoop.io.Writable;
 import org.mockito.invocation.InvocationOnMock;

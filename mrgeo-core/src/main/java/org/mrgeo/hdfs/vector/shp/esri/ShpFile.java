@@ -173,7 +173,7 @@ private void saveRows(RandomAccessFile os, int i) throws IOException
   // write data
   int filePos = 100;
   int pos = index.getOffset(i);
-  os.seek(pos * 2l);
+  os.seek(pos * 2L);
   // loop
   for (int j = 0; j < index.getCurrentCacheSize(); j++)
   {

@@ -694,8 +694,7 @@ private static long copyFileFromS3(AmazonS3 s3Client, URI uri, File localFile,
 
   try (InputStream objectData = object.getObjectContent())
   {
-    long byteCount = org.apache.commons.io.IOUtils.copyLarge(objectData, fos);
-    return byteCount;
+    return org.apache.commons.io.IOUtils.copyLarge(objectData, fos);
   }
   finally
   {

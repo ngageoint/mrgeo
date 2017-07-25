@@ -46,10 +46,8 @@ private static ShapefileGeometryCollection loadGeometryCollection(Configuration 
       ShapefileReader sr = new ShapefileReader(path);
 
       // reproject into WGS84
-      ReprojectedShapefileGeometryCollection rgc =
-          new ReprojectedShapefileGeometryCollection(sr, GDALUtils.EPSG4326());
 
-      return rgc;
+      return new ReprojectedShapefileGeometryCollection(sr, GDALUtils.EPSG4326());
     }
   }
   throw new IllegalArgumentException("Neither a geometry collection or filename was set.");

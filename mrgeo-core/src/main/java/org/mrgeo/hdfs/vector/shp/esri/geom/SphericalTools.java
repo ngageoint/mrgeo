@@ -258,8 +258,7 @@ public static double getDistance(Coord c1, Coord c2)
   double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   double R = 6378.137 - 21 * Math.sin((y1 + y2) / 2); // utilize best-fit R
   // for average lat
-  double d = R * c; // km!
-  return d;
+  return R * c;
 }
 
 /*

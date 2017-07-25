@@ -1,7 +1,6 @@
 package org.mrgeo.hdfs.utils;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.image.ImageInputFormatContext;

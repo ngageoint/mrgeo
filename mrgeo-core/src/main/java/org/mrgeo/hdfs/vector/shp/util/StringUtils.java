@@ -15,10 +15,7 @@
 
 package org.mrgeo.hdfs.vector.shp.util;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 import java.util.StringTokenizer;
-import java.util.Vector;
 
 public class StringUtils
 {
