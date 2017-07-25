@@ -79,7 +79,7 @@ private static void addHttpElement110(Element parent, String requestUrl, String 
  */
 
 public Document generateDoc(Version version, String requestUrl,
-    MrsImageDataProvider[] layers) throws IOException, InterruptedException,
+    MrsImageDataProvider[] layers) throws IOException,
     ParserConfigurationException
 {
   Document doc;
@@ -107,7 +107,7 @@ private void generate110(Document doc, Version version, String requestUrl, MrsIm
   Element wmc = XmlUtils.createElement(doc, "wcs:Capabilities");
   wmc.setAttribute("version", version.toString());
 
-  wmc.setAttribute("xmlns:wcs", "http://www.opengis.net/wcs/" + version.toString());
+  wmc.setAttribute("xmlns:wcs", "http://www.opengis.net/wcs/" + version);
   wmc.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
   wmc.setAttribute("xmlns:ogc", "http://www.opengis.net/ogc");
   wmc.setAttribute("xmlns:ows", "http://www.opengis.net/ows/" + version.getMajor() + "." + version.getMinor());
@@ -143,7 +143,7 @@ private void generate100(Document doc, Version version, String requestUrl, MrsIm
   wmc.setAttribute("xmlns:gml", "http://www.opengis.net/gml");
   wmc.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
   wmc.setAttribute("xsi:schemaLocation",
-      "http://www.opengis.net/wcs http://schemas.opengeospatial.net/wcs/" + version.toString() +
+      "http://www.opengis.net/wcs http://schemas.opengeospatial.net/wcs/" + version +
           "/wcsCapabilities.xsd");
   doc.appendChild(wmc);
   // //
@@ -171,26 +171,20 @@ private void generate100(Document doc, Version version, String requestUrl, MrsIm
     Element gcDcpType = XmlUtils.createElement(getCapabilities, "DCPType");
     addHttpElement100(gcDcpType, requestUrl, version);
   }
-  {
-    Element describeCoverage = XmlUtils.createElement(requestTag, "DescribeCoverage");
-    Element dcDcpType = XmlUtils.createElement(describeCoverage, "DCPType");
-    addHttpElement100(dcDcpType, requestUrl, version);
-  }
-  {
-    Element getCapabilities = XmlUtils.createElement(requestTag, "GetCoverage");
-    Element gcDcpType = XmlUtils.createElement(getCapabilities, "DCPType");
-    addHttpElement100(gcDcpType, requestUrl, version);
-  }
+  Element describeCoverage = XmlUtils.createElement(requestTag, "DescribeCoverage");
+  Element dcDcpType = XmlUtils.createElement(describeCoverage, "DCPType");
+  addHttpElement100(dcDcpType, requestUrl, version);
+  Element getCapabilities = XmlUtils.createElement(requestTag, "GetCoverage");
+  Element gcDcpType = XmlUtils.createElement(getCapabilities, "DCPType");
+  addHttpElement100(gcDcpType, requestUrl, version);
 
   // Exception
   Element exception = XmlUtils.createElement(capability, "Exception");
   XmlUtils.createTextElement2(exception, "Format", "application/vnd.ogc.se_xml");
 
   // ContentMetadata
-  {
-    Element contentMetadata = XmlUtils.createElement(wmc, "ContentMetadata");
-    addLayers100(contentMetadata, layers);
-  }
+  Element contentMetadata = XmlUtils.createElement(wmc, "ContentMetadata");
+  addLayers100(contentMetadata, layers);
 }
 
 /*
