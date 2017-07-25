@@ -19,8 +19,6 @@ import org.mrgeo.hdfs.vector.shp.esri.geom.JPointZ;
 import org.mrgeo.hdfs.vector.shp.esri.geom.JShape;
 import org.mrgeo.hdfs.vector.shp.util.Convert;
 
-import java.io.IOException;
-
 
 public class ShpPointZ extends ShpShape
 {

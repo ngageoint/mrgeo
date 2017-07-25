@@ -211,9 +211,7 @@ public static String createUniqueJobName(String baseName)
   // create a new unique job name
   String now = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss").format(new Date());
 
-  String jobName = baseName + "_" + now + "_" + UUID.randomUUID();
-
-  return jobName;
+  return baseName + "_" + now + "_" + UUID.randomUUID();
 }
 
 public static String getDefaultColorScalesBaseDirectory()
@@ -223,8 +221,7 @@ public static String getDefaultColorScalesBaseDirectory()
 
 public static String getDefaultColorScalesBaseDirectory(Properties props)
 {
-  String dir = props.getProperty(MrGeoConstants.MRGEO_HDFS_COLORSCALE, null);
-  return dir;
+  return props.getProperty(MrGeoConstants.MRGEO_HDFS_COLORSCALE, null);
 }
 
 

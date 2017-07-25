@@ -28,8 +28,7 @@ public MrsImageException(Exception e)
 
 public MrsImageException(String msg)
 {
-  Exception e = new Exception(msg);
-  origException = e;
+  origException = new Exception(msg);
 }
 
 @Override

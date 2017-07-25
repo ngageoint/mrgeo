@@ -61,8 +61,7 @@ public RecordWriter<FeatureIdWritable, Geometry> getRecordWriter(TaskAttemptCont
   String extension = baseOut.substring(baseOut.length() - 4);
   Path output = getDefaultWorkFile(context, extension);
 
-  CsvRecordWriter result = new CsvRecordWriter(new Path(baseOut + ".columns"), output);
-  return result;
+  return new CsvRecordWriter(new Path(baseOut + ".columns"), output);
 }
 
 static public class CsvRecordWriter extends RecordWriter<FeatureIdWritable, Geometry>

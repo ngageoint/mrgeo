@@ -180,9 +180,7 @@ public static String createUniqueJobName(String baseName)
   // create a new unique job name
   String now = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss").format(new Date());
 
-  String jobName = baseName + "_" + now + "_" + UUID.randomUUID();
-
-  return jobName;
+  return baseName + "_" + now + "_" + UUID.randomUUID();
 }
 
 public static String[] getDefaultVectorBaseDirectories(Properties props)
@@ -255,10 +253,9 @@ public static MrsPyramidMetadata
 getMetadata(Configuration config, String pyramid) throws IOException,
     ClassNotFoundException
 {
-  MrsPyramidMetadata metadata = (MrsPyramidMetadata) Base64Utils
-      .decodeToObject(config.get("mrspyramid.metadata." + pyramid, null));
 
-  return metadata;
+  return (MrsPyramidMetadata) Base64Utils
+      .decodeToObject(config.get("mrspyramid.metadata." + pyramid, null));
 }
 
 public static String[]

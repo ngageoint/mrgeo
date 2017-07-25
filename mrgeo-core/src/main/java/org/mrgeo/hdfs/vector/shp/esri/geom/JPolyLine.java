@@ -206,8 +206,7 @@ public int getRecordLength()
 {
   int totParts = getPartCount();
   int totPoints = getPointCount();
-  int recordLength = 44 + (totParts * 4) + (totPoints * 16);
-  return recordLength;
+  return 44 + (totParts * 4) + (totPoints * 16);
 }
 
 public boolean insert(Coord p, int i)

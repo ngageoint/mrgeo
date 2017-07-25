@@ -297,10 +297,9 @@ public static boolean intersects(Point A, Point B, Point C, Point D,
           if (intersection != null)
           {
             double x = ax + (v * lbx);
-            double y = w;
 
             intersection.setX(x);
-            intersection.setY(y);
+            intersection.setY(w);
           }
           return true;
         }
