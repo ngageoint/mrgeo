@@ -3,7 +3,7 @@
     <Name>OGC:WMS</Name>
     <Title>MrGeo Web Map Service</Title>
     <Abstract>MrGeo Web Map Service</Abstract>
-    <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms" xlink:type="simple"/>
+    <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234" xlink:type="simple"/>
     <Fees>none</Fees>
     <AccessConstraints>none</AccessConstraints>
   </Service>
@@ -14,10 +14,10 @@
         <DCPType>
           <HTTP>
             <Get>
-              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetCapabilities&amp;VERSION=1.1.1&amp;SERVICE=WMS" xlink:type="simple"/>
+              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms" xlink:type="simple"/>
             </Get>
             <Post>
-              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetCapabilities&amp;VERSION=1.1.1&amp;SERVICE=WMS" xlink:type="simple"/>
+              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms" xlink:type="simple"/>
             </Post>
           </HTTP>
         </DCPType>
@@ -33,10 +33,10 @@
         <DCPType>
           <HTTP>
             <Get>
-              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetMap&amp;VERSION=1.1.1&amp;SERVICE=WMS" xlink:type="simple"/>
+              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms" xlink:type="simple"/>
             </Get>
             <Post>
-              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetMap&amp;VERSION=1.1.1&amp;SERVICE=WMS" xlink:type="simple"/>
+              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms" xlink:type="simple"/>
             </Post>
           </HTTP>
         </DCPType>
@@ -52,10 +52,10 @@
         <DCPType>
           <HTTP>
             <Get>
-              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetMosaic&amp;VERSION=1.1.1&amp;SERVICE=WMS" xlink:type="simple"/>
+              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms" xlink:type="simple"/>
             </Get>
             <Post>
-              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetMosaic&amp;VERSION=1.1.1&amp;SERVICE=WMS" xlink:type="simple"/>
+              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms" xlink:type="simple"/>
             </Post>
           </HTTP>
         </DCPType>

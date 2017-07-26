@@ -1,0 +1,69 @@
+<CoverageDescription xmlns="http://www.opengis.net/wcs" xmlns:gml="http://www.opengis.net/gml" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0.0" xsi:schemaLocation="http://www.opengis.net/wcs http://schemas.opengis.net/wcs/1.0.0/describeCoverage.xsd">
+  <CoverageOffering>
+    <name>IslandsElevation-v2</name>
+    <label>IslandsElevation-v2</label>
+    <description>Layer generated using MrGeo</description>
+    <lonLatEnvelope srsName="WGS84(DD)">
+      <gml:pos>161.25000000 -11.00000000</gml:pos>
+      <gml:pos>162.50000000 -10.08333333</gml:pos>
+    </lonLatEnvelope>
+    <domainSet>
+      <spatialDomain>
+        <gml:Envelope srsName="EPSG:4326">
+          <gml:pos>161.25000000 -11.00000000</gml:pos>
+          <gml:pos>162.50000000 -10.08333333</gml:pos>
+        </gml:Envelope>
+        <gml:RectifiedGrid>
+          <gml:limits>
+            <gml:GridEnvelope>
+              <gml:low>0 0</gml:low>
+              <gml:high>1820 1335</gml:high>
+            </gml:GridEnvelope>
+          </gml:limits>
+          <gml:axisName>Band 0</gml:axisName>
+          <gml:origin>
+            <gml:pos>161.25000000 -11.00000000</gml:pos>
+          </gml:origin>
+          <gml:offsetVector>0.000686645508 0.0</gml:offsetVector>
+          <gml:offsetVector>0.0 -0.000686645508</gml:offsetVector>
+        </gml:RectifiedGrid>
+      </spatialDomain>
+    </domainSet>
+    <rangeSet>
+      <RangeSet>
+        <name>IslandsElevation-v2</name>
+        <label>IslandsElevation-v2</label>
+        <axisDescription>
+          <AxisDescription>
+            <name>Band</name>
+            <label>Band</label>
+            <value>
+              <interval>
+                <min>1</min>
+                <max>1</max>
+              </interval>
+            </value>
+          </AxisDescription>
+        </axisDescription>
+        <nullValues>
+          <singleValue>-32768</singleValue>
+        </nullValues>
+      </RangeSet>
+    </rangeSet>
+    <supportedCRSs>
+      <requestResponseCRSs>EPSG:4326</requestResponseCRSs>
+    </supportedCRSs>
+    <supportedFormats nativeFormat="GeoTIFF">
+      <formats>geotif</formats>
+      <formats>geotiff</formats>
+      <formats>jpeg</formats>
+      <formats>jpg</formats>
+      <formats>png</formats>
+      <formats>tif</formats>
+      <formats>tiff</formats>
+    </supportedFormats>
+    <supportedInterpolations default="bilinear">
+      <interpolationMethod>bilinear</interpolationMethod>
+    </supportedInterpolations>
+  </CoverageOffering>
+</CoverageDescription>

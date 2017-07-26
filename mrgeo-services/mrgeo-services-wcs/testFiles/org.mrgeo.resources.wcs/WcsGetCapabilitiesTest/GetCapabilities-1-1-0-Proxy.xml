@@ -1,0 +1,44 @@
+<wcs:Capabilities xmlns:wcs="http://www.opengis.net/wcs/1.1.0" xmlns:gml="http://www.opengis.net/gml" xmlns:ogc="http://www.opengis.net/ogc" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1.0">
+  <ows:ServiceIdentification>
+    <ows:Title>MrGeo Web Coverage Service</ows:Title>
+    <ows:ServiceType>OGC WCS</ows:ServiceType>
+    <ows:ServiceTypeVersion>1.1.0</ows:ServiceTypeVersion>
+  </ows:ServiceIdentification>
+  <ows:OperationsMetadata>
+    <ows:Operation name="GetCapabilities">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:href="http://localhost:9998/wcs?"/>
+          <ows:Post xlink:href="http://localhost:9998/wcs?"/>
+        </ows:HTTP>
+      </ows:DCP>
+    </ows:Operation>
+    <ows:Operation name="DescribeCoverage">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:href="http://localhost:9998/wcs?"/>
+          <ows:Post xlink:href="http://localhost:9998/wcs?"/>
+        </ows:HTTP>
+      </ows:DCP>
+    </ows:Operation>
+    <ows:Operation name="GetCoverage">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:href="http://localhost:9998/wcs?"/>
+          <ows:Post xlink:href="http://localhost:9998/wcs?"/>
+        </ows:HTTP>
+      </ows:DCP>
+    </ows:Operation>
+  </ows:OperationsMetadata>
+  <wcs:Contents>
+    <wcs:CoverageSummary>
+      <wcs:Identifier>IslandsElevation-v2</wcs:Identifier>
+      <ows:Title>IslandsElevation-v2</ows:Title>
+      <ows:Abstract>IslandsElevation-v2</ows:Abstract>
+      <ows:WGS84BoundingBox>
+        <ows:LowerCorner>161.25 -11.0</ows:LowerCorner>
+        <ows:UpperCorner>162.5 -10.083333333333334</ows:UpperCorner>
+      </ows:WGS84BoundingBox>
+    </wcs:CoverageSummary>
+  </wcs:Contents>
+</wcs:Capabilities>

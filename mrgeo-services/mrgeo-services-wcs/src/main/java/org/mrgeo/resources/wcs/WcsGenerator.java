@@ -258,14 +258,18 @@ private Response getCapabilities(String baseURI, MultivaluedMap<String, String> 
   // The versionParamName will be null if the request did not include the
   // version parameter.
   String acceptVersions = getQueryParam(allParams, "acceptversions", null);
-  Version version = null;
+  version = null;
   if (acceptVersions != null)
   {
     String[] versions = acceptVersions.split(",");
 
     for (String ver : versions)
     {
-      if (version == null || version.isLess(ver))
+      if (version == null)
+      {
+        version = new Version(ver);
+      }
+      else if (version.isLess(ver))
       {
         version = new Version(ver);
       }
@@ -561,7 +565,7 @@ private Response writeError(Response.Status httpStatus, final String msg)
 
     final Element ser = doc.createElement("ServiceExceptionReport");
     doc.appendChild(ser);
-    ser.setAttribute("version", WCS_VERSION);
+    ser.setAttribute("version", version.toString());
     final Element se = XmlUtils.createElement(ser, "ServiceException");
     CDATASection msgNode = doc.createCDATASection(msg);
     se.appendChild(msgNode);
