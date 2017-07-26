@@ -29,9 +29,9 @@ import org.mrgeo.test.{LocalRunnerTest, MapOpTestUtils}
 import org.scalatest.junit.AssertionsForJUnit
 
 object BandExtractMapOpTest {
-  var all_ones_input = Defs.INPUT + all_ones
-  var small_3band_input = Defs.INPUT + small_3band
-  var testUtils:MapOpTestUtils = null
+  var all_ones_input:String = Defs.INPUT + all_ones
+  var small_3band_input:String = Defs.INPUT + small_3band
+  var testUtils:MapOpTestUtils = _
 
   def all_ones = "all-ones"
 
@@ -70,10 +70,9 @@ class BandExtractMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
       Assert.fail("Should have gotten a ParserException")
     }
     catch {
-      case e:ParserException => {
+      case e:ParserException =>
         // Verify the content of the error message
         Assert.assertTrue(e.getMessage.contains("requires two arguments"))
-      }
     }
   }
 
@@ -88,10 +87,9 @@ class BandExtractMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
       Assert.fail("Should have gotten a ParserException")
     }
     catch {
-      case e:ParserException => {
+      case e:ParserException =>
         // Verify the content of the error message
         Assert.assertTrue(e.getMessage.contains("requires two arguments"))
-      }
     }
   }
 
@@ -106,10 +104,9 @@ class BandExtractMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
       Assert.fail("Should have gotten a ParserException")
     }
     catch {
-      case e:ParserException => {
+      case e:ParserException =>
         // Verify the content of the error message
         Assert.assertTrue(e.getMessage.contains("requires two arguments"))
-      }
     }
   }
 
@@ -124,11 +121,10 @@ class BandExtractMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
       Assert.fail("Should have gotten a ParserException")
     }
     catch {
-      case e:ParserException => {
+      case e:ParserException =>
         // Verify the content of the error message
         Assert.assertTrue("Unexpected message: " + e.getMessage,
           e.getMessage.contains("is not a raster input"))
-      }
     }
   }
 
@@ -143,11 +139,10 @@ class BandExtractMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
       Assert.fail("Should have gotten a ParserException")
     }
     catch {
-      case e:ParserException => {
+      case e:ParserException =>
         // Verify the content of the error message
         Assert.assertTrue("Unexpected message: " + e.getMessage,
           e.getMessage.contains("is not a raster input"))
-      }
     }
   }
 
@@ -168,11 +163,10 @@ class BandExtractMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
       }
     }
     catch {
-      case e:ParserException => {
+      case e:ParserException =>
         // Verify the content of the error message
         Assert.assertTrue("Unexpected message: " + e.getMessage,
           e.getMessage.contains("Cannot extract band"))
-      }
     }
   }
 
@@ -193,11 +187,10 @@ class BandExtractMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
       }
     }
     catch {
-      case e:ParserException => {
+      case e:ParserException =>
         // Verify the content of the error message
         Assert.assertTrue("Unexpected message: " + e.getMessage,
           e.getMessage.contains("Cannot extract band"))
-      }
     }
   }
 
@@ -218,11 +211,10 @@ class BandExtractMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
       }
     }
     catch {
-      case e:ParserException => {
+      case e:ParserException =>
         // Verify the content of the error message
         Assert.assertTrue("Unexpected message: " + e.getMessage,
           e.getMessage.contains("Cannot extract band"))
-      }
     }
   }
 }

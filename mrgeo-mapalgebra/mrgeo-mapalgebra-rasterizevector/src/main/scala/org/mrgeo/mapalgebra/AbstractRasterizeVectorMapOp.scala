@@ -60,16 +60,18 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
     tilesize = in.readInt()
     zoom = in.readInt()
     val hasColumn = in.readBoolean()
-    column = hasColumn match {
-      case true =>
-        Some(in.readUTF())
-      case _ => None
+    column = if (hasColumn) {
+      Some(in.readUTF())
+    }
+    else {
+      None
     }
     val hasBounds = in.readBoolean()
-    bounds = hasBounds match {
-      case true =>
-        Some(new Bounds(in.readDouble(), in.readDouble(), in.readDouble(), in.readDouble()))
-      case _ => None
+    bounds = if (hasBounds) {
+      Some(new Bounds(in.readDouble(), in.readDouble(), in.readDouble(), in.readDouble()))
+    }
+    else {
+      None
     }
   }
 
@@ -196,28 +198,23 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
 
     if (node.getNumChildren > 3) {
       node.getNumChildren match {
-        case 4 => {
+        case 4 =>
           try {
             rasterForBoundsMapOp = RasterMapOp.decodeToRaster(node.getChild(3), variables)
           }
           catch {
-            case e:ParserException => {
+            case e:ParserException =>
               // Since the fourth and last argument is not a raster, it must be a column
               column = MapOp.decodeString(node.getChild(3))
-            }
           }
-        }
-        case 5 => {
+        case 5 =>
           rasterForBoundsMapOp = RasterMapOp.decodeToRaster(node.getChild(4), variables)
           column = MapOp.decodeString(node.getChild(3))
-        }
-        case 7 => {
+        case 7 =>
           parseBounds(node, variables, 3)
-        }
-        case 8 => {
+        case 8 =>
           column = MapOp.decodeString(node.getChild(3))
           parseBounds(node, variables, 4)
-        }
         case _ => throw new ParserException(usageMsg)
       }
     }
@@ -228,12 +225,11 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
         if (column.isDefined) {
           throw new ParserException("A column name must not be specified with MASK or MASK2")
         }
-      case VectorPainter.AggregationType.SUM => {
+      case VectorPainter.AggregationType.SUM =>
         // SUM can be used with or without a column name being specified. If used
         // with a column name, it sums the values of that column for all features
         // that intersects that pixel. Without the column, it sums the number of
         // features that intersects the pixel.
-      }
       case _ =>
         // All other aggregation types require a column name
         if (column.isEmpty) {
@@ -292,15 +288,14 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
     // All the arguments have been parsed, now validate the column based on the aggregation type
     aggregationType match {
       case VectorPainter.AggregationType.MASK | VectorPainter.AggregationType.MASK2 =>
-        if (!this.column.isEmpty) {
+        if (this.column.isDefined) {
           throw new ParserException("A column name must not be specified with MASK or MASK2")
         }
-      case VectorPainter.AggregationType.SUM => {
+      case VectorPainter.AggregationType.SUM =>
         // SUM can be used with or without a column name being specified. If used
         // with a column name, it sums the values of that column for all features
         // that intersects that pixel. Without the column, it sums the number of
         // features that intersects the pixel.
-      }
       case _ =>
         // All other aggregation types require a column name
         if (column.isEmpty) {
@@ -313,14 +308,12 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
 //    }
 
     bounds match {
-      case Left(b) => {
+      case Left(b) =>
         if (b != null && b.length > 0) {
           this.bounds = Some(Bounds.fromCommaString(b))
         }
-      }
-      case Right(rasterForBoundsMapOp) => {
-        this.rasterForBoundsMapOp = rasterForBoundsMapOp
-      }
+      case Right(rbmo) =>
+        this.rasterForBoundsMapOp = rbmo
     }
   }
 

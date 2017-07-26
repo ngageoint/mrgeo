@@ -62,11 +62,11 @@ public String[] getWmsFormats()
 }
 
 @Override
-public Response.ResponseBuilder write(final MrGeoRaster raster)
+public Response.ResponseBuilder write(MrGeoRaster raster)
 {
   try
   {
-    final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+    ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
 
     writeStream(raster, Bounds.WORLD, Double.NaN, byteStream);
 
@@ -90,44 +90,42 @@ public Response.ResponseBuilder write(final MrGeoRaster raster)
 }
 
 @Override
-public void write(final MrGeoRaster raster, final HttpServletResponse response)
+public void write(MrGeoRaster raster, HttpServletResponse response)
     throws ServletException
 {
   response.setContentType(getResponseMimeType());
-  final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+  ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
   try
   {
     writeStream(raster, Bounds.WORLD, Double.NaN, byteStream);
     ServletUtils.writeImageToResponse(response, byteStream.toByteArray());
   }
-  catch (final IOException e)
+  catch (IOException e)
   {
     throw new ServletException("Error writing raster", e);
   }
 }
 
 @Override
-public Response.ResponseBuilder write(final MrGeoRaster raster, final int tileColumn, final int tileRow,
-    final double scale, final MrsPyramid pyramid)
+public Response.ResponseBuilder write(MrGeoRaster raster, int tileColumn, int tileRow,
+    double scale, MrsPyramid pyramid)
 {
   try
   {
-    final int tilesize = pyramid.getMetadata().getTilesize();
+    int tilesize = pyramid.getMetadata().getTilesize();
 
-    final int zoom = TMSUtils.zoomForPixelSize(scale, tilesize);
-    final Bounds bounds = TMSUtils.tileBounds(tileColumn, tileRow, zoom, tilesize);
-    final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+    int zoom = TMSUtils.zoomForPixelSize(scale, tilesize);
+    Bounds bounds = TMSUtils.tileBounds(tileColumn, tileRow, zoom, tilesize);
+    ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
 
     writeStream(raster, bounds, pyramid.getMetadata().getDefaultValue(0), byteStream);
 
-    Response.ResponseBuilder response = Response.ok().entity(byteStream.toByteArray())
+    return Response.ok().entity(byteStream.toByteArray())
         .encoding(getResponseMimeType())
         .header("Content-type", getResponseMimeType())
         .header("Content-Disposition", "attachment; filename=" + pyramid.getName() + ".tif");
-
-    return response;
   }
-  catch (final Exception e)
+  catch (Exception e)
   {
     log.error("Exception thrown", e);
     if (e.getMessage() != null)
@@ -141,23 +139,23 @@ public Response.ResponseBuilder write(final MrGeoRaster raster, final int tileCo
 }
 
 @Override
-public void write(final MrGeoRaster raster, final int tileColumn, final int tileRow,
-    final double scale, final MrsPyramid pyramid, final HttpServletResponse response)
+public void write(MrGeoRaster raster, int tileColumn, int tileRow,
+    double scale, MrsPyramid pyramid, HttpServletResponse response)
     throws ServletException
 {
   try
   {
-    final int tilesize = pyramid.getMetadata().getTilesize();
+    int tilesize = pyramid.getMetadata().getTilesize();
 
-    final int zoom = TMSUtils.zoomForPixelSize(scale, tilesize);
-    final Bounds bounds = TMSUtils.tileBounds(tileColumn, tileRow, zoom, tilesize);
+    int zoom = TMSUtils.zoomForPixelSize(scale, tilesize);
+    Bounds bounds = TMSUtils.tileBounds(tileColumn, tileRow, zoom, tilesize);
 
     response.setContentType(getResponseMimeType());
-    final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+    ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
     writeStream(raster, bounds, pyramid.getMetadata().getDefaultValue(0), byteStream);
     ServletUtils.writeImageToResponse(response, byteStream.toByteArray());
   }
-  catch (final IOException e)
+  catch (IOException e)
   {
     throw new ServletException("Error writing raster", e);
   }
@@ -165,11 +163,11 @@ public void write(final MrGeoRaster raster, final int tileColumn, final int tile
 }
 
 @Override
-public Response.ResponseBuilder write(final MrGeoRaster raster, final String imageName, final Bounds bounds)
+public Response.ResponseBuilder write(MrGeoRaster raster, String imageName, Bounds bounds)
 {
   try
   {
-    final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+    ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
 
     MrsImageDataProvider dp =
         DataProviderFactory.getMrsImageDataProvider(imageName, DataProviderFactory.AccessMode.READ,
@@ -178,12 +176,10 @@ public Response.ResponseBuilder write(final MrGeoRaster raster, final String ima
 
     writeStream(raster, bounds, metadata.getDefaultValue(0), byteStream);
 
-    Response.ResponseBuilder response = Response.ok().entity(byteStream.toByteArray())
+    return Response.ok().entity(byteStream.toByteArray())
         .encoding(getResponseMimeType())
         .header("Content-type", getResponseMimeType())
         .header("Content-Disposition", "attachment; filename=" + imageName + ".tif");
-
-    return response;
 
   }
   catch (IOException e)
@@ -198,17 +194,17 @@ public Response.ResponseBuilder write(final MrGeoRaster raster, final String ima
 }
 
 @Override
-public void write(final MrGeoRaster raster, final String imageName, final Bounds bounds,
-    final HttpServletResponse response) throws ServletException
+public void write(MrGeoRaster raster, String imageName, Bounds bounds,
+    HttpServletResponse response) throws ServletException
 {
   response.setContentType(getResponseMimeType());
-  final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+  ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
   try
   {
     writeStream(raster, bounds, Double.NaN, byteStream);
     ServletUtils.writeImageToResponse(response, byteStream.toByteArray());
   }
-  catch (final IOException e)
+  catch (IOException e)
   {
     throw new ServletException("Error writing raster", e);
   }
@@ -216,14 +212,14 @@ public void write(final MrGeoRaster raster, final String imageName, final Bounds
 }
 
 @Override
-public void writeToStream(final MrGeoRaster raster, double[] defaults, final ByteArrayOutputStream byteStream)
+public void writeToStream(MrGeoRaster raster, double[] defaults, ByteArrayOutputStream byteStream)
     throws IOException
 {
   // no-op. We need a different set so we can write geotiffs (with header info);
 }
 
-private void writeStream(final MrGeoRaster raster, final Bounds bounds, final double nodata,
-    final ByteArrayOutputStream byteStream) throws IOException
+private void writeStream(MrGeoRaster raster, Bounds bounds, double nodata,
+    ByteArrayOutputStream byteStream) throws IOException
 {
   double nodatas[] = new double[raster.bands()];
   Arrays.fill(nodatas, nodata);

@@ -72,7 +72,7 @@ public KmlGenerator()
 }
 
 public static String getKmlBodyAsString(String service, String url, Bounds inputBounds, String layer, String wmsHost,
-    String levelStr, String res, final ProviderProperties providerProperties) throws IOException
+    String levelStr, String res, ProviderProperties providerProperties) throws IOException
 {
   String bbox = "";
   if (layer == null)
@@ -351,7 +351,7 @@ private void addHttpElement(Element parent, HttpServletRequest request)
  */
 @SuppressWarnings("squid:S1166") // Exception caught and handled
 private void addLayersToCapability(Element capability, Version kmlVersion,
-    final ProviderProperties providerProperties) throws IOException
+    ProviderProperties providerProperties) throws IOException
 {
 
   MrsImageDataProvider[] providers = RequestUtils.getPyramidFilesList(providerProperties);
@@ -424,7 +424,7 @@ private void addLayersToCapability(Element capability, Version kmlVersion,
  */
 @SuppressFBWarnings(value = "SERVLET_PARAMETER", justification = "VERSION validated")
 private void getCapabilities(HttpServletRequest request, HttpServletResponse response,
-    final ProviderProperties providerProperties) throws ParserConfigurationException, IOException, TransformerException
+    ProviderProperties providerProperties) throws ParserConfigurationException, IOException, TransformerException
 {
   Document doc;
   DocumentBuilderFactory dBF = DocumentBuilderFactory.newInstance();
@@ -569,8 +569,6 @@ private void getNetworkKmlNode(String serviceParam, HttpServletRequest request, 
 
   StringBuilder kmlBody = new StringBuilder();
 
-  String format = KML_MIME_TYPE;
-
   double aspect = (maxX - minX) / (maxY - minY);
   int width, height;
 
@@ -656,7 +654,7 @@ private void getNetworkKmlNode(String serviceParam, HttpServletRequest request, 
           + String.valueOf(childMinX) + "," + String.valueOf(childMinY) + ","
           + String.valueOf(childMaxX) + "," + String.valueOf(childMaxY) + "&amp;LEVELS="
           + levelParam + "&amp;RESOLUTION=" + resParam + "&amp;NODEID="
-          + String.valueOf(levelId + 1) + "," + String.valueOf(childId);
+          + (levelId + 1) + "," + String.valueOf(childId);
 
       kmlBody.append(writeKmlNetworkLink(childMinX, childMinY, childMaxX, childMaxY, levelId,
           childId, childHrefKmlString));
@@ -691,8 +689,8 @@ private void getNetworkKmlNode(String serviceParam, HttpServletRequest request, 
 
   try (PrintStream kmlStream = new PrintStream(response.getOutputStream()))
   {
-    kmlStream.println(kmlBody.toString());
-    response.setContentType(format);
+    kmlStream.println(kmlBody);
+    response.setContentType(KML_MIME_TYPE);
 
     response.setContentLength(kmlBody.length());
   }
@@ -703,7 +701,7 @@ private void getNetworkKmlNode(String serviceParam, HttpServletRequest request, 
  */
 @SuppressFBWarnings(value = "SERVLET_PARAMETER", justification = "BBOX, LEVELS, RESOLUTION validated, LAYERS validated though other request")
 private void getNetworkKmlRootNode(String serviceParam, HttpServletRequest request,
-    HttpServletResponse response, final ProviderProperties providerProperties)
+    HttpServletResponse response, ProviderProperties providerProperties)
     throws IOException
 {
   String url = request.getRequestURL().toString();
@@ -716,7 +714,6 @@ private void getNetworkKmlRootNode(String serviceParam, HttpServletRequest reque
   response.setHeader("Content-Disposition", headerInfo);
 
   String hostParam = getWmsHost(request);
-  String format = KML_MIME_TYPE;
 
   int maxLevels = Integer.parseInt(levelParam);
   if (maxLevels < 1 || maxLevels >= 22)
@@ -751,7 +748,7 @@ private void getNetworkKmlRootNode(String serviceParam, HttpServletRequest reque
   {
 
     kmlStream.println(kmlBody);
-    response.setContentType(format);
+    response.setContentType(KML_MIME_TYPE);
 
     response.setContentLength(kmlBody.length());
 

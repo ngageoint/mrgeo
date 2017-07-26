@@ -50,9 +50,9 @@ class ZoomMapOp extends RasterMapOp with Externalizable
 
   override def execute(context:SparkContext):Boolean = {
     input match {
-      case Some(rmo) => {
+      case Some(rmo) =>
         rmo match {
-          case mapOp: MrsPyramidMapOp => {
+          case mapOp: MrsPyramidMapOp =>
             val newMapOp = mapOp.clone
             newMapOp.context(context)
             rasterRDD = newMapOp.rdd(zoom)
@@ -63,10 +63,8 @@ class ZoomMapOp extends RasterMapOp with Externalizable
               bounds = meta.getBounds,
               calcStats = false))
             return true
-          }
           case _ => throw new IOException("Can only pass a direct image data source to zoom")
         }
-      }
       case None => throw new IOException("Can't work with input raster! Ouch!")
     }
     false

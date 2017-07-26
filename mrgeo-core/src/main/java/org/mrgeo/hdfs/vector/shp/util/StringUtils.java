@@ -184,9 +184,7 @@ public static String trimLeft(String str, int length)
   {
     return "";
   }
-  StringBuilder result = new StringBuilder();
-  result.append(str.substring(str.length() - length));
-  return result.toString();
+  return str.substring(str.length() - length);
 }
 
 public static String trimRight(String str, int length)
@@ -203,9 +201,7 @@ public static String trimRight(String str, int length)
   {
     return "" + str;
   }
-  StringBuilder result = new StringBuilder();
-  result.append(str.substring(0, str.length() - length));
-  return result.toString();
+  return str.substring(0, str.length() - length);
 }
 
 static String getLeft(String str, int length, boolean indicator)

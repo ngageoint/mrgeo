@@ -22,9 +22,9 @@ import org.mrgeo.utils.Logging
 
 abstract class Kernel(var kernelWidth:Int, var kernelHeight:Int) extends Externalizable with Logging {
 
-  def getWidth = kernelWidth
+  def getWidth:Int = kernelWidth
 
-  def getHeight = kernelHeight
+  def getHeight:Int = kernelHeight
 
   def getKernel:Option[Array[Float]]
 

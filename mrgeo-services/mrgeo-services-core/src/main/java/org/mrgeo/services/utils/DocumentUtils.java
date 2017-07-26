@@ -91,7 +91,7 @@ public static void checkForErrors(Document doc, String service, Version version)
   {
     // Validation errors
     @Override
-    public void error(SAXParseException ex) throws SAXParseException
+    public void error(SAXParseException ex)
     {
       log.error("Error at " + ex.getLineNumber() + " line.");
       log.error(ex.getMessage());
@@ -99,7 +99,7 @@ public static void checkForErrors(Document doc, String service, Version version)
 
     // Ignore the fatal errors
     @Override
-    public void fatalError(SAXParseException ex) throws SAXException
+    public void fatalError(SAXParseException ex)
     {
       log.error("Fatal Error at " + ex.getLineNumber() + " line.");
       log.error(ex.getMessage());
@@ -107,7 +107,7 @@ public static void checkForErrors(Document doc, String service, Version version)
 
     // Show warnings
     @Override
-    public void warning(SAXParseException ex) throws SAXParseException
+    public void warning(SAXParseException ex)
     {
       log.warn("Warning at " + ex.getLineNumber() + " line.");
       log.warn(ex.getMessage());

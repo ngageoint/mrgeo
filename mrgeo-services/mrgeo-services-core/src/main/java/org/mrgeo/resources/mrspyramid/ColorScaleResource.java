@@ -213,7 +213,7 @@ public Response getColorScaleLegend(@PathParam("name") String name,
     {
       for (int i = 0; i <= numBreaks; i++)
       {
-        html.append("<div style='").append(textStyle.toString()).append("position:absolute; ").append(position)
+        html.append("<div style='").append(textStyle).append("position:absolute; ").append(position)
             .append(":").append((deltaPixel * i) - offset).append(";'>");
         if (width > height)
         {

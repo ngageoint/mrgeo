@@ -95,11 +95,11 @@ object LeastCostPathCalculator extends Logging {
   value = Array("NM_FIELD_NAMING_CONVENTION", "FE_FLOATING_POINT_EQUALITY", "RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"),
   justification = "1) false positive - case class NeighborData correctly named, 2 & 3) Scala generated code")
 private class LeastCostPathCalculator(start:Point, rdd:RasterRDD, meta:MrsPyramidMetadata) extends Logging {
-  val zoom = meta.getMaxZoomLevel
-  val tilesize = meta.getTilesize
+  val zoom:Int = meta.getMaxZoomLevel
+  val tilesize:Int = meta.getTilesize
   private val pixelsize = (TMSUtils.resolution(zoom, tilesize) * LatLng.METERS_PER_DEGREE).toFloat
   private val pixelsizediag = Math.sqrt(2.0 * pixelsize * pixelsize).toFloat
-  val neighborData = Array[NeighborData](
+  val neighborData:Array[NeighborData] = Array[NeighborData](
     NeighborData(-1, -1, pixelsizediag), // UP_LEFT),
     NeighborData(0, -1, pixelsize), // UP),
     NeighborData(1, -1, pixelsizediag), // UP_RIGHT),
@@ -109,12 +109,12 @@ private class LeastCostPathCalculator(start:Point, rdd:RasterRDD, meta:MrsPyrami
     NeighborData(0, 1, pixelsize), // DOWN),
     NeighborData(1, 1, pixelsizediag) // DOWN_RIGHT)
   )
-  val maxPx = tilesize - 1
+  val maxPx:Int = tilesize - 1
   private val CACHE_HALFWIDTH = 3
   var cache = mutable.HashMap.empty[Long, MrGeoRaster]
-  var tile = TMSUtils.latLonToTile(start.getY, start.getX, zoom, tilesize)
-  var pt = TMSUtils.latLonToTilePixelUL(start.getY, start.getX, tile.tx, tile.ty, zoom, tilesize)
-  var totalcost:Float = getcost(0, 0)
+  var tile:Tile = TMSUtils.latLonToTile(start.getY, start.getX, zoom, tilesize)
+  var pt:Pixel = TMSUtils.latLonToTilePixelUL(start.getY, start.getX, tile.tx, tile.ty, zoom, tilesize)
+  val totalcost:Float = getcost(0, 0)
   var totaldist:Float = 0.0f
   var minspeed:Float = Float.MaxValue
   var maxspeed:Float = 0
@@ -173,7 +173,7 @@ private class LeastCostPathCalculator(start:Point, rdd:RasterRDD, meta:MrsPyrami
     GeometryFactory.createPoint(p.lon, p.lat)
   }
 
-  def newpoint(dx:Int, dy:Int) = {
+  def newpoint(dx:Int, dy:Int):(Int, Int, Tile) = {
     val x = (pt.px + dx).toInt
     val y = (pt.py + dy).toInt
 
@@ -224,7 +224,7 @@ private class LeastCostPathCalculator(start:Point, rdd:RasterRDD, meta:MrsPyrami
     }
   }
 
-  def updatecache(t:Tile) = {
+  def updatecache(t:Tile):Unit = {
     val newcache = mutable.HashMap.empty[Long, MrGeoRaster]
 
     val tilebuilder = Array.newBuilder[Long]

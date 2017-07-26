@@ -103,11 +103,7 @@ public int hashCode()
 @Override
 public boolean equals(Object obj)
 {
-  if (!(obj instanceof Version))
-  {
-    return false;
-  }
-  return compareTo((Version) obj) == 0;
+  return obj instanceof Version && compareTo((Version) obj) == 0;
 }
 
 @Override

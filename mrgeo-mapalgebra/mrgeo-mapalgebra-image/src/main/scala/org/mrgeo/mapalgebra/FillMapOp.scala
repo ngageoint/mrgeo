@@ -130,7 +130,7 @@ class FillMapOp extends RasterMapOp with Externalizable {
 
   override def writeExternal(out:ObjectOutput):Unit = {}
 
-  protected def parseChildren(node:ParserNode, variables:String => Option[ParserNode]) = {
+  protected def parseChildren(node:ParserNode, variables:String => Option[ParserNode]):Unit = {
     // these are common between functions
     inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
 

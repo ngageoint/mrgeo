@@ -46,7 +46,7 @@ object ConvertMapOpTest {
   def init() {
     testUtils = new MapOpTestUtils(classOf[ConvertMapOpTest])
 
-    var file = new File(allHundreds)
+    val file = new File(allHundreds)
     allHundreds = "file://" + file.getAbsolutePath()
     allHundredsPath = new Path(allHundreds)
   }
@@ -64,11 +64,10 @@ class ConvertMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
       Assert.fail("Should have gotten a ParserException")
     }
     catch {
-      case e:ParserException => {
+      case e:ParserException =>
         // Verify the content of the error message
         Assert.assertTrue("Got unexpected exception message: " + e.getMessage,
           e.getMessage.contains("convert usage"))
-      }
     }
   }
 
@@ -83,11 +82,10 @@ class ConvertMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
       Assert.fail("Should have gotten a ParserException")
     }
     catch {
-      case e:ParserException => {
+      case e:ParserException =>
         // Verify the content of the error message
         Assert.assertTrue("Got unexpected exception message: " + e.getMessage,
           e.getMessage.contains("is not a raster input"))
-      }
     }
   }
 
@@ -102,11 +100,10 @@ class ConvertMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
       Assert.fail("Should have gotten a ParserException")
     }
     catch {
-      case e:ParserException => {
+      case e:ParserException =>
         // Verify the content of the error message
         Assert.assertTrue("Got unexpected exception message: " + e.getMessage,
           e.getMessage.contains("convert usage"))
-      }
     }
   }
 
@@ -126,10 +123,10 @@ class ConvertMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
     Assert.assertNotNull("Unable to get metadataReader", metadataReader)
     val metadata = metadataReader.read()
     Assert.assertNotNull("Unable to read metadata", metadata)
-    Assert.assertEquals("Unexpected image data type", DataBuffer.TYPE_BYTE, metadata.getTileType);
+    Assert.assertEquals("Unexpected image data type", DataBuffer.TYPE_BYTE, metadata.getTileType)
     val stats = metadata.getImageStats(metadata.getMaxZoomLevel, 0)
-    Assert.assertEquals("Unexpected min value ", (3100000000.0 % 254.0), stats.min)
-    Assert.assertEquals("Unexpected max value ", (3100000000.0 % 254.0), stats.max)
+    Assert.assertEquals("Unexpected min value ", 3100000000.0 % 254.0, stats.min)
+    Assert.assertEquals("Unexpected max value ", 3100000000.0 % 254.0, stats.max)
   }
 
   @Test
@@ -150,7 +147,7 @@ class ConvertMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
     Assert.assertNotNull("Unable to get metadataReader", metadataReader)
     val metadata = metadataReader.read()
     Assert.assertNotNull("Unable to read metadata", metadata)
-    Assert.assertEquals("Unexpected image data type", DataBuffer.TYPE_BYTE, metadata.getTileType);
+    Assert.assertEquals("Unexpected image data type", DataBuffer.TYPE_BYTE, metadata.getTileType)
     val stats = metadata.getImageStats(metadata.getMaxZoomLevel, 0)
     Assert.assertEquals("Unexpected min value ", 254.0, stats.min)
     Assert.assertEquals("Unexpected max value ", 254.0, stats.max)
@@ -172,7 +169,7 @@ class ConvertMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
     Assert.assertNotNull("Unable to get metadataReader", metadataReader)
     val metadata = metadataReader.read()
     Assert.assertNotNull("Unable to read metadata", metadata)
-    Assert.assertEquals("Unexpected image data type", DataBuffer.TYPE_BYTE, metadata.getTileType);
+    Assert.assertEquals("Unexpected image data type", DataBuffer.TYPE_BYTE, metadata.getTileType)
     val stats = metadata.getImageStats(metadata.getMaxZoomLevel, 0)
     Assert.assertEquals("Unexpected min value ", 0.0, stats.min)
     Assert.assertEquals("Unexpected max value ", 0.0, stats.max)
@@ -194,10 +191,10 @@ class ConvertMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
     Assert.assertNotNull("Unable to get metadataReader", metadataReader)
     val metadata = metadataReader.read()
     Assert.assertNotNull("Unable to read metadata", metadata)
-    Assert.assertEquals("Unexpected image data type", DataBuffer.TYPE_SHORT, metadata.getTileType);
+    Assert.assertEquals("Unexpected image data type", DataBuffer.TYPE_SHORT, metadata.getTileType)
     val stats = metadata.getImageStats(metadata.getMaxZoomLevel, 0)
-    Assert.assertEquals("Unexpected min value ", (3100000000.0 % Short.MaxValue), stats.min)
-    Assert.assertEquals("Unexpected max value ", (3100000000.0 % Short.MaxValue), stats.max)
+    Assert.assertEquals("Unexpected min value ", 3100000000.0 % Short.MaxValue, stats.min)
+    Assert.assertEquals("Unexpected max value ", 3100000000.0 % Short.MaxValue, stats.max)
   }
 
   @Test
@@ -218,7 +215,7 @@ class ConvertMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
     Assert.assertNotNull("Unable to get metadataReader", metadataReader)
     val metadata = metadataReader.read()
     Assert.assertNotNull("Unable to read metadata", metadata)
-    Assert.assertEquals("Unexpected image data type", DataBuffer.TYPE_SHORT, metadata.getTileType);
+    Assert.assertEquals("Unexpected image data type", DataBuffer.TYPE_SHORT, metadata.getTileType)
     val stats = metadata.getImageStats(metadata.getMaxZoomLevel, 0)
     Assert.assertEquals("Unexpected min value ", Short.MaxValue.toDouble, stats.min)
     Assert.assertEquals("Unexpected max value ", Short.MaxValue.toDouble, stats.max)
@@ -242,7 +239,7 @@ class ConvertMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
     Assert.assertNotNull("Unable to get metadataReader", metadataReader)
     val metadata = metadataReader.read()
     Assert.assertNotNull("Unable to read metadata", metadata)
-    Assert.assertEquals("Unexpected image data type", DataBuffer.TYPE_SHORT, metadata.getTileType);
+    Assert.assertEquals("Unexpected image data type", DataBuffer.TYPE_SHORT, metadata.getTileType)
     val stats = metadata.getImageStats(metadata.getMaxZoomLevel, 0)
     Assert.assertEquals("Unexpected min value ", (Short.MinValue + 1).toDouble, stats.min)
     Assert.assertEquals("Unexpected max value ", (Short.MinValue + 1).toDouble, stats.max)
@@ -264,10 +261,10 @@ class ConvertMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
     Assert.assertNotNull("Unable to get metadataReader", metadataReader)
     val metadata = metadataReader.read()
     Assert.assertNotNull("Unable to read metadata", metadata)
-    Assert.assertEquals("Unexpected image data type", DataBuffer.TYPE_INT, metadata.getTileType);
+    Assert.assertEquals("Unexpected image data type", DataBuffer.TYPE_INT, metadata.getTileType)
     val stats = metadata.getImageStats(metadata.getMaxZoomLevel, 0)
-    Assert.assertEquals("Unexpected min value ", (3100000000.0 % Int.MaxValue), stats.min)
-    Assert.assertEquals("Unexpected max value ", (3100000000.0 % Int.MaxValue), stats.max)
+    Assert.assertEquals("Unexpected min value ", 3100000000.0 % Int.MaxValue, stats.min)
+    Assert.assertEquals("Unexpected max value ", 3100000000.0 % Int.MaxValue, stats.max)
   }
 
   @Test
@@ -288,7 +285,7 @@ class ConvertMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
     Assert.assertNotNull("Unable to get metadataReader", metadataReader)
     val metadata = metadataReader.read()
     Assert.assertNotNull("Unable to read metadata", metadata)
-    Assert.assertEquals("Unexpected image data type", DataBuffer.TYPE_INT, metadata.getTileType);
+    Assert.assertEquals("Unexpected image data type", DataBuffer.TYPE_INT, metadata.getTileType)
     val stats = metadata.getImageStats(metadata.getMaxZoomLevel, 0)
     Assert.assertEquals("Unexpected min value ", Int.MaxValue.toDouble, stats.min)
     Assert.assertEquals("Unexpected max value ", Int.MaxValue.toDouble, stats.max)
@@ -312,7 +309,7 @@ class ConvertMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
     Assert.assertNotNull("Unable to get metadataReader", metadataReader)
     val metadata = metadataReader.read()
     Assert.assertNotNull("Unable to read metadata", metadata)
-    Assert.assertEquals("Unexpected image data type", DataBuffer.TYPE_INT, metadata.getTileType);
+    Assert.assertEquals("Unexpected image data type", DataBuffer.TYPE_INT, metadata.getTileType)
     val stats = metadata.getImageStats(metadata.getMaxZoomLevel, 0)
     Assert.assertEquals("Unexpected min value ", (Int.MinValue + 1).toDouble, stats.min)
     Assert.assertEquals("Unexpected max value ", (Int.MinValue + 1).toDouble, stats.max)
@@ -334,7 +331,7 @@ class ConvertMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
     Assert.assertNotNull("Unable to get metadataReader", metadataReader)
     val metadata = metadataReader.read()
     Assert.assertNotNull("Unable to read metadata", metadata)
-    Assert.assertEquals("Unexpected image data type", DataBuffer.TYPE_DOUBLE, metadata.getTileType);
+    Assert.assertEquals("Unexpected image data type", DataBuffer.TYPE_DOUBLE, metadata.getTileType)
     val stats = metadata.getImageStats(metadata.getMaxZoomLevel, 0)
     Assert.assertEquals("Unexpected min value ", 3100000000.0, stats.min)
     Assert.assertEquals("Unexpected max value ", 3100000000.0, stats.max)
@@ -357,7 +354,7 @@ class ConvertMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
     Assert.assertNotNull("Unable to get metadataReader", metadataReader)
     val metadata = metadataReader.read()
     Assert.assertNotNull("Unable to read metadata", metadata)
-    Assert.assertEquals("Unexpected image data type", DataBuffer.TYPE_FLOAT, metadata.getTileType);
+    Assert.assertEquals("Unexpected image data type", DataBuffer.TYPE_FLOAT, metadata.getTileType)
     val stats = metadata.getImageStats(metadata.getMaxZoomLevel, 0)
     Assert.assertEquals("Unexpected min value ", 3100000000.0, stats.min)
     Assert.assertEquals("Unexpected max value ", 3100000000.0, stats.max)

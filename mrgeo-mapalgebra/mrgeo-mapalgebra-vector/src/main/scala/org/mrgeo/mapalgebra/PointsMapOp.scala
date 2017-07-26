@@ -28,7 +28,7 @@ import org.mrgeo.mapalgebra.vector.VectorMapOp
 import scala.collection.mutable.ListBuffer
 
 object PointsMapOp {
-  def apply(coords:Array[Double]) = {
+  def apply(coords:Array[Double]):PointsMapOp = {
     new PointsMapOp(coords)
   }
 
@@ -49,9 +49,8 @@ class PointsMapOp extends VectorMapOp with Externalizable {
 
   def getCoordCount():Int = {
     srcCoordinates match {
-      case Some(coords) => {
+      case Some(coords) =>
         coords.length
-      }
       case None => -1
     }
   }
@@ -80,13 +79,11 @@ class PointsMapOp extends VectorMapOp with Externalizable {
 
   override def writeExternal(out:ObjectOutput):Unit = {
     srcCoordinates match {
-      case Some(coords) => {
+      case Some(coords) =>
         out.writeInt(coords.length)
         coords.foreach(c => out.writeDouble(c))
-      }
-      case None => {
+      case None =>
         out.writeInt(-1)
-      }
     }
   }
 
@@ -120,15 +117,14 @@ class PointsMapOp extends VectorMapOp with Externalizable {
   private def load():Unit = {
     if (vectorrdd.isEmpty) {
       val pointsrdd = srcCoordinates match {
-        case Some(coords) => {
+        case Some(coords) =>
           // Convert the array of lon/let pairs to a VectorRDD
           var recordData = new ListBuffer[(FeatureIdWritable, Geometry)]()
-          for (i <- 0 until coords.length by 2) {
+          for (i <- coords.indices by 2) {
             val geom = GeometryFactory.createPoint(coords(i).toFloat, coords(i + 1).toFloat)
             recordData += ((new FeatureIdWritable(i / 2), geom))
           }
           VectorRDD(context.parallelize(recordData))
-        }
         case None => throw new IOException("Invalid points input")
       }
       vectorrdd = Some(pointsrdd)
