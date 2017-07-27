@@ -68,40 +68,43 @@ static
 {
   if (MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_WCS_CAPABILITIES_CACHE, "true").equals("true"))
   {
-    new Thread(() ->
+    new Thread()
     {
-      long sleeptime = 60L * 1000L *
-          Integer.parseInt(
-              MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_WCS_CAPABILITIES_REFRESH, "5"));
-
-      boolean stop = false;
-      while (!stop)
+      public void run()
       {
-        try
+        long sleeptime = 60L * 1000L *
+            Integer.parseInt(
+                MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_WCS_CAPABILITIES_REFRESH, "5"));
+
+        boolean stop = false;
+        while (!stop)
         {
-          for (Version version : capabilities.keySet())
+          try
           {
-            try
+            for (Version version : capabilities.keySet())
             {
-              log.info("refreshing capabilities for version {}", version);
-              ProviderProperties providerProperties = SecurityUtils.getProviderProperties();
-              Document doc = generateCapabilities(version, baseURI, providerProperties);
-              capabilities.put(version, doc);
+              try
+              {
+                log.info("refreshing capabilities for version {}", version);
+                ProviderProperties providerProperties = SecurityUtils.getProviderProperties();
+                Document doc = generateCapabilities(version, baseURI, providerProperties);
+                capabilities.put(version, doc);
+              }
+              catch (ParserConfigurationException | IOException e)
+              {
+                log.error("Exception thrown", e);
+              }
             }
-            catch (ParserConfigurationException | IOException e)
-            {
-              log.error("Exception thrown", e);
-            }
+            Thread.sleep(sleeptime);
           }
-          Thread.sleep(sleeptime);
-        }
-        catch (InterruptedException e)
-        {
-          log.error("Thread Inturrupted...  stopping {}", e);
-          stop = true;
+          catch (InterruptedException e)
+          {
+            log.error("Thread Inturrupted...  stopping {}", e);
+            stop = true;
+          }
         }
       }
-    }).start();
+    }.start();
   }
 
 }

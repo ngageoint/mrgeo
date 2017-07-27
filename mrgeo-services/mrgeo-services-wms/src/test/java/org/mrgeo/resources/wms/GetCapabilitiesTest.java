@@ -183,7 +183,7 @@ public void testGetCapabilitiesProxy() throws Exception
       .queryParam("REQUEST", "getcapabilities")
       .queryParam("VERSION", "1.1.1")
       .request()
-      .header("X-Forwarded-For", "www.foo.bar")
+      .header("X-Forwarded-Host", "www.foo.bar")
       .get();
 
   processXMLResponse(response, "GetCapabilities-1-1-1-Proxy.xml");
@@ -198,7 +198,7 @@ public void testGetCapabilitiesProxyLowercase() throws Exception
       .queryParam("REQUEST", "getcapabilities")
       .queryParam("VERSION", "1.1.1")
       .request()
-      .header("x-forwarded-for", "www.foo.bar")
+      .header("x-forwarded-host", "www.foo.bar")
       .get();
 
   processXMLResponse(response, "GetCapabilities-1-1-1-Proxy.xml");
@@ -213,7 +213,7 @@ public void testGetCapabilitiesProxyPort() throws Exception
       .queryParam("REQUEST", "getcapabilities")
       .queryParam("VERSION", "1.1.1")
       .request()
-      .header("X-Forwarded-For", "www.foo.bar:1234")
+      .header("X-Forwarded-Host", "www.foo.bar:1234")
       .get();
 
   processXMLResponse(response, "GetCapabilities-1-1-1-ProxyPort.xml");
