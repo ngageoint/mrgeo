@@ -163,10 +163,10 @@ public String toString()
   Map<String, String> attr = geometry.getAllAttributes();
   for (String key : geometry.getAllAttributes().keySet())
   {
-    result.append(key + ": " + attr.get(key));
+    result.append(key).append(": ").append(attr.get(key));
     result.append(", ");
   }
-  result.append("geom: " + WktConverter.toWkt(geometry));
+  result.append("geom: ").append(WktConverter.toWkt(geometry));
   result.append(" ]");
   return result.toString();
 }

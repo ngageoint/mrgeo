@@ -64,32 +64,32 @@ private String imageName = null;
 
 public ImageRendererAbstract()
 {
-  this.srs = GDALUtils.EPSG4326();
+  srs = GDALUtils.EPSG4326();
 }
 
-public ImageRendererAbstract(final SpatialReference srs)
+public ImageRendererAbstract(SpatialReference srs)
 {
   this.srs = srs.ExportToWkt();
 }
 
-public ImageRendererAbstract(final String srsWkt)
+public ImageRendererAbstract(String srsWkt)
 {
-  this.srs = srsWkt;
+  srs = srsWkt;
 }
 
 /**
  * @return KML String
  */
-public static String asKml(final String pyrName, final Bounds bounds, String requestUrl,
-    final ProviderProperties providerProperties) throws IOException
+public static String asKml(String pyrName, Bounds bounds, String requestUrl,
+    ProviderProperties providerProperties) throws IOException
 {
-  final URL url = new URL(requestUrl);
+  URL url = new URL(requestUrl);
   if (!requestUrl.endsWith("/"))
   {
     requestUrl += "/";
   }
   requestUrl += "KmlGenerator";
-  final String wmsHost = url.getHost() + ":" + url.getPort();
+  String wmsHost = url.getHost() + ":" + url.getPort();
   return KmlGenerator
       .getKmlBodyAsString("kml", requestUrl, bounds, pyrName, wmsHost, null, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
           providerProperties);
@@ -104,15 +104,15 @@ public static String asKml(final String pyrName, final Bounds bounds, String req
  * @param height   requested output image height
  * @return a zoom level
  */
-private static int getZoomLevel(final MrsPyramidMetadata metadata, final Bounds bounds,
-    final int width, final int height)
+private static int getZoomLevel(MrsPyramidMetadata metadata, Bounds bounds,
+    int width, int height)
 {
   log.debug("Determining zoom level for {}", metadata.getPyramid());
-  final double pixelSizeLon = bounds.width() / width;
-  final double pixelSizeLat = bounds.height() / height;
-  final int tileSize = metadata.getTilesize();
-  final int zoomY = TMSUtils.zoomForPixelSize(pixelSizeLat, tileSize);
-  final int zoomX = TMSUtils.zoomForPixelSize(pixelSizeLon, tileSize);
+  double pixelSizeLon = bounds.width() / width;
+  double pixelSizeLat = bounds.height() / height;
+  int tileSize = metadata.getTilesize();
+  int zoomY = TMSUtils.zoomForPixelSize(pixelSizeLat, tileSize);
+  int zoomX = TMSUtils.zoomForPixelSize(pixelSizeLon, tileSize);
   int zoomLevel = zoomX;
   if (zoomY > zoomX)
   {
@@ -137,21 +137,21 @@ private static int getZoomLevel(final MrsPyramidMetadata metadata, final Bounds 
  * @param zoomLevel requested zoom level
  * @return true if the source data contains an image at the requested zoom level; false otherwise
  */
-private static boolean isZoomLevelValid(final MrsPyramidMetadata metadata,
-    final int zoomLevel) throws IOException
+private static boolean isZoomLevelValid(MrsPyramidMetadata metadata,
+    int zoomLevel)
 {
   return (metadata.getName(zoomLevel) != null);
 }
 
 
-private static MrsImage getImageForScale(final MrsPyramid pyramid, final double scale)
+private static MrsImage getImageForScale(MrsPyramid pyramid, double scale)
     throws IOException
 {
   log.debug("Retrieving image for for scale {} ...", scale);
 
-  final int zoom = TMSUtils.zoomForPixelSize(scale, pyramid.getMetadata().getTilesize());
+  int zoom = TMSUtils.zoomForPixelSize(scale, pyramid.getMetadata().getTilesize());
 
-  final MrsImage image = pyramid.getImage(zoom);
+  MrsImage image = pyramid.getImage(zoom);
   if (image == null)
   {
     throw new IllegalArgumentException("A valid scale couldn't be matched.");
@@ -276,8 +276,8 @@ public boolean outputIsTransparent()
 @SuppressWarnings("squid:S1166") // Exception caught and handled
 @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "GDAL may have throw exception enabled")
 @Override
-public MrGeoRaster renderImage(final String pyramidName, final Bounds requestBounds, final int width,
-    final int height, final ProviderProperties providerProperties, final String epsg) throws ImageRendererException
+public MrGeoRaster renderImage(String pyramidName, Bounds requestBounds, int width,
+    int height, ProviderProperties providerProperties, String epsg) throws ImageRendererException
 {
   try
   {
@@ -285,7 +285,7 @@ public MrGeoRaster renderImage(final String pyramidName, final Bounds requestBou
 
     if (log.isDebugEnabled())
     {
-      log.debug("requested bounds: {}", requestBounds.toString());
+      log.debug("requested bounds: {}", requestBounds);
       log.debug("requested bounds width: {}", requestBounds.width());
       log.debug("requested bounds height: {}", requestBounds.height());
       log.debug("requested width: {}", width);
@@ -295,7 +295,7 @@ public MrGeoRaster renderImage(final String pyramidName, final Bounds requestBou
     MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(pyramidName,
         AccessMode.READ, providerProperties);
     MrsPyramidMetadataReader r = dp.getMetadataReader();
-    final MrsPyramidMetadata pyramidMetadata = r.read();
+    MrsPyramidMetadata pyramidMetadata = r.read();
     isTransparent = false;
 
     Bounds wgs84Bounds = requestBounds;
@@ -314,8 +314,8 @@ public MrGeoRaster renderImage(final String pyramidName, final Bounds requestBou
     if (!wgs84Bounds.intersects(pyramidMetadata.getBounds()))
     {
       log.debug("request bounds does not intersect image bounds");
-      log.debug("requested bounds in wgs84: " + wgs84Bounds.toString());
-      log.debug("image bounds: " + pyramidMetadata.getBounds().toString());
+      log.debug("requested bounds in wgs84: " + wgs84Bounds);
+      log.debug("image bounds: " + pyramidMetadata.getBounds());
       isTransparent = true;
       return MrGeoRaster.createEmptyRaster(width, height, pyramidMetadata.getBands(),
           pyramidMetadata.getTileType(), pyramidMetadata.getDefaultValue(0));
@@ -366,12 +366,12 @@ public MrGeoRaster renderImage(final String pyramidName, final Bounds requestBou
         src = mosaicToDataset(image, zoomLevel, wgs84Bounds, pyramidMetadata.getDefaultValues());
         dst = GDALUtils.createEmptyDiskBasedRaster(src, width, height);
 
-        log.debug("WGS84 bounds: {}", wgs84Bounds.toString());
+        log.debug("WGS84 bounds: {}", wgs84Bounds);
         log.debug("WGS84 requested bounds width: {}", wgs84Bounds.width());
         log.debug("WGS84 requested bounds height: {}", wgs84Bounds.height());
 
         // now change only the resolution for the dst
-        final double[] dstxform = new double[6];
+        double[] dstxform = new double[6];
 
         // default is WGS84
         String dstcrs = GDALUtils.EPSG4326();
@@ -443,27 +443,27 @@ public MrGeoRaster renderImage(final String pyramidName, final Bounds requestBou
   }
 }
 
-Dataset mosaicToDataset(final MrsImage image, final int zoomlevel,
-                        final Bounds requestedBounds, final double[] nodatas) throws IOException
+Dataset mosaicToDataset(MrsImage image, int zoomlevel,
+                        Bounds requestedBounds, double[] nodatas) throws IOException
 {
   MrsPyramidMetadata metadata = image.getMetadata(); // make sure metadata is loaded
 
-  final int tilesize = metadata.getTilesize();
-  final TileBounds tileBounds = TMSUtils.boundsToTile(requestedBounds, zoomlevel, tilesize);
+  int tilesize = metadata.getTilesize();
+  TileBounds tileBounds = TMSUtils.boundsToTile(requestedBounds, zoomlevel, tilesize);
 
   Bounds actualBounds = TMSUtils.tileToBounds(tileBounds, zoomlevel, tilesize);
   Pixel actualUL =
           TMSUtils.latLonToPixelsUL(actualBounds.n, actualBounds.w, zoomLevel, tilesize);
-  log.debug("Actual UL pixel: " + actualUL.toString());
+  log.debug("Actual UL pixel: " + actualUL);
   Pixel actualLR =
           TMSUtils.latLonToPixelsUL(actualBounds.s, actualBounds.e, zoomLevel, tilesize);
-  log.debug("Actual LR pixel: " + actualLR.toString());
+  log.debug("Actual LR pixel: " + actualLR);
   Pixel requestedUL =
           TMSUtils.latLonToPixelsUL(requestedBounds.n, requestedBounds.w, zoomLevel, tilesize);
-  log.debug("Requested UL pixel: " + requestedUL.toString());
+  log.debug("Requested UL pixel: " + requestedUL);
   Pixel requestedLR =
           TMSUtils.latLonToPixelsUL(requestedBounds.s, requestedBounds.e, zoomLevel, tilesize);
-  log.debug("Requested LR pixel: " + requestedLR.toString());
+  log.debug("Requested LR pixel: " + requestedLR);
   int dsWidth = (int)(requestedLR.px - requestedUL.px);
   int dsHeight = (int)(requestedLR.py - requestedUL.py);
   int gdaltype = GDALUtils.toGDALDataType(metadata.getTileType());
@@ -493,15 +493,15 @@ Dataset mosaicToDataset(final MrsImage image, final int zoomlevel,
   // final KVIterator<TileIdWritable, Raster> iter = image.getTiles(TileBounds
   // .convertToLongRectangle(tileBounds));
   for (long row = tileBounds.s; row <= tileBounds.n; row++) {
-    final TileIdWritable rowStart = new TileIdWritable(TMSUtils.tileid(tileBounds.w, row, zoomlevel));
-    final TileIdWritable rowEnd = new TileIdWritable(TMSUtils.tileid(tileBounds.e, row, zoomlevel));
+    TileIdWritable rowStart = new TileIdWritable(TMSUtils.tileid(tileBounds.w, row, zoomlevel));
+    TileIdWritable rowEnd = new TileIdWritable(TMSUtils.tileid(tileBounds.e, row, zoomlevel));
 
-    final KVIterator<TileIdWritable, MrGeoRaster> iter = image.getTiles(rowStart, rowEnd);
+    KVIterator<TileIdWritable, MrGeoRaster> iter = image.getTiles(rowStart, rowEnd);
     while (iter.hasNext()) {
-      final MrGeoRaster source = iter.currentValue();
+      MrGeoRaster source = iter.currentValue();
       if (source != null) {
-        final Tile tile = TMSUtils.tileid(iter.currentKey().get(), zoomlevel);
-        final Bounds b = TMSUtils.tileBounds(tile.tx, tile.ty, zoomlevel, tilesize);
+        Tile tile = TMSUtils.tileid(iter.currentKey().get(), zoomlevel);
+        Bounds b = TMSUtils.tileBounds(tile.tx, tile.ty, zoomlevel, tilesize);
         source.copyToDataset(ds, dsWidth, dsHeight, requestedBounds, b, tilesize, zoomlevel, gdaltype);
       }
     }
@@ -524,16 +524,16 @@ Dataset mosaicToDataset(final MrsImage image, final int zoomlevel,
  * @return image rendering of the requested bounds
  */
 @Override
-public MrGeoRaster renderImage(final String pyramidName, final Bounds bounds,
-    final ProviderProperties providerProperties, final String epsg) throws ImageRendererException
+public MrGeoRaster renderImage(String pyramidName, Bounds bounds,
+    ProviderProperties providerProperties, String epsg) throws ImageRendererException
 {
   imageName = pyramidName;
 
   try
   {
     // assuming dimensions for tiles at all image levels are the same
-    final MrsPyramid p = MrsPyramid.open(pyramidName, providerProperties);
-    final int tileSize = p.getMetadata().getTilesize();
+    MrsPyramid p = MrsPyramid.open(pyramidName, providerProperties);
+    int tileSize = p.getMetadata().getTilesize();
     return renderImage(pyramidName, bounds, tileSize, tileSize, providerProperties, epsg);
   }
   catch (ImageRendererException | IOException e)
@@ -552,8 +552,8 @@ public MrGeoRaster renderImage(final String pyramidName, final Bounds bounds,
  * @return image rendering of the requested tile
  */
 @Override
-public MrGeoRaster renderImage(final String pyramidName, final int tileColumn, final int tileRow,
-    final double scale, final ProviderProperties providerProperties) throws ImageRendererException
+public MrGeoRaster renderImage(String pyramidName, int tileColumn, int tileRow,
+    double scale, ProviderProperties providerProperties) throws ImageRendererException
 {
   imageName = pyramidName;
 
@@ -566,7 +566,7 @@ public MrGeoRaster renderImage(final String pyramidName, final int tileColumn, f
       return image.getTile(tileColumn, tileRow);
     }
   }
-  catch (final IOException e)
+  catch (IOException e)
   {
     throw new ImageRendererException("Unable to open pyramid: " + HadoopFileUtils.unqualifyPath(pyramidName), e);
   }
@@ -574,8 +574,8 @@ public MrGeoRaster renderImage(final String pyramidName, final int tileColumn, f
 
 @Override
 @SuppressWarnings("squid:S2583")  // false positive, "if (metadata==null)" will _not_ always evaluate true
-public MrGeoRaster renderImage(final String pyramidName, final int tileColumn, final int tileRow,
-    final double scale, final String maskName, final double maskMax,
+public MrGeoRaster renderImage(String pyramidName, int tileColumn, int tileRow,
+    double scale, String maskName, double maskMax,
     ProviderProperties providerProperties) throws ImageRendererException
 {
   imageName = pyramidName;
@@ -587,26 +587,26 @@ public MrGeoRaster renderImage(final String pyramidName, final int tileColumn, f
     pyramid = MrsPyramid.open(pyramidName, providerProperties);
     try (MrsImage image = getImageForScale(pyramid, scale))
     {
-      final MrGeoRaster raster = image.getTile(tileColumn, tileRow);
+      MrGeoRaster raster = image.getTile(tileColumn, tileRow);
       log.debug("Retrieving tile {}, {}", tileColumn, tileRow);
 
       metadata = pyramid.getMetadata();
 
-      final double[] nodata = metadata.getDefaultValues();
+      double[] nodata = metadata.getDefaultValues();
 
       MrsPyramid maskPyramid = MrsPyramid.open(maskName, providerProperties);
       MrsImage maskImage = getImageForScale(maskPyramid, scale);
 
-      final MrGeoRaster maskRaster = maskImage.getTile(tileColumn, tileRow);
+      MrGeoRaster maskRaster = maskImage.getTile(tileColumn, tileRow);
       log.debug("Retrieving mask tile {}, {}", tileColumn, tileRow);
 
-      final MrsPyramidMetadata maskMetadata = maskPyramid.getMetadata();
-      final double[] maskNodata = maskMetadata.getDefaultValues();
+      MrsPyramidMetadata maskMetadata = maskPyramid.getMetadata();
+      double[] maskNodata = maskMetadata.getDefaultValues();
 
       return maskRaster(maskMax, raster, nodata, maskRaster, maskNodata);
     }
   }
-  catch (final TileNotFoundException e)
+  catch (TileNotFoundException e)
   {
     try
     {
@@ -627,23 +627,23 @@ public MrGeoRaster renderImage(final String pyramidName, final int tileColumn, f
     }
     throw new ImageRendererException("Unable to open pyramid: " + HadoopFileUtils.unqualifyPath(pyramidName), e);
   }
-  catch (final IOException e)
+  catch (IOException e)
   {
     throw new ImageRendererException("Unable to open pyramid: " + HadoopFileUtils.unqualifyPath(pyramidName), e);
   }
 }
 
 @Override
-public MrGeoRaster renderImage(final String pyramidName, final int tileColumn, final int tileRow,
-    final double scale, final String maskName, final ProviderProperties providerProperties)
+public MrGeoRaster renderImage(String pyramidName, int tileColumn, int tileRow,
+    double scale, String maskName, ProviderProperties providerProperties)
     throws ImageRendererException
 {
   return renderImage(pyramidName, tileColumn, tileRow, scale, maskName, Double.MAX_VALUE, providerProperties);
 }
 
 @Override
-public MrGeoRaster renderImage(final String pyramidName, final int tileColumn, final int tileRow,
-    final int zoom, final ProviderProperties providerProperties) throws ImageRendererException
+public MrGeoRaster renderImage(String pyramidName, int tileColumn, int tileRow,
+    int zoom, ProviderProperties providerProperties) throws ImageRendererException
 {
   imageName = pyramidName;
 
@@ -665,9 +665,9 @@ public MrGeoRaster renderImage(final String pyramidName, final int tileColumn, f
 
 @Override
 @SuppressWarnings("squid:S2583") // metadata may be null when TileNotFoundException is thrown, need to check...
-public MrGeoRaster renderImage(final String pyramidName, final int tileColumn, final int tileRow,
-    final int zoom, final String maskName, final double maskMax,
-    final ProviderProperties providerProperties) throws ImageRendererException
+public MrGeoRaster renderImage(String pyramidName, int tileColumn, int tileRow,
+    int zoom, String maskName, double maskMax,
+    ProviderProperties providerProperties) throws ImageRendererException
 {
   imageName = pyramidName;
 
@@ -682,25 +682,25 @@ public MrGeoRaster renderImage(final String pyramidName, final int tileColumn, f
       {
         throw new MrsImageException("Zoom level not found: " + pyramidName + " level: " + zoom);
       }
-      final MrGeoRaster raster = image.getTile(tileColumn, tileRow);
+      MrGeoRaster raster = image.getTile(tileColumn, tileRow);
       log.debug("Retrieving tile {}, {}", tileColumn, tileRow);
 
       metadata = pyramid.getMetadata();
-      final double[] nodata = metadata.getDefaultValues();
+      double[] nodata = metadata.getDefaultValues();
 
       MrsPyramid maskPyramid = MrsPyramid.open(maskName, providerProperties);
       MrsImage maskImage = maskPyramid.getImage(zoom);
 
-      final MrGeoRaster maskRaster = maskImage.getTile(tileColumn, tileRow);
+      MrGeoRaster maskRaster = maskImage.getTile(tileColumn, tileRow);
       log.debug("Retrieving mask tile {}, {}", tileColumn, tileRow);
 
-      final MrsPyramidMetadata maskMetadata = maskPyramid.getMetadata();
-      final double[] maskNodata = maskMetadata.getDefaultValues();
+      MrsPyramidMetadata maskMetadata = maskPyramid.getMetadata();
+      double[] maskNodata = maskMetadata.getDefaultValues();
 
       return maskRaster(maskMax, raster, nodata, maskRaster, maskNodata);
     }
   }
-  catch (final TileNotFoundException e)
+  catch (TileNotFoundException e)
   {
     try
     {
@@ -721,7 +721,7 @@ public MrGeoRaster renderImage(final String pyramidName, final int tileColumn, f
     }
     throw new ImageRendererException("Unable to open pyramid: " + HadoopFileUtils.unqualifyPath(pyramidName), e);
   }
-  catch (final IOException e)
+  catch (IOException e)
   {
     throw new ImageRendererException("Unable to open pyramid: " + HadoopFileUtils.unqualifyPath(pyramidName), e);
   }
@@ -737,9 +737,9 @@ public MrGeoRaster renderImage(final String pyramidName, final int tileColumn, f
 }
 
 @Override
-public MrGeoRaster renderImage(final String pyramidName, final int tileColumn, final int tileRow,
-    final int zoom, final String maskName,
-    final ProviderProperties providerProperties) throws ImageRendererException
+public MrGeoRaster renderImage(String pyramidName, int tileColumn, int tileRow,
+    int zoom, String maskName,
+    ProviderProperties providerProperties) throws ImageRendererException
 {
   return renderImage(pyramidName, tileColumn, tileRow, zoom, maskName, Double.MAX_VALUE,
       providerProperties);
@@ -753,15 +753,15 @@ public MrGeoRaster renderImage(final String pyramidName, final int tileColumn, f
  * @param tilesize tile size of the source data
  * @return an envelope containing all source image tiles touching the requested bounds
  */
-protected double[] getImageTileEnvelope(final Bounds bounds, final int zoom,
-    final int tilesize)
+protected double[] getImageTileEnvelope(Bounds bounds, int zoom,
+    int tilesize)
 {
   log.debug("Calculating image tile envelope...");
 
 
-  final double res = TMSUtils.resolution(zoom, tilesize);
+  double res = TMSUtils.resolution(zoom, tilesize);
 
-  final double[] xform = new double[6];
+  double[] xform = new double[6];
 
   xform[0] = bounds.w; /* top left x */
   xform[1] = res; /* w-e pixel resolution */
@@ -803,7 +803,7 @@ private MrGeoRaster maskRaster(double maskMax, MrGeoRaster raster, double[] noda
       boolean masked = true;
       for (int b = 0; b < maskRaster.bands(); b++)
       {
-        final double maskPixel = maskRaster.getPixelDouble(w, h, b);
+        double maskPixel = maskRaster.getPixelDouble(w, h, b);
         if (maskPixel <= maskMax && Double.compare(maskPixel, maskNodata[b]) != 0)
         {
           masked = false;

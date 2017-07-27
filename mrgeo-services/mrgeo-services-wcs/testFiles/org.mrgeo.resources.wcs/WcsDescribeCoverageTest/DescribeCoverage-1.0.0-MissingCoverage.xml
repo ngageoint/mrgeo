@@ -1,0 +1,3 @@
+<ServiceExceptionReport version="1.0.0">
+  <ServiceException><![CDATA[Missing required COVERAGE parameter]]></ServiceException>
+</ServiceExceptionReport>

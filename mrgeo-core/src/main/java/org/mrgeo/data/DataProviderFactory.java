@@ -183,10 +183,7 @@ public static ProviderProperties loadProviderPropertiesFromConfig(Configuration 
   if (strRoles != null && !strRoles.isEmpty())
   {
     String[] separated = strRoles.split(",");
-    for (String r : separated)
-    {
-      roles.add(r);
-    }
+    Collections.addAll(roles, separated);
   }
   return new ProviderProperties(userName, roles);
 }

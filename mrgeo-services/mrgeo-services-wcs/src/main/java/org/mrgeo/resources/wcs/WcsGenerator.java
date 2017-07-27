@@ -126,17 +126,17 @@ public Response doGet(@Context UriInfo uriInfo, @Context HttpHeaders headers)
   log.info("headers:");
   for (MultivaluedMap.Entry header: headers.getRequestHeaders().entrySet())
   {
-    log.info("  {}: {}", header.getKey().toString(), header.getValue().toString());
+    log.info("  {}: {}", header.getKey(), header.getValue());
   }
 
-  log.info("GET URI: {}", uriInfo.getRequestUri().toString());
+  log.info("GET URI: {}", uriInfo.getRequestUri());
   return handleRequest(uriInfo, headers);
 }
 
 @POST
 public Response doPost(@Context UriInfo uriInfo, @Context HttpHeaders headers)
 {
-  log.info("POST URI: {}", uriInfo.getRequestUri().toString());
+  log.info("POST URI: {}", uriInfo.getRequestUri());
   return handleRequest(uriInfo, headers);
 }
 
@@ -181,14 +181,12 @@ private Response handleRequest(UriInfo uriInfo, HttpHeaders headers)
   finally
   {
     //if (log.isDebugEnabled())
-    {
-      log.info("WCS request time: {}ms", (System.currentTimeMillis() - start));
-      // this can be resource intensive.
-      System.gc();
-      final Runtime rt = Runtime.getRuntime();
-      log.info(String.format("WMS request memory: %.1fMB / %.1fMB%n", (rt.totalMemory() - rt
-          .freeMemory()) / 1e6, rt.maxMemory() / 1e6));
-    }
+    log.info("WCS request time: {}ms", (System.currentTimeMillis() - start));
+    // this can be resource intensive.
+    System.gc();
+    final Runtime rt = Runtime.getRuntime();
+    log.info(String.format("WMS request memory: %.1fMB / %.1fMB%n", (rt.totalMemory() - rt
+        .freeMemory()) / 1e6, rt.maxMemory() / 1e6));
   }
 }
 
@@ -263,14 +261,18 @@ private Response getCapabilities(String baseURI, MultivaluedMap<String, String> 
   // The versionParamName will be null if the request did not include the
   // version parameter.
   String acceptVersions = getQueryParam(allParams, "acceptversions", null);
-  Version version = null;
+  version = null;
   if (acceptVersions != null)
   {
     String[] versions = acceptVersions.split(",");
 
     for (String ver : versions)
     {
-      if (version == null || version.isLess(ver))
+      if (version == null)
+      {
+        version = new Version(ver);
+      }
+      else if (version.isLess(ver))
       {
         version = new Version(ver);
       }
@@ -566,7 +568,7 @@ private Response writeError(Response.Status httpStatus, final String msg)
 
     final Element ser = doc.createElement("ServiceExceptionReport");
     doc.appendChild(ser);
-    ser.setAttribute("version", WCS_VERSION);
+    ser.setAttribute("version", version.toString());
     final Element se = XmlUtils.createElement(ser, "ServiceException");
     CDATASection msgNode = doc.createCDATASection(msg);
     se.appendChild(msgNode);

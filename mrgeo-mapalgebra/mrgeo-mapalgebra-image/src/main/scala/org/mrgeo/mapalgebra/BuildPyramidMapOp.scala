@@ -43,7 +43,7 @@ object BuildPyramidMapOp extends MapOpRegistrar {
 
 class BuildPyramidMapOp extends RasterMapOp with Externalizable {
 
-  var providerProperties:ProviderProperties = null
+  var providerProperties:ProviderProperties = _
   private var rasterRDD:Option[RasterRDD] = None
   private var inputMapOp:Option[RasterMapOp] = None
   private var aggregator:Option[String] = None

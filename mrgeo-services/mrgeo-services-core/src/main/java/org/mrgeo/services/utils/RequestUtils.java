@@ -15,7 +15,6 @@
 
 package org.mrgeo.services.utils;
 
-import org.apache.http.client.utils.URIBuilder;
 import org.gdal.osr.CoordinateTransformation;
 import org.gdal.osr.SpatialReference;
 import org.glassfish.jersey.internal.util.collection.MultivaluedStringMap;
@@ -137,7 +136,7 @@ public static MultivaluedMap<String, String> replaceParam(String name, List<Stri
  * Returns a list of all MrsPyramid version 2 data in the home data directory
  */
 public static MrsImageDataProvider[] getPyramidFilesList(
-    final ProviderProperties providerProperties) throws IOException
+    ProviderProperties providerProperties) throws IOException
 {
   String[] images = DataProviderFactory.listImages(providerProperties);
 
@@ -162,14 +161,14 @@ public static MrsImageDataProvider[] getPyramidFilesList(
  * @param param request parameter value
  * @return geographic bounds
  */
-static Bounds boundsFromParam(final String param)
+static Bounds boundsFromParam(String param)
 {
   if (param == null)
   {
     throw new IllegalArgumentException("Bounding box must be specified.");
   }
   log.debug("incoming bounds request: " + param);
-  final String[] bBoxValues = param.split(",");
+  String[] bBoxValues = param.split(",");
   if (bBoxValues.length != 4)
   {
     throw new IllegalArgumentException("Bounding box must have four comma delimited arguments.");
@@ -187,7 +186,7 @@ static Bounds boundsFromParam(final String param)
  *              Examples include "EPSG:4326" and "CRS:84".
  * @return geographic bounds
  */
-public static Bounds reprojectBounds(final Bounds bounds, final String srs)
+public static Bounds reprojectBounds(Bounds bounds, String srs)
 {
   if (srs != null && !(srs.equalsIgnoreCase("EPSG:4326")))
   {
@@ -227,7 +226,7 @@ public static Bounds reprojectBounds(final Bounds bounds, final String srs)
  *              Examples include "EPSG:4326" and "CRS:84".
  * @return geographic bounds
  */
-public static Bounds reprojectBoundsToWGS84(final Bounds bounds, final String srs)
+public static Bounds reprojectBoundsToWGS84(Bounds bounds, String srs)
 {
   if (srs != null)
   {

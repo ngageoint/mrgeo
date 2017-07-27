@@ -45,7 +45,7 @@ object QuantilesMapOpTest {
   def init() {
     testUtils = new MapOpTestUtils(classOf[QuantilesMapOpTest])
 
-    var file = new File(smallElevation)
+    val file = new File(smallElevation)
     smallElevation = "file://" + file.getAbsolutePath()
     smallElevationPath = new Path(smallElevation)
   }
@@ -63,10 +63,9 @@ class QuantilesMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
       Assert.fail("Should have gotten a ParserException")
     }
     catch {
-      case e:ParserException => {
+      case e:ParserException =>
         // Verify the content of the error message
         Assert.assertTrue(e.getMessage.contains("quantiles usage"))
-      }
     }
   }
 
@@ -81,10 +80,9 @@ class QuantilesMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
       Assert.fail("Should have gotten a ParserException")
     }
     catch {
-      case e:ParserException => {
+      case e:ParserException =>
         // Verify the content of the error message
         Assert.assertTrue(e.getMessage.contains("quantiles usage"))
-      }
     }
   }
 
@@ -99,10 +97,9 @@ class QuantilesMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
       Assert.fail("Should have gotten a ParserException")
     }
     catch {
-      case e:ParserException => {
+      case e:ParserException =>
         // Verify the content of the error message
         Assert.assertTrue(e.getMessage.contains("quantiles usage"))
-      }
     }
   }
 
@@ -117,10 +114,9 @@ class QuantilesMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
       Assert.fail("Should have gotten a ParserException")
     }
     catch {
-      case e:ParserException => {
+      case e:ParserException =>
         // Verify the content of the error message
         Assert.assertTrue(e.getMessage.contains("The value for the numQuantiles parameter must be an integer"))
-      }
     }
   }
 
@@ -135,10 +131,9 @@ class QuantilesMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
       Assert.fail("Should have gotten a ParserException")
     }
     catch {
-      case e:ParserException => {
+      case e:ParserException =>
         // Verify the content of the error message
         Assert.assertTrue(e.getMessage.contains("The value for the fraction parameter must be a number"))
-      }
     }
   }
 
@@ -153,11 +148,10 @@ class QuantilesMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
       Assert.fail("Should have gotten a ParserException")
     }
     catch {
-      case e:ParserException => {
+      case e:ParserException =>
         // Verify the content of the error message
         Assert.assertTrue("Unexpected message: " + e.getMessage,
           e.getMessage.contains("is not a raster input"))
-      }
     }
   }
 
@@ -172,11 +166,10 @@ class QuantilesMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
         testname.getMethodName, exp)
     }
     catch {
-      case e:ParserException => {
+      case e:ParserException =>
         // Verify the content of the error message
         Assert.assertTrue("Unexpected message: " + e.getMessage,
           e.getMessage.contains("Unable to compute quantiles because there are only"))
-      }
     }
   }
 
@@ -191,11 +184,10 @@ class QuantilesMapOpTest extends LocalRunnerTest with AssertionsForJUnit {
         testname.getMethodName, exp)
     }
     catch {
-      case e:ParserException => {
+      case e:ParserException =>
         // Verify the content of the error message
         Assert.assertTrue("Unexpected message: " + e.getMessage,
           e.getMessage.contains("Unable to compute quantiles because there are only"))
-      }
     }
   }
 

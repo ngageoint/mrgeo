@@ -44,20 +44,17 @@ class IsNodataBoundsMapOp extends IsNodataMapOp {
 
   override def getOutputBounds(inputMetadata:MrsPyramidMetadata):Bounds = {
     rasterForBounds match {
-      case Some(rfb) => {
+      case Some(rfb) =>
         rfb.metadata() match {
           case Some(metadata) => metadata.getBounds
           case _ => throw new ParserException("Unable to read metadata for bounds raster: ")
         }
-      }
-      case _ => {
+      case _ =>
         bounds match {
-          case Some(b) => {
+          case Some(b) =>
             b
-          }
           case _ => throw new IOException("Invalid bounds specified to isNodataBounds")
         }
-      }
     }
   }
 

@@ -58,10 +58,10 @@ static public String wktGeometryFixer(String wktGeometry)
           {
             fixedGeometry.append(",");
           }
-          String tmpFixed = parsePoints(geometryArray[i], geometryType);
+          StringBuilder tmpFixed = new StringBuilder(parsePoints(geometryArray[i], geometryType));
           for (int j = 0; j < parenthesesCount; j++)
           {
-            tmpFixed = "(" + tmpFixed + ")";
+            tmpFixed = new StringBuilder("(" + tmpFixed + ")");
           }
           fixedGeometry.append(tmpFixed);
         }

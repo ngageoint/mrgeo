@@ -89,10 +89,6 @@ object ConvertMapOp extends MapOpRegistrar {
     * output nodata will be 255, for short and int it will be MinValue. For float32 and
     * float64, it will be NaN regardless of the conversion method.
     *
-    * @param meta
-    * @param conversionMethod
-    * @param tileType
-    * @return
     */
   def computeOutputNodata(meta:MrsPyramidMetadata, conversionMethod:String,
                           tileType:String):Array[Number] = {
@@ -154,7 +150,7 @@ class ConvertMapOp extends RasterMapOp with Externalizable {
   private var conversionMethod:Option[String] = None
 
   // Available tile types in increasing order of range
-  def tileTypeSizeOrdering = Array[Int](
+  def tileTypeSizeOrdering:Array[Int] = Array[Int](
     DataBuffer.TYPE_BYTE,
     DataBuffer.TYPE_SHORT,
     DataBuffer.TYPE_USHORT,
@@ -174,23 +170,21 @@ class ConvertMapOp extends RasterMapOp with Externalizable {
     inputMapOp = RasterMapOp.decodeToRaster(node.getChild(0), variables)
     toType = MapOp.decodeString(node.getChild(1), variables)
     toType match {
-      case Some(tt) => {
+      case Some(tt) =>
         tt.toLowerCase match {
-          case "byte" | "short" | "int" | "float32" | "float64" => {}
+          case "byte" | "short" | "int" | "float32" | "float64" =>
           case _ => throw new ParserException("Invalid toType - expected byte, short, int, float32 or float64")
         }
-      }
       case None => throw new ParserException("Invalid toType - expected byte, short, int, float32 or float64")
     }
     if (node.getNumChildren == 3) {
       conversionMethod = MapOp.decodeString(node.getChild(2), variables)
       conversionMethod match {
-        case Some(cm) => {
+        case Some(cm) =>
           cm.toLowerCase match {
-            case "truncate" | "mod" | "fit" => {}
+            case "truncate" | "mod" | "fit" =>
             case _ => throw new ParserException("conversionMethod must be truncate, mod or fit")
           }
-        }
         case None => throw new ParserException("conversionMethod must be truncate, mod or fit");
       }
     }
@@ -256,9 +250,9 @@ class ConvertMapOp extends RasterMapOp with Externalizable {
         val dst = MrGeoRaster.createEmptyRaster(meta.getTilesize, meta.getTilesize, meta.getBands,
           newTileType, newNodata)
         val converter = cm match {
-          case "truncate" => ConvertMapOp.truncateValue(_, _, _, _)
-          case "mod" => ConvertMapOp.modValue(_, _, _, _)
-          case "fit" => ConvertMapOp.fitValue(_, _, _, _)
+          case "truncate" => ConvertMapOp.truncateValue _
+          case "mod" => ConvertMapOp.modValue _
+          case "fit" => ConvertMapOp.fitValue _
         }
         var py = 0
         val h = src.height()

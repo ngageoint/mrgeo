@@ -38,16 +38,15 @@ class BitwiseComplementMapOp extends RawUnaryMathMapOp {
 
   override def execute(context:SparkContext):Boolean = {
     input match {
-      case Some(r) => {
+      case Some(r) =>
         val metadata = r.metadata().getOrElse(throw new ParserException("Uh oh - no metadata available"))
         if (metadata.isFloatingPoint) {
           log.warn(
             "Using a floating point raster like " + metadata.getPyramid + " is not recommended for bitwise operators")
         }
-      }
-      case None => {}
+      case None =>
     }
-    return super.execute(context)
+    super.execute(context)
   }
 
   private[unarymath] def this(raster:Option[RasterMapOp]) = {

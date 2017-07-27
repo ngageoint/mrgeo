@@ -23,7 +23,7 @@ import java.util.List;
 public class JobsListResponse
 {
 
-private List<JobInfoResponse> _jobInfos = new ArrayList<JobInfoResponse>();
+private List<JobInfoResponse> _jobInfos = new ArrayList<>();
 private String _nextUrl;
 private String _prevUrl;
 
@@ -34,7 +34,7 @@ public List<JobInfoResponse> getJobInfo()
 
 public void setJobInfo(List<JobInfoResponse> jobInfos)
 {
-  this._jobInfos = jobInfos;
+  _jobInfos = jobInfos;
 }
 
 public String getNextURL()
@@ -44,7 +44,7 @@ public String getNextURL()
 
 public void setNextURL(String nextUrl)
 {
-  this._nextUrl = nextUrl;
+  _nextUrl = nextUrl;
 }
 
 public String getPrevURL()
@@ -54,7 +54,7 @@ public String getPrevURL()
 
 public void setPrevURL(String prevUrl)
 {
-  this._prevUrl = prevUrl;
+  _prevUrl = prevUrl;
 }
 
 }

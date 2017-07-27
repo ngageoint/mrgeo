@@ -65,8 +65,8 @@ class InlineCsvMapOp extends VectorMapOp with Externalizable {
   private val recordSeparator = ';'
   private val encapsulator = '\''
   private val fieldSeparator = ','
-  private var records:Array[String] = null
-  private var delimitedParser:DelimitedParser = null
+  private var records:Array[String] = _
+  private var delimitedParser:DelimitedParser = _
   private var vectorrdd:Option[VectorRDD] = None
 
   def this(columns:String, values:String) = {
@@ -161,7 +161,7 @@ class InlineCsvMapOp extends VectorMapOp with Externalizable {
 
     val values = MapOp.decodeString(node.getChild(1))
     records = values match {
-      case Some(v) =>
+      case Some(_) =>
         values.get.split(Character.toString(recordSeparator))
       case None =>
         throw new ParserException("Missing values for inline csv")

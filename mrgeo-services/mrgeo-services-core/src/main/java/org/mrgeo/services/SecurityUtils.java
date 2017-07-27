@@ -36,7 +36,7 @@ public static ProviderProperties getProviderProperties()
     if (a != null)
     {
       java.util.Collection<? extends GrantedAuthority> auths = a.getAuthorities();
-      List<String> roles = new ArrayList<String>(auths.size());
+      List<String> roles = new ArrayList<>(auths.size());
       int i = 0;
       for (GrantedAuthority auth : auths)
       {

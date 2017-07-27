@@ -37,17 +37,17 @@ public abstract class ImageResponseWriterAbstract implements ImageResponseWriter
 private static final Logger log = LoggerFactory.getLogger(ImageResponseWriterAbstract.class);
 
 @Override
-public Response.ResponseBuilder write(final MrGeoRaster raster)
+public Response.ResponseBuilder write(MrGeoRaster raster)
 {
   return write(raster, (double[]) (null));
 }
 
 @Override
-public Response.ResponseBuilder write(final MrGeoRaster raster, double[] defaults)
+public Response.ResponseBuilder write(MrGeoRaster raster, double[] defaults)
 {
   try
   {
-    final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+    ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
 
     writeToStream(raster, defaults, byteStream);
 
@@ -57,7 +57,7 @@ public Response.ResponseBuilder write(final MrGeoRaster raster, double[] default
         .header("Content-type", getResponseMimeType());
 
   }
-  catch (final Exception e)
+  catch (Exception e)
   {
     log.error("Exception thrown", e);
     if (e.getMessage() != null)
@@ -69,17 +69,17 @@ public Response.ResponseBuilder write(final MrGeoRaster raster, double[] default
 }
 
 @Override
-public void write(final MrGeoRaster raster, final HttpServletResponse response) throws ServletException
+public void write(MrGeoRaster raster, HttpServletResponse response) throws ServletException
 {
   write(raster, null, response);
 }
 
 @Override
-public void write(final MrGeoRaster raster, double[] defaults, final HttpServletResponse response)
+public void write(MrGeoRaster raster, double[] defaults, HttpServletResponse response)
     throws ServletException
 {
   response.setContentType(getResponseMimeType());
-  final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+  ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
   try
   {
     writeToStream(raster, defaults, byteStream);
@@ -92,29 +92,29 @@ public void write(final MrGeoRaster raster, double[] defaults, final HttpServlet
 }
 
 @Override
-public Response.ResponseBuilder write(final MrGeoRaster raster, final int tileColumn, final int tileRow,
-    final double scale, final MrsPyramid pyramid) throws IOException
+public Response.ResponseBuilder write(MrGeoRaster raster, int tileColumn, int tileRow,
+    double scale, MrsPyramid pyramid) throws IOException
 {
   return write(raster, pyramid.getMetadata().getDefaultValues());
 }
 
 @Override
-public void write(final MrGeoRaster raster, final int tileColumn, final int tileRow,
-    final double scale, final MrsPyramid pyramid, final HttpServletResponse response)
+public void write(MrGeoRaster raster, int tileColumn, int tileRow,
+    double scale, MrsPyramid pyramid, HttpServletResponse response)
     throws ServletException, IOException
 {
   write(raster, pyramid.getMetadata().getDefaultValues(), response);
 }
 
 @Override
-public Response.ResponseBuilder write(final MrGeoRaster raster, final String imageName, final Bounds bounds)
+public Response.ResponseBuilder write(MrGeoRaster raster, String imageName, Bounds bounds)
 {
   return write(raster);
 }
 
 @Override
-public void write(final MrGeoRaster raster, final String imageName, final Bounds bounds,
-    final HttpServletResponse response) throws ServletException
+public void write(MrGeoRaster raster, String imageName, Bounds bounds,
+    HttpServletResponse response) throws ServletException
 {
   write(raster, response);
 }
