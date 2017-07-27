@@ -35,7 +35,7 @@ import org.mrgeo.data.accumulo.utils.MrGeoAccumuloConstants;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.tile.TileIdZoomWritable;
-import org.mrgeo.utils.Base64Utils;
+import org.mrgeo.data.accumulo.utils.Base64Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

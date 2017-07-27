@@ -39,7 +39,7 @@ import org.mrgeo.data.image.MrsImageOutputFormatProvider;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.data.rdd.RasterRDD;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.utils.Base64Utils;
+import org.mrgeo.data.accumulo.utils.Base64Utils;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
 import org.mrgeo.utils.tms.TMSUtils;
