@@ -1,0 +1,3 @@
+version=@version@
+name=@name@
+generated_date=@date@

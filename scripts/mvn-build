@@ -13,6 +13,7 @@ usage() {
     echo "  dataprovider - mrgeo-core/mrgeo-dataprovider"
     echo "  services     - mrgeo-core/mrgeo-vector/mrgeo-services"
     echo "  python       - mrgeo-core/mrgeo-vector/mrgeo-dataprovider/mrgeo-mapalgebra/mrgeo-python"
+    echo "  ogc          - mrgeo-core/mrgeo-services-(core, wms, wcs, tms)"
     echo "build type:"
     echo "  apache    - apache hadoop"
     echo "  apache272 - Apache hadoop, version 2.7.2"
@@ -236,6 +237,10 @@ while [ $# -gt 0 ] ; do
     "python-only")
         MODULE="python"
         ARGS="$SKIPCORE $SKIPVECTOR $SKIPDP $SKIPMAPALGEBRA $SKIPCMD $SKIPSERVICES $ARGS"
+        ;;
+    "ogc")
+        MODULE="ogc"
+        ARGS="$SKIPALL $ARGS"
         ;;
     "apache220" | "apache230" | "apache240" | "apache241" )
         BUILD=$1

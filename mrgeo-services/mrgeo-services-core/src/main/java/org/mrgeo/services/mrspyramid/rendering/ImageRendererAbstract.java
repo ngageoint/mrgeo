@@ -32,7 +32,6 @@ import org.mrgeo.data.tile.TileIdWritable;
 import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.*;
-import org.mrgeo.resources.KmlGenerator;
 import org.mrgeo.services.utils.RequestUtils;
 import org.mrgeo.utils.GDALUtils;
 import org.mrgeo.utils.tms.*;
@@ -80,20 +79,20 @@ public ImageRendererAbstract(String srsWkt)
 /**
  * @return KML String
  */
-public static String asKml(String pyrName, Bounds bounds, String requestUrl,
-    ProviderProperties providerProperties) throws IOException
-{
-  URL url = new URL(requestUrl);
-  if (!requestUrl.endsWith("/"))
-  {
-    requestUrl += "/";
-  }
-  requestUrl += "KmlGenerator";
-  String wmsHost = url.getHost() + ":" + url.getPort();
-  return KmlGenerator
-      .getKmlBodyAsString("kml", requestUrl, bounds, pyrName, wmsHost, null, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
-          providerProperties);
-}
+//public static String asKml(String pyrName, Bounds bounds, String requestUrl,
+//    ProviderProperties providerProperties) throws IOException
+//{
+//  URL url = new URL(requestUrl);
+//  if (!requestUrl.endsWith("/"))
+//  {
+//    requestUrl += "/";
+//  }
+//  requestUrl += "KmlGenerator";
+//  String wmsHost = url.getHost() + ":" + url.getPort();
+//  return KmlGenerator
+//      .getKmlBodyAsString("kml", requestUrl, bounds, pyrName, wmsHost, null, MrGeoConstants.MRGEO_MRS_TILESIZE_DEFAULT,
+//          providerProperties);
+//}
 
 /**
  * Determines the appropriate image zoom level for an image request
