@@ -42,11 +42,20 @@ private static final Logger log = LoggerFactory.getLogger(WcsCapabilities.class)
 private static void addHttpElement100(Element parent, String requestUrl, Version version)
 {
   Element http = XmlUtils.createElement(parent, "HTTP");
+
   Element get = XmlUtils.createElement(http, "Get");
-  XmlUtils.createTextElement2(get, "OnlineResource", requestUrl);
+
+  Element onlineResource = XmlUtils.createElement(get, "OnlineResource");
+  onlineResource.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+  onlineResource.setAttribute("xlink:type", "simple");
+  onlineResource.setAttribute("xlink:href", requestUrl);
+
 
   Element post = XmlUtils.createElement(http, "Post");
-  XmlUtils.createTextElement2(post, "OnlineResource", requestUrl);
+  onlineResource = XmlUtils.createElement(post, "OnlineResource");
+  onlineResource.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+  onlineResource.setAttribute("xlink:type", "simple");
+  onlineResource.setAttribute("xlink:href", requestUrl);
 }
 
 /*
@@ -60,10 +69,10 @@ private static void addHttpElement110(Element parent, String requestUrl, String 
   Element http = XmlUtils.createElement(XmlUtils.createElement(op, "ows:DCP"),
       "ows:HTTP");
   Element get = XmlUtils.createElement(http, "ows:Get");
-  XmlUtils.createTextElement2(get, "xlink:href", requestUrl);
+  get.setAttribute("xlink:href", requestUrl);
 
   Element post = XmlUtils.createElement(http, "ows:Post");
-  XmlUtils.createTextElement2(post, "xlink:href", requestUrl);
+  post.setAttribute("xlink:href", requestUrl);
 }
 
 /**
@@ -91,11 +100,11 @@ public Document generateDoc(Version version, String requestUrl,
 
   if (version.isLess("1.1.0"))
   {
-    generate100(doc, version, requestUrl, layers);
+    generate100(doc, new Version("1.0.0"), requestUrl, layers);
   }
   else
   {
-    generate110(doc, version, requestUrl, layers);
+    generate110(doc, new Version("1.1.0"), requestUrl, layers);
   }
 
   return doc;
@@ -117,8 +126,8 @@ private void generate110(Document doc, Version version, String requestUrl, MrsIm
 
   Element service = XmlUtils.createElement(wmc, "ows:ServiceIdentification");
   XmlUtils.createTextElement2(service, "ows:Title", "MrGeo Web Coverage Service");
-  XmlUtils.createTextElement2(service, "ows:ServiceType", "WCS");
-  XmlUtils.createTextElement2(service, "ows:ServiceTypeVersion", "1.0.0");
+  XmlUtils.createTextElement2(service, "ows:ServiceType", "OGC WCS");
+  // XmlUtils.createTextElement2(service, "ows:ServiceTypeVersion", "1.0.0");
   XmlUtils.createTextElement2(service, "ows:ServiceTypeVersion", "1.1.0");
 
   Element operations = XmlUtils.createElement(wmc, "ows:OperationsMetadata");
@@ -138,7 +147,7 @@ private void generate100(Document doc, Version version, String requestUrl, MrsIm
   Element wmc = doc.createElement("WCS_Capabilities");
   wmc.setAttribute("version", version.toString());
 
-  wmc.setAttribute("xmlns", "http://www.opengis.net/wcsc");
+  wmc.setAttribute("xmlns", "http://www.opengis.net/wcs");
   wmc.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
   wmc.setAttribute("xmlns:gml", "http://www.opengis.net/gml");
   wmc.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
@@ -152,11 +161,11 @@ private void generate100(Document doc, Version version, String requestUrl, MrsIm
   Element service = XmlUtils.createElement(wmc, "Service");
   wmc.appendChild(service);
   // WMT Defined
-  XmlUtils.createTextElement2(service, "Name", "OGC:WC");
+  XmlUtils.createTextElement2(service, "name", "OGC:WC");
   XmlUtils.createTextElement2(service, "description", "MrGeo Web Coverage Service");
   XmlUtils.createTextElement2(service, "label", "MrGeo Web Coverage Service");
-  XmlUtils.createTextElement2(service, "Fees", "none");
-  XmlUtils.createTextElement2(service, "AccessConstraints", "none");
+  XmlUtils.createTextElement2(service, "fees", "NONE");
+  XmlUtils.createTextElement2(service, "accessConstraints", "NONE");
 
   // //
   // Capability

@@ -38,6 +38,8 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -55,7 +57,7 @@ private static void addHttpElement(Element parent, String requestUrl, Version ve
 {
   Element http = XmlUtils.createElement(parent, "HTTP");
   Element get = XmlUtils.createElement(http, "Get");
-  if (version.isEqual("1.1.1"))
+  if (version.isLess("1.4.0"))
   {
     Element onlineResource = XmlUtils.createElement(get, "OnlineResource");
     onlineResource.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
@@ -68,7 +70,7 @@ private static void addHttpElement(Element parent, String requestUrl, Version ve
   }
 
   Element post = XmlUtils.createElement(http, "Post");
-  if (version.isEqual("1.1.1"))
+  if (version.isLess("1.4.0"))
   {
     Element onlineResource = XmlUtils.createElement(post, "OnlineResource");
     onlineResource.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
@@ -129,20 +131,37 @@ Document generateDoc(Version version, String requestUrl, MultivaluedMap<String, 
   XmlUtils.createTextElement2(service, "Name", "OGC:WMS");
   XmlUtils.createTextElement2(service, "Title", "MrGeo Web Map Service");
   XmlUtils.createTextElement2(service, "Abstract", "MrGeo Web Map Service");
-  if (version.isLess("1.3.0"))
+
+  // url is just scheme:hostname:port
+  String hostUri;
+
+  try
+  {
+    URI request = new URI(requestUrl);
+    hostUri = new URI(request.getScheme(), null,
+        request.getHost(), request.getPort(), null, null, null).toASCIIString();
+  }
+  catch (URISyntaxException e)
+  {
+    hostUri = requestUrl;
+  }
+
+  if (version.isLess("1.4.0"))
   {
     Element onlineResource = XmlUtils.createElement(service, "OnlineResource");
     onlineResource.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
     onlineResource.setAttribute("xlink:type", "simple");
-    onlineResource.setAttribute("xlink:href", requestUrl);
+    onlineResource.setAttribute("xlink:href", hostUri);
   }
   else
   {
-    XmlUtils.createTextElement2(service, "OnlineResource", requestUrl);
+    XmlUtils.createTextElement2(service, "OnlineResource", hostUri);
   }
 
   XmlUtils.createTextElement2(service, "Fees", "none");
   XmlUtils.createTextElement2(service, "AccessConstraints", "none");
+
+  String requestStr = requestUrl + (version.isLess("1.3.0") ? "" : "?");
 
   // //
   // Capability
@@ -155,17 +174,10 @@ Document generateDoc(Version version, String requestUrl, MultivaluedMap<String, 
   Element getCapabilities = XmlUtils.createElement(requestTag, "GetCapabilities");
   XmlUtils.createTextElement2(getCapabilities, "Format", "application/vnd.ogc.wms_xml");
   Element gcDcpType = XmlUtils.createElement(getCapabilities, "DCPType");
-  addHttpElement(gcDcpType, RequestUtils.buildURI(requestUrl,
-      RequestUtils.replaceParam("REQUEST", "GetCapabilities", allParams)), version);
+  addHttpElement(gcDcpType, requestUrl, version);
 
-  addCapability(requestTag, "GetMap", version,
-      RequestUtils.buildURI(requestUrl,
-          RequestUtils.replaceParam("REQUEST", "GetMap", allParams)));
-
-  addCapability(requestTag, "GetMosaic", version,
-      RequestUtils.buildURI(requestUrl,
-          RequestUtils.replaceParam("REQUEST", "GetMosaic", allParams)));
-
+  addCapability(requestTag, "GetMap", version, requestStr);
+  addCapability(requestTag, "GetMosaic", version, requestStr);
 
   // Tiled extensions
   if (!version.isLess("1.4.0"))
@@ -175,9 +187,7 @@ Document generateDoc(Version version, String requestUrl, MultivaluedMap<String, 
     Element dtDcpType = XmlUtils.createElement(describeTiles, "DCPType");
     addHttpElement(dtDcpType, requestUrl, version);
 
-    addCapability(requestTag, "GetTile", version,
-        RequestUtils.buildURI(requestUrl,
-            RequestUtils.replaceParam("REQUEST", "GetTile", allParams)));
+    addCapability(requestTag, "GetTile", version, requestStr);
   }
 
   // not supported at this time.

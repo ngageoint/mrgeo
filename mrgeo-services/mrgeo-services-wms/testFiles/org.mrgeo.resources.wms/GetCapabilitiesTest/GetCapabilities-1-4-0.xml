@@ -3,7 +3,7 @@
     <Name>OGC:WMS</Name>
     <Title>MrGeo Web Map Service</Title>
     <Abstract>MrGeo Web Map Service</Abstract>
-    <OnlineResource>http://localhost:9998/wms</OnlineResource>
+    <OnlineResource>http://localhost:9998</OnlineResource>
     <Fees>none</Fees>
     <AccessConstraints>none</AccessConstraints>
   </Service>
@@ -14,10 +14,10 @@
         <DCPType>
           <HTTP>
             <Get>
-              <OnlineResource>http://localhost:9998/wms?REQUEST=GetCapabilities&amp;VERSION=1.4.0&amp;SERVICE=WMS</OnlineResource>
+              <OnlineResource>http://localhost:9998/wms</OnlineResource>
             </Get>
             <Post>
-              <OnlineResource>http://localhost:9998/wms?REQUEST=GetCapabilities&amp;VERSION=1.4.0&amp;SERVICE=WMS</OnlineResource>
+              <OnlineResource>http://localhost:9998/wms</OnlineResource>
             </Post>
           </HTTP>
         </DCPType>
@@ -33,10 +33,10 @@
         <DCPType>
           <HTTP>
             <Get>
-              <OnlineResource>http://localhost:9998/wms?REQUEST=GetMap&amp;VERSION=1.4.0&amp;SERVICE=WMS</OnlineResource>
+              <OnlineResource>http://localhost:9998/wms?</OnlineResource>
             </Get>
             <Post>
-              <OnlineResource>http://localhost:9998/wms?REQUEST=GetMap&amp;VERSION=1.4.0&amp;SERVICE=WMS</OnlineResource>
+              <OnlineResource>http://localhost:9998/wms?</OnlineResource>
             </Post>
           </HTTP>
         </DCPType>
@@ -52,10 +52,10 @@
         <DCPType>
           <HTTP>
             <Get>
-              <OnlineResource>http://localhost:9998/wms?REQUEST=GetMosaic&amp;VERSION=1.4.0&amp;SERVICE=WMS</OnlineResource>
+              <OnlineResource>http://localhost:9998/wms?</OnlineResource>
             </Get>
             <Post>
-              <OnlineResource>http://localhost:9998/wms?REQUEST=GetMosaic&amp;VERSION=1.4.0&amp;SERVICE=WMS</OnlineResource>
+              <OnlineResource>http://localhost:9998/wms?</OnlineResource>
             </Post>
           </HTTP>
         </DCPType>
@@ -83,10 +83,10 @@
         <DCPType>
           <HTTP>
             <Get>
-              <OnlineResource>http://localhost:9998/wms?REQUEST=GetTile&amp;VERSION=1.4.0&amp;SERVICE=WMS</OnlineResource>
+              <OnlineResource>http://localhost:9998/wms?</OnlineResource>
             </Get>
             <Post>
-              <OnlineResource>http://localhost:9998/wms?REQUEST=GetTile&amp;VERSION=1.4.0&amp;SERVICE=WMS</OnlineResource>
+              <OnlineResource>http://localhost:9998/wms?</OnlineResource>
             </Post>
           </HTTP>
         </DCPType>

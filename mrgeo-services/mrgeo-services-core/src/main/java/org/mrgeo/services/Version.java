@@ -25,9 +25,9 @@ private int major, minor, micro;
 public Version(String str)
 {
   String[] l = str.split("\\.");
-  major = Integer.parseInt(l[0]);
-  minor = Integer.parseInt(l[1]);
-  micro = Integer.parseInt(l[2]);
+  major = Integer.parseInt(l[0].trim());
+  minor = Integer.parseInt(l[1].trim());
+  micro = Integer.parseInt(l[2].trim());
 }
 
 public int compareTo(Version other)
