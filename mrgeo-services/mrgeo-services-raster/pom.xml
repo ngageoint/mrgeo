@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright 2009-2017. DigitalGlobe, Inc.
+  ~
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~
+  ~  http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and limitations under the License.
+  -->
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.mrgeo</groupId>
+    <artifactId>mrgeo-services</artifactId>
+    <version>1.2.0-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+  <artifactId>mrgeo-services-raster</artifactId>
+  <version>1.2.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <build.template.file>src/main/resources/org/mrgeo/services/build.info.template</build.template.file>
+    <build.file>src/main/resources/org/mrgeo/services/build.info</build.file>
+    <version.template.file>src/main/resources/org/mrgeo/services/version.properties.template</version.template.file>
+    <version.file>target/classes/version.properties</version.file>
+    <findbugs.basedir>${project.parent.parent.basedir}</findbugs.basedir>
+  </properties>
+  <name>mrgeo-services-raster</name>
+  <url>http://mrgeo.org</url>
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <comments>A business-friendly OSS license</comments>
+    </license>
+  </licenses>
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <skipTests>${skip.mrgeo.services.tests}</skipTests>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <configuration>
+          <skipTests>${skip.mrgeo.services.integration.tests}</skipTests>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>com.google.code.maven-replacer-plugin</groupId>
+        <artifactId>maven-replacer-plugin</artifactId>
+        <version>1.4.0</version>
+        <executions>
+          <execution>
+            <id>build-info</id>
+            <phase>process-sources</phase>
+            <goals>
+              <goal>replace</goal>
+            </goals>
+            <configuration>
+              <file>${build.template.file}</file>
+              <outputFile>${build.file}</outputFile>
+              <replacements>
+                <replacement>
+                  <token>@version@</token>
+                  <value>${revision}</value>
+                </replacement>
+                <replacement>
+                  <token>@name@</token>
+                  <value>${project.parent.artifactId}</value>
+                </replacement>
+                <replacement>
+                  <token>@date@</token>
+                  <value>${maven.build.timestamp}</value>
+                </replacement>
+              </replacements>
+            </configuration>
+          </execution>
+          <execution>
+            <id>version-info</id>
+            <phase>process-sources</phase>
+            <goals>
+              <goal>replace</goal>
+            </goals>
+            <configuration>
+              <file>${version.template.file}</file>
+              <outputFile>${version.file}</outputFile>
+              <replacements>
+                <replacement>
+                  <token>@name@</token>
+                  <value>${project.parent.artifactId}</value>
+                </replacement>
+                <replacement>
+                  <token>@version@</token>
+                  <value>${project.version}</value>
+                </replacement>
+                <replacement>
+                  <token>@rev@</token>
+                  <value>${buildNumber}</value>
+                </replacement>
+                <replacement>
+                  <token>@build@</token>
+                  <value>${revision}</value>
+                </replacement>
+                <replacement>
+                  <token>@buildTime@</token>
+                  <value>${maven.build.timestamp}</value>
+                </replacement>
+              </replacements>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+  <dependencies>
+    <dependency>
+      <groupId>org.mrgeo</groupId>
+      <artifactId>mrgeo-services-core</artifactId>
+    </dependency>
+  </dependencies>
+</project>

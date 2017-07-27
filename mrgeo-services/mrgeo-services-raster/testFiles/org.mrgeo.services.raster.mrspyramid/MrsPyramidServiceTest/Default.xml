@@ -1,0 +1,30 @@
+<!--
+  ~ Copyright 2009-2017. DigitalGlobe, Inc.
+  ~
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~
+  ~  http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and limitations under the License.
+  -->
+
+<ColorMap name="Default">
+  <Scaling>MinMax</Scaling> <!-- Could also be Absolute -->
+  <ForceValuesIntoRange>1</ForceValuesIntoRange>
+  <!-- null values will be transparent -->
+  <NullColor color="0,0,0" opacity="0"/>
+  <!-- if opacity is not specified it defaults to 255 -->
+  <!-- red -->
+  <Color value="0.0" color="255,0,0"/>
+  <!-- yellow -->
+  <Color value="0.25" color="255,255,0"/>
+  <!-- cyan -->
+  <Color value="0.75" color="0,255,255"/>
+  <!-- white -->
+  <Color value="1.0" color="255,255,255"/>
+</ColorMap>

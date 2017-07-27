@@ -2697,6 +2697,20 @@
       </modules>
     </profile>
     <profile>
+      <id>build-ogc</id>
+      <activation>
+        <property>
+          <name>modules</name>
+          <value>ogc</value>
+        </property>
+      </activation>
+      <modules>
+        <module>mrgeo-core</module>
+        <module>mrgeo-services</module>
+        <module>distribution</module>
+      </modules>
+    </profile>
+    <profile>
       <id>build-all-but-distribution</id>
       <activation>
         <property>
@@ -2922,6 +2936,11 @@
         <version>${project.version}</version>
         <type>test-jar</type>
         <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-services-raster</artifactId>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
