@@ -96,5 +96,5 @@ MrGeoRaster renderImage(String pyramidName, int tileColumn, int tileRow, int zoo
     double maskMax, ProviderProperties providerProperties) throws ImageRendererException;
 
 MrGeoRaster renderImage(String pyramidName, int tileColumn, int tileRow, int zoom, String maskName,
-    final ProviderProperties providerProperties) throws ImageRendererException;
+    ProviderProperties providerProperties) throws ImageRendererException;
 }

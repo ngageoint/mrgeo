@@ -26,13 +26,13 @@ public class JobResponseFormatter
 public static JobsListResponse createJobsListResponse(JobDetails[] jDetails, String jobUri, String prevUrl,
     String nextUrl)
 {
-  List<JobInfoResponse> jobInfo = new ArrayList<JobInfoResponse>();
+  List<JobInfoResponse> jobInfo = new ArrayList<>();
   JobsListResponse jres = new JobsListResponse();
   jres.setJobInfo(jobInfo);
-  for (int i = 0; i < jDetails.length; i++)
+  for (JobDetails jDetail : jDetails)
   {
     JobInfoResponse jInfo = new JobInfoResponse();
-    populateJobInfo(jInfo, jDetails[i], jobUri);
+    populateJobInfo(jInfo, jDetail, jobUri);
     jobInfo.add(jInfo);
   }
   jres.setPrevURL(prevUrl);

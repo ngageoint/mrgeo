@@ -1,0 +1,63 @@
+<WCS_Capabilities xmlns="http://www.opengis.net/wcs" xmlns:gml="http://www.opengis.net/gml" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0.0" xsi:schemaLocation="http://www.opengis.net/wcs http://schemas.opengeospatial.net/wcs/1.0.0/wcsCapabilities.xsd">
+  <Service>
+    <name>OGC:WC</name>
+    <description>MrGeo Web Coverage Service</description>
+    <label>MrGeo Web Coverage Service</label>
+    <fees>NONE</fees>
+    <accessConstraints>NONE</accessConstraints>
+  </Service>
+  <Capability>
+    <Request>
+      <GetCapabilities>
+        <DCPType>
+          <HTTP>
+            <Get>
+              <OnlineResource xlink:href="http://localhost:9998/wcs?" xlink:type="simple"/>
+            </Get>
+            <Post>
+              <OnlineResource xlink:href="http://localhost:9998/wcs?" xlink:type="simple"/>
+            </Post>
+          </HTTP>
+        </DCPType>
+      </GetCapabilities>
+      <DescribeCoverage>
+        <DCPType>
+          <HTTP>
+            <Get>
+              <OnlineResource xlink:href="http://localhost:9998/wcs?" xlink:type="simple"/>
+            </Get>
+            <Post>
+              <OnlineResource xlink:href="http://localhost:9998/wcs?" xlink:type="simple"/>
+            </Post>
+          </HTTP>
+        </DCPType>
+      </DescribeCoverage>
+      <GetCoverage>
+        <DCPType>
+          <HTTP>
+            <Get>
+              <OnlineResource xlink:href="http://localhost:9998/wcs?" xlink:type="simple"/>
+            </Get>
+            <Post>
+              <OnlineResource xlink:href="http://localhost:9998/wcs?" xlink:type="simple"/>
+            </Post>
+          </HTTP>
+        </DCPType>
+      </GetCoverage>
+    </Request>
+    <Exception>
+      <Format>application/vnd.ogc.se_xml</Format>
+    </Exception>
+  </Capability>
+  <ContentMetadata>
+    <CoverageOfferingBrief>
+      <description>IslandsElevation-v2</description>
+      <name>IslandsElevation-v2</name>
+      <label>IslandsElevation-v2</label>
+      <lonLatEnvelope srsName="WGS84(DD)">
+        <gml:pos>161.25 -11.0</gml:pos>
+        <gml:pos>162.5 -10.083333333333334</gml:pos>
+      </lonLatEnvelope>
+    </CoverageOfferingBrief>
+  </ContentMetadata>
+</WCS_Capabilities>

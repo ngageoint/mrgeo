@@ -47,7 +47,7 @@ object RasterizeVectorMapOp extends MapOpRegistrar {
   override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new RasterizeVectorMapOp(node, variables)
 
-  def create(vector:VectorMapOp, aggregator:String, cellsize:String, column:String = null) = {
+  def create(vector:VectorMapOp, aggregator:String, cellsize:String, column:String = null):RasterizeVectorMapOp = {
     new RasterizeVectorMapOp(Some(vector), aggregator, cellsize, column, null.asInstanceOf[String])
   }
 }

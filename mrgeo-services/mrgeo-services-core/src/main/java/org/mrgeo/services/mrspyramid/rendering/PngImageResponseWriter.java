@@ -54,8 +54,8 @@ public String[] getWmsFormats()
 }
 
 @Override
-public void writeToStream(final MrGeoRaster raster, final double[] defaults,
-    final ByteArrayOutputStream byteStream) throws IOException
+public void writeToStream(MrGeoRaster raster, double[] defaults,
+    ByteArrayOutputStream byteStream) throws IOException
 {
   GDALJavaUtils.saveRaster(raster.toDataset(null, defaults), byteStream, "png");
   byteStream.close();

@@ -53,7 +53,7 @@ object KernelMapOp extends MapOpRegistrar {
 class KernelMapOp extends RasterMapOp with Externalizable {
   private var rasterRDD:Option[RasterRDD] = None
 
-  private var method:String = null
+  private var method:String = _
   private var sigma:Double = 0
   private var inputMapOp:Option[RasterMapOp] = None
 
@@ -230,7 +230,7 @@ class KernelMapOp extends RasterMapOp with Externalizable {
               loopRuns += 1
             }
             if (weight != 0.0) {
-              dst.setPixel(x, y, 0, (result / weight))
+              dst.setPixel(x, y, 0, result / weight)
             }
           }
           x += 1

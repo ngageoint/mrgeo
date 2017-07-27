@@ -87,8 +87,8 @@ object StatisticsMapOp extends MapOpRegistrar {
 class StatisticsMapOp extends RasterMapOp with Externalizable {
 
 
-  var providerProperties:ProviderProperties = null
-  private var method:String = null
+  var providerProperties:ProviderProperties = _
+  private var method:String = _
   private var inputs:Option[Array[Either[Option[RasterMapOp], Option[String]]]] = None
   private var rasterRDD:Option[RasterRDD] = None
 
@@ -112,11 +112,10 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
                 (throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName))
 
               zoom match {
-                case Some(z) => {
+                case Some(z) =>
                   if (z != meta.getMaxZoomLevel) {
                     throw new IOException("Mismatched zoom levels in stats inputs")
                   }
-                }
                 case None => zoom = Some(meta.getMaxZoomLevel)
               }
 
@@ -148,11 +147,10 @@ class StatisticsMapOp extends RasterMapOp with Externalizable {
                   (throw new IOException("Can't load metadata! Ouch! " + raster.getClass.getName))
 
                 zoom match {
-                  case Some(z) => {
+                  case Some(z) =>
                     if (z != meta.getMaxZoomLevel) {
                       throw new IOException("Mismatched zoom levels in stats inputs")
                     }
-                  }
                   case None => zoom = Some(meta.getMaxZoomLevel)
                 }
                 if (tilesize < 0) {

@@ -25,7 +25,7 @@ public GeotiffImageRenderer()
   super();
 }
 
-public GeotiffImageRenderer(final SpatialReference srs)
+public GeotiffImageRenderer(SpatialReference srs)
 {
   super(srs);
 }

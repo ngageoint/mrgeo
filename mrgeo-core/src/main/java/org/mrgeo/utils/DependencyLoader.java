@@ -39,11 +39,8 @@ import java.io.*;
 import java.net.JarURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Pattern;
@@ -329,10 +326,7 @@ private static Set<String> getClasspath(Configuration conf)
   Set<String> results = new HashSet<>(entries.length);
   if (entries.length > 0)
   {
-    for (String entry : entries)
-    {
-      results.add(entry);
-    }
+    Collections.addAll(results, entries);
   }
   return results;
 }

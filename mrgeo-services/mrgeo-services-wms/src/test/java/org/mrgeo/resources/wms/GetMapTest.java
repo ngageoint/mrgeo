@@ -31,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.Response;
-import java.util.Properties;
 
 @SuppressWarnings("all") // Test code, not included in production
 public class GetMapTest extends WmsGeneratorTestAbstract

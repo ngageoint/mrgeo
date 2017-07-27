@@ -35,7 +35,7 @@ object RasterizePointsMapOp extends MapOpRegistrar {
     Array[String]("rasterizepoints")
   }
 
-  def create(vector:VectorMapOp, aggregator:String, cellsize:String, column:String = null) = {
+  def create(vector:VectorMapOp, aggregator:String, cellsize:String, column:String = null):RasterizePointsMapOp = {
     new RasterizePointsMapOp(Some(vector), aggregator, cellsize, column, null.asInstanceOf[String])
   }
 

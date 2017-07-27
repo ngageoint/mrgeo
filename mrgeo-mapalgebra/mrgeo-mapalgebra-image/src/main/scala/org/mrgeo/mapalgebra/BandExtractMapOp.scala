@@ -42,7 +42,7 @@ object BandExtractMapOp extends MapOpRegistrar {
 class BandExtractMapOp extends RasterMapOp with Externalizable {
 
   private var rasterRDD:Option[RasterRDD] = None
-  private var input:Option[RasterMapOp] = null
+  private var input:Option[RasterMapOp] = _
   private var band:Int = 0
 
   override def rdd():Option[RasterRDD] = rasterRDD

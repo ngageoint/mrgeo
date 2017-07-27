@@ -111,10 +111,9 @@ public List<String> getColorScales() throws MrsPyramidServiceException
 public MrGeoRaster createColorScaleSwatch(String name, String format, int width, int height)
     throws MrsPyramidServiceException
 {
-  ColorScale cs = null;
   try
   {
-    cs = getColorScaleFromName(name);
+    ColorScale cs = getColorScaleFromName(name);
     return createColorScaleSwatch(cs, format, width, height);
   }
   catch (Exception e)
@@ -204,12 +203,8 @@ public MrGeoRaster applyColorScaleToImage(String format, MrGeoRaster result, Col
     return applier.applyColorScale(result, cs, extrema, renderer.getDefaultValues(),
             renderer.getQuantiles());
   }
-  catch (ColorScale.ColorScaleException e)
+  catch (ColorScale.ColorScaleException | InstantiationException | IllegalAccessException e)
   {
-    throw new MrsPyramidServiceException(e);
-  } catch (IllegalAccessException e) {
-    throw new MrsPyramidServiceException(e);
-  } catch (InstantiationException e) {
     throw new MrsPyramidServiceException(e);
   }
 }
@@ -227,7 +222,7 @@ public ImageResponseWriter getImageResponseWriter(String format) throws MrsPyram
 }
 
 public Response renderKml(String pyramidPathStr, Bounds bounds, int width, int height, ColorScale cs,
-    int zoomLevel, final ProviderProperties providerProperties)
+    int zoomLevel, ProviderProperties providerProperties)
 {
   String baseUrl = config.getProperty("base.url");
   KmlResponseBuilder kmlGenerator = new KmlResponseBuilder();

@@ -100,7 +100,7 @@ public Document generateDoc(Version version, String requestUrl,
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled
 private void addLayersToDescribeTiles(Element dt, Version version,
-    MrsImageDataProvider[] providers) throws IOException
+    MrsImageDataProvider[] providers)
 {
   Document doc = dt.getOwnerDocument();
 

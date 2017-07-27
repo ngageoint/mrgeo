@@ -63,12 +63,11 @@ class QuantilesMapOp extends RasterMapOp with Externalizable {
     if (node.getNumChildren > 2) {
       fraction = MapOp.decodeFloat(node.getChild(2), variables)
       fraction match {
-        case Some(f) => {
-          if ((f <= 0.0 || f > 1.0)) {
+        case Some(f) =>
+          if (f <= 0.0 || f > 1.0) {
             throw new ParserException(
               "The fraction passed to quantiles " + f + " must be between 0.0 and 1.0")
           }
-        }
         case None => throw new ParserException(
           "The value for the fraction parameter must be a number between 0.0 and 1.0");
       }

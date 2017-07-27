@@ -25,9 +25,9 @@ private int major, minor, micro;
 public Version(String str)
 {
   String[] l = str.split("\\.");
-  major = Integer.parseInt(l[0]);
-  minor = Integer.parseInt(l[1]);
-  micro = Integer.parseInt(l[2]);
+  major = Integer.parseInt(l[0].trim());
+  minor = Integer.parseInt(l[1].trim());
+  micro = Integer.parseInt(l[2].trim());
 }
 
 public int compareTo(Version other)
@@ -103,11 +103,7 @@ public int hashCode()
 @Override
 public boolean equals(Object obj)
 {
-  if (!(obj instanceof Version))
-  {
-    return false;
-  }
-  return compareTo((Version) obj) == 0;
+  return obj instanceof Version && compareTo((Version) obj) == 0;
 }
 
 @Override

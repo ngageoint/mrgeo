@@ -61,11 +61,11 @@ class ConMapOp extends RasterMapOp with Externalizable {
   private val constMap = mutable.Map.empty[Int, Option[Double]]
   // maps input order (key) to constant value
   private var rasterRDD:Option[RasterRDD] = None
-  private var inputs:Array[RasterMapOp] = null
+  private var inputs:Array[RasterMapOp] = _
   // list of raster inputs
-  private var isRdd:Array[Boolean] = null
+  private var isRdd:Array[Boolean] = _
   // ia the input (order) an RDD (true) or const (false)
-  private var nodatas:Array[Double] = null // nodata value for the input data
+  private var nodatas:Array[Double] = _ // nodata value for the input data
 
   override def rdd():Option[RasterRDD] = rasterRDD
 
@@ -74,12 +74,11 @@ class ConMapOp extends RasterMapOp with Externalizable {
     inputs.foreach(rmo=> {
       val mapOpZoom = rmo.getZoomLevel()
       zoom match {
-        case Some(z) => {
+        case Some(z) =>
           if (z != mapOpZoom) {
             throw new IOException("Input zoom levels do not match for " +
               this.getClass.getName)
           }
-        }
         case None => zoom = Some(mapOpZoom)
       }
     })
@@ -214,12 +213,11 @@ class ConMapOp extends RasterMapOp with Externalizable {
 
               // didn't find one in the loop, take the last entry (the else)
               getValue(termCount - 1, x, y, b) match {
-                case Some(d) => {
+                case Some(d) =>
                   if (RasterMapOp.isNotNodata(d, nodatas(termCount - 1))) {
                     raster.setPixel(x, y, b, d)
                     hasdata = true
                   }
-                }
                 case _ =>
               }
             }
@@ -411,7 +409,6 @@ class ConMapOp extends RasterMapOp with Externalizable {
     var inputCnt = 0
     for (i <- 0 until children.size()) {
       val child = children(i)
-      val a = decodeChild(child, variables)
       decodeChild(child, variables) match {
         case mapop:RasterMapOp =>
           inputBuilder += mapop

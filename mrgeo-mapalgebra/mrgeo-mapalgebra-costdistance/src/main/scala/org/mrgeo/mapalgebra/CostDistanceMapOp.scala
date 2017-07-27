@@ -105,7 +105,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
   var numExecutors:Int = -1
   var numCoresPerExecutor:Int = -1
   var maxCost:Float = -1
-  var providerProperties:ProviderProperties = null
+  var providerProperties:ProviderProperties = _
   private var rasterRDD:Option[RasterRDD] = None
 
   override def rdd():Option[RasterRDD] = rasterRDD
@@ -126,25 +126,23 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
   }
 
   override def execute(context:SparkContext):Boolean = {
-    val t0 = System.nanoTime()
+    // val t0 = System.nanoTime()
 
     val inputFriction:RasterMapOp = friction getOrElse (throw new IOException("Input MapOp not valid!"))
     val sourcePointsRDD = srcVector match {
       case Some(mapOp) => mapOp.rdd().getOrElse(throw new IOException("Missing source points"))
-      case None => {
+      case None =>
         sourcePoints match {
-          case Some(pointsList) => {
+          case Some(pointsList) =>
             // Convert the array of lon/let pairs to a VectorRDD
             var recordData = new ListBuffer[(FeatureIdWritable, Geometry)]()
-            for (i <- 0 until pointsList.length by 2) {
+            for (i <- pointsList.indices by 2) {
               val geom = GeometryFactory.createPoint(pointsList(i).toFloat, pointsList(i + 1).toFloat)
               recordData += ((new FeatureIdWritable(i / 2), geom))
             }
             VectorRDD(context.parallelize(recordData))
-          }
           case None => throw new IOException("Missing source points")
         }
-      }
     }
     val frictionMeta = inputFriction.metadata() getOrElse
                        (throw new IOException("Can't load metadata! Ouch! " + inputFriction.getClass.getName))
@@ -208,8 +206,8 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
       tileBounds.contains(t, true)
     })
 
-    val width:Short = tilesize.toShort
-    val height:Short = tilesize.toShort
+    // val width:Short = tilesize.toShort
+    // val height:Short = tilesize.toShort
     val res = TMSUtils.resolution(zoom, tilesize)
 
     // Create a hash map lookup where the key is the tile id and the value is
@@ -233,7 +231,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
       if (!startPts.contains(pixel._1)) {
         startPts.put(pixel._1, mutable.Set.empty[(Pixel, Point)])
       }
-      startPts.get(pixel._1).get += pixel._2
+      startPts(pixel._1) += pixel._2
     })
 
 
@@ -418,10 +416,10 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
 
   def isNoData(value: Float, nodataValue: Float): Boolean = {
     if (nodataValue.isNaN) {
-      return value.isNaN;
+      value.isNaN
     }
     else {
-      return value == nodataValue;
+      value == nodataValue
     }
   }
 
@@ -462,14 +460,14 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     val DOWN_RIGHT = 7
 
     val neighborData = Array[NeighborData](
-      new NeighborData(-1, -1, 7, pixelsizediag), // UP_LEFT),
-      new NeighborData(0, -1, 0, pixelsize), // UP),
-      new NeighborData(1, -1, 1, pixelsizediag), // UP_RIGHT),
-      new NeighborData(-1, 0, 6, pixelsize), // LEFT),
-      new NeighborData(1, 0, 2, pixelsize), // RIGHT),
-      new NeighborData(-1, 1, 5, pixelsizediag), // DOWN_LEFT),
-      new NeighborData(0, 1, 4, pixelsize), // DOWN),
-      new NeighborData(1, 1, 3, pixelsizediag) // DOWN_RIGHT)
+      NeighborData(-1, -1, 7, pixelsizediag), // UP_LEFT),
+      NeighborData(0, -1, 0, pixelsize), // UP),
+      NeighborData(1, -1, 1, pixelsizediag), // UP_RIGHT),
+      NeighborData(-1, 0, 6, pixelsize), // LEFT),
+      NeighborData(1, 0, 2, pixelsize), // RIGHT),
+      NeighborData(-1, 1, 5, pixelsizediag), // DOWN_LEFT),
+      NeighborData(0, 1, 4, pixelsize), // DOWN),
+      NeighborData(1, 1, 3, pixelsizediag) // DOWN_RIGHT)
     )
 
     def isSmaller(newcost:Float, oldcost:Float):Boolean = {
@@ -587,10 +585,10 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     // for the neighbor point. If a point around the perimeter of the tile
     // changes, then add an entry to local changedPoints.
 
-    val preProcessingTime:Double = System.nanoTime() - preStart
+    // val preProcessingTime:Double = System.nanoTime() - preStart
     var totalEnqueue:Double = 0.0
     var totalDequeue:Double = 0.0
-    var counter:Long = 0L
+    // var counter:Long = 0L
 
     val costPointPool = new mutable.Queue[CostPoint]()
 //    var reuseCount:Long = 0
@@ -667,7 +665,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
             }
 
             friction match {
-              case Some(f) => {
+              case Some(f) =>
                 val currentNeighborCost = raster.getPixelFloat(pxNeighbor, pyNeighbor, costBand)
                 val pixelCost = f * direction.dist
                 val neighborCost = newCost + pixelCost
@@ -697,7 +695,6 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
 
                   totalEnqueue = totalEnqueue + (System.nanoTime() - t0)
                 }
-              }
               case None => // do nothing
             }
           }
@@ -891,8 +888,8 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
       changesAccum.add(edgePoints)
     }
 
-    val postProcessingTime:Double = System.nanoTime() - t0
-    val totalTime:Double = System.nanoTime() - startTime
+    // val postProcessingTime:Double = System.nanoTime() - t0
+    // val totalTime:Double = System.nanoTime() - startTime
   }
 
   override def writeExternal(out:ObjectOutput):Unit = {
@@ -910,7 +907,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
   def buildInitialPoints(frictionRDD:RDD[(TileIdWritable, RasterWritable)],
                          nodataValues: Array[Float],
                          startingPts:mutable.Map[Long, mutable.Set[(Pixel, Point)]],
-                         context:SparkContext, pixelsize:Float) = {
+                         context:SparkContext, pixelsize:Float):NeighborChangedPoints = {
 
     val initialChangesAccum = context.accumulator(new NeighborChangedPoints)(NeighborChangesAccumulator)
 
@@ -940,7 +937,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
       val tileid = tile._1.get()
       if (startingPts.contains(tileid)) {
         val raster = RasterWritable.toMrGeoRaster(tile._2)
-        val pointsInTile = startingPts.get(tileid).get
+        val pointsInTile = startingPts(tileid)
 
         val costPoints = new ListBuffer[CostPoint]()
         for (startPair <- pointsInTile) {
@@ -973,7 +970,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     initialChangesAccum.value
   }
 
-  def makeRasters(frictionRDD:RDD[(TileIdWritable, RasterWritable)]) = {
+  def makeRasters(frictionRDD:RDD[(TileIdWritable, RasterWritable)]):RDD[(TileIdWritable, RasterWritable)] = {
     frictionRDD.map(tile => {
       val tileid = tile._1.get()
       val raster = RasterWritable.toMrGeoRaster(tile._2)
@@ -982,7 +979,7 @@ class CostDistanceMapOp extends RasterMapOp with Externalizable with Logging {
     })
   }
 
-  def addCostBand(raster:MrGeoRaster) = {
+  def addCostBand(raster:MrGeoRaster):MrGeoRaster = {
     val srcBands = raster.bands()
     val dstBands = srcBands + 1
 
@@ -1148,7 +1145,7 @@ class NeighborChangedPoints extends Externalizable with Logging {
 
   def size():Int = changes.size()
 
-  def dump(zoomLevel:Int) = {
+  def dump(zoomLevel:Int):Unit = {
     val iter = changes.keySet().iterator()
     while (iter.hasNext) {
       val tileId = iter.next()

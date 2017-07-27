@@ -93,7 +93,7 @@ public static String toString(Map<?, ?> tokens)
   String comma = "";
   for (Entry<?, ?> e : tokens.entrySet())
   {
-    buf.append(comma + e.getKey() + ":" + e.getValue());
+    buf.append(comma).append(e.getKey()).append(":").append(e.getValue());
     comma = ", ";
   }
   return buf.toString();

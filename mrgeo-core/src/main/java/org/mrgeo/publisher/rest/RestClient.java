@@ -97,7 +97,7 @@ private static String getResponse(HttpResponse response, ContentType expectedCon
     String inputLine;
     while ((inputLine = in.readLine()) != null)
     {
-      sbJson.append(inputLine + "\n");
+      sbJson.append(inputLine).append("\n");
     }
     in.close();
     return sbJson.toString();

@@ -51,13 +51,13 @@ object FocalStatMapOp extends MapOpRegistrar {
 }
 
 class FocalStatMapOp extends RawFocalMapOp with Externalizable {
-  private var stat:String = null
-  private var neighborhoodSize:String = null
+  private var stat:String = _
+  private var neighborhoodSize:String = _
   private var neighborhoodPixels:Int = 0
   private var ignoreNoData:Boolean = false
   private var outputTileType:Option[Int] = None
   private var outputNoDatas:Option[Array[Double]] = None
-  private var neighborhoodValues:Array[Double] = null
+  private var neighborhoodValues:Array[Double] = _
 
   override def registerClasses():Array[Class[_]] = {
     Array[Class[_]](classOf[Array[Float]])
@@ -76,13 +76,12 @@ class FocalStatMapOp extends RawFocalMapOp with Externalizable {
     // Make sure that neighborhood values is re-initialized at the start of map op execution
     neighborhoodValues = null
     neighborhoodPixels = neighborhoodSize match {
-      case ns if (ns.endsWith("p")) => ns.dropRight(1).toInt
-      case ns if (ns.endsWith("m")) => {
+      case ns if ns.endsWith("p") => ns.dropRight(1).toInt
+      case ns if ns.endsWith("m") =>
         val degPerPixel = TMSUtils.resolution(meta.getMaxZoomLevel, meta.getTilesize)
         val sizeInMeters = ns.dropRight(1).toFloat
         val metersPerPixel = degPerPixel * LatLng.METERS_PER_DEGREE
         (sizeInMeters / metersPerPixel).ceil.toInt
-      }
       case _ => throw new IllegalArgumentException(
         "Invalid value for neighborhood size. Must specifiy either meters (e.g. 300m) or pixels (e.g. 10p)")
     }
@@ -165,37 +164,34 @@ class FocalStatMapOp extends RawFocalMapOp with Externalizable {
     while (n < maxIndex) {
       val value = values(n)
       n += 1
-      val delta = (value - oldM)
+      val delta = value - oldM
       newM = oldM + delta / n
       newS = oldS + delta * (value - newM)
       oldM = newM
       oldS = newS
     }
     stat match {
-      case FocalStatMapOp.StdDev => {
+      case FocalStatMapOp.StdDev =>
         math.sqrt(if (n > 1) {
           newS / (n - 1)
         }
         else {
           0.0
         })
-      }
-      case FocalStatMapOp.Mean => {
+      case FocalStatMapOp.Mean =>
         if (n > 0) {
           newM
         }
         else {
           0.0
         }
-      }
-      case FocalStatMapOp.Variance => {
+      case FocalStatMapOp.Variance =>
         if (n > 1) {
           newS / (n - 1)
         }
         else {
           0.0
         }
-      }
       case _ => throw new IllegalArgumentException("computeStat does not handle " + stat)
     }
   }
@@ -248,20 +244,18 @@ class FocalStatMapOp extends RawFocalMapOp with Externalizable {
     out.writeInt(neighborhoodPixels)
     outputTileType match {
       case None => out.writeBoolean(false)
-      case Some(tt) => {
+      case Some(tt) =>
         out.writeBoolean(true)
         out.writeInt(tt)
-      }
     }
     outputNoDatas match {
       case None => out.writeBoolean(false)
-      case Some(nd) => {
+      case Some(nd) =>
         out.writeBoolean(true)
         out.writeInt(nd.length)
         for (v <- nd) {
           out.writeDouble(v.doubleValue())
         }
-      }
     }
     if (neighborhoodValues == null) {
       out.writeInt(0)
@@ -369,11 +363,11 @@ class FocalStatMapOp extends RawFocalMapOp with Externalizable {
     val sortedValues = values.sorted
     if ((maxIndex & 1) == 1) {
       // Odd number of elements, return the one right in the middle
-      sortedValues((maxIndex / 2).toInt)
+      sortedValues(maxIndex / 2)
     }
     else {
       // Even number of elements, return the average of the two in the middle
-      val midIndex = (maxIndex / 2).toInt
+      val midIndex = maxIndex / 2
       (sortedValues(midIndex) + sortedValues(midIndex - 1)) / 2.0
     }
   }

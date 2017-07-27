@@ -288,11 +288,11 @@ private void setupNamespaces(Element dtr, Version version)
   dtr.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
   if (!version.isLess("1.1.0"))
   {
-    dtr.setAttribute("xmlns:ows", "http://www.opengis.net/ows/1.1" + version.toString());
-    dtr.setAttribute("xmlns:wcs", "http://www.opengis.net/wcs/" + version.toString());
+    dtr.setAttribute("xmlns:ows", "http://www.opengis.net/ows/1.1" + version);
+    dtr.setAttribute("xmlns:wcs", "http://www.opengis.net/wcs/" + version);
   }
   dtr.setAttribute("xsi:schemaLocation",
-      "http://www.opengis.net/wcs http://schemas.opengis.net/wcs/" + version.toString() + "/describeCoverage.xsd");
+      "http://www.opengis.net/wcs http://schemas.opengis.net/wcs/" + version + "/describeCoverage.xsd");
 }
 
 private MrsImageDataProvider[] getLayers(String[] layers) throws IOException

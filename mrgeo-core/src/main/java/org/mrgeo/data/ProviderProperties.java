@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class ProviderProperties implements Externalizable
@@ -48,10 +50,7 @@ public ProviderProperties(String userName, String commaDelimitedRoles)
   this.userName = userName;
   roles = new ArrayList<>();
   String[] separated = commaDelimitedRoles.split(",");
-  for (String r : separated)
-  {
-    roles.add(r);
-  }
+  Collections.addAll(roles, separated);
 }
 
 public static String toDelimitedString(ProviderProperties properties)
@@ -73,10 +72,7 @@ public static ProviderProperties fromDelimitedString(String value)
   if (values.length > 0)
   {
     userName = values[0];
-    for (int i = 1; i < values.length; i++)
-    {
-      roles.add(values[i]);
-    }
+    roles.addAll(Arrays.asList(values).subList(1, values.length));
   }
   return new ProviderProperties(userName, roles);
 }

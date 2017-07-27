@@ -57,8 +57,8 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
     val neighborhoodInfo = getNeighborhoodInfo
     val neighborhoodWidth = neighborhoodInfo._1
     val neighborhoodHeight = neighborhoodInfo._2
-    val bufferX = (neighborhoodWidth / 2).toInt
-    val bufferY = (neighborhoodHeight / 2).toInt
+    val bufferX = neighborhoodWidth / 2
+    val bufferY = neighborhoodHeight / 2
 
     val tiles = FocalBuilder.create(rdd, bufferX, bufferY, meta.getBounds, zoom, nodatas, context)
 
@@ -154,7 +154,7 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
       value.isNaN
     }
     else {
-      (value == nodata)
+      value == nodata
     }
   }
 
@@ -173,18 +173,18 @@ abstract class RawFocalMapOp extends RasterMapOp with Externalizable {
       // and right of the source pixel. If even, then it has one fewer pixels to the left of the
       // source value than to the right.
       val xLeftOffset = if ((neighborhoodWidth % 2) == 0) {
-        (neighborhoodWidth / 2).toInt - 1
+        (neighborhoodWidth / 2) - 1
       }
       else {
-        (neighborhoodWidth / 2).toInt
+        neighborhoodWidth / 2
       }
       // If neighborhoodHeight is an odd value, then the neighborhood has the same number of pixels above and
       // below the source pixel. If even, then it has one fewer pixel above than below.
       val yAboveOffset = if ((neighborhoodHeight % 2) == 0) {
-        (neighborhoodHeight / 2).toInt - 1
+        (neighborhoodHeight / 2) - 1
       }
       else {
-        (neighborhoodHeight / 2).toInt
+        neighborhoodHeight / 2
       }
       // For performance, construct an array of booleans indicating whether or not each
       // pixel value in the source raster is nodata or not

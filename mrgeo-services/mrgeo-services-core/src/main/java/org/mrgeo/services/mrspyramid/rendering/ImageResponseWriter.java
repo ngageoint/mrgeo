@@ -43,25 +43,25 @@ String getResponseMimeType();
 
 String[] getWmsFormats();
 
-Response.ResponseBuilder write(final MrGeoRaster raster);
+Response.ResponseBuilder write(MrGeoRaster raster);
 
-void write(final MrGeoRaster raster, final HttpServletResponse response) throws ServletException;
+void write(MrGeoRaster raster, HttpServletResponse response) throws ServletException;
 
-Response.ResponseBuilder write(final MrGeoRaster raster, double[] defaults);
+Response.ResponseBuilder write(MrGeoRaster raster, double[] defaults);
 
-void write(final MrGeoRaster raster, double[] defaults, final HttpServletResponse response) throws ServletException;
+void write(MrGeoRaster raster, double[] defaults, HttpServletResponse response) throws ServletException;
 
-Response.ResponseBuilder write(final MrGeoRaster raster, final int tileColumn, final int tileRow, final double scale,
-    final MrsPyramid pyramid) throws IOException;
+Response.ResponseBuilder write(MrGeoRaster raster, int tileColumn, int tileRow, double scale,
+    MrsPyramid pyramid) throws IOException;
 
-void write(final MrGeoRaster raster, final int tileColumn, final int tileRow, final double scale,
-    final MrsPyramid pyramid, final HttpServletResponse response) throws ServletException, IOException;
+void write(MrGeoRaster raster, int tileColumn, int tileRow, double scale,
+    MrsPyramid pyramid, HttpServletResponse response) throws ServletException, IOException;
 
-Response.ResponseBuilder write(final MrGeoRaster raster, final String imageName, final Bounds bounds);
+Response.ResponseBuilder write(MrGeoRaster raster, String imageName, Bounds bounds);
 
-void write(final MrGeoRaster raster, final String imageName, final Bounds bounds,
-    final HttpServletResponse response) throws ServletException;
+void write(MrGeoRaster raster, String imageName, Bounds bounds,
+    HttpServletResponse response) throws ServletException;
 
-void writeToStream(final MrGeoRaster raster, double[] defaults, final ByteArrayOutputStream byteStream)
+void writeToStream(MrGeoRaster raster, double[] defaults, ByteArrayOutputStream byteStream)
     throws IOException;
 }

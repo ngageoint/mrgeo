@@ -262,8 +262,8 @@ public void readFields(DataInput in) throws IOException
 public String toString()
 {
   StringBuilder result = new StringBuilder();
-  result.append("Name: " + name + "%n");
-  result.append("Type: " + type + "%n");
+  result.append("Name: ").append(name).append("%n");
+  result.append("Type: ").append(type).append("%n");
   result.append(String.format("  count: %d%n", count));
   if (type == FactorType.Numeric)
   {

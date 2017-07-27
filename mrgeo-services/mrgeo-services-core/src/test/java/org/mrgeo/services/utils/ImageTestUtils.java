@@ -17,7 +17,6 @@
 package org.mrgeo.services.utils;
 
 import com.google.common.io.ByteStreams;
-import org.apache.hadoop.yarn.webapp.hamlet.HamletSpec;
 import org.junit.Assert;
 import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.test.TestUtils;
