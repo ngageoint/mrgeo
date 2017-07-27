@@ -39,7 +39,6 @@ import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.raster.RasterWritable;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.image.MrsPyramidMetadata.Classification;
-import org.mrgeo.utils.Base64Utils;
 import org.mrgeo.utils.LongRectangle;
 import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;

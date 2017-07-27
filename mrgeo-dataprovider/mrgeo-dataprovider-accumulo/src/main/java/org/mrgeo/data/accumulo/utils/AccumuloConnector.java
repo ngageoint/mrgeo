@@ -23,7 +23,6 @@ import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.DataProviderException;
-import org.mrgeo.utils.Base64Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
