@@ -54,7 +54,22 @@ public static String buildBaseURI(UriInfo uriInfo, HttpHeaders headers)
 {
   URI base = uriInfo.getBaseUriBuilder().path(uriInfo.getPath()).build();
 
-  List<String> proxies = headers.getRequestHeader("X-Forwarded-For");
+  if (log.isDebugEnabled() && headers != null && headers.getRequestHeaders() != null) {
+    for (String key: headers.getRequestHeaders().keySet()) {
+      log.debug("HTTP header name: " + key);
+      for (String h: headers.getRequestHeader(key)) {
+        log.debug("  " + h);
+      }
+    }
+  }
+  String scheme = base.getScheme();
+  if (headers != null) {
+    List<String> protos = headers.getRequestHeader("X-Forwarded-Proto");
+    if (protos != null && protos.size() >= 1) {
+      scheme = protos.get(0);
+    }
+  }
+  List<String> proxies = (headers == null) ? null : headers.getRequestHeader("X-Forwarded-Host");
   if (proxies == null || proxies.size() < 1)
   {
     return base.toASCIIString();
@@ -65,7 +80,7 @@ public static String buildBaseURI(UriInfo uriInfo, HttpHeaders headers)
     {
       URI proxy = new URI("http://" + proxies.get(0));  // the 1st proxy is the original one...
 
-      return new URI(base.getScheme(), base.getRawUserInfo(), proxy.getHost(), proxy.getPort(),
+      return new URI(scheme, base.getRawUserInfo(), proxy.getHost(), proxy.getPort(),
           base.getRawPath(), base.getRawQuery(), base.getRawFragment()).toASCIIString();
     }
     catch (URISyntaxException e)
