@@ -221,15 +221,15 @@ public ImageResponseWriter getImageResponseWriter(String format) throws MrsPyram
   }
 }
 
-public Response renderKml(String pyramidPathStr, Bounds bounds, int width, int height, ColorScale cs,
-    int zoomLevel, ProviderProperties providerProperties)
-{
-  String baseUrl = config.getProperty("base.url");
-  KmlResponseBuilder kmlGenerator = new KmlResponseBuilder();
-  return kmlGenerator.getResponse(
-      pyramidPathStr, bounds, width, height, cs, baseUrl, zoomLevel,
-      providerProperties);
-}
+//public Response renderKml(String pyramidPathStr, Bounds bounds, int width, int height, ColorScale cs,
+//    int zoomLevel, ProviderProperties providerProperties)
+//{
+//  String baseUrl = config.getProperty("base.url");
+//  KmlResponseBuilder kmlGenerator = new KmlResponseBuilder();
+//  return kmlGenerator.getResponse(
+//      pyramidPathStr, bounds, width, height, cs, baseUrl, zoomLevel,
+//      providerProperties);
+//}
 
 public Properties getConfig()
 {

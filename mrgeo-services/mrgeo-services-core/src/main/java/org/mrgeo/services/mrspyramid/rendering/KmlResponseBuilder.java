@@ -15,6 +15,7 @@
 
 package org.mrgeo.services.mrspyramid.rendering;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.utils.tms.Bounds;
@@ -51,25 +52,26 @@ public Response getResponse(String pyrName, Bounds bounds, int width,
     int height, ColorScale cs, String reqUrl, int zoomLevel,
     ProviderProperties providerProperties)
 {
-  try
-  {
-    String kmlBody = ImageRendererAbstract
-        .asKml(pyrName, bounds, reqUrl, providerProperties);
-    String type = new MimetypesFileTypeMap().getContentType(getFormatSuffix());
-    String headerInfo = "attachment; filename=" + pyrName + "." + getFormatSuffix();
-    return Response.ok()
-        .entity(kmlBody)
-        .encoding(type)
-        .header("Content-Disposition", headerInfo)
-        .header("Content-type", getMimeType()).build();
-  }
-  catch (IOException e)
-  {
-    if (e.getMessage() != null)
-    {
-      return Response.serverError().entity(e.getMessage()).build();
-    }
-    return Response.serverError().entity("Internal Error").build();
-  }
+  throw new NotImplementedException("KML has been disabled!");
+//  try
+//  {
+//    String kmlBody = ImageRendererAbstract
+//        .asKml(pyrName, bounds, reqUrl, providerProperties);
+//    String type = new MimetypesFileTypeMap().getContentType(getFormatSuffix());
+//    String headerInfo = "attachment; filename=" + pyrName + "." + getFormatSuffix();
+//    return Response.ok()
+//        .entity(kmlBody)
+//        .encoding(type)
+//        .header("Content-Disposition", headerInfo)
+//        .header("Content-type", getMimeType()).build();
+//  }
+//  catch (IOException e)
+//  {
+//    if (e.getMessage() != null)
+//    {
+//      return Response.serverError().entity(e.getMessage()).build();
+//    }
+//    return Response.serverError().entity("Internal Error").build();
+//  }
 }
 }

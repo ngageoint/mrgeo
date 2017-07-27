@@ -317,6 +317,10 @@
     </dependency>
     <dependency>
       <groupId>org.mrgeo</groupId>
+      <artifactId>mrgeo-services-raster</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-services-tms</artifactId>
     </dependency>
     <dependency>

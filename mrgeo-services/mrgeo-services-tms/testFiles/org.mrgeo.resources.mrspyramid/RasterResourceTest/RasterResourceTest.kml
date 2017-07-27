@@ -28,7 +28,7 @@
    </Lod>
  </Region>
  <Link>
-<href>{BASE.URL}KmlGenerator?LAYERS=/mrgeo/test-files/org.mrgeo.resources.mrspyramid/RasterResourceTest/all-ones&amp;SERVICE=kml&amp;REQUEST=getkmlnode&amp;WMSHOST={WMSHOST}&amp;BBOX=&amp;LEVELS=10&amp;RESOLUTION=512&amp;NODEID=0,0</href>
+<href>{BASE.URL}KmlGenerator?LAYERS=/mrgeo/test-files/org.mrgeo.resources.raster.mrspyramid/RasterResourceTest/all-ones&amp;SERVICE=kml&amp;REQUEST=getkmlnode&amp;WMSHOST={WMSHOST}&amp;BBOX=&amp;LEVELS=10&amp;RESOLUTION=512&amp;NODEID=0,0</href>
    <viewRefreshMode>onRegion</viewRefreshMode>
  </Link>
 </NetworkLink>

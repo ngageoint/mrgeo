@@ -1,0 +1,5 @@
+name = @name@
+version = @version@
+revision = @rev@
+build = @build@
+buildTime = @buildTime@
