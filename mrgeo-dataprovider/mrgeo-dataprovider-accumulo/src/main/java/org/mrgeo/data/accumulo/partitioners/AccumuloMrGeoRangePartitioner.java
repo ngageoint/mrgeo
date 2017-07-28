@@ -26,7 +26,7 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.Partitioner;
 import org.mrgeo.data.tile.TileIdWritable;
-import org.mrgeo.utils.Base64Utils;
+import org.mrgeo.data.accumulo.utils.Base64Utils;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
