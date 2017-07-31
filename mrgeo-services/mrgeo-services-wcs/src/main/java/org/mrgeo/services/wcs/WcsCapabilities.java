@@ -18,6 +18,7 @@ package org.mrgeo.services.wcs;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsPyramid;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.services.Version;
 import org.mrgeo.utils.XmlUtils;
 import org.slf4j.Logger;
@@ -216,7 +217,21 @@ private void addLayers110(Element parent, MrsImageDataProvider[] providers) thro
 
     XmlUtils.createTextElement2(layer, "wcs:Identifier", provider.getResourceName());
     XmlUtils.createTextElement2(layer, "ows:Title", provider.getResourceName());
-    XmlUtils.createTextElement2(layer, "ows:Abstract", provider.getResourceName());
+
+    try
+    {
+      MrsPyramidMetadata meta = provider.getMetadataReader().read();
+
+      String abs = meta.getTag("abstract", null);
+      if (abs != null)
+      {
+        XmlUtils.createTextElement2(layer, "ows:Abstract", abs);
+      }
+    }
+    catch (IOException ignored)
+    {
+    }
+
 
     MrsPyramid pyramid = MrsPyramid.open(provider);
     minx = Math.min(minx, pyramid.getBounds().w);
@@ -260,7 +275,20 @@ private void addLayers100(Element parent, MrsImageDataProvider[] providers) thro
 
     Element layer = XmlUtils.createElement(parent, "CoverageOfferingBrief");
 
-    XmlUtils.createTextElement2(layer, "description", provider.getResourceName());
+    try
+    {
+      MrsPyramidMetadata meta = provider.getMetadataReader().read();
+
+      String abs = meta.getTag("abstract", null);
+      if (abs != null)
+      {
+        XmlUtils.createTextElement2(layer, "description", abs);
+      }
+    }
+    catch (IOException ignored)
+    {
+    }
+
     XmlUtils.createTextElement2(layer, "name", provider.getResourceName());
     XmlUtils.createTextElement2(layer, "label", provider.getResourceName());
 
