@@ -34,7 +34,6 @@
     <wcs:CoverageSummary>
       <wcs:Identifier>IslandsElevation-v2</wcs:Identifier>
       <ows:Title>IslandsElevation-v2</ows:Title>
-      <ows:Abstract>IslandsElevation-v2</ows:Abstract>
       <ows:WGS84BoundingBox>
         <ows:LowerCorner>161.25 -11.0</ows:LowerCorner>
         <ows:UpperCorner>162.5 -10.083333333333334</ows:UpperCorner>

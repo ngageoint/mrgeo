@@ -21,6 +21,7 @@ import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsPyramid;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.services.Version;
 import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;
 import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
@@ -263,6 +264,20 @@ private void addLayersToCapability(Element capability, Version version,
 
     XmlUtils.createTextElement2(layer, "Title", provider.getResourceName());
     XmlUtils.createTextElement2(layer, "Name", provider.getResourceName());
+
+    try
+    {
+      MrsPyramidMetadata meta = provider.getMetadataReader().read();
+
+      String abs = meta.getTag("abstract", null);
+      if (abs != null)
+      {
+        XmlUtils.createTextElement2(layer, "Abstract", abs);
+      }
+    }
+    catch (IOException ignored)
+    {
+    }
 
     try
     {

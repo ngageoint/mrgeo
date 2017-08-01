@@ -17,9 +17,8 @@ package org.mrgeo.ingest
 
 import java.io.{File, IOException}
 import java.net.URI
-import javax.annotation.CheckForNull
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
+import edu.umd.cs.findbugs.annotations.{CheckForNull, SuppressFBWarnings}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileStatus, FileSystem, Path}
 import org.gdal.gdal.{Band, Dataset}
@@ -76,7 +75,6 @@ class IngestInputProcessor extends Logging {
 
   def getBounds = bounds.orNull
 
-  @CheckForNull
   def getNodata = nodata.orNull
 
   def processInput(arg:String, recurse:Boolean):Unit = {
