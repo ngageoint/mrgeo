@@ -850,13 +850,20 @@ String getOutputLocal()
 public void copyFileLocal(String fromDir, String toDir, String fileName) throws IOException
 {
   File td = new File(toDir);
+  File tf = new File(toDir, fileName);
 
-  if (td.exists())
+  if (tf.exists())
   {
-    FileUtils.deleteDirectory(td);
+    if (tf.isDirectory())
+    {
+      FileUtils.deleteDirectory(tf);
+    }
+    else
+    {
+      tf.delete();
+    }
   }
 
-  File tf = new File(toDir, fileName);
   File ff = new File(fromDir, fileName);
 
   if (ff.isDirectory())
