@@ -379,13 +379,13 @@ private Response getLegend(MultivaluedMap<String, String> allParams, ProviderPro
   ColorScale cs;
   try
   {
-    if (colorscalename != null)
+    if (colorscalename != null && !colorscalename.equalsIgnoreCase("default"))
     {
       cs = service.getColorScaleFromName(colorscalename);
     }
     else
     {
-      cs = ColorScale.createDefault();
+      cs = ColorScale.createDefaultGrayScale();
 
     }
   }
