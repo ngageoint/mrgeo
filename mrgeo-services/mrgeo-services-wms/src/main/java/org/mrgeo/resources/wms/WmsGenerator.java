@@ -397,7 +397,7 @@ private Response getLegend(MultivaluedMap<String, String> allParams, ProviderPro
   try
   {
 
-    MrGeoRaster swatch = service.createColorScaleSwatch(cs, format, width, height, cs.getMin(), cs.getMax());
+    MrGeoRaster swatch = service.createColorScaleSwatch(cs, format, width, height, cs.getScaleMin(), cs.getScaleMax());
 
     // Bounds bounds = new Bounds(0, 0, width, height);
 
