@@ -342,12 +342,12 @@ private Response.ResponseBuilder setupCaching(Response.ResponseBuilder builder,
 private Response getLegend(MultivaluedMap<String, String> allParams, ProviderProperties providerProperties)
 {
   // Get all of the query parameter values needed and validate them
-  String layer = getQueryParam(allParams, "layer");
-
-  if (layer == null || layer.isEmpty())
-  {
-    return writeError(Response.Status.BAD_REQUEST, "Missing required LAYER parameter");
-  }
+//  String layer = getQueryParam(allParams, "layer");
+//
+//  if (layer == null || layer.isEmpty())
+//  {
+//    return writeError(Response.Status.BAD_REQUEST, "Missing required LAYER parameter");
+//  }
 
   String format = getQueryParam(allParams, "format", "png");
   String colorscalename = getQueryParam(allParams, "style", null);
