@@ -70,7 +70,7 @@
       </activation>
       <modules>
         <module>mrgeo-cmd-core</module>
-        <module>mrgeo-cmd-mapalgebra</module>
+        <module>mrgeo-cmd-webserver</module>
       </modules>
     </profile>
   </profiles>
