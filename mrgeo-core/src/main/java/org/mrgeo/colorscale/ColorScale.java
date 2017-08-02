@@ -450,7 +450,7 @@ public Double getScaleMax()
 
 public Double getScaleMin()
 {
-  return lastKey();
+  return firstKey();
 }
 
 public int[] getNullColor()
