@@ -358,23 +358,23 @@ private Response getLegend(MultivaluedMap<String, String> allParams, ProviderPro
 
   MrsPyramidService service = new MrsPyramidService();
 
-  double[] extrema;
-  try
-  {
-    ImageStats stats = service.getPyramid(layer, providerProperties).getStats();
-    if (stats != null)
-    {
-      extrema = new double[]{stats.min, stats.max};
-    }
-    else
-    {
-      extrema = new double[]{0, width > height ? width : height};
-    }
-  }
-  catch (MrsPyramidServiceException e)
-  {
-    return writeError(Response.Status.BAD_REQUEST, "Can not load LAYER");
-  }
+//  double[] extrema;
+//  try
+//  {
+//    ImageStats stats = service.getPyramid(layer, providerProperties).getStats();
+//    if (stats != null)
+//    {
+//      extrema = new double[]{stats.min, stats.max};
+//    }
+//    else
+//    {
+//      extrema = new double[]{0, width > height ? width : height};
+//    }
+//  }
+//  catch (MrsPyramidServiceException e)
+//  {
+//    return writeError(Response.Status.BAD_REQUEST, "Can not load LAYER");
+//  }
 
   ColorScale cs;
   try
@@ -397,7 +397,7 @@ private Response getLegend(MultivaluedMap<String, String> allParams, ProviderPro
   try
   {
 
-    MrGeoRaster swatch = service.createColorScaleSwatch(cs, format, width, height, extrema[0], extrema[1]);
+    MrGeoRaster swatch = service.createColorScaleSwatch(cs, format, width, height, cs.getMin(), cs.getMax());
 
     Bounds bounds = new Bounds(0, 0, width, height);
 
