@@ -361,7 +361,7 @@ private Response getLegend(MultivaluedMap<String, String> allParams, ProviderPro
 //  double[] extrema;
 //  try
 //  {
-//    ImageStats stats = service.getPyramid(layer, providerProperties).getStats();
+//    MrsPyramid image = service.getPyramid(layer, providerProperties);
 //    if (stats != null)
 //    {
 //      extrema = new double[]{stats.min, stats.max};
@@ -391,7 +391,7 @@ private Response getLegend(MultivaluedMap<String, String> allParams, ProviderPro
   }
   catch (MrsPyramidServiceException e)
   {
-    return writeError(Response.Status.INTERNAL_SERVER_ERROR, "Can not load color scale for STYLE");
+    return writeError(Response.Status.INTERNAL_SERVER_ERROR, "Can not load STYLE");
   }
 
   try
@@ -399,11 +399,11 @@ private Response getLegend(MultivaluedMap<String, String> allParams, ProviderPro
 
     MrGeoRaster swatch = service.createColorScaleSwatch(cs, format, width, height, cs.getMin(), cs.getMax());
 
-    Bounds bounds = new Bounds(0, 0, width, height);
+    // Bounds bounds = new Bounds(0, 0, width, height);
 
     Response.ResponseBuilder builder = ((ImageResponseWriter) ImageHandlerFactory
         .getHandler(format, ImageResponseWriter.class))
-        .write(swatch, layer, bounds);
+        .write(swatch);
 
     return setupCaching(builder, allParams).build();
   }
