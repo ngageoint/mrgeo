@@ -61,6 +61,7 @@ private static final int G = 1;
 private static final int R = 0;
 private static ColorScale _colorScale;
 private static ColorScale _grayScale;
+
 private int[][] cache;
 private boolean interpolate;
 private Double min, max;
@@ -440,6 +441,16 @@ public Double getMax()
 public Double getMin()
 {
   return min;
+}
+
+public Double getScaleMax()
+{
+  return lastKey();
+}
+
+public Double getScaleMin()
+{
+  return lastKey();
 }
 
 public int[] getNullColor()
