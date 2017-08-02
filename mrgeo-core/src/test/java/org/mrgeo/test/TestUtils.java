@@ -15,6 +15,7 @@
  */
 package org.mrgeo.test;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
@@ -32,7 +33,6 @@ import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.MrsPyramidMetadata;
-import org.mrgeo.utils.FileUtils;
 import org.mrgeo.utils.GDALJavaUtils;
 import org.mrgeo.utils.GDALUtils;
 import org.mrgeo.utils.tms.Bounds;
@@ -118,7 +118,7 @@ public static String composeOutputDir(Class<?> c) throws IOException
   File dir = new File(result);
   if (dir.exists())
   {
-    FileUtils.deleteDir(dir, true);
+    org.mrgeo.utils.FileUtils.deleteDir(dir, true);
   }
 
   if (!dir.mkdirs())
@@ -846,6 +846,37 @@ String getOutputLocal()
 {
   return outputLocal;
 }
+
+public void copyFileLocal(String fromDir, String toDir, String fileName) throws IOException
+{
+  File td = new File(toDir);
+  File tf = new File(toDir, fileName);
+
+  if (tf.exists())
+  {
+    if (tf.isDirectory())
+    {
+      FileUtils.deleteDirectory(tf);
+    }
+    else
+    {
+      tf.delete();
+    }
+  }
+
+  File ff = new File(fromDir, fileName);
+
+  if (ff.isDirectory())
+  {
+    FileUtils.copyDirectory(ff, tf);
+  }
+  else
+  {
+    FileUtils.copyFile(ff, tf);
+  }
+
+}
+
 
 
 public interface ValueTranslator

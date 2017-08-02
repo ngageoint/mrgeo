@@ -15,3 +15,4 @@
 
 org.mrgeo.cmd.mapalgebra.MapAlgebraSpi
 org.mrgeo.cmd.mapalgebra.python.PythonGatewaySpi
+org.mrgeo.cmd.tags.TagsSpi

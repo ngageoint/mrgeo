@@ -25,7 +25,7 @@ import javax.ws.rs.ext.Provider;
 public class MrsPyramidServiceProvider implements ContextResolver<MrsPyramidService>
 {
 private static final MrsPyramidService instance =
-    new MrsPyramidService(Configuration.getInstance().getProperties());
+    new MrsPyramidService();
 
 @Override
 public MrsPyramidService getContext(Class type)

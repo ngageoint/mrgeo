@@ -21,6 +21,7 @@ import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsPyramid;
+import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.services.Version;
 import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;
 import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
@@ -34,6 +35,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.UriBuilder;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -200,7 +202,7 @@ Document generateDoc(Version version, String requestUrl, MultivaluedMap<String, 
   XmlUtils.createTextElement2(exception, "Format", "application/vnd.ogc.se_blank");
 
   // Layer
-  addLayersToCapability(capability, version, pyramidFiles);
+  addLayersToCapability(capability, version, pyramidFiles, requestUrl);
 
   return doc;
 }
@@ -226,8 +228,7 @@ private void addCapability(Element parent, String capability, Version version, S
  */
 @SuppressWarnings("squid:S1166") // Exception caught and handled
 @SuppressFBWarnings(value = "SIC_INNER_SHOULD_BE_STATIC_ANON", justification = "Just a simple inline comparator")
-private void addLayersToCapability(Element capability, Version version,
-    MrsImageDataProvider[] providers)
+private void addLayersToCapability(Element capability, Version version, MrsImageDataProvider[] providers, String requestUrl)
 {
   Element rootLayer = XmlUtils.createElement(capability, "Layer");
   rootLayer.setAttribute("queryable", "0");
@@ -263,6 +264,20 @@ private void addLayersToCapability(Element capability, Version version,
 
     XmlUtils.createTextElement2(layer, "Title", provider.getResourceName());
     XmlUtils.createTextElement2(layer, "Name", provider.getResourceName());
+
+    try
+    {
+      MrsPyramidMetadata meta = provider.getMetadataReader().read();
+
+      String abs = meta.getTag("abstract", null);
+      if (abs != null)
+      {
+        XmlUtils.createTextElement2(layer, "Abstract", abs);
+      }
+    }
+    catch (IOException ignored)
+    {
+    }
 
     try
     {
@@ -364,13 +379,17 @@ private void addLayersToCapability(Element capability, Version version,
         Element style = XmlUtils.createElement(layer, "Style");
         XmlUtils.createTextElement2(style, "Name", "Default");
 
+        Element legend;
         int bands = pyramid.getMetadata().getBands();
         // Add the colorscale styles if there are only 1 band...
         if (bands == 1)
         {
-          XmlUtils.createTextElement2(style, "Title", "Default Grayscale");
+          XmlUtils.createTextElement2(style, "Title", provider.getResourceName() + '-' + "Default Grayscale");
           XmlUtils.createTextElement2(style, "Abstract",
               "3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value");
+
+          createLegend(requestUrl, provider, "Default", style);
+
 
           ColorScale[] scales = ColorScaleManager.getColorScaleList();
           for (ColorScale scale : scales)
@@ -383,6 +402,9 @@ private void addLayersToCapability(Element capability, Version version,
             {
               title = scale.getName();
             }
+
+            title = provider.getResourceName() + '-' + title;
+
             XmlUtils.createTextElement2(style, "Title", title);
 
             String abst = scale.getDescription();
@@ -390,6 +412,8 @@ private void addLayersToCapability(Element capability, Version version,
             {
               XmlUtils.createTextElement2(style, "Abstract", abst);
             }
+
+            createLegend(requestUrl, provider, scale.getName(), style);
           }
         }
         else if (bands >= 3)
@@ -401,7 +425,6 @@ private void addLayersToCapability(Element capability, Version version,
           style = XmlUtils.createElement(layer, "Style");
           XmlUtils.createTextElement2(style, "Name", "BandR,G,B");
           XmlUtils.createTextElement2(style, "Title", "Band Selection");
-
         }
 
         // only add this layer to the XML document if everything else was
@@ -418,5 +441,29 @@ private void addLayersToCapability(Element capability, Version version,
       // suck up the exception, there may be a bad file in the images directory...
     }
   }
+}
+
+private void createLegend(String requestUrl, MrsImageDataProvider provider, String stylename, Element style)
+{
+  Element legend;
+  legend = XmlUtils.createElement(style, "LegendURL");
+  legend.setAttribute("width", "25");
+  legend.setAttribute("height", "100");
+  XmlUtils.createTextElement2(legend, "Format", "image/jpeg");
+  Element onlineResource = XmlUtils.createElement(legend, "OnlineResource");
+  onlineResource.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+  onlineResource.setAttribute("xlink:type", "simple");
+
+  UriBuilder builder = UriBuilder.fromUri(requestUrl);
+  builder.queryParam("REQUEST", "GetLegendGraphic");
+  builder.queryParam("VERSION", "1.0.0");
+  builder.queryParam("STYLE", stylename);
+  builder.queryParam("LAYER", provider.getResourceName());
+  builder.queryParam("FORMAT", "image/jpeg");
+  builder.queryParam("WIDTH", 25);
+  builder.queryParam("HEIGHT", 100);
+
+
+  onlineResource.setAttribute("xlink:href", builder.toString());
 }
 }

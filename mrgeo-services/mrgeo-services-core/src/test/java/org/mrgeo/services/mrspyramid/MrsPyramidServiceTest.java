@@ -90,7 +90,7 @@ public void teardown()
 @Category(UnitTest.class)
 public void testFormatElapsedTime()
 {
-  MrsPyramidService testInstance = new MrsPyramidService(new Properties());
+  MrsPyramidService testInstance = new MrsPyramidService();
 
   assertEquals(testInstance.formatElapsedTime(7200d), "2h");
   assertEquals(testInstance.formatElapsedTime(60d), "1m");
@@ -108,7 +108,7 @@ public void testFormatElapsedTime()
 @Category(UnitTest.class)
 public void testFormatValue()
 {
-  MrsPyramidService testInstance = new MrsPyramidService(new Properties());
+  MrsPyramidService testInstance = new MrsPyramidService();
   assertEquals(testInstance.formatValue(7200d, "seconds"), "2h");
   assertEquals(testInstance.formatValue(7200d, ""), "7200.0");
   assertEquals(testInstance.formatValue(75d, "degrees"), "75deg");
@@ -122,7 +122,7 @@ public void testFormatValue()
 public void testCreateColorSwatch() throws Exception
 {
   String format = "png";
-  MrsPyramidService testInstance = new MrsPyramidService(new Properties());
+  MrsPyramidService testInstance = new MrsPyramidService();
   int width = 100;
   int height = 10;
 
@@ -144,7 +144,7 @@ public void testCreateColorSwatch() throws Exception
 public void testCreateColorSwatchVertical() throws Exception
 {
   String format = "png";
-  MrsPyramidService testInstance = new MrsPyramidService(new Properties());
+  MrsPyramidService testInstance = new MrsPyramidService();
   int width = 20;
   int height = 200;
 
@@ -503,7 +503,7 @@ private void testIslandsElevationFor(String format, final String width,
   mrgeoProperties.put(MrGeoConstants.MRGEO_COMMON_HOME, testutils.getInputLocal());
   mrgeoProperties.put(MrGeoConstants.MRGEO_HDFS_IMAGE, "file://" + testutils.getInputLocal());
   mrgeoProperties.put(MrGeoConstants.MRGEO_HDFS_COLORSCALE, "file://" + testutils.getInputLocal() + "color-scales");
-  MrsPyramidService service = new MrsPyramidService(unusedMrgeoProperties);
+  MrsPyramidService service = new MrsPyramidService();
 
   String[] bBoxValues = bbox.split(",");
   if (bBoxValues.length != 4)

@@ -2705,6 +2705,7 @@
         </property>
       </activation>
       <modules>
+        <module>mrgeo-cmd</module>
         <module>mrgeo-core</module>
         <module>mrgeo-services</module>
         <module>distribution</module>

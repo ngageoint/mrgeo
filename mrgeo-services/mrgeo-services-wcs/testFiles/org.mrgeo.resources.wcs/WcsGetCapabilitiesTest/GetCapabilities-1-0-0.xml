@@ -51,7 +51,6 @@
   </Capability>
   <ContentMetadata>
     <CoverageOfferingBrief>
-      <description>IslandsElevation-v2</description>
       <name>IslandsElevation-v2</name>
       <label>IslandsElevation-v2</label>
       <lonLatEnvelope srsName="WGS84(DD)">
