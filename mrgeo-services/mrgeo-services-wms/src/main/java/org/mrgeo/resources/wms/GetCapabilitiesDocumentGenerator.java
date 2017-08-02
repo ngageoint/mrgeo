@@ -456,6 +456,7 @@ private void createLegend(String requestUrl, MrsImageDataProvider provider, Stri
 
   UriBuilder builder = UriBuilder.fromUri(requestUrl);
   builder.queryParam("REQUEST", "GetLegendGraphic");
+  builder.queryParam("SERVICE", "WMS");
   builder.queryParam("VERSION", "1.0.0");
   builder.queryParam("STYLE", stylename);
   builder.queryParam("LAYER", provider.getResourceName());
