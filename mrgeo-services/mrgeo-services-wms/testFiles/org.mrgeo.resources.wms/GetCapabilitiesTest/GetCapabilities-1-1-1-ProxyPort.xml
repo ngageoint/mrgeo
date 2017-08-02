@@ -87,7 +87,7 @@
           <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
-            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;VERSION=1.0.0&amp;STYLE=Default&amp;LAYER=IslandsElevation-v2&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=Default&amp;LAYER=IslandsElevation-v2&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
         <Style>
@@ -95,7 +95,7 @@
           <Title>IslandsElevation-v2-Rainbow</Title>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
-            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;VERSION=1.0.0&amp;STYLE=Rainbow&amp;LAYER=IslandsElevation-v2&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=Rainbow&amp;LAYER=IslandsElevation-v2&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
         <Style>
@@ -103,7 +103,7 @@
           <Title>IslandsElevation-v2-elevation</Title>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
-            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;VERSION=1.0.0&amp;STYLE=elevation&amp;LAYER=IslandsElevation-v2&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=elevation&amp;LAYER=IslandsElevation-v2&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
       </Layer>
@@ -125,7 +125,7 @@
           <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
-            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;VERSION=1.0.0&amp;STYLE=Default&amp;LAYER=IslandsElevation-v2-color-scale&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=Default&amp;LAYER=IslandsElevation-v2-color-scale&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
         <Style>
@@ -133,7 +133,7 @@
           <Title>IslandsElevation-v2-color-scale-Rainbow</Title>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
-            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;VERSION=1.0.0&amp;STYLE=Rainbow&amp;LAYER=IslandsElevation-v2-color-scale&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=Rainbow&amp;LAYER=IslandsElevation-v2-color-scale&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
         <Style>
@@ -141,7 +141,7 @@
           <Title>IslandsElevation-v2-color-scale-elevation</Title>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
-            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;VERSION=1.0.0&amp;STYLE=elevation&amp;LAYER=IslandsElevation-v2-color-scale&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=elevation&amp;LAYER=IslandsElevation-v2-color-scale&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
       </Layer>
@@ -163,7 +163,7 @@
           <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
-            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;VERSION=1.0.0&amp;STYLE=Default&amp;LAYER=IslandsElevation-v2-no-pyramid&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=Default&amp;LAYER=IslandsElevation-v2-no-pyramid&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
         <Style>
@@ -171,7 +171,7 @@
           <Title>IslandsElevation-v2-no-pyramid-Rainbow</Title>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
-            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;VERSION=1.0.0&amp;STYLE=Rainbow&amp;LAYER=IslandsElevation-v2-no-pyramid&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=Rainbow&amp;LAYER=IslandsElevation-v2-no-pyramid&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
         <Style>
@@ -179,7 +179,7 @@
           <Title>IslandsElevation-v2-no-pyramid-elevation</Title>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
-            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;VERSION=1.0.0&amp;STYLE=elevation&amp;LAYER=IslandsElevation-v2-no-pyramid&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=elevation&amp;LAYER=IslandsElevation-v2-no-pyramid&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
       </Layer>
@@ -201,7 +201,7 @@
           <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
-            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;VERSION=1.0.0&amp;STYLE=Default&amp;LAYER=IslandsElevation-v2-no-pyramid-extra-metadata&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=Default&amp;LAYER=IslandsElevation-v2-no-pyramid-extra-metadata&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
         <Style>
@@ -209,7 +209,7 @@
           <Title>IslandsElevation-v2-no-pyramid-extra-metadata-Rainbow</Title>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
-            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;VERSION=1.0.0&amp;STYLE=Rainbow&amp;LAYER=IslandsElevation-v2-no-pyramid-extra-metadata&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=Rainbow&amp;LAYER=IslandsElevation-v2-no-pyramid-extra-metadata&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
         <Style>
@@ -217,7 +217,7 @@
           <Title>IslandsElevation-v2-no-pyramid-extra-metadata-elevation</Title>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
-            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;VERSION=1.0.0&amp;STYLE=elevation&amp;LAYER=IslandsElevation-v2-no-pyramid-extra-metadata&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=elevation&amp;LAYER=IslandsElevation-v2-no-pyramid-extra-metadata&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
       </Layer>
@@ -239,7 +239,7 @@
           <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
-            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;VERSION=1.0.0&amp;STYLE=Default&amp;LAYER=IslandsElevation-v2-no-stats&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=Default&amp;LAYER=IslandsElevation-v2-no-stats&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
         <Style>
@@ -247,7 +247,7 @@
           <Title>IslandsElevation-v2-no-stats-Rainbow</Title>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
-            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;VERSION=1.0.0&amp;STYLE=Rainbow&amp;LAYER=IslandsElevation-v2-no-stats&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=Rainbow&amp;LAYER=IslandsElevation-v2-no-stats&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
         <Style>
@@ -255,7 +255,7 @@
           <Title>IslandsElevation-v2-no-stats-elevation</Title>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
-            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;VERSION=1.0.0&amp;STYLE=elevation&amp;LAYER=IslandsElevation-v2-no-stats&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=elevation&amp;LAYER=IslandsElevation-v2-no-stats&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
       </Layer>
@@ -277,7 +277,7 @@
           <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
-            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;VERSION=1.0.0&amp;STYLE=Default&amp;LAYER=cost-distance&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=Default&amp;LAYER=cost-distance&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
         <Style>
@@ -285,7 +285,7 @@
           <Title>cost-distance-Rainbow</Title>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
-            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;VERSION=1.0.0&amp;STYLE=Rainbow&amp;LAYER=cost-distance&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=Rainbow&amp;LAYER=cost-distance&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
         <Style>
@@ -293,7 +293,7 @@
           <Title>cost-distance-elevation</Title>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
-            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;VERSION=1.0.0&amp;STYLE=elevation&amp;LAYER=cost-distance&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=elevation&amp;LAYER=cost-distance&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
       </Layer>
@@ -315,7 +315,7 @@
           <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
-            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;VERSION=1.0.0&amp;STYLE=Default&amp;LAYER=cost-distance-shift-2&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=Default&amp;LAYER=cost-distance-shift-2&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
         <Style>
@@ -323,7 +323,7 @@
           <Title>cost-distance-shift-2-Rainbow</Title>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
-            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;VERSION=1.0.0&amp;STYLE=Rainbow&amp;LAYER=cost-distance-shift-2&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=Rainbow&amp;LAYER=cost-distance-shift-2&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
         <Style>
@@ -331,7 +331,7 @@
           <Title>cost-distance-shift-2-elevation</Title>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
-            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;VERSION=1.0.0&amp;STYLE=elevation&amp;LAYER=cost-distance-shift-2&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=elevation&amp;LAYER=cost-distance-shift-2&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
       </Layer>
