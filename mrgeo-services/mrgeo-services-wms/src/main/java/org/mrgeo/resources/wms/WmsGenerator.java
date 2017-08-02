@@ -24,10 +24,13 @@ import org.mrgeo.data.DataProviderFactory;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.raster.MrGeoRaster;
+import org.mrgeo.image.ImageStats;
 import org.mrgeo.image.MrsPyramid;
 import org.mrgeo.image.MrsPyramidMetadata;
 import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.Version;
+import org.mrgeo.services.mrspyramid.MrsPyramidService;
+import org.mrgeo.services.mrspyramid.MrsPyramidServiceException;
 import org.mrgeo.services.mrspyramid.rendering.*;
 import org.mrgeo.services.utils.RequestUtils;
 import org.mrgeo.utils.XmlUtils;
@@ -41,11 +44,13 @@ import org.w3c.dom.Element;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.*;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.dom.DOMSource;
+import java.awt.image.DataBuffer;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -56,10 +61,6 @@ import java.util.Map;
 
 //import org.mrgeo.utils.logging.LoggingUtils;
 
-/**
- * OGC WMS implementation - See https://107.23.31.196/redmine/projects/mrgeo/wiki/WmsReference for
- * details.
- */
 @Path("/wms")
 public class WmsGenerator
 {
@@ -130,6 +131,7 @@ private static MrGeoRaster colorRaster(String layer, String style, String imageF
     throw new WmsGeneratorException(e);
   }
 }
+
 
 @GET
 public Response doGet(@Context UriInfo uriInfo, @Context HttpHeaders headers)
@@ -283,6 +285,11 @@ private Response handleRequest(@Context UriInfo uriInfo, @Context HttpHeaders he
     {
       return describeTiles(uri, allParams, providerProperties);
     }
+    else if (request.equalsIgnoreCase("getlegendgraphic"))
+    {
+      return getLegend(allParams, providerProperties);
+    }
+
     return writeError(Response.Status.BAD_REQUEST, "Invalid request");
   }
   finally
@@ -328,6 +335,81 @@ private Response.ResponseBuilder setupCaching(Response.ResponseBuilder builder,
     // This is retained from the original WmsGenerator, but it seems wrong.
     //return builder.cacheControl(cacheControl).expires(future.toDate());
     return builder.cacheControl(cacheControl);
+  }
+}
+
+// Inspired by: http://docs.geoserver.org/stable/en/user/services/wms/get_legend_graphic/index.html
+private Response getLegend(MultivaluedMap<String, String> allParams, ProviderProperties providerProperties)
+{
+  // Get all of the query parameter values needed and validate them
+  String layer = getQueryParam(allParams, "layer");
+
+  if (layer == null || layer.isEmpty())
+  {
+    return writeError(Response.Status.BAD_REQUEST, "Missing required LAYER parameter");
+  }
+
+  String format = getQueryParam(allParams, "format", "png");
+  String colorscalename = getQueryParam(allParams, "style", null);
+
+
+  int width = getQueryParamAsInt(allParams, "width", 72);
+  int height = getQueryParamAsInt(allParams, "height", 72);
+
+  MrsPyramidService service = new MrsPyramidService();
+
+  double[] extrema;
+  try
+  {
+    ImageStats stats = service.getPyramid(layer, providerProperties).getStats();
+    if (stats != null)
+    {
+      extrema = new double[]{stats.min, stats.max};
+    }
+    else
+    {
+      extrema = new double[]{0, width > height ? width : height};
+    }
+  }
+  catch (MrsPyramidServiceException e)
+  {
+    return writeError(Response.Status.BAD_REQUEST, "Can not load LAYER");
+  }
+
+  ColorScale cs;
+  try
+  {
+    if (colorscalename != null)
+    {
+      cs = service.getColorScaleFromName(colorscalename);
+    }
+    else
+    {
+      cs = ColorScale.createDefault();
+
+    }
+  }
+  catch (MrsPyramidServiceException e)
+  {
+    return writeError(Response.Status.INTERNAL_SERVER_ERROR, "Can not load color scale for STYLE");
+  }
+
+  try
+  {
+
+    MrGeoRaster swatch = service.createColorScaleSwatch(cs, format, width, height, extrema[0], extrema[1]);
+
+    Bounds bounds = new Bounds(0, 0, width, height);
+
+    Response.ResponseBuilder builder = ((ImageResponseWriter) ImageHandlerFactory
+        .getHandler(format, ImageResponseWriter.class))
+        .write(swatch, layer, bounds);
+
+    return setupCaching(builder, allParams).build();
+  }
+  catch (MrsPyramidServiceException | IllegalAccessException | InstantiationException e)
+  {
+    return writeError(Response.Status.INTERNAL_SERVER_ERROR, "Error creating legend");
   }
 }
 

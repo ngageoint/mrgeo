@@ -320,9 +320,22 @@ public String getScaleType()
   return null;
 }
 
-@SuppressWarnings("static-method")
 public ImageStats getStats()
 {
+  return getStats(0);
+}
+
+public ImageStats getStats(int band)
+{
+  try
+  {
+    return provider.getMetadataReader().read().getStats(band);
+  }
+  catch (IOException e)
+  {
+    e.printStackTrace();
+  }
+
   return null;
 }
 

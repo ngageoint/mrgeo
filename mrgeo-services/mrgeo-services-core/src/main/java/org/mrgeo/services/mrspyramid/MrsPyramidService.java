@@ -29,20 +29,16 @@ import org.mrgeo.services.SecurityUtils;
 import org.mrgeo.services.mrspyramid.rendering.ImageHandlerFactory;
 import org.mrgeo.services.mrspyramid.rendering.ImageRenderer;
 import org.mrgeo.services.mrspyramid.rendering.ImageResponseWriter;
-import org.mrgeo.services.mrspyramid.rendering.KmlResponseBuilder;
-import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.inject.Singleton;
-import javax.ws.rs.core.Response;
 import java.awt.image.DataBuffer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 @SuppressWarnings("static-method")
 @Singleton
@@ -52,12 +48,10 @@ public class MrsPyramidService
 private static final Logger log = LoggerFactory.getLogger(MrsPyramidService.class);
 private static final MimetypesFileTypeMap mimeTypeMap = new MimetypesFileTypeMap();
 
-private JobManager jobManager = JobManager.getInstance();
-private Properties config;
+private final JobManager jobManager = JobManager.getInstance();
 
-public MrsPyramidService(Properties configuration)
+public MrsPyramidService()
 {
-  config = configuration;
 }
 
 public JobManager getJobManager()
@@ -126,31 +120,38 @@ public MrGeoRaster createColorScaleSwatch(String name, String format, int width,
 public MrGeoRaster createColorScaleSwatch(ColorScale cs, String format, int width, int height)
     throws MrsPyramidServiceException
 {
-  double[] extrema = {0, 0};
+  return createColorScaleSwatch(cs, format, width, height, 0,  width > height ? width: height);
+}
+
+public MrGeoRaster createColorScaleSwatch(ColorScale cs, String format, int width, int height, double min, double max)
+    throws MrsPyramidServiceException
+{
+  double[] extrema = {min, max};
 
   try
   {
     MrGeoRaster wr = MrGeoRaster.createEmptyRaster(width, height, 1, DataBuffer.TYPE_FLOAT);
 
+    double range = max - min;
     if (width > height)
     {
-      extrema[1] = width - 1.0;
+      double dwidth = (double)width;
       for (int w = 0; w < width; w++)
       {
         for (int h = 0; h < height; h++)
         {
-          wr.setPixel(w, h, 0, w);
+          wr.setPixel(w, h, 0, min + (w / dwidth) * range);
         }
       }
     }
     else
     {
-      extrema[1] = height - 1.0;
+      double dheight = (double)height;
       for (int h = 0; h < height; h++)
       {
         for (int w = 0; w < width; w++)
         {
-          wr.setPixel(w, h, 0, extrema[1] - h);
+          wr.setPixel(w, h, 0, min + (h / dheight) * range);
         }
       }
     }
@@ -201,7 +202,7 @@ public MrGeoRaster applyColorScaleToImage(String format, MrGeoRaster result, Col
         ColorScaleApplier.class);
 
     return applier.applyColorScale(result, cs, extrema, renderer.getDefaultValues(),
-            renderer.getQuantiles());
+        renderer.getQuantiles());
   }
   catch (ColorScale.ColorScaleException | InstantiationException | IllegalAccessException e)
   {
@@ -230,11 +231,6 @@ public ImageResponseWriter getImageResponseWriter(String format) throws MrsPyram
 //      pyramidPathStr, bounds, width, height, cs, baseUrl, zoomLevel,
 //      providerProperties);
 //}
-
-public Properties getConfig()
-{
-  return config;
-}
 
 //    private ImageWriter getWriterFor(String format) throws IOException {
 //        if ( StringUtils.isNotEmpty(format) ) {
