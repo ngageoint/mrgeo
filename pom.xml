@@ -2698,6 +2698,15 @@
     </profile>
     <profile>
       <id>build-ogc</id>
+      <properties>
+        <!--
+        Need jets3t 0.9.2 to get credentials from IAM role. We set this
+        specially for OGC services because it will run on an EC2 instance
+        without hadoop or Databricks installed, so access to S3 goes
+        through jets3t.
+        -->
+        <jets3t.version>0.9.2</jets3t.version>
+      </properties>
       <activation>
         <property>
           <name>modules</name>
