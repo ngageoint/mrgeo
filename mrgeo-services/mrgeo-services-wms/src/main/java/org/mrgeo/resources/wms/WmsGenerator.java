@@ -255,16 +255,6 @@ private Response handleRequest(@Context UriInfo uriInfo, @Context HttpHeaders he
     String request = getQueryParam(allParams, "request", "GetCapabilities");
     ProviderProperties providerProperties = SecurityUtils.getProviderProperties();
 
-    String serviceName = getQueryParam(allParams, "service");
-    if (serviceName == null)
-    {
-      return writeError(Response.Status.BAD_REQUEST, "Missing required SERVICE parameter. Should be set to \"WMS\"");
-    }
-    if (!serviceName.equalsIgnoreCase("wms"))
-    {
-      return writeError(Response.Status.BAD_REQUEST, "Invalid SERVICE parameter. Should be set to \"WMS\"");
-    }
-
     if (request.equalsIgnoreCase("getmap"))
     {
       return getMap(allParams, providerProperties);
@@ -776,6 +766,16 @@ private Response describeTiles(String baseURI,
 private Response getCapabilities(String baseURI, MultivaluedMap<String, String> allParams,
     ProviderProperties providerProperties)
 {
+  String serviceName = getQueryParam(allParams, "service");
+  if (serviceName == null)
+  {
+    return writeError(Response.Status.BAD_REQUEST, "Missing required SERVICE parameter. Should be set to \"WMS\"");
+  }
+  if (!serviceName.equalsIgnoreCase("wms"))
+  {
+    return writeError(Response.Status.BAD_REQUEST, "Invalid SERVICE parameter. Should be set to \"WMS\"");
+  }
+
   Version version =  new Version(getQueryParam(allParams, "version", "1.1.1"));
   // conform to the version negotiation standards of WMS.
   if (version.isLess("1.3.0"))
