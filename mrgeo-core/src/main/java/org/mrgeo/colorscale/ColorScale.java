@@ -511,21 +511,34 @@ public void fromXML(Document doc) throws ColorScaleException
       description = xpath.evaluate("text()", nodeDesc);
     }
 
-    scaling = Scaling.valueOf(xpath.evaluate("/ColorMap/Scaling/text()", doc));
-    String reliefShadingStr = xpath.evaluate("/ColorMap/ReliefShading/text()", doc)
-        .toLowerCase();
-    reliefShading = reliefShadingStr.equals("1") || reliefShadingStr.equals("true");
+    Node nodeScaling = (Node) xpath.evaluate("/ColorMap/Scaling", doc, XPathConstants.NODE);
+    if (nodeScaling != null)
+    {
+      scaling = Scaling.valueOf(xpath.evaluate("text()", nodeScaling));
+    }
 
-    String interpolateStr = xpath.evaluate("/ColorMap/Interpolate/text()", doc)
-        .toLowerCase();
-    interpolate = interpolateStr.isEmpty() || (interpolateStr.equals("1") || interpolateStr.equals("true"));
+    Node nodeRelief = (Node) xpath.evaluate("/ColorMap/ReliefShading", doc, XPathConstants.NODE);
+    if (nodeRelief != null)
+    {
+      String reliefShadingStr = xpath.evaluate("text()", nodeRelief).toLowerCase();
+      reliefShading = reliefShadingStr.equals("1") || reliefShadingStr.equals("true");
+    }
 
-    String forceStr = xpath.evaluate("/ColorMap/ForceValuesIntoRange/text()", doc)
-        .toLowerCase();
-    forceValuesIntoRange = (forceStr.equals("1") || forceStr.equals("true"));
+    Node nodeInterp = (Node) xpath.evaluate("/ColorMap/Interpolate", doc, XPathConstants.NODE);
+    if (nodeInterp != null)
+    {
+      String interpolateStr = xpath.evaluate("text()", nodeInterp).toLowerCase();
+      interpolate = interpolateStr.isEmpty() || (interpolateStr.equals("1") || interpolateStr.equals("true"));
+    }
 
-    Node nullColorNode = (Node) xpath.evaluate("/ColorMap/NullColor", doc,
-        XPathConstants.NODE);
+    Node nodeForce = (Node) xpath.evaluate("/ColorMap/ForceValuesIntoRange", doc, XPathConstants.NODE);
+    if (nodeForce != null)
+    {
+      String forceStr = xpath.evaluate("text()", nodeForce).toLowerCase();
+      forceValuesIntoRange = (forceStr.equals("1") || forceStr.equals("true"));
+    }
+
+    Node nullColorNode = (Node) xpath.evaluate("/ColorMap/NullColor", doc, XPathConstants.NODE);
     if (nullColorNode != null)
     {
       String colorStr = xpath.evaluate("@color", nullColorNode);
