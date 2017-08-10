@@ -167,9 +167,6 @@ public static String getAttribute(Node node, String attribute)
 /**
  * @param is
  * @return
- * @throws ParserConfigurationException
- * @throws IOException
- * @throws SAXException
  */
 public static Document parseInputStream(InputStream is) throws IOException
 {
@@ -182,7 +179,7 @@ public static Document parseInputStream(InputStream is) throws IOException
     DocumentBuilder builder = domFactory.newDocumentBuilder();
     return builder.parse(is);
   }
-  catch (Exception e)
+  catch (ParserConfigurationException | SAXException e)
   {
     throw new IOException("Error parsing XML Stream", e);
   }
