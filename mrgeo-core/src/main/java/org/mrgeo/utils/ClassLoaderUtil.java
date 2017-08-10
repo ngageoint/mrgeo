@@ -207,7 +207,7 @@ public static List<URL> loadDirectory(String filePath) throws IOException
 }
 
 @SuppressWarnings("squid:S1166") // exceptions are caught and returned as false
-public static void addLibraryPath(String pathToAdd)
+static void addLibraryPath(String pathToAdd)
 {
   try
   {

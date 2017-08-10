@@ -194,7 +194,10 @@ public void readSplits(Path parent) throws IOException
     generateSplits(parent, HadoopUtils.createConfiguration());
     writeSplits(parent);
   }
-  readSplits(getInputStream(new Path(parent, SPLIT_FILE)));
+  try (InputStream stream = getInputStream(new Path(parent, SPLIT_FILE)))
+  {
+    readSplits(stream);
+  }
 }
 
 public void writeSplits(OutputStream stream) throws SplitException
@@ -222,7 +225,10 @@ public void writeSplits(OutputStream stream) throws SplitException
 
 public void writeSplits(Path parent) throws IOException
 {
-  writeSplits(getOutputStream(new Path(parent, SPLIT_FILE)));
+  try (OutputStream stream = getOutputStream(new Path(parent, SPLIT_FILE)))
+  {
+    writeSplits(stream);
+  }
 }
 
 @Override
