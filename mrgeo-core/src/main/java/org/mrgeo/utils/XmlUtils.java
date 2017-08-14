@@ -175,7 +175,8 @@ public static Document parseInputStream(InputStream is) throws IOException
     DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
     domFactory.setNamespaceAware(false);
     domFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-    domFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+    // NOTE:  In Java 8, XMLConstants.FEATURE_SECURE_PROCESSING disables XMLConstants.ACCESS_EXTERNAL_DTD
+    // domFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
     DocumentBuilder builder = domFactory.newDocumentBuilder();
     return builder.parse(is);
   }
