@@ -420,20 +420,21 @@ private Response getMap(MultivaluedMap<String, String> allParams, ProviderProper
   {
     return writeError(Response.Status.BAD_REQUEST, "Only one LAYER is supported");
   }
+
   String styles = getQueryParam(allParams, "styles");
   String styleNames[] = null;
   if (styles != null && !styles.isEmpty())
   {
     styleNames = styles.split(",");
-//      if (styleNames.length != layerNames.length)
-//      {
-//        return writeError(Response.Status.BAD_REQUEST, "There are a different number of LAYERS (" + layerNames.length + ") than STYLES(" + styleNames.length + ")");
-//      }
+    if (styleNames.length != layerNames.length)
+    {
+      return writeError(Response.Status.BAD_REQUEST, "There are a different number of LAYERS (" + layerNames.length + ") than STYLES(" + styleNames.length + ")");
+    }
   }
-//    else
-//    {
-//      return writeError(Response.Status.BAD_REQUEST, "Missing required STYLES parameter");
-//    }
+//  else
+//  {
+//    return writeError(Response.Status.BAD_REQUEST, "Missing required STYLES parameter");
+//  }
   String srs;
   try
   {
@@ -487,7 +488,7 @@ private Response getMap(MultivaluedMap<String, String> allParams, ProviderProper
     MrGeoRaster result = renderer.renderImage(layerNames[0], bounds, width, height, providerProperties, srs);
 
     result = colorRaster(layerNames[0],
-        (styleNames != null && styleNames.length > 0) ? styleNames[0] : null,
+        (styleNames != null && styleNames[0].length() > 0) ? styleNames[0] : null,
         format, renderer, result, providerProperties);
 
     Response.ResponseBuilder builder = ((ImageResponseWriter) ImageHandlerFactory
