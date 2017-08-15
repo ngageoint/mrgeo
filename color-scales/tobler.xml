@@ -1,0 +1,35 @@
+<!--
+  ~ Copyright 2009-2017. DigitalGlobe, Inc.
+  ~
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~
+  ~  http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and limitations under the License.
+  -->
+
+<ColorMap name="tobler">
+  <Scaling>Absolute</Scaling> <!-- Could also be Absolute -->
+  <ReliefShading>0</ReliefShading>
+  <Interpolate>1</Interpolate>
+<!--
+  <ForceValuesIntoRange>1</ForceValuesIntoRange>
+-->
+<!--
+  <NullColor color="0,0,0" value="-9999" opacity="0"/>
+-->
+  <Color color="#007F00" value="0.7147478" opacity="255" />
+  <Color color="#009F00" value="0.7726824" opacity="255" />
+  <Color color="#00BF00" value="0.7880261" opacity="255" />
+  <Color color="#00DF00" value="0.8107788" opacity="255" />
+  <Color color="#FFFF00" value="0.8407017" opacity="255" />
+  <Color color="#FFC500" value="0.8665576" opacity="255" />
+  <Color color="#FFA500" value="0.93400574" opacity="255" />
+  <Color color="#FF6500" value="1.0872399" opacity="255" />
+  <Color color="#FF0000" value="1.7072996" opacity="255" />
+</ColorMap>

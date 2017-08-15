@@ -800,7 +800,7 @@ public class S3Utils
    * This is only meant for testing S3 caching from the command line.
    * @param args
    */
-  public static void main(String[] args) {
-    S3FileCacheEntry.run(args);
-  }
+//  public static void main(String[] args) {
+//    S3FileCacheEntry.run(args);
+//  }
 }

@@ -35,10 +35,8 @@
     <axiom.version>1.2.9</axiom.version>
     <aws.version>1.7.4</aws.version>
     <classutil.version>1.0.5</classutil.version>
-    <commons-beanutils.version>1.7.0</commons-beanutils.version>
     <commons-codec.version>1.4</commons-codec.version>
     <commons-collections.version>3.2.2</commons-collections.version>
-    <commons-fileupload.version>1.2.1</commons-fileupload.version>
     <commons-httpclient.version>3.1</commons-httpclient.version>
     <commons-io.version>2.4</commons-io.version>
     <commons-jexl.version>2.1.1</commons-jexl.version>
@@ -3419,25 +3417,9 @@
         <version>${commons-collections.version}</version>
       </dependency>
       <dependency>
-        <groupId>commons-fileupload</groupId>
-        <artifactId>commons-fileupload</artifactId>
-        <version>${commons-fileupload.version}</version>
-      </dependency>
-      <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-lang3</artifactId>
         <version>${commons-lang.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>commons-beanutils</groupId>
-        <artifactId>commons-beanutils</artifactId>
-        <version>${commons-beanutils.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>java3d</groupId>

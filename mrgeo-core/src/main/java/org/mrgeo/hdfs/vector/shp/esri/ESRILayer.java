@@ -103,7 +103,18 @@ public static ESRILayer open(String fileName) throws FormatException, IOExceptio
     prjIs = new FileInputStream(fileBase + ".prj");
   }
 
-  return open(new SeekableRaf(shpRaf), new SeekableRaf(shxRaf), new SeekableRaf(dbfRaf), prjIs);
+  try
+  {
+    return open(new SeekableRaf(shpRaf), new SeekableRaf(shxRaf), new SeekableRaf(dbfRaf), prjIs);
+  }
+  finally
+  {
+    if (prjIs != null)
+    {
+      prjIs.close();
+    }
+  }
+
 }
 
 public void close() throws IOException

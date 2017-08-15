@@ -759,6 +759,38 @@ public void testDefaultColorscale() throws Exception
 
 @Test
 @Category(IntegrationTest.class)
+public void testDefaultColorscale2() throws Exception
+{
+
+  MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider("IslandsElevation-v2",
+      DataProviderFactory.AccessMode.READ, new ProviderProperties());
+  MrsPyramidMetadata meta = dp.getMetadataReader().read();
+
+  meta.setTag(MrGeoConstants.MRGEO_DEFAULT_COLORSCALE, "elevation");
+
+  String contentType = "image/png";
+
+  Response response = target("wms")
+      .queryParam("SERVICE", "WMS")
+      .queryParam("REQUEST", "getmap")
+      .queryParam("LAYERS", "IslandsElevation-v2")
+      .queryParam("FORMAT", contentType)
+      .queryParam("BBOX", ISLANDS_ELEVATION_V2_IN_BOUNDS_SINGLE_SOURCE_TILE)
+      .queryParam("WIDTH", "900")
+      .queryParam("HEIGHT", "700")
+      .queryParam("STYLES", "")
+      .request().get();
+
+  processImageResponse(response, contentType, "png", true);
+  response.close();
+
+  meta.setTag(MrGeoConstants.MRGEO_DEFAULT_COLORSCALE, "");
+  dp.getMetadataReader().reload();
+}
+
+
+@Test
+@Category(IntegrationTest.class)
 public void testJpg3band() throws Exception
 {
   Response response = target("wms")

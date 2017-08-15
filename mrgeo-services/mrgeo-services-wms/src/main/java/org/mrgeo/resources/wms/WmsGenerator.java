@@ -255,16 +255,6 @@ private Response handleRequest(@Context UriInfo uriInfo, @Context HttpHeaders he
     String request = getQueryParam(allParams, "request", "GetCapabilities");
     ProviderProperties providerProperties = SecurityUtils.getProviderProperties();
 
-    String serviceName = getQueryParam(allParams, "service");
-    if (serviceName == null)
-    {
-      return writeError(Response.Status.BAD_REQUEST, "Missing required SERVICE parameter. Should be set to \"WMS\"");
-    }
-    if (!serviceName.equalsIgnoreCase("wms"))
-    {
-      return writeError(Response.Status.BAD_REQUEST, "Invalid SERVICE parameter. Should be set to \"WMS\"");
-    }
-
     if (request.equalsIgnoreCase("getmap"))
     {
       return getMap(allParams, providerProperties);
@@ -430,20 +420,21 @@ private Response getMap(MultivaluedMap<String, String> allParams, ProviderProper
   {
     return writeError(Response.Status.BAD_REQUEST, "Only one LAYER is supported");
   }
+
   String styles = getQueryParam(allParams, "styles");
   String styleNames[] = null;
   if (styles != null && !styles.isEmpty())
   {
     styleNames = styles.split(",");
-//      if (styleNames.length != layerNames.length)
-//      {
-//        return writeError(Response.Status.BAD_REQUEST, "There are a different number of LAYERS (" + layerNames.length + ") than STYLES(" + styleNames.length + ")");
-//      }
+    if (styleNames.length != layerNames.length)
+    {
+      return writeError(Response.Status.BAD_REQUEST, "There are a different number of LAYERS (" + layerNames.length + ") than STYLES(" + styleNames.length + ")");
+    }
   }
-//    else
-//    {
-//      return writeError(Response.Status.BAD_REQUEST, "Missing required STYLES parameter");
-//    }
+//  else
+//  {
+//    return writeError(Response.Status.BAD_REQUEST, "Missing required STYLES parameter");
+//  }
   String srs;
   try
   {
@@ -497,7 +488,7 @@ private Response getMap(MultivaluedMap<String, String> allParams, ProviderProper
     MrGeoRaster result = renderer.renderImage(layerNames[0], bounds, width, height, providerProperties, srs);
 
     result = colorRaster(layerNames[0],
-        (styleNames != null && styleNames.length > 0) ? styleNames[0] : null,
+        (styleNames != null && styleNames[0].length() > 0) ? styleNames[0] : null,
         format, renderer, result, providerProperties);
 
     Response.ResponseBuilder builder = ((ImageResponseWriter) ImageHandlerFactory
@@ -776,6 +767,16 @@ private Response describeTiles(String baseURI,
 private Response getCapabilities(String baseURI, MultivaluedMap<String, String> allParams,
     ProviderProperties providerProperties)
 {
+  String serviceName = getQueryParam(allParams, "service");
+  if (serviceName == null)
+  {
+    return writeError(Response.Status.BAD_REQUEST, "Missing required SERVICE parameter. Should be set to \"WMS\"");
+  }
+  if (!serviceName.equalsIgnoreCase("wms"))
+  {
+    return writeError(Response.Status.BAD_REQUEST, "Invalid SERVICE parameter. Should be set to \"WMS\"");
+  }
+
   Version version =  new Version(getQueryParam(allParams, "version", "1.1.1"));
   // conform to the version negotiation standards of WMS.
   if (version.isLess("1.3.0"))
