@@ -18,6 +18,7 @@ package org.mrgeo.job.yarn
 import java.io.{File, PrintWriter}
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
+import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkConf
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.job.JobArguments
@@ -37,42 +38,50 @@ class MrGeoYarnDriver {
     // need to get initialize spark.deploy.yarn... by reflection, because it is package private
     // to org.apache.spark
 
-    // tell Spark we are running in yarn mode
-    System.setProperty("SPARK_YARN_MODE", "true")
+    try {
+      // tell Spark we are running in yarn mode
+      System.setProperty("SPARK_YARN_MODE", "true")
 
-    val clientargsclazz = cl.loadClass("org.apache.spark.deploy.yarn.ClientArguments")
+      val clientargsclazz = cl.loadClass("org.apache.spark.deploy.yarn.ClientArguments")
 
-    if (clientargsclazz != null) {
-      val args, is20 =
-        try {
-          val caconst = clientargsclazz.getConstructor(classOf[Array[String]], classOf[SparkConf])
-          caconst.newInstance(toYarnArgs(job, cl, conf, false), conf)
-        }
-        catch {
-          case e:NoSuchMethodException => {
-            val caconst = clientargsclazz.getConstructor(classOf[Array[String]])
-            caconst.newInstance(toYarnArgs(job, cl, conf, true))
+      if (clientargsclazz != null) {
+        val args, is20 =
+          try {
+            val caconst = clientargsclazz.getConstructor(classOf[Array[String]], classOf[SparkConf])
+            caconst.newInstance(toYarnArgs(job, cl, conf, false), conf)
           }
-        }
+          catch {
+            case e:NoSuchMethodException => {
+              val caconst = clientargsclazz.getConstructor(classOf[Array[String]])
+              caconst.newInstance(toYarnArgs(job, cl, conf, true))
+            }
+          }
 
 
-      val clientclazz = cl.loadClass("org.apache.spark.deploy.yarn.Client")
+        val clientclazz = cl.loadClass("org.apache.spark.deploy.yarn.Client")
 
-      if (clientclazz != null) {
-        val const = clientclazz.getConstructor(clientargsclazz, classOf[SparkConf])
-        val client = const.newInstance(args.asInstanceOf[Object], conf)
-        val run = clientclazz.getMethod("run")
+        if (clientclazz != null) {
+          val const = clientclazz.getConstructor(clientargsclazz, classOf[SparkConf])
+          val client = const.newInstance(args.asInstanceOf[Object], conf)
+          val run = clientclazz.getMethod("run")
 
-        try {
-          run.invoke(client)
-        }
-        catch {
-          case e:Exception =>
-            e.printStackTrace()
-            throw e
+          try {
+            run.invoke(client)
+          }
+          catch {
+            case e:Exception =>
+              e.printStackTrace()
+              throw e
+          }
         }
       }
     }
+    finally {
+        if (job.hasSetting(MrGeoYarnDriver.ARGFILE)) {
+          val filename = new Path(job.getSetting(MrGeoYarnDriver.ARGFILE))
+          HadoopFileUtils.delete(filename)
+        }
+      }
   }
 
   @SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "Using File to strip path from a file")

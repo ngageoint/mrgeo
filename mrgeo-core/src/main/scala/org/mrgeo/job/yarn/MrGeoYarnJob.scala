@@ -100,7 +100,7 @@ object MrGeoYarnJob extends Logging {
           stream.close()
         }
       }
-      HadoopFileUtils.delete(filename)
+      // HadoopFileUtils.delete(filename)
 
     }
 
