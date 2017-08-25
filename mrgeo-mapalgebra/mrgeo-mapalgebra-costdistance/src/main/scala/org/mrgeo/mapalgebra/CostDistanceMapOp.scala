@@ -1251,6 +1251,19 @@ class NeighborChangedPoints extends Externalizable with Logging {
       })
     })
   }
+
+  override def equals(obj:scala.Any):Boolean = {
+    obj match {
+      case that:NeighborChangedPoints =>
+        if (that.size() == 0 && size() == 0) {
+          true
+        }
+        else {
+          false
+        }
+      case _ => false
+    }
+  }
 }
 
 // An accumulator used within Spark to accumulate changes to all of the tiles

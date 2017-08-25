@@ -33,6 +33,8 @@ class KryoRegistrar extends KryoRegistrator {
     kryo.register(classOf[Array[Long]])
     kryo.register(Class.forName("org.apache.spark.util.BoundedPriorityQueue"))
 
+    // this class is missing in Spark 2.2.0 (see https://issues.apache.org/jira/browse/SPARK-21569)
+    kryo.register(classOf[org.apache.spark.internal.io.FileCommitProtocol.TaskCommitMessage])
   }
 }
 
