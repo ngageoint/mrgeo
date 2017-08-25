@@ -241,7 +241,40 @@ public static boolean intersects(Polygon polygon, Geometry geometry)
     com.vividsolutions.jts.geom.Polygon jtsPoly = polygon.toJTS();
     com.vividsolutions.jts.geom.Geometry jtsGeom = geometry.toJTS();
 
-    return jtsGeom.within(jtsPoly) || jtsGeom.contains(jtsPoly) || jtsGeom.intersects(jtsPoly);
+    boolean within = false;
+    boolean contains = false;
+    boolean intersects = false;
+
+    try
+    {
+      within = jtsGeom.within(jtsPoly);
+    }
+    catch (TopologyException ignored)
+    {
+
+    }
+
+    try
+    {
+      contains = jtsGeom.contains(jtsPoly);
+    }
+    catch (TopologyException ignored)
+    {
+
+    }
+
+    try
+    {
+      intersects = jtsGeom.intersects(jtsPoly);
+    }
+    catch (TopologyException ignored)
+    {
+
+    }
+
+    return within || contains || intersects;
+
+    // return jtsGeom.within(jtsPoly) || jtsGeom.contains(jtsPoly) || jtsGeom.intersects(jtsPoly);
   }
 }
 
