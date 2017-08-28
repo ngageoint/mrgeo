@@ -26,7 +26,7 @@ import javax.xml.bind.DatatypeConverter
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.ArrayUtils
-import org.apache.hadoop.fs.Path
+import org.apache.hadoop.fs.{FSDataInputStream, Path}
 import org.gdal.gdal.{Band, Dataset, Driver, gdal}
 import org.gdal.gdalconst.gdalconstConstants
 import org.gdal.ogr.ogr
@@ -357,6 +357,7 @@ object GDALUtils extends Logging {
   @SuppressFBWarnings(value = Array("REC_CATCH_EXCEPTION"), justification = "GDAL may have throw exceptions enabled")
   @SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "GDAL only reads image files")
   def open(imagename:String):Dataset = {
+    var is:FSDataInputStream = null
     try {
       val uri:URI = new URI(imagename)
       logDebug("Loading image with GDAL: " + imagename)
@@ -372,7 +373,8 @@ object GDALUtils extends Logging {
 
       val p = new Path(uri)
       val fs = HadoopFileUtils.getFileSystem(p)
-      val is = fs.open(p)
+
+      is = fs.open(p)
 
       val bytes = IOUtils.toByteArray(is)
 
@@ -390,6 +392,11 @@ object GDALUtils extends Logging {
     }
     catch {
       case e:Exception => throw new GDALException("Error opening image file: " + imagename, e)
+    }
+    finally {
+      if (is != null) {
+        is.close()
+      }
     }
 
     null
@@ -415,7 +422,7 @@ object GDALUtils extends Logging {
     }
   }
 
-  def delete(image:Dataset, deleteNow: Boolean = false): Unit = {
+  def delete(image:Dataset, deleteNow: Boolean = true): Unit = {
     val files = image.GetFileList
 
     image.delete()
@@ -425,7 +432,7 @@ object GDALUtils extends Logging {
         case file:String =>
           val f = new File(file)
           if (deleteNow) {
-            f.delete();
+            f.delete()
           }
           else {
             f.deleteOnExit()

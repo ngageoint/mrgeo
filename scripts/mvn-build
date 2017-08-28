@@ -39,6 +39,7 @@ usage() {
     echo "  cdh552    - Cloudera hadoop 5.5.2"
     echo "  cdh551    - Cloudera hadoop 5.5.1"
     echo "  cdh550    - Cloudera hadoop 5.5.0"
+    echo "  emr580 - Amazon EMR 5.8.0 with hadoop 2.7.3"
     echo "  emr530 - Amazon EMR 5.3.0 with hadoop 2.7.3"
     echo "  emr500 - Amazon EMR 5.0.0 with hadoop 2.7.2"
     echo "  emr472 - Amazon EMR 4.7.2 with hadoop 2.7.2"
@@ -250,6 +251,9 @@ while [ $# -gt 0 ] ; do
         ;;
     "apache260" | "apache270" | "apache271" | "apache272")
         BUILD=$1
+        ;;
+    "emr580")
+        BUILD="emr580"
         ;;
     "emr530")
         BUILD="emr530"
