@@ -606,7 +606,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
           finally {
             // close the image
             GDALUtils.close(src)
-            src = null;
+            src = null
           }
 
           //    val time = System.currentTimeMillis() - start

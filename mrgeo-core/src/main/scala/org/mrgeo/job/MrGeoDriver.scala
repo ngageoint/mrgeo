@@ -47,6 +47,8 @@ object MrGeoDriver extends Logging {
       // running in "cluster" mode, the driver runs within a YARN process
       conf.setMaster(job.YARN + "-cluster")
 
+      conf.set("spark.submit.deployMode", "cluster")
+
       conf.set("spark.yarn.preserve.staging.files", "true")
       conf.set("spark.eventLog.overwrite", "true") // overwrite event logs
 

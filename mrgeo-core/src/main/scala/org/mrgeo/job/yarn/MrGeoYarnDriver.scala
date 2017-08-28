@@ -18,6 +18,7 @@ package org.mrgeo.job.yarn
 import java.io.{File, PrintWriter}
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
+import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkConf
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.job.JobArguments
@@ -37,37 +38,54 @@ class MrGeoYarnDriver {
     // need to get initialize spark.deploy.yarn... by reflection, because it is package private
     // to org.apache.spark
 
-    // tell Spark we are running in yarn mode
-    System.setProperty("SPARK_YARN_MODE", "true")
+    try {
+      // tell Spark we are running in yarn mode
+      System.setProperty("SPARK_YARN_MODE", "true")
 
-    val clientargsclazz = cl.loadClass("org.apache.spark.deploy.yarn.ClientArguments")
+      val clientargsclazz = cl.loadClass("org.apache.spark.deploy.yarn.ClientArguments")
 
-    if (clientargsclazz != null) {
-      val caconst = clientargsclazz.getConstructor(classOf[Array[String]], classOf[SparkConf])
-      val args = caconst.newInstance(toYarnArgs(job, cl, conf), conf)
+      if (clientargsclazz != null) {
+        val args, is20 =
+          try {
+            val caconst = clientargsclazz.getConstructor(classOf[Array[String]], classOf[SparkConf])
+            caconst.newInstance(toYarnArgs(job, cl, conf, false), conf)
+          }
+          catch {
+            case e:NoSuchMethodException => {
+              val caconst = clientargsclazz.getConstructor(classOf[Array[String]])
+              caconst.newInstance(toYarnArgs(job, cl, conf, true))
+            }
+          }
 
-      val clientclazz = cl.loadClass("org.apache.spark.deploy.yarn.Client")
 
-      if (clientclazz != null) {
-        val const = clientclazz.getConstructor(clientargsclazz, classOf[SparkConf])
-        val client = const.newInstance(args.asInstanceOf[Object], conf)
-        val run = clientclazz.getMethod("run")
+        val clientclazz = cl.loadClass("org.apache.spark.deploy.yarn.Client")
 
-        try {
-          run.invoke(client)
-        }
-        catch {
-          case e:Exception =>
-            e.printStackTrace()
-            throw e
+        if (clientclazz != null) {
+          val const = clientclazz.getConstructor(clientargsclazz, classOf[SparkConf])
+          val client = const.newInstance(args.asInstanceOf[Object], conf)
+          val run = clientclazz.getMethod("run")
+
+          try {
+            run.invoke(client)
+          }
+          catch {
+            case e:Exception =>
+              e.printStackTrace()
+              throw e
+          }
         }
       }
     }
-
+    finally {
+        if (job.hasSetting(MrGeoYarnDriver.ARGFILE)) {
+          val filename = new Path(job.getSetting(MrGeoYarnDriver.ARGFILE))
+          HadoopFileUtils.delete(filename)
+        }
+      }
   }
 
   @SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "Using File to strip path from a file")
-  def toYarnArgs(job:JobArguments, cl:ClassLoader, conf:SparkConf):Array[String] = {
+  def toYarnArgs(job:JobArguments, cl:ClassLoader, conf:SparkConf, is20:Boolean):Array[String] = {
     val args = new ArrayBuffer[String]()
 
     //        "  --jar JAR_PATH             Path to your application's JAR file (required in yarn-cluster mode)\n" +
@@ -110,34 +128,52 @@ class MrGeoYarnDriver {
       // have to set the spark.executor.instances configuration setting.
       conf.set("spark.executor.instances", job.executors.toString)
       conf.set("spark.executor.cores", job.cores.toString)
-      args += "--num-executors"
 
-      args += job.executors.toString
+      if (!is20) {
+        args += "--num-executors"
+        args += job.executors.toString
+      }
     }
-    args += "--executor-cores"
-    args += job.cores.toString
+
 
     // spark.executor.memory is the total memory available to spark,
-    // --executor-memory is the memory per executor.  Go figure...
-    //conf.set("spark.executor.memory", SparkUtils.kbtohuman(job.memoryKb, "m"))
     conf.set("spark.executor.memory", SparkUtils.kbtohuman(job.executorMemKb, "m"))
-    //args += "--executor-memory"
-    //args += SparkUtils.kbtohuman(job.executorMemKb, "m")
 
-    args += "--driver-cores"
-    args += "1"
+    if (is20) {
+      conf.set("spark.driver.cores", "1")
+    }
+    else {
+      args += "--executor-memory"
+      args += SparkUtils.kbtohuman(job.executorMemKb, "m")
+
+      args += "--driver-cores"
+      args += "1"
+    }
 
     // since in YARN, the driver is just another executor, we give it the same memory as a worker.  Anything
     // less would just be wasted, unused memory.
-    args += "--driver-memory"
-    args += SparkUtils.kbtohuman(job.executorMemKb, "m")
 
-    args += "--name"
-    if (job.name != null && job.name.length > 0) {
-      args += job.name
+    if (is20) {
+      conf.set("spark.driver.memory", SparkUtils.kbtohuman(job.executorMemKb, "m"))
     }
     else {
-      args += "Unnamed MrGeo Job"
+      args += "--driver-memory"
+      args += SparkUtils.kbtohuman(job.executorMemKb, "m")
+    }
+
+    val jobname = if (job.name != null && job.name.length > 0) {
+      job.name
+    }
+    else {
+      "Unnamed MrGeo Job"
+    }
+
+    if (is20) {
+      conf.set("spark.job.name", jobname)
+    }
+    else {
+      args += "--name"
+      args += jobname
     }
 
     // need to make sure the driver jar isn't included.  Yuck!
@@ -150,8 +186,14 @@ class MrGeoYarnDriver {
       }
     })
 
-    args += "--addJars"
-    args += clean.result().mkString(",")
+
+    if (is20) {
+      conf.set("spark.yarn.dist.jars", clean.result().mkString(","))
+    }
+    else {
+      args += "--addJars"
+      args += clean.result().mkString(",")
+    }
 
     args += "--arg"
     args += "--" + MrGeoYarnDriver.DRIVER

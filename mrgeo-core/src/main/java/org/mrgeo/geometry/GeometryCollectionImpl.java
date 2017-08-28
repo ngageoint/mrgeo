@@ -44,6 +44,11 @@ GeometryCollectionImpl(Map<String, String> attributes)
   this.attributes.putAll(attributes);
 }
 
+public static Class[] getClasses()
+{
+  return new Class[]{GeometryCollectionImpl.class};
+}
+
 @Override
 public Collection<? extends Geometry> getGeometries()
 {
