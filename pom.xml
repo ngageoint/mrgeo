@@ -56,7 +56,7 @@
     <hppc.version>0.5.2</hppc.version>
     <httpcomponents.version>4.3.4</httpcomponents.version>
     <imageio.version>1.1.7</imageio.version>
-    <jackson.version>2.6.6</jackson.version>
+    <jackson.version>2.4.4</jackson.version>
     <jai-imageio.version>1.1</jai-imageio.version>
     <jaitools.version>1.3.0</jaitools.version>
     <jai.version>1.1.3</jai.version>
@@ -77,7 +77,7 @@
     <reflections.version>0.9.9-RC1</reflections.version>
     <servlet-api.version>3.1.0</servlet-api.version>
     <slf4j.version>1.7.21</slf4j.version>
-    <spark.version>1.2.0-cdh5.3.0</spark.version>
+    <spark.version></spark.version>
     <spark.scala.version>2.11</spark.scala.version>
     <spark.scope>compile</spark.scope>
     <xerces.version>2.9.1</xerces.version>
@@ -2051,6 +2051,31 @@
         </dependency>
       </dependencies>
     </profile>
+    <profile>
+      <id>apache273</id>
+      <properties>
+        <hadoop.version>2.7.3</hadoop.version>
+        <mahout.version>0.7</mahout.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <jackson.version>2.6.6</jackson.version>
+        <spark.version>2.2.0</spark.version>
+        <final.classifier>2.7.3</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>${commons-httpclient.version}</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
     <!--
          | Profiles defining the various build options.  The template for these are:
          | <profile>
@@ -2066,7 +2091,7 @@
       <id>emr580</id>
       <properties>
         <hadoop.version>2.7.3</hadoop.version>
-        <mahout.version>0.12.2</mahout.version>
+        <mahout.version>0.13.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.10</slf4j.version>
         <final.classifier>emr5.8.0</final.classifier>

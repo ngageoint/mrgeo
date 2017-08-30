@@ -723,6 +723,7 @@ object GDALUtils extends Logging {
     }
   }
 
+  @SuppressFBWarnings(value = Array("RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"), justification = "Scala generated code")
   private def saveRaster(ds:Dataset, file:String, format:String, bounds:Bounds, options:Array[String]):Unit = {
     val fmt = mapType(format)
     val driver = gdal.GetDriverByName(fmt)
