@@ -79,7 +79,7 @@
     <slf4j.version>1.7.21</slf4j.version>
     <!--
     Leave spark.version blank. This is always overridden
-    by version-specific profiles for CDH, APache, EMR, etc...
+    by version-specific profiles for CDH, Apache, EMR, etc...
     -->
     <spark.version></spark.version>
     <spark.scala.version>2.11</spark.scala.version>
