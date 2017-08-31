@@ -18,6 +18,7 @@ package org.mrgeo.mapalgebra
 import java.awt.image.DataBuffer
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.rdd.CoGroupedRDD
 import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
 import org.mrgeo.data.raster.{MrGeoRaster, RasterUtils, RasterWritable}
@@ -88,6 +89,7 @@ class ConMapOp extends RasterMapOp with Externalizable {
     }
   }
 
+  @SuppressFBWarnings(value = Array("UC_USELESS_OBJECT"), justification = "Scala generated code")
   override def execute(context:SparkContext):Boolean = {
 
     val t = calculateLargestType()
