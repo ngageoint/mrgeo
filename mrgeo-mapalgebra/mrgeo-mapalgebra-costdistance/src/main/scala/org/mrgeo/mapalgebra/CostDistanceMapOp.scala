@@ -1264,6 +1264,10 @@ class NeighborChangedPoints extends Externalizable with Logging {
       case _ => false
     }
   }
+
+  override def hashCode:Int = {
+    changes.hashCode
+  }
 }
 
 // An accumulator used within Spark to accumulate changes to all of the tiles
