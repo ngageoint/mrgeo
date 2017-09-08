@@ -563,7 +563,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
           logDebug("  tile height:  " + h)
         }
 
-        val scaled = GDALUtils.createEmptyDiskBasedRaster(src, w.toInt, h.toInt)
+        val scaled = GDALUtils.createUnfilledMemoryRaster(src, w.toInt, h.toInt)
 
         if (scaled == null) {
           throw new java.lang.OutOfMemoryError(
@@ -601,7 +601,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
             }
 
           try {
-            gdal.ReprojectImage(src, scaled, src.GetProjection(), GDALUtils.EPSG4326, resample)
+            gdal.ReprojectImage(src, scaled, src.GetProjection(), scaled.GetProjection(), resample, 0, 0.125)
           }
           finally {
             // close the image
@@ -649,7 +649,8 @@ object IngestImage extends MrGeoDriver with Externalizable {
           }
         }
         finally {
-          GDALUtils.delete(scaled)
+          // GDALUtils.delete(scaled)
+          GDALUtils.close(scaled)
         }
       }
       else {
