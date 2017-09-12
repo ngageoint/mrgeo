@@ -170,7 +170,7 @@
   </dependencies>
   <profiles>
     <profile>
-      <id>build-all</id>
+      <id>distribution-build-all</id>
       <activation>
         <property>
           <name>modules</name>
@@ -210,12 +210,6 @@
     </profile>
     <profile>
       <id>build-ogc</id>
-      <activation>
-        <property>
-          <name>modules</name>
-          <value>ogc</value>
-        </property>
-      </activation>
     </profile>
     <profile>
       <id>include-geowave</id>
