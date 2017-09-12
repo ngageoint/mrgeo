@@ -77,11 +77,11 @@ class MrGeoYarnDriver {
       }
     }
     finally {
-        if (job.hasSetting(MrGeoYarnDriver.ARGFILE)) {
-          val filename = new Path(job.getSetting(MrGeoYarnDriver.ARGFILE))
-          HadoopFileUtils.delete(filename)
-        }
+      if (job.hasSetting(MrGeoYarnDriver.ARGFILE)) {
+        val filename = new Path(job.getSetting(MrGeoYarnDriver.ARGFILE))
+        HadoopFileUtils.delete(filename)
       }
+    }
   }
 
   @SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "Using File to strip path from a file")
@@ -127,7 +127,6 @@ class MrGeoYarnDriver {
       // For Spark 1.6.0, passing --num-executors no longer works. Instead, you
       // have to set the spark.executor.instances configuration setting.
       conf.set("spark.executor.instances", job.executors.toString)
-      conf.set("spark.executor.cores", job.cores.toString)
 
       if (!is20) {
         args += "--num-executors"
@@ -136,6 +135,7 @@ class MrGeoYarnDriver {
     }
 
 
+    conf.set("spark.executor.cores", job.cores.toString)
     // spark.executor.memory is the total memory available to spark,
     conf.set("spark.executor.memory", SparkUtils.kbtohuman(job.executorMemKb, "m"))
 
