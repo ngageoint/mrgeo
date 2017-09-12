@@ -19,6 +19,7 @@ import java.awt.image.DataBuffer
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
 
 import org.apache.spark.rdd.RDD
+import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
 import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.data.raster.{RasterUtils, RasterWritable}
@@ -102,12 +103,14 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
 
   override def execute(context:SparkContext):Boolean = {
     val vectorRDD:VectorRDD = vectorMapOp.getOrElse(throw new IOException("Missing vector input")).
-        rdd().getOrElse(throw new IOException("Missing vector RDD"))
+        rdd().getOrElse(throw new IOException("Missing vector RDD")).persist(StorageLevel.MEMORY_AND_DISK)
     if (rasterForBoundsMapOp.isDefined) {
       bounds = Some(rasterForBoundsMapOp.get.metadata().getOrElse(
         throw new IOException("Unable to get metadata for the bounds raster")).getBounds)
     }
     rasterRDD = Some(RasterRDD(rasterize(vectorRDD)))
+
+    vectorRDD.unpersist()
 
     val noData = if (aggregationType == AggregationType.MASK || aggregationType == AggregationType.MASK2) {
       RasterUtils.getDefaultNoDataForType(DataBuffer.TYPE_BYTE)
@@ -117,6 +120,7 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
     }
     metadata(SparkUtils.calculateMetadata(rasterRDD.get, zoom, noData,
       bounds = null, calcStats = false))
+
     true
   }
 

@@ -21,6 +21,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.hadoop.fs.Path
 import org.apache.spark.AccumulatorParam
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
+import org.apache.spark.storage.StorageLevel
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.data.tile.TileIdWritable
@@ -83,6 +84,7 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     val tiledVectors = vectorsToTiledRDD(vectorRDD)
     val localRdd = new PairRDDFunctions(tiledVectors)
     val groupedGeometries = localRdd.groupByKey()
+
     rasterize(groupedGeometries)
   }
 
@@ -110,24 +112,53 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
   TraversableOnce[(FeatureIdWritable, Geometry)] = {
     var result = new ListBuffer[(FeatureIdWritable, Geometry)]
 
-    if (geom != null) {
-      val bounds:Bounds = geom.getBounds
-      if (bounds.width() * bounds.height() > maxfeaturesize) {
-        val center = bounds.center()
+    try {
+      if (geom != null) {
+        val bounds:Bounds = geom.getBounds
+        if (bounds.width() * bounds.height() > maxfeaturesize) {
+          val center = bounds.center()
 
-        val ul = new Bounds(bounds.w, center.lat, center.lon, bounds.n)
-        val ll = new Bounds(bounds.w, bounds.s, center.lon, center.lat)
-        val ur = new Bounds(center.lon, center.lat, bounds.e, bounds.n)
-        val lr = new Bounds(center.lon, bounds.s, bounds.e, center.lat)
+          val ul = new Bounds(bounds.w, center.lat, center.lon, bounds.n)
+          val ll = new Bounds(bounds.w, bounds.s, center.lon, center.lat)
+          val ur = new Bounds(center.lon, center.lat, bounds.e, bounds.n)
+          val lr = new Bounds(center.lon, bounds.s, bounds.e, center.lat)
 
-        result ++= splitFeature(fid, geom.clip(ul), maxfeaturesize)
-        result ++= splitFeature(fid, geom.clip(ll), maxfeaturesize)
-        result ++= splitFeature(fid, geom.clip(ur), maxfeaturesize)
-        result ++= splitFeature(fid, geom.clip(lr), maxfeaturesize)
+          var r = new ListBuffer[(FeatureIdWritable, Geometry)]
+
+          // JTS could exception with a "TopologyException: side location conflict" if the feature comes too close
+          // to the clip bounds.  If it does, we can only add the entire feature to the result...
+          try {
+            val gul = geom.clip(ul)
+            if (gul == null) throw new Exception("Bad Clip")
+            r ++= splitFeature(fid, gul, maxfeaturesize)
+
+            val gll = geom.clip(ll)
+            if (gll == null) throw new Exception("Bad Clip")
+            r ++= splitFeature(fid, gll, maxfeaturesize)
+
+            val gur = geom.clip(ur)
+            if (gur == null) throw new Exception("Bad Clip")
+            r ++= splitFeature(fid, gur, maxfeaturesize)
+
+            val glr = geom.clip(lr)
+            if (glr == null) throw new Exception("Bad Clip")
+            r ++= splitFeature(fid, glr, maxfeaturesize)
+
+            result ++= r
+          }
+          catch {
+            case _:Throwable => result += ((fid, geom))
+          }
+        }
+        else {
+          result += ((fid, geom))
+        }
       }
-      else {
+    }
+    catch {
+      case _:Throwable =>
+        result.clear()
         result += ((fid, geom))
-      }
     }
     result
   }
@@ -231,7 +262,7 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
       }
 
       result
-    })
+    }).persist(StorageLevel.MEMORY_AND_DISK)
 
     val count = tilefeatures.count()
     // The divide by 2 is not scientific. It simply doubles the number of partitions
@@ -239,7 +270,12 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     val partitions = (count / geomsPerPartition).toInt + 1
     log.info("Using " + partitions + " partitions for RasterizeVector")
 
-    tilefeatures.repartition(partitions)
+    try {
+      tilefeatures.repartition(partitions)
+    }
+    finally {
+      tilefeatures.unpersist()
+    }
   }
 
   def getOverlappingTiles(zoom:Int, tileSize:Int, bounds:Bounds):List[TileIdWritable] = {

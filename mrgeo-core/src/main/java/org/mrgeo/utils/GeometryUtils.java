@@ -15,15 +15,26 @@
 
 package org.mrgeo.utils;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.TopologyException;
+import com.vividsolutions.jts.geom.*;
+import com.vividsolutions.jts.geom.util.LineStringExtracter;
+import com.vividsolutions.jts.operation.polygonize.Polygonizer;
 import com.vividsolutions.jts.simplify.TopologyPreservingSimplifier;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.mrgeo.geometry.*;
+import org.mrgeo.geometry.Geometry;
 import org.mrgeo.geometry.Geometry.Type;
+import org.mrgeo.geometry.GeometryCollection;
+import org.mrgeo.geometry.GeometryFactory;
+import org.mrgeo.geometry.LineString;
+import org.mrgeo.geometry.LinearRing;
+import org.mrgeo.geometry.Point;
+import org.mrgeo.geometry.Polygon;
 import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Collection;
+import java.util.List;
 
 public class GeometryUtils
 {
@@ -463,12 +474,12 @@ static boolean inside(Point v0, Point v1, Point p)
       .getX() - v0.getX()));
 }
 
-
 @SuppressWarnings("squid:S1166") // Exception caught and handled
 static com.vividsolutions.jts.geom.Geometry intersect(
     com.vividsolutions.jts.geom.Polygon jtsClip,
     com.vividsolutions.jts.geom.Geometry jtsGeom)
 {
+
   com.vividsolutions.jts.geom.Geometry jtsClipped;
   try
   {
@@ -476,24 +487,39 @@ static com.vividsolutions.jts.geom.Geometry intersect(
   }
   catch (TopologyException e)
   {
-    com.vividsolutions.jts.geom.Geometry g = TopologyPreservingSimplifier.simplify(jtsGeom,
-        1E-8);
     try
     {
-      jtsClipped = g.intersection(jtsClip);
+      jtsClipped = jtsGeom.buffer(0).intersection(jtsClip);
     }
     catch (TopologyException e1)
     {
-      log.error(
-          "JTS Topology problem: clip area: " + jtsClip + " geom: " + jtsGeom + " message: " +
-              e1.getMessage());
-      log.error("Exception thrown", e1);
+      com.vividsolutions.jts.geom.Geometry g = TopologyPreservingSimplifier.simplify(jtsGeom,
+          1E-6);
+      try
+      {
+        jtsClipped = g.intersection(jtsClip);
+      }
+      catch (TopologyException e2)
+      {
+        try
+        {
+          jtsClipped = g.buffer(0).intersection(jtsClip);
+        }
+        catch (TopologyException e3)
+        {
+          log.error(
+              "JTS Topology problem: clip area: " + jtsClip + " geom: " + jtsGeom + " message: " +
+                  e1.getMessage());
+          // log.error("Exception thrown", e1);
 
-      return new com.vividsolutions.jts.geom.GeometryFactory().createPoint((Coordinate) null);
+          return new com.vividsolutions.jts.geom.GeometryFactory().createPoint((Coordinate) null);
+        }
+      }
     }
   }
 
   return jtsClipped;
 }
+
 
 }
