@@ -49,6 +49,10 @@ private static String hdfsShapefile;
 private static String hdfsCropRaster;
 private static String column = "FID_kabul_";
 
+private static String crazypoly = "crazy-polygon.csv";
+private static String hdfsCrazypolygon;
+
+
 @BeforeClass
 public static void init() throws IOException
 {
@@ -69,6 +73,14 @@ public static void init() throws IOException
   HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal(), "roads"),
       testUtils.getInputHdfs(), shapefile + ".dbf");
   hdfsShapefile = testUtils.getInputHdfsFor(shapefile + ".shp").toString();
+
+
+  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal()),
+      testUtils.getInputHdfs(), crazypoly);
+  HadoopFileUtils.copyToHdfs(new Path(testUtils.getInputLocal()),
+      testUtils.getInputHdfs(), crazypoly + ".columns");
+
+  hdfsCrazypolygon = testUtils.getInputHdfsFor(crazypoly).toString();
 
   HadoopFileUtils.copyToHdfs(Defs.INPUT, testUtils.getInputHdfs(), cropRaster);
   hdfsCropRaster = testUtils.getInputHdfsFor(cropRaster).toString();
@@ -264,6 +276,23 @@ public void rasterizeMax() throws Exception
   }
 
 }
+
+@Test
+@Category(IntegrationTest.class)
+public void rasterizeMaskCrazyPolygon() throws Exception
+{
+  String exp = "RasterizeVector([" + hdfsCrazypolygon + "], 'MASK', '8z')";
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
 
 @Test(expected = ParserException.class)
 @Category(UnitTest.class)
