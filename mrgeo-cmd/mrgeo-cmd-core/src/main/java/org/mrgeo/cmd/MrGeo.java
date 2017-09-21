@@ -21,6 +21,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.joda.time.Period;
+import org.joda.time.format.PeriodFormatter;
+import org.joda.time.format.PeriodFormatterBuilder;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.core.MrGeoProperties;
 import org.mrgeo.data.ProviderProperties;
@@ -81,6 +84,13 @@ static Options createOptions()
   result.addOption(new Option("v", "verbose", false, "Verbose logging"));
   result.addOption(new Option("d", "debug", false, "Debug (very verbose) logging"));
   result.addOption(new Option("h", "help", false, "Display help for this command"));
+
+  result.addOption(new Option("exec", "max-executors", true,
+      "Maximum number of executors (processes)"));
+  result.addOption(new Option("cores", "max-cores", true,
+      "Maximum number of cores (threads) per executor"));
+  result.addOption(new Option("mem", "max-mem", true,
+      "Maximum memory per executor (using number<k, m, g> format)"));
 
   return result;
 }
@@ -209,79 +219,100 @@ public int run(String[] args) throws IOException
     return -1;
   }
 
-  // Process the command-line arguments
-  if (line.hasOption("h"))
+  long start = System.currentTimeMillis();
+  try
   {
-    specific_usage(cmd, options);
-    return 0;
-  }
-  else
-  {
-    if (line.hasOption("np"))
+    // Process the command-line arguments
+    if (line.hasOption("h"))
     {
-      MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_AUTOPERSISTANCE, "false");
-    }
-
-    if (line.hasOption("d"))
-    {
-      LoggingUtils.setDefaultLogLevel(LoggingUtils.DEBUG);
-    }
-    else if (line.hasOption("v"))
-    {
-      LoggingUtils.setDefaultLogLevel(LoggingUtils.INFO);
+      specific_usage(cmd, options);
+      return 0;
     }
     else
     {
-      LoggingUtils.setDefaultLogLevel(LoggingUtils.ERROR);
-      HadoopUtils.adjustLogging();
+      if (line.hasOption("np"))
+      {
+        MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_AUTOPERSISTANCE, "false");
+      }
+
+      if (line.hasOption("d"))
+      {
+        LoggingUtils.setDefaultLogLevel(LoggingUtils.DEBUG);
+      }
+      else if (line.hasOption("v"))
+      {
+        LoggingUtils.setDefaultLogLevel(LoggingUtils.INFO);
+      }
+      else
+      {
+        LoggingUtils.setDefaultLogLevel(LoggingUtils.ERROR);
+        HadoopUtils.adjustLogging();
+      }
+
+      if (line.hasOption("exec"))
+      {
+        MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_MAXEXECUTORS, line.getOptionValue("exec"));
+      }
+      if (line.hasOption("cores"))
+      {
+        MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_MAXCORES, line.getOptionValue("cores"));
+      }
+      if (line.hasOption("mem"))
+      {
+        MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_MAXMEMORY, line.getOptionValue("mem"));
+      }
+
     }
-  }
 
-  if (line.hasOption("l"))
-  {
-    System.out.println("Using local runner");
-    HadoopUtils.setupLocalRunner(getConf());
-  }
-
-  if (line.hasOption("mm"))
-  {
-    float mult = Float.parseFloat(line.getOptionValue("mm"));
-    MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_FORCE_MEMORYINTENSIVE, "true");
-    MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_MEMORYINTENSIVE_MULTIPLIER, Float.toString(mult));
-  }
-
-  if (line.hasOption("mem"))
-  {
-    MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_MAX_PROCESSING_MEM, line.getOptionValue("mem"));
-  }
-
-  if (line.hasOption("sf"))
-  {
-    MrGeoProperties.getInstance().setProperty(MrGeoConstants.MRGEO_SHUFFLE_FRACTION, line.getOptionValue("sf"));
-  }
-
-  if (!commands.containsKey(cmdStr))
-  {
-    int ret = 0;
-    if (!line.hasOption("h"))
+    if (line.hasOption("l"))
     {
-      System.out.println("Command not found: " + cmdStr);
-      System.out.println();
-      ret = -1;
+      System.out.println("Using local runner");
+      HadoopUtils.setupLocalRunner(getConf());
     }
 
-    general_usage(options);
-    return ret;
-  }
 
-  ProviderProperties providerProperties = new ProviderProperties();
-  try {
-    return cmd.run(line, getConf(), providerProperties);
+    if (!commands.containsKey(cmdStr))
+    {
+      int ret = 0;
+      if (!line.hasOption("h"))
+      {
+        System.out.println("Command not found: " + cmdStr);
+        System.out.println();
+        ret = -1;
+      }
+
+      general_usage(options);
+      return ret;
+    }
+
+    ProviderProperties providerProperties = new ProviderProperties();
+    try
+    {
+      return cmd.run(line, getConf(), providerProperties);
+    }
+    catch (ParseException e)
+    {
+      System.out.println(e.getMessage());
+      new HelpFormatter().printHelp(cmd.getUsage(), options);
+      return -1;
+    }
   }
-  catch(ParseException e) {
-    System.out.println(e.getMessage());
-    new HelpFormatter().printHelp(cmd.getUsage(), options);
-    return -1;
+  finally
+  {
+    long end = System.currentTimeMillis();
+    long duration = end - start;
+    PeriodFormatter formatter = new PeriodFormatterBuilder()
+        .appendHours()
+        .appendSuffix("h:")
+        .appendMinutes()
+        .appendSuffix("m:")
+        .appendSeconds()
+        .appendSuffix("s")
+        .toFormatter();
+    String formatted = formatter.print(new Period(duration));
+    log.info(cmdStr + " completed in " + formatted);
+    System.out.println(cmdStr + " completed in " + formatted);
+
   }
 }
 
