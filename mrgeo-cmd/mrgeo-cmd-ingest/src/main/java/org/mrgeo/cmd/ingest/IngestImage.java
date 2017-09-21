@@ -168,8 +168,6 @@ public int run(CommandLine line, Configuration conf,
 {
 //  try
 //  {
-    long start = System.currentTimeMillis();
-
     boolean overrideNodata = line.hasOption("nd");
     double[] nodataOverride = null;
     if (overrideNodata)
@@ -332,19 +330,6 @@ public int run(CommandLine line, Configuration conf,
         return 1;
       }
     }
-
-    long end = System.currentTimeMillis();
-    long duration = end - start;
-    PeriodFormatter formatter = new PeriodFormatterBuilder()
-        .appendHours()
-        .appendSuffix("h:")
-        .appendMinutes()
-        .appendSuffix("m:")
-        .appendSeconds()
-        .appendSuffix("s")
-        .toFormatter();
-    String formatted = formatter.print(new Period(duration));
-    log.info("IngestImage complete in " + formatted);
 
     return 0;
 //  }

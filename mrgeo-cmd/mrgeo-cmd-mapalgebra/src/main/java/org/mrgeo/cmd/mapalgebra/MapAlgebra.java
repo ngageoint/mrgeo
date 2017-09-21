@@ -19,6 +19,9 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.cli.*;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
+import org.joda.time.Period;
+import org.joda.time.format.PeriodFormatter;
+import org.joda.time.format.PeriodFormatterBuilder;
 import org.mrgeo.aggregators.MeanAggregator;
 import org.mrgeo.buildpyramid.BuildPyramid;
 import org.mrgeo.cmd.Command;
@@ -90,97 +93,74 @@ public void addOptions(Options options)
 @SuppressWarnings("squid:S1166") // Exception caught and error message printed
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File used for reading script")
 public int run(final CommandLine line, final Configuration conf,
-               final ProviderProperties providerProperties) throws ParseException
+    final ProviderProperties providerProperties) throws ParseException
 {
-  long starttime = System.currentTimeMillis();
+  System.out.println(log.getClass().getName());
+
+  String expression = line.getOptionValue("e");
+  String output = line.getOptionValue("o");
+  String script = line.getOptionValue("s");
+
+  if (expression == null && script == null)
+  {
+    throw new ParseException("Either an expression or script must be specified.");
+  }
+
   try
   {
-    long t0 = System.currentTimeMillis();
-    System.out.println(log.getClass().getName());
-
-    String expression = line.getOptionValue("e");
-    String output = line.getOptionValue("o");
-    String script = line.getOptionValue("s");
-
-    if (expression == null && script == null)
+    if (script != null)
     {
-      throw new ParseException("Either an expression or script must be specified.");
+      File f = new File(script);
+      int total = (int) f.length();
+      byte[] buffer = new byte[total];
+      int read = 0;
+      try (FileInputStream fis = new FileInputStream(f))
+      {
+        while (read < total)
+        {
+          read += fis.read(buffer, read, total - read);
+        }
+        expression = new String(buffer);
+      }
     }
 
-    try
+    String protectionLevel = line.getOptionValue("pl");
+
+    log.debug("expression: " + expression);
+    log.debug("output: " + output);
+
+    Job job = new Job();
+    job.setJobName("MapAlgebra");
+
+    MrsImageDataProvider dp =
+        DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerProperties);
+    String useProtectionLevel = ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel);
+
+
+    boolean valid = org.mrgeo.mapalgebra.MapAlgebra.validate(expression, providerProperties);
+    if (valid)
     {
-      if (script != null)
+      if (org.mrgeo.mapalgebra.MapAlgebra.mapalgebra(expression, output, conf,
+          providerProperties, useProtectionLevel))
       {
-        File f = new File(script);
-        int total = (int) f.length();
-        byte[] buffer = new byte[total];
-        int read = 0;
-        try (FileInputStream fis = new FileInputStream(f))
+        if (line.hasOption("b"))
         {
-          while (read < total)
+          System.out.println("Building pyramids...");
+          if (!BuildPyramid.build(output, new MeanAggregator(), conf, providerProperties))
           {
-            read += fis.read(buffer, read, total - read);
+            System.out.println("Building pyramids failed. See YARN logs for more information.");
           }
-          expression = new String(buffer);
-        }
-      }
-
-      String protectionLevel = line.getOptionValue("pl");
-
-      log.debug("expression: " + expression);
-      log.debug("output: " + output);
-
-      Job job = new Job();
-      job.setJobName("MapAlgebra");
-
-      MrsImageDataProvider dp =
-          DataProviderFactory.getMrsImageDataProvider(output, AccessMode.OVERWRITE, providerProperties);
-      String useProtectionLevel = ProtectionLevelUtils.getAndValidateProtectionLevel(dp, protectionLevel);
-
-
-      boolean valid = org.mrgeo.mapalgebra.MapAlgebra.validate(expression, providerProperties);
-      if (valid)
-      {
-        if (org.mrgeo.mapalgebra.MapAlgebra.mapalgebra(expression, output, conf,
-            providerProperties, useProtectionLevel))
-        {
-          if (line.hasOption("b"))
-          {
-            System.out.println("Building pyramids...");
-            if (!BuildPyramid.build(output, new MeanAggregator(), conf, providerProperties))
-            {
-              System.out.println("Building pyramids failed. See YARN logs for more information.");
-            }
-          }
-          System.out.println(
-              "Output written to: " + output + " in " + ((System.currentTimeMillis() - t0) / 1000.0) + " seconds");
         }
       }
     }
-    catch (IOException e)
-    {
-      System.out.println("Failure while running map algebra " + e.getMessage());
-      return -1;
-    }
-
-    return 0;
   }
-  finally
+  catch (IOException e)
   {
-    long elapsed = System.currentTimeMillis() - starttime;
-    System.out.println("Elapsed time: " + time(elapsed));
+    System.out.println("Failure while running map algebra " + e.getMessage());
+    return -1;
   }
-}
 
-String time(long millis)
-{
-  long second = (millis / 1000) % 60;
-  long minute = (millis / (1000 * 60)) % 60;
-  long hour = (millis / (1000 * 60 * 60)) % 24;
-
-  return String.format("%02d:%02d:%02d", hour, minute, second) +
-      String.format(".%-3d", millis % 1000).replace(' ', '0');
-
+  return 0;
 }
 }
 

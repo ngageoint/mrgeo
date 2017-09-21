@@ -62,9 +62,7 @@ public String getUsage() { return "quantiles <options> <input>"; }
 public int run(CommandLine line, final Configuration conf,
                final ProviderProperties providerProperties) throws ParseException
 {
-  log.info("quantiles");
-
-  long start = System.currentTimeMillis();
+  log.info("Quantiles");
 
   String input = null;
   for (String arg : line.getArgs())
@@ -145,19 +143,6 @@ public int run(CommandLine line, final Configuration conf,
     }
 
   }
-
-  long end = System.currentTimeMillis();
-  long duration = end - start;
-  PeriodFormatter formatter = new PeriodFormatterBuilder()
-      .appendHours()
-      .appendSuffix("h:")
-      .appendMinutes()
-      .appendSuffix("m:")
-      .appendSeconds()
-      .appendSuffix("s")
-      .toFormatter();
-  String formatted = formatter.print(new Period(duration));
-  log.info("BuildPyramid completed in " + formatted);
 
   return 0;
 }
