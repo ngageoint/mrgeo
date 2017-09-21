@@ -202,9 +202,6 @@ object GDALUtils extends Logging {
 
     val f = File.createTempFile("gdal-tmp-", ".tif")
     val filename = f.getCanonicalPath
-    if (!f.delete()) {
-      throw new IOException("Error creating tmp file")
-    }
 
     val dataset = driver.Create(filename, width, height, bands, datatype)
 
@@ -225,15 +222,7 @@ object GDALUtils extends Logging {
         }
       }
 
-      // flush the raster, then re-open it
-      dataset.delete()
-
-      val image = gdal.Open(filename)
-      if (image == null) {
-        throw new IOException("  Error creating empty disk-based raster: " + filename)
-      }
-
-      return image
+      return dataset
     }
 
     null
@@ -268,9 +257,6 @@ object GDALUtils extends Logging {
 
     val f = File.createTempFile("gdal-tmp-", ".tif")
     val filename = f.getCanonicalPath
-    if (!f.delete()) {
-      throw new IOException("Error creating tmp file")
-    }
 
     driver.Create(filename, width, height, bands, datatype)
   }
