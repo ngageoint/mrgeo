@@ -549,8 +549,6 @@ object IngestImage extends MrGeoDriver with Externalizable {
 
         val res = TMSUtils.resolution(zoom, tilesize)
 
-        //val scaledsize = w * h * bands * datasize
-
         if (log.isDebugEnabled) {
           logDebug("Image info:  " + image)
           logDebug("  bands:  " + bands)
@@ -563,7 +561,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
           logDebug("  tile height:  " + h)
         }
 
-        val scaled = GDALUtils.createUnfilledMemoryRaster(src, w.toInt, h.toInt)
+        val scaled = GDALUtils.createEmptyDiskBasedRaster(src, w.toInt, h.toInt)
 
         if (scaled == null) {
           throw new java.lang.OutOfMemoryError(
@@ -649,14 +647,11 @@ object IngestImage extends MrGeoDriver with Externalizable {
           }
         }
         finally {
-          // GDALUtils.delete(scaled)
-          GDALUtils.close(scaled)
+          GDALUtils.delete(scaled)
         }
       }
       else {
-        //if (log.isDebugEnabled) {
         logError("Could not open " + image)
-        //}
       }
     }
     catch {
