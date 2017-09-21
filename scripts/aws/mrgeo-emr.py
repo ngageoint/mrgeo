@@ -240,7 +240,7 @@ if "core-site" in localConfigs:
 sparkdefaults = {"Classification": "spark-defaults",
                  "Properties": {
                      "spark.yarn.jar": "/usr/lib/spark/lib/spark-assembly.jar",
-                     "spark.network.timeout": "600",
+                     "spark.network.timeout": "600s",
                      "spark.driver.maxResultSize": "0",
                      "spark.buffer.pageSize":"4m"
                  },

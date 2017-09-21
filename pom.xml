@@ -79,9 +79,9 @@
     <servlet-api.version>3.1.0</servlet-api.version>
     <slf4j.version>1.7.21</slf4j.version>
     <!--
-    Leave spark.version blank. This is always overridden
-    by version-specific profiles for CDH, Apache, EMR, etc...
-    Force change.
+         Leave spark.version blank. This is always overridden
+         by version-specific profiles for CDH, Apache, EMR, etc...
+         Force change.
     -->
     <spark.version>2.2.0</spark.version>
     <spark.scala.version>2.11</spark.scala.version>
@@ -922,6 +922,13 @@
           <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>org.apache.httpcomponents</groupId>
+          <artifactId>httpclient</artifactId>
+          <version>${httpcomponents.version}</version>
+          <scope>${hadoop.scope}</scope>
+        </dependency>
         <dependency>
           <groupId>org.glassfish.jersey.containers</groupId>
           <artifactId>jersey-container-servlet-core</artifactId>
@@ -957,7 +964,7 @@
     <profile>
       <id>apache273</id>
       <properties>
-        <aws.version>1.7.4</aws.version>
+        <aws.version>1.10.6</aws.version>
         <aws.s3.version>1.10.6</aws.s3.version>
         <hadoop.version>2.7.3</hadoop.version>
         <scala.version>2.11.8</scala.version>
@@ -1004,7 +1011,7 @@
         <slf4j.version>1.7.10</slf4j.version>
         <final.classifier>emr5.8.0</final.classifier>
         <release.arguments />
-        <gdal.version>1.11.1</gdal.version>
+        <gdal.version>2.1.2</gdal.version>
         <scala.version>2.11.8</scala.version>
         <spark.version>2.2.0</spark.version>
         <spark.scala.version>2.11</spark.scala.version>
@@ -1940,6 +1947,16 @@
         <version>${jackson.version}</version>
       </dependency>
       <dependency>
+        <groupId>com.fasterxml.jackson.module</groupId>
+        <artifactId>jackson-module-paranamer</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.module</groupId>
+        <artifactId>jackson-module-scala_${spark.scala.version}</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
         <groupId>xerces</groupId>
         <artifactId>xercesImpl</artifactId>
         <version>${xerces.version}</version>
@@ -2002,10 +2019,12 @@
             <groupId>com.thoughtworks.paranamer</groupId>
             <artifactId>paranamer</artifactId>
           </exclusion>
-          <exclusion>
-            <groupId>org.codehaus.jackson</groupId>
-            <artifactId>jackson-core-asl</artifactId>
-          </exclusion>
+          <!--
+               <exclusion>
+               <groupId>org.codehaus.jackson</groupId>
+               <artifactId>jackson-core-asl</artifactId>
+               </exclusion>
+          -->
           <exclusion>
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-mapper-asl</artifactId>
@@ -2083,6 +2102,12 @@
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-xc</artifactId>
           </exclusion>
+          <!--
+               <exclusion>
+               <groupId>org.codehaus.jackson</groupId>
+               <artifactId>jackson-mapper-asl</artifactId>
+               </exclusion>
+          -->
           <exclusion>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-server</artifactId>
@@ -2129,6 +2154,10 @@
           <exclusion>
             <groupId>org.eclipse.jetty.orbit</groupId>
             <artifactId>javax.servlet</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
