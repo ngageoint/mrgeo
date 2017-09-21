@@ -423,8 +423,6 @@ public MrGeoRaster renderImage(String pyramidName, Bounds requestBounds, int wid
         gdal.ReprojectImage(src, dst, GDALUtils.EPSG4326(), dstcrs, resample, 0, 0.125);
         log.debug("Image scaled.");
 
-        GDALJavaUtils.saveRaster(src, "/data/export/unscaled-raster.tif", "tiff");
-        GDALJavaUtils.saveRaster(dst, "/data/export/scaled-raster.tif", "tiff");
         return MrGeoRaster.fromDataset(dst);
       }
       finally {
