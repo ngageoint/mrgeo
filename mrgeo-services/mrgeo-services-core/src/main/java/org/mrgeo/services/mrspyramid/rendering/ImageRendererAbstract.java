@@ -33,6 +33,7 @@ import org.mrgeo.data.tile.TileNotFoundException;
 import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.*;
 import org.mrgeo.services.utils.RequestUtils;
+import org.mrgeo.utils.GDALJavaUtils;
 import org.mrgeo.utils.GDALUtils;
 import org.mrgeo.utils.tms.*;
 import org.slf4j.Logger;
@@ -419,9 +420,11 @@ public MrGeoRaster renderImage(String pyramidName, Bounds requestBounds, int wid
         }
 
         log.debug("Scaling image...");
-        gdal.ReprojectImage(src, dst, GDALUtils.EPSG4326(), dstcrs, resample);
+        gdal.ReprojectImage(src, dst, GDALUtils.EPSG4326(), dstcrs, resample, 0, 0.125);
         log.debug("Image scaled.");
 
+        GDALJavaUtils.saveRaster(src, "/data/export/unscaled-raster.tif", "tiff");
+        GDALJavaUtils.saveRaster(dst, "/data/export/scaled-raster.tif", "tiff");
         return MrGeoRaster.fromDataset(dst);
       }
       finally {
@@ -466,8 +469,7 @@ Dataset mosaicToDataset(MrsImage image, int zoomlevel,
   int dsWidth = (int)(requestedLR.px - requestedUL.px);
   int dsHeight = (int)(requestedLR.py - requestedUL.py);
   int gdaltype = GDALUtils.toGDALDataType(metadata.getTileType());
-  Dataset ds = GDALUtils.createEmptyDiskBasedRaster(dsWidth, dsHeight, metadata.getBands(),
-          gdaltype, nodatas);
+  Dataset ds = GDALUtils.createEmptyDiskBasedRaster(dsWidth, dsHeight, metadata.getBands(), gdaltype, nodatas);
   double[] xform = new double[6];
   xform[0] = requestedBounds.w;
   xform[1] = requestedBounds.width() / dsWidth;

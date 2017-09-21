@@ -494,7 +494,7 @@ static com.vividsolutions.jts.geom.Geometry intersect(
     catch (TopologyException e1)
     {
       com.vividsolutions.jts.geom.Geometry g = TopologyPreservingSimplifier.simplify(jtsGeom,
-          1E-6);
+          1E-8);
       try
       {
         jtsClipped = g.intersection(jtsClip);

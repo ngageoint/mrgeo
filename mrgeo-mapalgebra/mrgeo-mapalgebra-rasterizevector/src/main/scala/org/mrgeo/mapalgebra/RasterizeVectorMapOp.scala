@@ -17,6 +17,7 @@ package org.mrgeo.mapalgebra
 
 import java.io._
 
+import com.vividsolutions.jts.io.WKTWriter
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.hadoop.fs.Path
 import org.apache.spark.AccumulatorParam
@@ -26,7 +27,7 @@ import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.vector.FeatureIdWritable
-import org.mrgeo.geometry.{Geometry, GeometryFactory}
+import org.mrgeo.geometry.{Geometry, GeometryFactory, WktConverter}
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.raster.RasterMapOp
@@ -40,6 +41,7 @@ import scala.collection.mutable.ListBuffer
 object RasterizeVectorMapOp extends MapOpRegistrar {
 
   private val MAX_TILES_PER_FEATURE = 1000
+  private val MAX_BYTES_PER_FEATURE = 100000
 
   override def register:Array[String] = {
     Array[String]("rasterizevector", "rasterize")
@@ -81,11 +83,17 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
   }
 
   override def rasterize(vectorRDD:VectorRDD):RDD[(TileIdWritable, RasterWritable)] = {
-    val tiledVectors = vectorsToTiledRDD(vectorRDD)
+    val tiledVectors = vectorsToTiledRDD(vectorRDD).persist(StorageLevel.MEMORY_AND_DISK)
     val localRdd = new PairRDDFunctions(tiledVectors)
-    val groupedGeometries = localRdd.groupByKey()
+    val groupedGeometries = localRdd.groupByKey().persist(StorageLevel.MEMORY_AND_DISK)
 
-    rasterize(groupedGeometries)
+    try {
+      rasterize(groupedGeometries)
+    }
+    finally {
+      groupedGeometries.unpersist()
+      tiledVectors.unpersist()
+    }
   }
 
   def rasterize(groupedGeometries:RDD[(TileIdWritable, Iterable[Geometry])]):RDD[(TileIdWritable, RasterWritable)] = {
@@ -99,23 +107,39 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
         },
         tilesize)
       rvp.beforePaintingTile(tileId.get)
+      //var cnt = 0
       for (geom <- U._2) {
         rvp.paintGeometry(geom)
+        //cnt += 1
       }
+      //println("t: " + tileId.get() + " cnt: " + cnt)
       val raster = rvp.afterPaintingTile()
       (tileId, raster)
     })
     result
   }
 
-  def splitFeature(fid:FeatureIdWritable, geom:Geometry, maxfeaturesize:Double):
+  def splitFeature(fid:FeatureIdWritable, geom:Geometry, maxFeatureSize:Double, maxFeatureArea:Double):
   TraversableOnce[(FeatureIdWritable, Geometry)] = {
     var result = new ListBuffer[(FeatureIdWritable, Geometry)]
 
     try {
       if (geom != null) {
+        val bytes = {
+          val baos = new ByteArrayOutputStream(1024)
+          val dos = new DataOutputStream(baos)
+          try {
+            geom.write(dos)
+            baos.size()
+          }
+          finally {
+            dos.close()
+          }
+        }
+
         val bounds:Bounds = geom.getBounds
-        if (bounds.width() * bounds.height() > maxfeaturesize) {
+        if (bytes > maxFeatureSize || (bounds.width() * bounds.height() > maxFeatureArea)) {
+
           val center = bounds.center()
 
           val ul = new Bounds(bounds.w, center.lat, center.lon, bounds.n)
@@ -129,25 +153,30 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
           // to the clip bounds.  If it does, we can only add the entire feature to the result...
           try {
             val gul = geom.clip(ul)
-            if (gul == null) throw new Exception("Bad Clip")
-            r ++= splitFeature(fid, gul, maxfeaturesize)
-
             val gll = geom.clip(ll)
-            if (gll == null) throw new Exception("Bad Clip")
-            r ++= splitFeature(fid, gll, maxfeaturesize)
-
             val gur = geom.clip(ur)
-            if (gur == null) throw new Exception("Bad Clip")
-            r ++= splitFeature(fid, gur, maxfeaturesize)
-
             val glr = geom.clip(lr)
-            if (glr == null) throw new Exception("Bad Clip")
-            r ++= splitFeature(fid, glr, maxfeaturesize)
 
+            if (gul == null && gll == null && gur == null && glr == null) {
+              log.error("Got a bad clipping... " + geom)
+              result += ((fid, geom))
+            }
+            else {
+              if (gul != null)
+                r ++= splitFeature(fid, gul, maxFeatureSize, maxFeatureArea)
+              if (gll != null)
+                r ++= splitFeature(fid, gll, maxFeatureSize, maxFeatureArea)
+              if (gur != null)
+                r ++= splitFeature(fid, gur, maxFeatureSize, maxFeatureArea)
+              if (glr != null)
+                r ++= splitFeature(fid, glr, maxFeatureSize, maxFeatureArea)
+            }
             result ++= r
           }
           catch {
-            case _:Throwable => result += ((fid, geom))
+            case _:Throwable =>
+              log.error("Got a bad clipping... " + geom)
+              result += ((fid, geom))
           }
         }
         else {
@@ -175,49 +204,42 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     val sizeAccumulator = vectorRDD.context.accumulator(0)(MaxSizeAccumulator)
 
     val singletile = TMSUtils.tileBounds(0, 0, zoom, tilesize)
-    val maxfeaturesize = singletile.width() * singletile.height() * RasterizeVectorMapOp.MAX_TILES_PER_FEATURE
+    val maxfeaurearea = singletile.width() * singletile.height() * RasterizeVectorMapOp.MAX_TILES_PER_FEATURE
+    val maxfeaturebytes = RasterizeVectorMapOp.MAX_BYTES_PER_FEATURE
     val splitfeatures = vectorRDD.flatMap(feature => {
+
       var result = new ListBuffer[(FeatureIdWritable, Geometry)]
 
-      var maxsize:Int = 0
       val geom = feature._2
+      if (geom.isValid && !geom.isEmpty) {
 
-      val process = bounds match {
-        case Some(filterBounds) =>
-          if (filterBounds.intersects(geom.getBounds)) {
-            true
-          }
-          else {
-            false
-          }
-        case None => true
-      }
-
-      if (process) {
-        // make sure each geometry isn't too "large".  Split it in 4 peices if it is
-        splitFeature(feature._1, geom, maxfeaturesize).foreach(feature => {
-          val baos = new ByteArrayOutputStream(1024)
-          val dos = new DataOutputStream(baos)
-          try {
-
-            feature._2.write(dos)
-            val size = baos.size()
-            if (size > maxsize) {
-              maxsize = size
+        val process = bounds match {
+          case Some(filterBounds) =>
+            if (filterBounds.intersects(geom.getBounds)) {
+              true
             }
-          }
-          finally {
-            dos.close()
-          }
+            else {
+              false
+            }
+          case None => true
+        }
 
-          result += feature
-        })
+        if (process) {
+          // make sure each geometry isn't too "large".  Split it into peices if it is
+          result ++= splitFeature(feature._1, geom, maxfeaturebytes, maxfeaurearea)
+        }
+      }
+      else if (!geom.isValid) {
+        log.error("Invalid Geometry: " + geom.getAttribute("GEOMETRY"))
+      }
+      else if (geom.isEmpty) {
+        log.error("Empty Geometry")
       }
 
-      sizeAccumulator.add(maxsize)
+      // println("\nSplit cnt: " + result.size)
+
       result
     })
-
 
     // An individual partition cannot serialize to more than Int.MaxValue bytes
     // because Spark cannot to load the partition into memory, and it results in
@@ -230,22 +252,21 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     // max geometry size.
 
     val splitfeaturescnt = splitfeatures.count()
-    val maxSize = sizeAccumulator.value
-    log.info("Max geometry serialized size is " + maxSize)
+    log.info("Max geometry serialized size is " + maxfeaturebytes)
+
     // The divide by 2 is not scientific. It simply doubles the number of partitions
     // which, during testing, significatnly improved performance.
-    //val geomsPerPartition = Integer.MAX_VALUE / maxSize / 8
+    // val geomsPerPartition = Integer.MAX_VALUE / maxSize / 2
 
     val path = new Path("/")
     val fs = HadoopFileUtils.getFileSystem(path)
     val blocksize = fs.getDefaultBlockSize(path)
 
-    val geomsPerPartition = blocksize / maxSize
+    val geomsPerPartition = blocksize / maxfeaturebytes
 
     log.info("Can fit " + geomsPerPartition + " geometries in a partition")
     val splitpartitions = (splitfeaturescnt / geomsPerPartition).toInt + 1
     log.info("Using " + splitpartitions + " partitions for RasterizeVector")
-
 
     val tilefeatures = splitfeatures.repartition(splitpartitions).flatMap(U => {
       val geom = U._2
@@ -262,25 +283,29 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
       }
 
       result
-    }).persist(StorageLevel.MEMORY_AND_DISK)
+    })
 
     val count = tilefeatures.count()
+    log.info("Created " + count + " tile/geometry combos")
+
     // The divide by 2 is not scientific. It simply doubles the number of partitions
     // which, during testing, significatnly improved performance.
     val partitions = (count / geomsPerPartition).toInt + 1
     log.info("Using " + partitions + " partitions for RasterizeVector")
 
-    try {
-      tilefeatures.repartition(partitions)
-    }
-    finally {
-      tilefeatures.unpersist()
-    }
+    tilefeatures.repartition(partitions)
   }
 
   def getOverlappingTiles(zoom:Int, tileSize:Int, bounds:Bounds):List[TileIdWritable] = {
+
+    if (bounds.w > bounds.e || bounds.s > bounds.n) {
+      log.error("FUNKY Bounds: " + bounds)
+      throw new IOException("FUNKY Bounds: " + bounds)
+    }
+
     var tiles = new ListBuffer[TileIdWritable]
     val tb:TileBounds = TMSUtils.boundsToTile(bounds, zoom, tileSize)
+    // println("\nTile cnt: " + (tb.width() * tb.height()))
     var tx:Long = tb.w
     while (tx <= tb.e) {
       var ty:Long = tb.s
