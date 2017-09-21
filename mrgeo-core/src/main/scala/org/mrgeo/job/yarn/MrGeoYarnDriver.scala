@@ -134,6 +134,7 @@ class MrGeoYarnDriver {
       }
     }
 
+    conf.set("spark.yarn.executor.memoryOverhead", ((job.memoryKb - job.executorMemKb) / 1024).toString)
 
     conf.set("spark.executor.cores", job.cores.toString)
     // spark.executor.memory is the total memory available to spark,
