@@ -27,7 +27,9 @@ import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.vector.VectorMapOp
 import org.mrgeo.mapalgebra.vector.paint.VectorPainter
-import org.mrgeo.utils.tms.{Pixel, TMSUtils}
+import org.mrgeo.utils.tms.{Pixel, TMSUtils, TileBounds}
+
+import scala.collection.mutable.ListBuffer
 
 
 object RasterizePointsMapOp extends MapOpRegistrar {
@@ -35,8 +37,8 @@ object RasterizePointsMapOp extends MapOpRegistrar {
     Array[String]("rasterizepoints")
   }
 
-  def create(vector:VectorMapOp, aggregator:String, cellsize:String, column:String = null):RasterizePointsMapOp = {
-    new RasterizePointsMapOp(Some(vector), aggregator, cellsize, column, null.asInstanceOf[String])
+  def create(vector:VectorMapOp, aggregator:String, cellsize:String, column:String = null, lineWidth:Float = 1.0f):RasterizePointsMapOp = {
+    new RasterizePointsMapOp(Some(vector), aggregator, cellsize, column, null.asInstanceOf[String], lineWidth)
   }
 
   override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
@@ -55,17 +57,17 @@ object RasterizePointsMapOp extends MapOpRegistrar {
   * can just set the pixel value directly in the output raster
   */
 class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externalizable {
-  def this(vector:Option[VectorMapOp], aggregator:String, cellsize:String, column:String, bounds:String) = {
+  def this(vector:Option[VectorMapOp], aggregator:String, cellsize:String, column:String, bounds:String, lineWidth:Float) = {
     this()
 
-    initialize(vector, aggregator, cellsize, Left(bounds), column)
+    initialize(vector, aggregator, cellsize, Left(bounds), column, lineWidth)
   }
 
   def this(vector:Option[VectorMapOp], aggregator:String, cellsize:String, column:String,
-           rasterForBoundsMapOp:Option[RasterMapOp]) = {
+           rasterForBoundsMapOp:Option[RasterMapOp], lineWidth:Float) = {
     this()
 
-    initialize(vector, aggregator, cellsize, Right(rasterForBoundsMapOp), column)
+    initialize(vector, aggregator, cellsize, Right(rasterForBoundsMapOp), column, lineWidth)
   }
 
   def this(node:ParserNode, variables:String => Option[ParserNode]) = {
@@ -119,12 +121,36 @@ class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externaliza
   }
 
   def vectorsToTiledRDD(vectorRDD:VectorRDD):RDD[(TileIdWritable, (Double, Double, Double, Boolean))] = {
+
+    val buffer = if (lineWidthPx == 1.0) {
+      0.0
+    }
+    else if (lineWidthPx > 1.0) {
+      (lineWidthPx - 1.0) * TMSUtils.resolution(zoom, tilesize)
+    }
+    else {
+      -lineWidthPx * TMSUtils.resolution(zoom, tilesize)
+    }
+
     val filtered = if (bounds.nonEmpty) {
       val filterBounds = bounds.get
-      vectorRDD.filter(U => {
-        U._2 match {
+      vectorRDD.filter(feature => {
+        val geom = feature._2
+        geom match {
           case pt:Point =>
-            filterBounds.contains(pt.getX, pt.getY)
+            if (buffer == 0.0) {
+              filterBounds.contains(pt.getX, pt.getY)
+            }
+            else {
+              val pbounds = pt.getBounds.expandBy(buffer)
+
+              if (filterBounds.intersects(pbounds)) {
+                true
+              }
+              else {
+                false
+              }
+            }
           case _ =>
             false
         }
@@ -134,24 +160,52 @@ class RasterizePointsMapOp extends AbstractRasterizeVectorMapOp with Externaliza
       vectorRDD
     }
 
-    filtered.map(U => {
-      U._2 match {
+    filtered.flatMap(feature => {
+      var result = new ListBuffer[(TileIdWritable, (Double, Double, Double, Boolean))]
+      feature._2 match {
         case pt:Point =>
-          val tile = TMSUtils.latLonToTile(pt.getY, pt.getX, zoom, tilesize)
-          (new TileIdWritable(TMSUtils.tileid(tile.tx, tile.ty, zoom)),
-              (pt.getY, pt.getX,
-                  if (column.isEmpty) {
-                    0.0
-                  }
-                  else {
-                    pt.getAttribute(column.get).toDouble
-                  },
-                  column.isDefined))
+          if (buffer == 0.0) {
+            val tile = TMSUtils.latLonToTile(pt.getY, pt.getX, zoom, tilesize)
+            result += ((new TileIdWritable(TMSUtils.tileid(tile.tx, tile.ty, zoom)),
+                (pt.getY, pt.getX,
+                    if (column.isEmpty) {
+                      0.0
+                    }
+                    else {
+                      pt.getAttribute(column.get).toDouble
+                    },
+                    column.isDefined)))
+          }
+          else {
+            val pbounds = pt.getBounds.expandBy(buffer)
+
+            val tb:TileBounds = TMSUtils.boundsToTile(pbounds, zoom, tilesize)
+            var tx:Long = tb.w
+            while (tx <= tb.e) {
+              var ty:Long = tb.s
+              while (ty <= tb.n) {
+                result += ((new TileIdWritable(TMSUtils.tileid(tx, ty, zoom)),
+                    (pt.getY, pt.getX,
+                        if (column.isEmpty) {
+                          0.0
+                        }
+                        else {
+                          pt.getAttribute(column.get).toDouble
+                        },
+                        column.isDefined)))
+                ty += 1
+              }
+              tx += 1
+            }
+
+          }
+          result
         case _ =>
           throw new IllegalArgumentException(
             "Cannot use RasterizePoints map algebra for non-point geometry: " +
-            U._2.getClass.getName)
+            feature._2.getClass.getName)
       }
+
     })
   }
 

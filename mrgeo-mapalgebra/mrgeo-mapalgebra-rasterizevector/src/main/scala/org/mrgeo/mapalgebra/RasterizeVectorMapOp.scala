@@ -50,25 +50,25 @@ object RasterizeVectorMapOp extends MapOpRegistrar {
   override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new RasterizeVectorMapOp(node, variables)
 
-  def create(vector:VectorMapOp, aggregator:String, cellsize:String, column:String = null):RasterizeVectorMapOp = {
-    new RasterizeVectorMapOp(Some(vector), aggregator, cellsize, column, null.asInstanceOf[String])
+  def create(vector:VectorMapOp, aggregator:String, cellsize:String, column:String = null, lineWidth:Float = 1.0f):RasterizeVectorMapOp = {
+    new RasterizeVectorMapOp(Some(vector), aggregator, cellsize, column, null.asInstanceOf[String], lineWidth)
   }
 }
 
 
 class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externalizable {
 
-  def this(vector:Option[VectorMapOp], aggregator:String, cellsize:String, column:String, bounds:String) = {
+  def this(vector:Option[VectorMapOp], aggregator:String, cellsize:String, column:String, bounds:String, lineWidth:Float) = {
     this()
 
-    initialize(vector, aggregator, cellsize, Left(bounds), column)
+    initialize(vector, aggregator, cellsize, Left(bounds), column, lineWidth)
   }
 
   def this(vector:Option[VectorMapOp], aggregator:String, cellsize:String, column:String,
-           rasterForBounds:Option[RasterMapOp]) = {
+           rasterForBounds:Option[RasterMapOp], lineWidth:Float) = {
     this()
 
-    initialize(vector, aggregator, cellsize, Right(rasterForBounds), column)
+    initialize(vector, aggregator, cellsize, Right(rasterForBounds), column, lineWidth)
   }
 
 
@@ -105,7 +105,7 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
           case Some(c) => c
           case None => null
         },
-        tilesize)
+        tilesize, lineWidthPx)
       rvp.beforePaintingTile(tileId.get)
       //var cnt = 0
       for (geom <- U._2) {
@@ -119,7 +119,7 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     result
   }
 
-  def splitFeature(fid:FeatureIdWritable, geom:Geometry, maxFeatureSize:Double, maxFeatureArea:Double):
+  def splitFeature(fid:FeatureIdWritable, geom:Geometry, buffer:Double, maxFeatureSize:Double, maxFeatureArea:Double):
   TraversableOnce[(FeatureIdWritable, Geometry)] = {
     var result = new ListBuffer[(FeatureIdWritable, Geometry)]
 
@@ -137,7 +137,7 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
           }
         }
 
-        val bounds:Bounds = geom.getBounds
+        val bounds:Bounds = geom.getBounds.expandBy(buffer)
         if (bytes > maxFeatureSize || (bounds.width() * bounds.height() > maxFeatureArea)) {
 
           val center = bounds.center()
@@ -163,13 +163,13 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
             }
             else {
               if (gul != null)
-                r ++= splitFeature(fid, gul, maxFeatureSize, maxFeatureArea)
+                r ++= splitFeature(fid, gul, buffer, maxFeatureSize, maxFeatureArea)
               if (gll != null)
-                r ++= splitFeature(fid, gll, maxFeatureSize, maxFeatureArea)
+                r ++= splitFeature(fid, gll, buffer, maxFeatureSize, maxFeatureArea)
               if (gur != null)
-                r ++= splitFeature(fid, gur, maxFeatureSize, maxFeatureArea)
+                r ++= splitFeature(fid, gur, buffer, maxFeatureSize, maxFeatureArea)
               if (glr != null)
-                r ++= splitFeature(fid, glr, maxFeatureSize, maxFeatureArea)
+                r ++= splitFeature(fid, glr, buffer, maxFeatureSize, maxFeatureArea)
             }
             result ++= r
           }
@@ -206,16 +206,30 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     val singletile = TMSUtils.tileBounds(0, 0, zoom, tilesize)
     val maxfeaurearea = singletile.width() * singletile.height() * RasterizeVectorMapOp.MAX_TILES_PER_FEATURE
     val maxfeaturebytes = RasterizeVectorMapOp.MAX_BYTES_PER_FEATURE
+
+    val buffer = if (lineWidthPx == 1.0) {
+      0.0
+    }
+    else if (lineWidthPx > 1.0) {
+      (lineWidthPx - 1.0) * TMSUtils.resolution(zoom, tilesize)
+    }
+    else {
+      -lineWidthPx * TMSUtils.resolution(zoom, tilesize)
+    }
+
     val splitfeatures = vectorRDD.flatMap(feature => {
 
       var result = new ListBuffer[(FeatureIdWritable, Geometry)]
 
       val geom = feature._2
+
       if (geom.isValid && !geom.isEmpty) {
+
+        val gbounds = geom.getBounds.expandBy(buffer)
 
         val process = bounds match {
           case Some(filterBounds) =>
-            if (filterBounds.intersects(geom.getBounds)) {
+            if (filterBounds.intersects(gbounds)) {
               true
             }
             else {
@@ -226,7 +240,7 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
 
         if (process) {
           // make sure each geometry isn't too "large".  Split it into peices if it is
-          result ++= splitFeature(feature._1, geom, maxfeaturebytes, maxfeaurearea)
+          result ++= splitFeature(feature._1, geom, buffer, maxfeaturebytes, maxfeaurearea)
         }
       }
       else if (!geom.isValid) {
@@ -276,7 +290,9 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
       for (tileId <- tiles) {
         // make sure the geometry actually intersects this tile
         val t = TMSUtils.tileid(tileId.get(), zoom)
-        val tb = GeometryUtils.toPoly(TMSUtils.tileBounds(t, zoom, tilesize))
+
+        // it's easier to expand the tile bounds here than the geometry, so we will
+        val tb = GeometryUtils.toPoly(TMSUtils.tileBounds(t, zoom, tilesize).expandBy(buffer))
         if (GeometryUtils.intersects(tb, geom)) {
           result += ((tileId, geom))
         }

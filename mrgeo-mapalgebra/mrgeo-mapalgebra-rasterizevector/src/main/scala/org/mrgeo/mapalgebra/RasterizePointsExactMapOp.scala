@@ -25,8 +25,8 @@ object RasterizePointsExactMapOp extends MapOpRegistrar {
   }
 
   def create(vector:VectorMapOp, aggregator:String, cellsize:String, w:Double, s:Double, e:Double, n:Double,
-             column:String = null):RasterizePointsMapOp = {
-    new RasterizePointsMapOp(Some(vector), aggregator, cellsize, column, new Bounds(w, n, e, s).toCommaString)
+             column:String = null, lineWidth:Float=1.0f):RasterizePointsMapOp = {
+    new RasterizePointsMapOp(Some(vector), aggregator, cellsize, column, new Bounds(w, n, e, s).toCommaString, lineWidth)
   }
 
   override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =

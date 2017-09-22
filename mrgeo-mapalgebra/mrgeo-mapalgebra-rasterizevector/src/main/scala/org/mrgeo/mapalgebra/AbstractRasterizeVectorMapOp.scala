@@ -42,6 +42,7 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
   var aggregationType:VectorPainter.AggregationType = VectorPainter.AggregationType.MASK
   var tilesize:Int = -1
   var zoom:Int = -1
+  var lineWidthPx:Float = 1.0f
   var column:Option[String] = None
   var bounds:Option[Bounds] = None
   var rasterForBoundsMapOp:Option[RasterMapOp] = None
@@ -60,6 +61,7 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
     aggregationType = VectorPainter.AggregationType.valueOf(in.readUTF())
     tilesize = in.readInt()
     zoom = in.readInt()
+    lineWidthPx = in.readFloat()
     val hasColumn = in.readBoolean()
     column = if (hasColumn) {
       Some(in.readUTF())
@@ -80,6 +82,7 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
     out.writeUTF(aggregationType.toString)
     out.writeInt(tilesize)
     out.writeInt(zoom)
+    out.writeFloat(lineWidthPx)
     column match {
       case Some(c) =>
         out.writeBoolean(true)
@@ -145,7 +148,7 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
   }
 
   def initialize(node:ParserNode, variables:String => Option[ParserNode]):Unit = {
-    val usageMsg = "RasterizeVector and RasterizePoints take these arguments. (source vector, aggregation type, cellsize, [column], [bounds])"
+    val usageMsg = "RasterizeVector and RasterizePoints take these arguments. (source vector, aggregation type, cellsize, [column], [point/line width], [bounds (minx, miny, maxx, maxy], [raster for bounds] )"
     if (!(node.getNumChildren == 3 || node.getNumChildren == 4 || node.getNumChildren == 5 ||
           node.getNumChildren == 7 || node.getNumChildren == 8)) {
       throw new ParserException(usageMsg)
@@ -200,27 +203,101 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
     }
     zoom = TMSUtils.zoomForPixelSize(cellSize, tilesize)
 
-    if (node.getNumChildren > 3) {
+    var p1:Option[String] = None
+    var p2:Option[String] = None
+    if (node.getNumChildren > 3 ) {
       node.getNumChildren match {
         case 4 =>
-          try {
-            rasterForBoundsMapOp = RasterMapOp.decodeToRaster(node.getChild(3), variables)
-          }
-          catch {
-            case e:ParserException =>
-              // Since the fourth and last argument is not a raster, it must be a column
-              column = MapOp.decodeString(node.getChild(3))
-          }
+          p1 = parseForRaster(node, variables, 3)
         case 5 =>
-          rasterForBoundsMapOp = RasterMapOp.decodeToRaster(node.getChild(4), variables)
-          column = MapOp.decodeString(node.getChild(3))
+          p1 = parseForRaster(node, variables, 3)
+          p2 = parseForRaster(node, variables, 4)
         case 7 =>
           parseBounds(node, variables, 3)
         case 8 =>
-          column = MapOp.decodeString(node.getChild(3))
-          parseBounds(node, variables, 4)
+          try {
+            parseBounds(node, variables, 3)
+            p1 = parseForRaster(node, variables, 7)
+          }
+          catch {
+            case e:ParserException =>
+              p1 = parseForRaster(node, variables, 3)
+              parseBounds(node, variables, 4)
+          }
+        case 9 =>
+          try {
+            parseBounds(node, variables, 3)
+            p1 = parseForRaster(node, variables, 7)
+            p2 = parseForRaster(node, variables, 8)
+          }
+          catch {
+            case e:ParserException =>
+              try {
+                p1 = parseForRaster(node, variables, 3)
+                parseBounds(node, variables, 4)
+                p2 = parseForRaster(node, variables, 8)
+              }
+              catch {
+                case e:ParserException =>
+                    p1 = parseForRaster(node, variables, 3)
+                    p2 = parseForRaster(node, variables, 4)
+                    parseBounds(node, variables, 5)
+              }
+          }
         case _ => throw new ParserException(usageMsg)
       }
+    }
+
+    p1 match {
+      case Some(ps) =>
+        try {
+          if (ps.endsWith("m")) {
+            val meters = ps.replace("m", "").toDouble
+            val deg = meters / LatLng.METERS_PER_DEGREE
+            lineWidthPx = (deg / TMSUtils.resolution(zoom, tilesize)).toFloat
+          }
+          else if (ps.endsWith("p")) {
+            lineWidthPx = ps.replace("p", "").toFloat
+          }
+          else if (ps.endsWith("d")) {
+            val deg = ps.replace("d", "").toDouble
+            lineWidthPx = (deg / TMSUtils.resolution(zoom, tilesize)).toFloat
+          }
+          else {
+            column = Some(ps)
+          }
+        }
+        catch {
+          case _:NumberFormatException =>
+            column = Some(ps)
+        }
+      case _ =>
+    }
+
+    p2 match {
+      case Some(ps) =>
+        try {
+          if (ps.endsWith("m")) {
+            val meters = ps.replace("m", "").toDouble
+            val deg = meters / LatLng.METERS_PER_DEGREE
+            lineWidthPx = (deg / TMSUtils.resolution(zoom, tilesize)).toFloat
+          }
+          else if (ps.endsWith("p")) {
+            lineWidthPx = ps.replace("p", "").toFloat
+          }
+          else if (ps.endsWith("d")) {
+            val deg = ps.replace("d", "").toDouble
+            lineWidthPx = (deg / TMSUtils.resolution(zoom, tilesize)).toFloat
+          }
+          else {
+            column = Some(ps)
+          }
+        }
+        catch {
+          case _:NumberFormatException =>
+            column = Some(ps)
+        }
+      case _ =>
     }
 
     // All the arguments have been parsed, now validate the column based on the aggregation type
@@ -230,10 +307,10 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
           throw new ParserException("A column name must not be specified with MASK or MASK2")
         }
       case VectorPainter.AggregationType.SUM =>
-        // SUM can be used with or without a column name being specified. If used
-        // with a column name, it sums the values of that column for all features
-        // that intersects that pixel. Without the column, it sums the number of
-        // features that intersects the pixel.
+      // SUM can be used with or without a column name being specified. If used
+      // with a column name, it sums the values of that column for all features
+      // that intersects that pixel. Without the column, it sums the number of
+      // features that intersects the pixel.
       case _ =>
         // All other aggregation types require a column name
         if (column.isEmpty) {
@@ -243,7 +320,7 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
   }
 
   def initialize(vector:Option[VectorMapOp], aggregator:String, cellsize:String,
-                 bounds:Either[String, Option[RasterMapOp]], column:String):Unit = {
+                 bounds:Either[String, Option[RasterMapOp]], column:String, lineWidth:Float):Unit = {
     vectorMapOp = vector
     aggregationType =
         try {
@@ -296,10 +373,10 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
           throw new ParserException("A column name must not be specified with MASK or MASK2")
         }
       case VectorPainter.AggregationType.SUM =>
-        // SUM can be used with or without a column name being specified. If used
-        // with a column name, it sums the values of that column for all features
-        // that intersects that pixel. Without the column, it sums the number of
-        // features that intersects the pixel.
+      // SUM can be used with or without a column name being specified. If used
+      // with a column name, it sums the values of that column for all features
+      // that intersects that pixel. Without the column, it sums the number of
+      // features that intersects the pixel.
       case _ =>
         // All other aggregation types require a column name
         if (column.isEmpty) {
@@ -319,6 +396,9 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
       case Right(rbmo) =>
         this.rasterForBoundsMapOp = rbmo
     }
+
+    lineWidthPx = lineWidth
+
   }
 
   private def parseBounds(node:ParserNode, variables:String => Option[ParserNode], startIndex:Int):Unit = {
@@ -337,4 +417,14 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
     bounds = Some(new Bounds(b(0), b(1), b(2), b(3)))
   }
 
+  private def parseForRaster(node:ParserNode, variables:String => Option[ParserNode], index:Int) = {
+    try {
+      rasterForBoundsMapOp = RasterMapOp.decodeToRaster(node.getChild(index), variables)
+      None
+    }
+    catch {
+      case e:ParserException =>
+        MapOp.decodeString(node.getChild(index))
+    }
+  }
 }

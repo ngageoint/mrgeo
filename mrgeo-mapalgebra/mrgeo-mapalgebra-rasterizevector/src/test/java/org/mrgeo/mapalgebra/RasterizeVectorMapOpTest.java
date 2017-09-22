@@ -40,7 +40,8 @@ public class RasterizeVectorMapOpTest extends LocalRunnerTest
 {
 // only set this to true to generate new baseline images after correcting tests; image comparison
 // tests won't be run when is set to true
-public final static boolean GEN_BASELINE_DATA_ONLY = true;
+public final static boolean GEN_BASELINE_DATA_ONLY = false;
+
 private static final Logger log = LoggerFactory.getLogger(RasterizeVectorMapOpTest.class);
 private static MapOpTestUtils testUtils;
 private static String shapefile = "major_road_intersections_exploded";
@@ -116,8 +117,6 @@ public void rasterizeMaskBounds() throws Exception
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
   }
-
-
 }
 
 @Test
@@ -135,8 +134,6 @@ public void rasterizeMaskRasterBounds() throws Exception
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
   }
-
-
 }
 
 @Test(expected = Exception.class)
@@ -147,7 +144,6 @@ public void rasterizeOutOfBounds() throws Exception
 
   testUtils.runRasterExpression(this.conf, testname.getMethodName(),
       TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
-
 }
 
 @Test
@@ -170,7 +166,7 @@ public void rasterizeMask() throws Exception
 @Category(IntegrationTest.class)
 public void rasterizeSum() throws Exception
 {
-  String exp = "RasterizeVector([" + hdfsShapefile + "], \"SUM\", 0.0001716614)";
+  String exp = "RasterizeVector([" + hdfsShapefile + "], \"SUM\", '12z')";
   if (GEN_BASELINE_DATA_ONLY)
   {
     testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
@@ -181,6 +177,38 @@ public void rasterizeSum() throws Exception
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
   }
 
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void rasterizeSumPixel1() throws Exception
+{
+  String exp = "RasterizeVector([" + hdfsShapefile + "], 'SUM', '12z', '5p')";
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
+}
+
+@Test
+@Category(IntegrationTest.class)
+public void rasterizeSumPixel2() throws Exception
+{
+  String exp = "RasterizeVector([" + hdfsShapefile + "], 'SUM', 0.0001716614, '30m')";
+  if (GEN_BASELINE_DATA_ONLY)
+  {
+    testUtils.generateBaselineTif(this.conf, testname.getMethodName(), exp, -9999);
+  }
+  else
+  {
+    testUtils.runRasterExpression(this.conf, testname.getMethodName(),
+        TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999, exp);
+  }
 }
 
 @Test
@@ -369,13 +397,6 @@ public void sumWithBadBounds2() throws Exception
   MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
 }
 
-@Test(expected = ParserException.class)
-@Category(UnitTest.class)
-public void sumWithBadBounds1() throws Exception
-{
-  String exp = "RasterizeVector([" + hdfsShapefile + "], \"SUM\", 0.0001716614, \"" + column + "\", 68.85)";
-  MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
-}
 
 @Test(expected = ParserException.class)
 @Category(UnitTest.class)
