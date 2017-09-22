@@ -8,24 +8,24 @@
     <ows:Operation name="GetCapabilities">
       <ows:DCP>
         <ows:HTTP>
-          <ows:Get xlink:href="http://localhost:9998/wcs?"/>
-          <ows:Post xlink:href="http://localhost:9998/wcs?"/>
+          <ows:Get xlink:href="http://www.foo.bar:1234/wcs?"/>
+          <ows:Post xlink:href="http://www.foo.bar:1234/wcs?"/>
         </ows:HTTP>
       </ows:DCP>
     </ows:Operation>
     <ows:Operation name="DescribeCoverage">
       <ows:DCP>
         <ows:HTTP>
-          <ows:Get xlink:href="http://localhost:9998/wcs?"/>
-          <ows:Post xlink:href="http://localhost:9998/wcs?"/>
+          <ows:Get xlink:href="http://www.foo.bar:1234/wcs?"/>
+          <ows:Post xlink:href="http://www.foo.bar:1234/wcs?"/>
         </ows:HTTP>
       </ows:DCP>
     </ows:Operation>
     <ows:Operation name="GetCoverage">
       <ows:DCP>
         <ows:HTTP>
-          <ows:Get xlink:href="http://localhost:9998/wcs?"/>
-          <ows:Post xlink:href="http://localhost:9998/wcs?"/>
+          <ows:Get xlink:href="http://www.foo.bar:1234/wcs?"/>
+          <ows:Post xlink:href="http://www.foo.bar:1234/wcs?"/>
         </ows:HTTP>
       </ows:DCP>
     </ows:Operation>
