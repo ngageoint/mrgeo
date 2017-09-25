@@ -549,8 +549,6 @@ object IngestImage extends MrGeoDriver with Externalizable {
 
         val res = TMSUtils.resolution(zoom, tilesize)
 
-        //val scaledsize = w * h * bands * datasize
-
         if (log.isDebugEnabled) {
           logDebug("Image info:  " + image)
           logDebug("  bands:  " + bands)
@@ -601,7 +599,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
             }
 
           try {
-            gdal.ReprojectImage(src, scaled, src.GetProjection(), GDALUtils.EPSG4326, resample)
+            gdal.ReprojectImage(src, scaled, src.GetProjection(), scaled.GetProjection(), resample, 0, 0.125)
           }
           finally {
             // close the image
@@ -653,9 +651,7 @@ object IngestImage extends MrGeoDriver with Externalizable {
         }
       }
       else {
-        //if (log.isDebugEnabled) {
         logError("Could not open " + image)
-        //}
       }
     }
     catch {

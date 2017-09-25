@@ -24,16 +24,18 @@ private static WKTReader wktReader = new WKTReader();
 
 static public String wktGeometryFixer(String wktGeometry)
 {
-  String regex = "\\(|\\[|\\]|\\)";
-  String[] geometryArray = wktGeometry.split(regex);
   StringBuilder fixedGeometry = new StringBuilder();
-  String geometryType = "";
-  if (geometryArray.length > 1)
+
+  String regex = "[\\(\\[]";
+  String[] ga = wktGeometry.split(regex, 2);
+
+  if (ga.length > 1)
   {
-    geometryType = geometryArray[0];
-    if (geometryType.equalsIgnoreCase("EsriEnvelope"))
+    String geometryType =  ga[0].trim().toLowerCase();
+
+    if (geometryType.equals("esrienvelope"))
     {
-      String[] points = geometryArray[1].split(",");
+      String[] points = ga[1].split(",");
       if (points.length == 4)
       {
         fixedGeometry.append("POLYGON((");
@@ -48,40 +50,47 @@ static public String wktGeometryFixer(String wktGeometry)
     }
     else
     {
-      int parenthesesCount = 0;
-      for (int i = 1; i < geometryArray.length; i++)
-      {
-        String tmpGeom = geometryArray[i];
-        if (!tmpGeom.isEmpty() && !tmpGeom.equals(","))
-        {
-          if (fixedGeometry.length() > 0)
-          {
-            fixedGeometry.append(",");
-          }
-          StringBuilder tmpFixed = new StringBuilder(parsePoints(geometryArray[i], geometryType));
-          for (int j = 0; j < parenthesesCount; j++)
-          {
-            tmpFixed = new StringBuilder("(" + tmpFixed + ")");
-          }
-          fixedGeometry.append(tmpFixed);
-        }
+      fixedGeometry.append(geometryType.toUpperCase());
+      fixedGeometry.append('(');
 
-        //only count one time. e.g MULTIPOLYGON(((0 0,10 0,10 10,0 10,0 0)),((5 5,7 5,7 7,5 7, 5 5)))
-        //will generate array "MULTIPOLYGON, , , 0 0,10 0,10 10,0 10,0 0,...", there are two empty string
-        //in the array that indicate two parentheses we need to add back after parsing.
-        if (tmpGeom.isEmpty() && fixedGeometry.length() == 0)
+      StringBuilder subgeo = new StringBuilder();
+      for (char ch: ga[1].toCharArray())
+      {
+        if (ch == '(' || ch == '[')
         {
-          parenthesesCount++;
+          fixedGeometry.append('(');
+        }
+        else if (ch == ')' || ch == ']')
+        {
+          if (subgeo.length() > 0)
+          {
+            fixedGeometry.append(parsePoints(subgeo.toString(), geometryType));
+          }
+          fixedGeometry.append(')');
+          subgeo = new StringBuilder();
+        }
+        else if (ch == ',')
+        {
+          if (subgeo.length() == 0)
+          {
+            fixedGeometry.append(ch);
+          }
+          else
+          {
+            subgeo.append(ch);
+          }
+        }
+        else
+        {
+          subgeo.append(ch);
         }
       }
+      return fixedGeometry.toString();
     }
-  }
-  if (!geometryType.isEmpty() && fixedGeometry.length() != 0)
-  {
-    return geometryType + "(" + fixedGeometry + ")";
   }
   return wktGeometry;
 }
+
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled
 static public boolean isValidWktGeometry(String wktGeometry)
@@ -110,30 +119,36 @@ static public boolean isValidWktGeometry(String wktGeometry)
   return false;
 }
 
+
 static private String parsePoints(String geometryStr, String geometryType)
 {
-  StringBuilder geometry = new StringBuilder(geometryStr);
+  StringBuilder geometry = new StringBuilder();
+
   String regex = "\\,|\\  |\\\t";
   String[] pointsArray = geometryStr.split(regex);
 
-  if (geometryStr.contains("  ") || geometryStr.contains("\t"))
+  for (String pa : pointsArray)
   {
-    geometry = new StringBuilder();
-    for (String pa : pointsArray)
+    if (geometry.length() > 0)
     {
-      if (geometry.length() > 0)
-      {
-        geometry.append(",");
-      }
-      geometry.append(pa);
+      geometry.append(",");
     }
+    geometry.append(pa);
   }
 
-  if (geometryType.toLowerCase().contains("polygon"))
+  int len = pointsArray.length;
+
+  if (geometryType.contains("polygon"))
   {
     if (!pointsArray[0].trim().equalsIgnoreCase(pointsArray[pointsArray.length - 1].trim()))
     {
       geometry.append(",").append(pointsArray[0]); //close the polygon
+      len++;
+    }
+
+    for (int i = len; i < 4; i++)
+    {
+      geometry.append(",").append(pointsArray[0]); //pad the polygon to 4 points
     }
   }
   return geometry.toString();

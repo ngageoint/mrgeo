@@ -18,7 +18,7 @@ package org.mrgeo.ingest
 import java.io.{File, IOException}
 import java.net.URI
 
-import edu.umd.cs.findbugs.annotations.{CheckForNull, SuppressFBWarnings}
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileStatus, FileSystem, Path}
 import org.gdal.gdal.{Band, Dataset}
@@ -27,6 +27,7 @@ import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.utils.tms.{Bounds, TMSUtils}
 import org.mrgeo.utils.{GDALUtils, Logging}
 
+import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
 @SuppressFBWarnings(value = Array("PZLA_PREFER_ZERO_LENGTH_ARRAYS"), justification = "Need to return null")
@@ -36,8 +37,8 @@ class IngestInputProcessor extends Logging {
   private val inputs = new ListBuffer[String]()
   var skippreprocessing:Boolean = false
   var local:Boolean = false
-  private var conf:Configuration = null
-  private var nodataOverride:Array[Double] = null
+  private var conf:Configuration = _
+  private var nodataOverride:Array[Double] = _
   private var nodata:Option[Array[Double]] = None
   private var bounds:Option[Bounds] = None
   private var firstInput:Boolean = true
@@ -78,7 +79,59 @@ class IngestInputProcessor extends Logging {
   def getNodata = nodata.orNull
 
   def processInput(arg:String, recurse:Boolean):Unit = {
-    processInput(arg, recurse, true, false)
+    if (arg.contains("*") || arg.contains("?")) {
+      processInputGlob(arg, recurse)
+    }
+    else {
+      processInput(arg, recurse, existsCheck = true, argIsDir = false)
+    }
+  }
+
+  @SuppressFBWarnings(value = Array("PATH_TRAVERSAL_IN"), justification = "File() used to find GDAL images only")
+  private def processInputGlob(arg:String, recurse:Boolean):Unit = {
+
+    println("Input contains wildcards, this may take a while!")
+    val hier:mutable.Stack[String] = mutable.Stack()
+    val dirs = new ListBuffer[String]()
+
+    var p:Path = new Path(arg)
+    val fs:FileSystem = HadoopFileUtils.getFileSystem(conf, p)
+
+    while (p != null) {
+      if (p.isRoot) {
+        dirs += p.toUri.toASCIIString
+      }
+      else {
+        hier.push(p.getName)
+      }
+      p = p.getParent
+    }
+
+    while (hier.nonEmpty) {
+      val subdirs = new ListBuffer[String]()
+      val s = hier.pop()
+
+      dirs.foreach(dir => {
+        {
+          if (s.contains("*") || s.contains("?")) {
+            fs.globStatus(new Path(dir, s)).foreach(status => {
+              if (hier.isEmpty || fs.isDirectory(status.getPath)) {
+                subdirs += status.getPath.toUri.toASCIIString
+              }
+            })
+          }
+          else {
+            subdirs += new Path(dir, s).toUri.toASCIIString
+          }
+        }
+        dirs.clear()
+        dirs ++= subdirs
+      })
+    }
+
+    dirs.foreach(d => {
+      processInput(d, recurse, existsCheck = true, argIsDir = false)
+    })
   }
 
   // Should only be used privately - it is called recursively with the additional internal
@@ -91,9 +144,8 @@ class IngestInputProcessor extends Logging {
       f = new File(new URI(arg))
     }
     catch {
-      case ignored:Any => {
+      case ignored:Any =>
         f = new File(arg)
-      }
     }
 
     // recurse through directories
@@ -103,12 +155,11 @@ class IngestInputProcessor extends Logging {
         for (s <- dir) {
           try {
             if (s.isFile || (s.isDirectory && recurse)) {
-              processInput(s.getCanonicalFile.toURI.toString, recurse, false, s.isDirectory)
+              processInput(s.getCanonicalFile.toURI.toString, recurse, existsCheck = false, argIsDir = s.isDirectory)
             }
           }
           catch {
-            case ignored:IOException => {
-            }
+            case _:IOException =>
           }
         }
       }
@@ -149,9 +200,8 @@ class IngestInputProcessor extends Logging {
         }
       }
       catch {
-        case ignored:IOException => {
+        case _:IOException =>
           System.out.println(" can't load ***")
-        }
       }
     }
     else {
@@ -167,7 +217,7 @@ class IngestInputProcessor extends Logging {
           if (isADirectory && recurse) {
             val files:Array[FileStatus] = fs.listStatus(p)
             for (file <- files) {
-              processInput(file.getPath.toUri.toString, true, false, file.isDirectory)
+              processInput(file.getPath.toUri.toString, recurse = true, existsCheck = false, argIsDir = file.isDirectory)
             }
           }
           else {
@@ -205,12 +255,11 @@ class IngestInputProcessor extends Logging {
         }
       }
       catch {
-        case ignored:IOException => {
-        }
+        case _:IOException =>
       }
     }
 
-    return inputs
+    inputs
   }
 
   private def calculateParams(image:Dataset):Unit = {

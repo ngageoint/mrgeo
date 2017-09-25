@@ -135,7 +135,7 @@
   </build>
   <profiles>
     <profile>
-      <id>build-all</id>
+      <id>distribution-build-all</id>
       <activation>
         <activeByDefault>true</activeByDefault>
       </activation>

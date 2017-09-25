@@ -43,7 +43,7 @@
   </dependencyManagement>
   <profiles>
     <profile>
-      <id>build-all</id>
+      <id>cmd-build-all</id>
       <activation>
         <activeByDefault>true</activeByDefault>
       </activation>
@@ -62,12 +62,6 @@
     </profile>
     <profile>
       <id>build-ogc</id>
-      <activation>
-        <property>
-          <name>modules</name>
-          <value>ogc</value>
-        </property>
-      </activation>
       <modules>
         <module>mrgeo-cmd-core</module>
         <module>mrgeo-cmd-webserver</module>

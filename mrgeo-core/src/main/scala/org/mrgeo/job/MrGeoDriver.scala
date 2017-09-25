@@ -190,49 +190,6 @@ abstract class MrGeoDriver extends Logging {
     }
   }
 
-  def calculateMemoryFractions(job:JobArguments) = {
-    val exmem = if (job.executorMemKb > 0) {
-      job.executorMemKb
-    }
-    else {
-      job.memoryKb
-    }
-
-    val pmem = SparkUtils
-        .humantokb(MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_MAX_PROCESSING_MEM, "1G"))
-    val shufflefrac = MrGeoProperties.getInstance().getProperty(MrGeoConstants.MRGEO_SHUFFLE_FRACTION, "0.5").toDouble
-
-    if (shufflefrac < 0 || shufflefrac > 1) {
-      throw new IOException(MrGeoConstants.MRGEO_SHUFFLE_FRACTION + " must be between 0 and 1 (inclusive)")
-    }
-    val cachefrac = 1.0 - shufflefrac
-
-    val smemfrac = if (exmem > pmem * 2) {
-      (exmem - pmem).toDouble / exmem.toDouble
-    }
-    else {
-      0.5 // if less than 2x, 1/2 memory is for shuffle/cache
-    }
-
-    if (log.isInfoEnabled) {
-      val cfrac = smemfrac * cachefrac
-      val sfrac = smemfrac * shufflefrac
-      val pfrac = 1 - (cfrac + sfrac)
-      val p = (exmem * pfrac).toLong
-      val c = (exmem * cfrac).toLong
-      val s = (exmem * sfrac).toLong
-
-      logInfo("total memory:            " + SparkUtils.kbtohuman(exmem, "m"))
-      logInfo("mrgeo processing memory: " + SparkUtils.kbtohuman(p, "m") + " (" + pfrac + ")")
-      logInfo("shuffle/cache memory:    " + SparkUtils.kbtohuman(exmem - p, "m") + " (" + smemfrac + ")")
-      logInfo("    cache memory:   " + SparkUtils.kbtohuman(c, "m") + " (" + cfrac + ")")
-      logInfo("    shuffle memory: " + SparkUtils.kbtohuman(s, "m") + " (" + sfrac + ")")
-    }
-
-    // storage, shuffle fractions
-    (smemfrac * cachefrac, smemfrac * shufflefrac)
-
-  }
 
   protected def setupDependencies(job:JobArguments, hadoopConf:Configuration,
                                   additionalClasses:Option[scala.collection.immutable.Set[Class[_]]] = None):mutable.Set[String] = {

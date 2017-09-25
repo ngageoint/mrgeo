@@ -19,38 +19,17 @@ usage() {
     echo "  apache273 - Apache hadoop, version 2.7.3"
     echo "  apache272 - Apache hadoop, version 2.7.2"
     echo "  apache271 - Apache hadoop, version 2.7.1"
-    echo "  apache260 - Apache hadoop, version 2.6.0"
-    echo "  apache252 - Apache hadoop, version 2.5.2"
-    echo "  apache251 - Apache hadoop, version 2.5.1"
-    echo "  apache250 - Apache hadoop, version 2.5.0"
-    echo "  apache241 - Apache hadoop, version 2.4.1"
-    echo "  apache240 - Apache hadoop, version 2.4.0"
     echo "  cdh5121   - Cloudera hadoop 5.12.1"
     echo "  cdh5120   - Cloudera hadoop 5.12.0"
     echo "  cdh5111   - Cloudera hadoop 5.11.1"
     echo "  cdh5110   - Cloudera hadoop 5.11.0"
     echo "  cdh5101   - Cloudera hadoop 5.10.1"
     echo "  cdh5100   - Cloudera hadoop 5.10.0"
-    echo "  cdh591    - Cloudera hadoop 5.9.1"
-    echo "  cdh590    - Cloudera hadoop 5.9.0"
-    echo "  cdh582    - Cloudera hadoop 5.8.2"
-    echo "  cdh580    - Cloudera hadoop 5.8.0"
-    echo "  cdh571    - Cloudera hadoop 5.7.1"
-    echo "  cdh570    - Cloudera hadoop 5.7.0"
-    echo "  cdh560    - Cloudera hadoop 5.6.0"
-    echo "  cdh552    - Cloudera hadoop 5.5.2"
-    echo "  cdh551    - Cloudera hadoop 5.5.1"
-    echo "  cdh550    - Cloudera hadoop 5.5.0"
     echo "  emr580 - Amazon EMR 5.8.0 with hadoop 2.7.3"
     echo "  emr530 - Amazon EMR 5.3.0 with hadoop 2.7.3"
     echo "  emr500 - Amazon EMR 5.0.0 with hadoop 2.7.2"
     echo "  emr472 - Amazon EMR 4.7.2 with hadoop 2.7.2"
     echo "  emr471 - Amazon EMR 4.7.1 with hadoop 2.7.2"
-    echo "  emr470 - Amazon EMR 4.7.0 with hadoop 2.7.2"
-    echo "  emr460 - Amazon EMR 4.6.0 with hadoop 2.7.2"
-    echo "  emr450 - Amazon EMR 4.5.0 with hadoop 2.7.2"
-    echo "  emr440 - Amazon EMR 4.4.0 with hadoop 2.7.1"
-    echo "  mapr      - mapr hadoop"
     echo "phase:"
     echo "  build     - build a deployable version"
     echo "  test      - build, then run unit tests"
@@ -71,7 +50,6 @@ usage() {
     echo "  -p  --profile                  - turn on leak detection profiling"
     echo "  -s  --source                   - include source jars of dependencies (if available)"
     echo "  -sh --shade                    - generate the shaded (jar with dependencies) jars"
-    echo "  -y  --yarn                     - use hadoop YARN (for hadoop 2+, instead of mr1)"
     echo "  -q  --quiet                    - quiet (no prints from this script)"
     echo "other:"
     echo "  buildtype  - return the build type (apache273, cdh5121, etc.), no further processing is done"
@@ -245,13 +223,7 @@ while [ $# -gt 0 ] ; do
         MODULE="ogc"
         ARGS="$SKIPALL $ARGS"
         ;;
-    "apache220" | "apache230" | "apache240" | "apache241" )
-        BUILD=$1
-        ;;
-    "apache250" | "apache251" | "apache252")
-        BUILD=$1
-        ;;
-    "apache260" | "apache270" | "apache271" | "apache272" | "apache273")
+    "apache271" | "apache272" | "apache273")
         BUILD=$1
         ;;
     "emr580")
@@ -269,47 +241,17 @@ while [ $# -gt 0 ] ; do
     "emr471")
         BUILD="emr471"
         ;;
-    "emr470")
-        BUILD="emr470"
-        ;;
-    "emr460")
-        BUILD="emr460"
-        ;;
-    "emr450")
-        BUILD="emr450"
-        ;;
-    "emr440")
-        BUILD="emr440"
-        ;;
     "mapr")
         echo "*** MapR Hadoop is no longer supported"
         exit
         ;;
-    "cdh550" | "cdh550-yarn" | "cdh551" | "cdh551-yarn" | "cdh552" | "cdh552-yarn")
+    "cdh5100" | "cdh5101")
         BUILD=$1
         ;;
-    "cdh560" | "cdh560-yarn")
+    "cdh5110" | "cdh5111")
         BUILD=$1
         ;;
-    "cdh570" | "cdh570-yarn" | "cdh571" | "cdh571-yarn")
-        BUILD=$1
-        ;;
-    "cdh580" | "cdh580-yarn" | "cdh582" | "cdh582-yarn")
-        BUILD=$1
-        ;;
-    "cdh590" | "cdh590-yarn" | "cdh591" | "cdh591-yarn")
-        BUILD=$1
-        ;;
-    "cdh5100" | "cdh5100-yarn" | "cdh5101" | "cdh5101-yarn")
-        BUILD=$1
-        ;;
-    "cdh5110" | "cdh5110-yarn")
-        BUILD=$1
-        ;;
-    "cdh5111" | "cdh5111-yarn")
-        BUILD=$1
-        ;;
-    "cdh5120" | "cdh5120-yarn" | "cdh5121" | "cdh5121-yarn")
+    "cdh5120" | "cdh5121")
         BUILD=$1
         ;;
     "build")
@@ -371,9 +313,6 @@ while [ $# -gt 0 ] ; do
         ARGS=$ARGS" -Djava.version="$2
         shift 1
         ;;
-    "-y" | "--yarn")
-        USEYARN=true
-        ;;
     "-q" | "--quiet")
         QUIET="true"
         ;;
@@ -402,13 +341,6 @@ done
 if [ -n "$BUILDTYPE" ]; then
   echo $BUILD
   exit 0
-fi
-
-
-if [ -n "$USEYARN" ]; then
-    if [[ "$BUILD" != *-yarn ]] && [[ "$BUILD" != apache* ]]; then
-      BUILD=$BUILD-yarn
-    fi
 fi
 
 export HOME=$CWD

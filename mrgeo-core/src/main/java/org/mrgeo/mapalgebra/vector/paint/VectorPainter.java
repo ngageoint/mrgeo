@@ -41,6 +41,7 @@ private AggregationType aggregationType;
 private String valueColumn;
 private int tileSize;
 private int zoom;
+private float pixelwidth;
 private GeometryPainter rasterPainter;
 private Composite composite;
 private WritableRaster raster;
@@ -52,12 +53,13 @@ private WritableRaster totalRaster;
  * a map/reduce 1 job.
  */
 public VectorPainter(int zoom, AggregationType aggregationType, String valueColumn,
-    int tileSize)
+    int tileSize, float pixelwidth)
 {
   this.zoom = zoom;
   this.aggregationType = aggregationType;
   this.valueColumn = valueColumn;
   this.tileSize = tileSize;
+  this.pixelwidth = pixelwidth;
 }
 
 private static void averageRaster(WritableRaster raster, Raster count)
@@ -147,7 +149,7 @@ public void beforePaintingTile(long tileId)
     gr.setComposite(new AdditiveComposite());
     gr.setStroke(new BasicStroke(0));
 
-    totalPainter = new GeometryPainter(gr, totalRaster, new Color(1, 1, 1), new Color(0, 0, 0));
+    totalPainter = new GeometryPainter(gr, totalRaster, pixelwidth, new Color(1, 1, 1), new Color(0, 0, 0));
     totalPainter.setBounds(b);
   }
 
@@ -157,7 +159,7 @@ public void beforePaintingTile(long tileId)
   gr.setComposite(composite);
   gr.setStroke(new BasicStroke(0));
 
-  rasterPainter = new GeometryPainter(gr, raster, new Color(1, 1, 1),
+  rasterPainter = new GeometryPainter(gr, raster, pixelwidth, new Color(1, 1, 1),
       new Color(0, 0, 0));
   rasterPainter.setBounds(b);
 }

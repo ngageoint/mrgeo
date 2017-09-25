@@ -23,7 +23,7 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.yarn.api.records.{NodeReport, NodeState}
 import org.apache.hadoop.yarn.conf.YarnConfiguration
 import org.apache.spark.deploy.yarn.YarnSparkHadoopUtil
-import org.mrgeo.core.MrGeoProperties
+import org.mrgeo.core.{MrGeoConstants, MrGeoProperties}
 import org.mrgeo.data.DataProviderFactory
 import org.mrgeo.utils.logging.LoggingUtils
 import org.mrgeo.utils.{FileUtils, HadoopUtils, Logging, SparkUtils}
@@ -271,10 +271,34 @@ class JobArguments() extends Logging {
 
   def loadYarnSettings():Unit = {
 
-    val res = calculateYarnResources()
-
+    var (coresPerNode, totalNodes, memoryPerNode, totalMemory) = calculateYarnResources()
     val sparkConf = SparkUtils.getConfiguration
 
+    if (MrGeoProperties.getInstance.containsKey(MrGeoConstants.MRGEO_MAXCORES)) {
+      logInfo("Overriding maximum available cores per node from " +
+              coresPerNode + " to " + MrGeoProperties.getInstance.getProperty(MrGeoConstants.MRGEO_MAXCORES).toInt)
+      println("Overriding maximum available cores per node from " +
+              coresPerNode + " to " + MrGeoProperties.getInstance.getProperty(MrGeoConstants.MRGEO_MAXCORES).toInt)
+
+      coresPerNode = MrGeoProperties.getInstance.getProperty(MrGeoConstants.MRGEO_MAXCORES).toInt
+    }
+    if (MrGeoProperties.getInstance.containsKey(MrGeoConstants.MRGEO_MAXEXECUTORS)) {
+      logInfo("Overriding maximum available nodes from " +
+              totalNodes + " to " + MrGeoProperties.getInstance.getProperty(MrGeoConstants.MRGEO_MAXEXECUTORS).toInt)
+      println("Overriding maximum available nodes from " +
+              totalNodes + " to " + MrGeoProperties.getInstance.getProperty(MrGeoConstants.MRGEO_MAXEXECUTORS).toInt)
+
+      totalNodes = MrGeoProperties.getInstance.getProperty(MrGeoConstants.MRGEO_MAXEXECUTORS).toInt
+    }
+
+    if (MrGeoProperties.getInstance.containsKey(MrGeoConstants.MRGEO_MAXMEMORY)) {
+      logInfo("Overriding maximum available memory per node from " +
+              memoryPerNode + " to " + MrGeoProperties.getInstance.getProperty(MrGeoConstants.MRGEO_MAXMEMORY).toInt)
+      println("Overriding maximum available memory per node from " +
+              memoryPerNode + " to " + MrGeoProperties.getInstance.getProperty(MrGeoConstants.MRGEO_MAXMEMORY).toInt)
+
+      memoryPerNode = SparkUtils.humantokb(MrGeoProperties.getInstance.getProperty(MrGeoConstants.MRGEO_MAXMEMORY, Int.MaxValue.toString))
+    }
 
     val executorMemoryOverhead = sparkConf.getInt("spark.yarn.executor.memoryOverhead", 384)
 
@@ -283,8 +307,7 @@ class JobArguments() extends Logging {
     //    executorMemKb = (mem - actualoverhead) * 1024 // memory per worker
     //    memoryKb = res._4 * 1024  // total memory (includes driver memory)
 
-    val (newCores, newExecutors, newExMem) = adjustYarnParameters(res._1, res._2, res._3, res._4)
-    // val (newCores, newExecutors, newExMem) = adjustYarnParameters(80, 10, 241664, 2416640)
+    val (newCores, newExecutors, newExMem) = adjustYarnParameters(coresPerNode, totalNodes, memoryPerNode, totalMemory)
 
     val actualoverhead = (
         (if ((newExMem * YarnSparkHadoopUtil.MEMORY_OVERHEAD_FACTOR) > executorMemoryOverhead) {
@@ -295,10 +318,18 @@ class JobArguments() extends Logging {
           executorMemoryOverhead
         }) * 0.95).toLong
 
+//    cores = Math.min(newCores,
+//      MrGeoProperties.getInstance.getProperty(MrGeoConstants.MRGEO_MAXCORES, Int.MaxValue.toString).toInt)
+//    executors = Math.min(newExecutors,
+//      MrGeoProperties.getInstance.getProperty(MrGeoConstants.MRGEO_MAXEXECUTORS, Int.MaxValue.toString).toInt)
+//
+//    val maxMemKb = SparkUtils.humantokb(MrGeoProperties.getInstance.getProperty(MrGeoConstants.MRGEO_MAXMEMORY, Int.MaxValue.toString))
+//
+//    executorMemKb = Math.min((newExMem - actualoverhead) * 1024, maxMemKb)
     cores = newCores
     executors = newExecutors
     executorMemKb = (newExMem - actualoverhead) * 1024
-    memoryKb = res._4 * 1024
+    memoryKb = memoryPerNode * 1024
 
     if (sparkConf.getBoolean("spark.dynamicAllocation.enabled", defaultValue = false)) {
       logInfo("Configuring job (" + name + ") using Spark dynamic allocation, each executor (starting with "
