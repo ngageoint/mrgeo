@@ -80,8 +80,6 @@ public int run(CommandLine line, final Configuration conf,
 {
   log.info("BuildPyramid");
 
-  long start = System.currentTimeMillis();
-
   //if no arguments, print help
   if (line.getArgs().length == 0)
   {
@@ -150,19 +148,6 @@ public int run(CommandLine line, final Configuration conf,
       return -1;
     }
   }
-
-  long end = System.currentTimeMillis();
-  long duration = end - start;
-  PeriodFormatter formatter = new PeriodFormatterBuilder()
-      .appendHours()
-      .appendSuffix("h:")
-      .appendMinutes()
-      .appendSuffix("m:")
-      .appendSeconds()
-      .appendSuffix("s")
-      .toFormatter();
-  String formatted = formatter.print(new Period(duration));
-  log.info("BuildPyramid completed in " + formatted);
 
   return 0;
 }

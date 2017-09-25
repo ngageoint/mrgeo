@@ -17,15 +17,17 @@ package org.mrgeo.mapalgebra
 
 import java.io._
 
+import com.vividsolutions.jts.io.WKTWriter
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.hadoop.fs.Path
 import org.apache.spark.AccumulatorParam
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
+import org.apache.spark.storage.StorageLevel
 import org.mrgeo.data.raster.RasterWritable
 import org.mrgeo.data.rdd.VectorRDD
 import org.mrgeo.data.tile.TileIdWritable
 import org.mrgeo.data.vector.FeatureIdWritable
-import org.mrgeo.geometry.{Geometry, GeometryFactory}
+import org.mrgeo.geometry.{Geometry, GeometryFactory, WktConverter}
 import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.mapalgebra.parser.ParserNode
 import org.mrgeo.mapalgebra.raster.RasterMapOp
@@ -39,6 +41,7 @@ import scala.collection.mutable.ListBuffer
 object RasterizeVectorMapOp extends MapOpRegistrar {
 
   private val MAX_TILES_PER_FEATURE = 1000
+  private val MAX_BYTES_PER_FEATURE = 100000
 
   override def register:Array[String] = {
     Array[String]("rasterizevector", "rasterize")
@@ -47,25 +50,25 @@ object RasterizeVectorMapOp extends MapOpRegistrar {
   override def apply(node:ParserNode, variables:String => Option[ParserNode]):MapOp =
     new RasterizeVectorMapOp(node, variables)
 
-  def create(vector:VectorMapOp, aggregator:String, cellsize:String, column:String = null):RasterizeVectorMapOp = {
-    new RasterizeVectorMapOp(Some(vector), aggregator, cellsize, column, null.asInstanceOf[String])
+  def create(vector:VectorMapOp, aggregator:String, cellsize:String, column:String = null, lineWidth:Float = 1.0f):RasterizeVectorMapOp = {
+    new RasterizeVectorMapOp(Some(vector), aggregator, cellsize, column, null.asInstanceOf[String], lineWidth)
   }
 }
 
 
 class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externalizable {
 
-  def this(vector:Option[VectorMapOp], aggregator:String, cellsize:String, column:String, bounds:String) = {
+  def this(vector:Option[VectorMapOp], aggregator:String, cellsize:String, column:String, bounds:String, lineWidth:Float) = {
     this()
 
-    initialize(vector, aggregator, cellsize, Left(bounds), column)
+    initialize(vector, aggregator, cellsize, Left(bounds), column, lineWidth)
   }
 
   def this(vector:Option[VectorMapOp], aggregator:String, cellsize:String, column:String,
-           rasterForBounds:Option[RasterMapOp]) = {
+           rasterForBounds:Option[RasterMapOp], lineWidth:Float) = {
     this()
 
-    initialize(vector, aggregator, cellsize, Right(rasterForBounds), column)
+    initialize(vector, aggregator, cellsize, Right(rasterForBounds), column, lineWidth)
   }
 
 
@@ -80,10 +83,17 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
   }
 
   override def rasterize(vectorRDD:VectorRDD):RDD[(TileIdWritable, RasterWritable)] = {
-    val tiledVectors = vectorsToTiledRDD(vectorRDD)
+    val tiledVectors = vectorsToTiledRDD(vectorRDD).persist(StorageLevel.MEMORY_AND_DISK)
     val localRdd = new PairRDDFunctions(tiledVectors)
-    val groupedGeometries = localRdd.groupByKey()
-    rasterize(groupedGeometries)
+    val groupedGeometries = localRdd.groupByKey().persist(StorageLevel.MEMORY_AND_DISK)
+
+    try {
+      rasterize(groupedGeometries)
+    }
+    finally {
+      groupedGeometries.unpersist()
+      tiledVectors.unpersist()
+    }
   }
 
   def rasterize(groupedGeometries:RDD[(TileIdWritable, Iterable[Geometry])]):RDD[(TileIdWritable, RasterWritable)] = {
@@ -95,39 +105,89 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
           case Some(c) => c
           case None => null
         },
-        tilesize)
+        tilesize, lineWidthPx)
       rvp.beforePaintingTile(tileId.get)
+      //var cnt = 0
       for (geom <- U._2) {
         rvp.paintGeometry(geom)
+        //cnt += 1
       }
+      //println("t: " + tileId.get() + " cnt: " + cnt)
       val raster = rvp.afterPaintingTile()
       (tileId, raster)
     })
     result
   }
 
-  def splitFeature(fid:FeatureIdWritable, geom:Geometry, maxfeaturesize:Double):
+  def splitFeature(fid:FeatureIdWritable, geom:Geometry, buffer:Double, maxFeatureSize:Double, maxFeatureArea:Double):
   TraversableOnce[(FeatureIdWritable, Geometry)] = {
     var result = new ListBuffer[(FeatureIdWritable, Geometry)]
 
-    if (geom != null) {
-      val bounds:Bounds = geom.getBounds
-      if (bounds.width() * bounds.height() > maxfeaturesize) {
-        val center = bounds.center()
+    try {
+      if (geom != null) {
+        val bytes = {
+          val baos = new ByteArrayOutputStream(1024)
+          val dos = new DataOutputStream(baos)
+          try {
+            geom.write(dos)
+            baos.size()
+          }
+          finally {
+            dos.close()
+          }
+        }
 
-        val ul = new Bounds(bounds.w, center.lat, center.lon, bounds.n)
-        val ll = new Bounds(bounds.w, bounds.s, center.lon, center.lat)
-        val ur = new Bounds(center.lon, center.lat, bounds.e, bounds.n)
-        val lr = new Bounds(center.lon, bounds.s, bounds.e, center.lat)
+        val bounds:Bounds = geom.getBounds.expandBy(buffer)
+        if (bytes > maxFeatureSize || (bounds.width() * bounds.height() > maxFeatureArea)) {
 
-        result ++= splitFeature(fid, geom.clip(ul), maxfeaturesize)
-        result ++= splitFeature(fid, geom.clip(ll), maxfeaturesize)
-        result ++= splitFeature(fid, geom.clip(ur), maxfeaturesize)
-        result ++= splitFeature(fid, geom.clip(lr), maxfeaturesize)
+          val center = bounds.center()
+
+          val ul = new Bounds(bounds.w, center.lat, center.lon, bounds.n)
+          val ll = new Bounds(bounds.w, bounds.s, center.lon, center.lat)
+          val ur = new Bounds(center.lon, center.lat, bounds.e, bounds.n)
+          val lr = new Bounds(center.lon, bounds.s, bounds.e, center.lat)
+
+          var r = new ListBuffer[(FeatureIdWritable, Geometry)]
+
+          // JTS could exception with a "TopologyException: side location conflict" if the feature comes too close
+          // to the clip bounds.  If it does, we can only add the entire feature to the result...
+          try {
+            val gul = geom.clip(ul)
+            val gll = geom.clip(ll)
+            val gur = geom.clip(ur)
+            val glr = geom.clip(lr)
+
+            if (gul == null && gll == null && gur == null && glr == null) {
+              log.error("Got a bad clipping... " + geom)
+              result += ((fid, geom))
+            }
+            else {
+              if (gul != null)
+                r ++= splitFeature(fid, gul, buffer, maxFeatureSize, maxFeatureArea)
+              if (gll != null)
+                r ++= splitFeature(fid, gll, buffer, maxFeatureSize, maxFeatureArea)
+              if (gur != null)
+                r ++= splitFeature(fid, gur, buffer, maxFeatureSize, maxFeatureArea)
+              if (glr != null)
+                r ++= splitFeature(fid, glr, buffer, maxFeatureSize, maxFeatureArea)
+            }
+            result ++= r
+          }
+          catch {
+            case _:Throwable =>
+              log.error("Got a bad clipping... " + geom)
+              result += ((fid, geom))
+          }
+        }
+        else {
+          result += ((fid, geom))
+        }
       }
-      else {
+    }
+    catch {
+      case _:Throwable =>
+        result.clear()
         result += ((fid, geom))
-      }
     }
     result
   }
@@ -144,49 +204,56 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     val sizeAccumulator = vectorRDD.context.accumulator(0)(MaxSizeAccumulator)
 
     val singletile = TMSUtils.tileBounds(0, 0, zoom, tilesize)
-    val maxfeaturesize = singletile.width() * singletile.height() * RasterizeVectorMapOp.MAX_TILES_PER_FEATURE
+    val maxfeaurearea = singletile.width() * singletile.height() * RasterizeVectorMapOp.MAX_TILES_PER_FEATURE
+    val maxfeaturebytes = RasterizeVectorMapOp.MAX_BYTES_PER_FEATURE
+
+    val buffer = if (lineWidthPx == 1.0) {
+      0.0
+    }
+    else if (lineWidthPx > 1.0) {
+      (lineWidthPx - 1.0) * TMSUtils.resolution(zoom, tilesize)
+    }
+    else {
+      -lineWidthPx * TMSUtils.resolution(zoom, tilesize)
+    }
+
     val splitfeatures = vectorRDD.flatMap(feature => {
+
       var result = new ListBuffer[(FeatureIdWritable, Geometry)]
 
-      var maxsize:Int = 0
       val geom = feature._2
 
-      val process = bounds match {
-        case Some(filterBounds) =>
-          if (filterBounds.intersects(geom.getBounds)) {
-            true
-          }
-          else {
-            false
-          }
-        case None => true
-      }
+      if (geom.isValid && !geom.isEmpty) {
 
-      if (process) {
-        // make sure each geometry isn't too "large".  Split it in 4 peices if it is
-        splitFeature(feature._1, geom, maxfeaturesize).foreach(feature => {
-          val baos = new ByteArrayOutputStream(1024)
-          val dos = new DataOutputStream(baos)
-          try {
+        val gbounds = geom.getBounds.expandBy(buffer)
 
-            feature._2.write(dos)
-            val size = baos.size()
-            if (size > maxsize) {
-              maxsize = size
+        val process = bounds match {
+          case Some(filterBounds) =>
+            if (filterBounds.intersects(gbounds)) {
+              true
             }
-          }
-          finally {
-            dos.close()
-          }
+            else {
+              false
+            }
+          case None => true
+        }
 
-          result += feature
-        })
+        if (process) {
+          // make sure each geometry isn't too "large".  Split it into peices if it is
+          result ++= splitFeature(feature._1, geom, buffer, maxfeaturebytes, maxfeaurearea)
+        }
+      }
+      else if (!geom.isValid) {
+        log.error("Invalid Geometry: " + geom.getAttribute("GEOMETRY"))
+      }
+      else if (geom.isEmpty) {
+        log.error("Empty Geometry")
       }
 
-      sizeAccumulator.add(maxsize)
+      // println("\nSplit cnt: " + result.size)
+
       result
     })
-
 
     // An individual partition cannot serialize to more than Int.MaxValue bytes
     // because Spark cannot to load the partition into memory, and it results in
@@ -199,22 +266,21 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     // max geometry size.
 
     val splitfeaturescnt = splitfeatures.count()
-    val maxSize = sizeAccumulator.value
-    log.info("Max geometry serialized size is " + maxSize)
+    log.info("Max geometry serialized size is " + maxfeaturebytes)
+
     // The divide by 2 is not scientific. It simply doubles the number of partitions
     // which, during testing, significatnly improved performance.
-    //val geomsPerPartition = Integer.MAX_VALUE / maxSize / 8
+    // val geomsPerPartition = Integer.MAX_VALUE / maxSize / 2
 
     val path = new Path("/")
     val fs = HadoopFileUtils.getFileSystem(path)
     val blocksize = fs.getDefaultBlockSize(path)
 
-    val geomsPerPartition = blocksize / maxSize
+    val geomsPerPartition = blocksize / maxfeaturebytes
 
     log.info("Can fit " + geomsPerPartition + " geometries in a partition")
     val splitpartitions = (splitfeaturescnt / geomsPerPartition).toInt + 1
     log.info("Using " + splitpartitions + " partitions for RasterizeVector")
-
 
     val tilefeatures = splitfeatures.repartition(splitpartitions).flatMap(U => {
       val geom = U._2
@@ -224,7 +290,9 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
       for (tileId <- tiles) {
         // make sure the geometry actually intersects this tile
         val t = TMSUtils.tileid(tileId.get(), zoom)
-        val tb = GeometryUtils.toPoly(TMSUtils.tileBounds(t, zoom, tilesize))
+
+        // it's easier to expand the tile bounds here than the geometry, so we will
+        val tb = GeometryUtils.toPoly(TMSUtils.tileBounds(t, zoom, tilesize).expandBy(buffer))
         if (GeometryUtils.intersects(tb, geom)) {
           result += ((tileId, geom))
         }
@@ -234,6 +302,8 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
     })
 
     val count = tilefeatures.count()
+    log.info("Created " + count + " tile/geometry combos")
+
     // The divide by 2 is not scientific. It simply doubles the number of partitions
     // which, during testing, significatnly improved performance.
     val partitions = (count / geomsPerPartition).toInt + 1
@@ -243,8 +313,15 @@ class RasterizeVectorMapOp extends AbstractRasterizeVectorMapOp with Externaliza
   }
 
   def getOverlappingTiles(zoom:Int, tileSize:Int, bounds:Bounds):List[TileIdWritable] = {
+
+    if (bounds.w > bounds.e || bounds.s > bounds.n) {
+      log.error("FUNKY Bounds: " + bounds)
+      throw new IOException("FUNKY Bounds: " + bounds)
+    }
+
     var tiles = new ListBuffer[TileIdWritable]
     val tb:TileBounds = TMSUtils.boundsToTile(bounds, zoom, tileSize)
+    // println("\nTile cnt: " + (tb.width() * tb.height()))
     var tx:Long = tb.w
     while (tx <= tb.e) {
       var ty:Long = tb.s

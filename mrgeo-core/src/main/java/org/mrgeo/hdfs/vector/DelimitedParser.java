@@ -259,7 +259,7 @@ public Geometry parse(String line)
       //try to correct wktGeometry if possible
       try
       {
-        feature = GeometryFactory.fromJTS(_wktReader.read(WktGeometryUtils.wktGeometryFixer(wktGeometry)));
+        feature = GeometryFactory.fromJTS(_wktReader.read(WktGeometryUtils.wktGeometryFixer(wktGeometry)), attrs);
       }
       catch (Exception e2)
       {

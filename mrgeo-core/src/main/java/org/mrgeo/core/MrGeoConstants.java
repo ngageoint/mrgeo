@@ -70,15 +70,11 @@ public static final String MRGEO_HDFS_DISTRIBUTED_CACHE = "distributed.base";
  *
  */
 public static final String MRGEO_USE_KRYO = "use.kryo.serialization";
-public static final String MRGEO_MEMORYINTENSIVE_MULTIPLIER = "memoryintensive.multiplier";
-public static final String MRGEO_FORCE_MEMORYINTENSIVE = "force.memoryintensive.multiplier";
-
-public static final String MRGEO_MAX_PROCESSING_MEM = "max.processing.memory";
-public static final String MRGEO_SHUFFLE_FRACTION = "shuffle.fraction";
-
-
 public static final String MRGEO_AUTOPERSISTANCE = "autopersistance";
 
+public static final String MRGEO_MAXMEMORY = "max.memory";
+public static final String MRGEO_MAXEXECUTORS = "max.executors";
+public static final String MRGEO_MAXCORES = "max.cores";
 
 /*
  * Runtime configuration keys

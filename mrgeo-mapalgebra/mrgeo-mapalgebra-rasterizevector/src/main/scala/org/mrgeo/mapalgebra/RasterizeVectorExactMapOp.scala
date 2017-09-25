@@ -28,9 +28,9 @@ object RasterizeVectorExactMapOp extends MapOpRegistrar {
     new RasterizeVectorMapOp(node, variables)
 
   def create(vector:VectorMapOp, aggregator:String, cellsize:String,
-             w:Double, s:Double, e:Double, n:Double, column:String = null):RasterizeVectorMapOp = {
+             w:Double, s:Double, e:Double, n:Double, column:String = null, lineWidth:Float = 1.0f):RasterizeVectorMapOp = {
     new RasterizeVectorMapOp(Some(vector), aggregator, cellsize, column,
-      new Bounds(w, n, e, s).toCommaString)
+      new Bounds(w, n, e, s).toCommaString, lineWidth)
   }
 
   //  def create(vector: VectorMapOp, aggregator:String, cellsize:String, bounds:String, column:String = null) =

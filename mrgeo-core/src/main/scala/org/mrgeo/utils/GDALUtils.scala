@@ -202,9 +202,6 @@ object GDALUtils extends Logging {
 
     val f = File.createTempFile("gdal-tmp-", ".tif")
     val filename = f.getCanonicalPath
-    if (!f.delete()) {
-      throw new IOException("Error creating tmp file")
-    }
 
     val dataset = driver.Create(filename, width, height, bands, datatype)
 
@@ -224,10 +221,44 @@ object GDALUtils extends Logging {
           i += 1
         }
       }
+
       return dataset
     }
 
     null
+  }
+
+  def createUnfilledMemoryRaster(src:Dataset, width:Int, height:Int):Dataset = {
+
+    val bands:Int = src.getRasterCount
+    val datatype:Int = src.GetRasterBand(1).getDataType
+
+    createUnfilledMemoryRaster(width, height, bands, datatype)
+  }
+
+  def createUnfilledMemoryRaster(width:Int, height:Int, bands:Int, datatype:Int):Dataset = {
+    val driver:Driver = gdal.GetDriverByName("MEM")
+
+    driver.Create("InMem", width, height, bands, datatype)
+  }
+
+
+  def createUnfilledDiskBasedRaster(src:Dataset, width:Int, height:Int):Dataset = {
+
+    val bands:Int = src.getRasterCount
+    val datatype:Int = src.GetRasterBand(1).getDataType
+
+    createUnfilledDiskBasedRaster(width, height, bands, datatype)
+  }
+
+  def createUnfilledDiskBasedRaster(width:Int, height:Int, bands:Int, datatype:Int):Dataset = {
+
+    val driver:Driver = gdal.GetDriverByName("GTiff")
+
+    val f = File.createTempFile("gdal-tmp-", ".tif")
+    val filename = f.getCanonicalPath
+
+    driver.Create(filename, width, height, bands, datatype)
   }
 
 
@@ -406,9 +437,10 @@ object GDALUtils extends Logging {
     val files = image.GetFileList
 
     val driver = image.GetDriver()
-    if ("MEM".equals(driver.getShortName)) {
-      image.delete()
-    }
+//    if ("MEM".equals(driver.getShortName)) {
+//      image.delete()
+//    }
+    image.delete()
 
     // unlink the file from memory if is has been streamed
     for (f <- files) {

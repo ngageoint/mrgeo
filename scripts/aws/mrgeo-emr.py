@@ -200,23 +200,20 @@ yarnsite = {"Classification": "yarn-site",
                 "yarn.nodemanager.pmem-check-enabled": "false",
                 "yarn.nodemanager.vmem-check-enabled": "false",
                 "yarn.scheduler.minimum-allocation-mb": "1024",
-                "yarn.app.mapreduce.am.command-opts": "-Xmx820m",
                 "yarn.nodemanager.aux-services": "spark_shuffle",
-                "yarn.scheduler.maximum-allocation-vcores": "10",
                 "yarn.nodemanager.aux-services.spark_shuffle.class": "org.apache.spark.network.yarn.YarnShuffleService"
             },
             "Configurations": []
             }
 yarnsiteprops = yarnsite['Properties']
 if "yarn-site" in localConfigs:
-    print(localConfigs['yarn-site'])
+    # print(localConfigs['yarn-site'])
     for k, v in localConfigs['yarn-site'].iteritems():
         yarnsiteprops[k] = v
 configs.append(yarnsite)
 
 mapredsite = {"Classification": "mapred-site",
               "Properties": {
-                  "yarn.app.mapreduce.am.resource.mb": "1024"
               },
               "Configurations": []
               }
@@ -229,7 +226,10 @@ configs.append(mapredsite)
 # no core-site here, check the local config section
 if "core-site" in localConfigs:
     coresite = {"Classification": "core-site",
-                "Properties": {},
+                "Properties": {
+                   "fs.s3n.multipart.uploads.enabled": "false",
+                   "fs.s3.buckets.create.enabled": "false"
+                },
                 "Configurations": []
                 }
     coresiteprops = coresite['Properties']
@@ -240,9 +240,9 @@ if "core-site" in localConfigs:
 sparkdefaults = {"Classification": "spark-defaults",
                  "Properties": {
                      "spark.yarn.jar": "/usr/lib/spark/lib/spark-assembly.jar",
-                     "spark.network.timeout": "600",
+                     "spark.network.timeout": "600s",
                      "spark.driver.maxResultSize": "0",
-                     "spark.dynamicAllocation.enabled": "true",
+                     "spark.buffer.pageSize":"4m"
                  },
                  "Configurations": []
                  }

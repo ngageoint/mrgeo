@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AllColumns firstLineHeader="false">
+  <Column name="GEOMETRY" type="Nominal"/>
+</AllColumns>

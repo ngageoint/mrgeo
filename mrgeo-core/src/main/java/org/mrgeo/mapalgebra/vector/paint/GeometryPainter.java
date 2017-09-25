@@ -48,9 +48,10 @@ private WritableRaster raster;
 
 private Color fillColor;
 private Color backgroundColor;
+private float pixelWidth;
 private AffineTransform transform = new AffineTransform();
 
-public GeometryPainter(Graphics2D gr, WritableRaster raster, Color fillColor,
+public GeometryPainter(Graphics2D gr, WritableRaster raster, float pixelwidth, Color fillColor,
     Color backgroundColor)
 {
   this.gr = gr;
@@ -67,6 +68,8 @@ public GeometryPainter(Graphics2D gr, WritableRaster raster, Color fillColor,
 
   this.fillColor = fillColor;
   this.backgroundColor = backgroundColor;
+
+  this.pixelWidth = pixelwidth;
 }
 
 public Color getBackgroundColor()
@@ -146,7 +149,7 @@ public void paint(LineString ls)
   }
 
   gr.setColor(fillColor);
-  gr.setStroke(new BasicStroke(1));
+  gr.setStroke(new BasicStroke(pixelWidth));
   gr.draw(path);
 
 }
@@ -154,13 +157,13 @@ public void paint(LineString ls)
 public void paint(Point p)
 {
   gr.setColor(fillColor);
-  gr.setStroke(new BasicStroke(1));
+  gr.setStroke(new BasicStroke(pixelWidth));
 
   Point2D.Double dst = new Point2D.Double();
   transform.transform(new Point2D.Double(p.getX(), p.getY()), dst);
 
-  // System.out.println("p: x: " + p.getX() + " y: " + p.getY() + " xform: x: " + (int)dst.x +
-  // " y: " +(int) dst.y);
+//   System.out.println("p: x: " + p.getX() + " y: " + p.getY() + " xform: x: " + (int)dst.x +
+//   " y: " +(int) dst.y);
 
   // need to make a "line" 1 pixel long
   gr.drawLine((int) dst.x, (int) dst.y, (int) dst.x, (int) dst.y);

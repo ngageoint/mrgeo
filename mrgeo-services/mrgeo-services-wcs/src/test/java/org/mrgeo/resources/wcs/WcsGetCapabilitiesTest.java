@@ -15,6 +15,7 @@
  */
 package org.mrgeo.resources.wcs;
 
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -45,6 +46,11 @@ public static void setUpForJUnit()
   }
 }
 
+@Before
+public void setup()
+{
+  WcsGenerator.capabilities.clear();
+}
 /*
  * defaults to GetCapabilities request when no request type is specified
  */

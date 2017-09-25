@@ -61,7 +61,9 @@ public class WcsGenerator
 private static final Logger log = LoggerFactory.getLogger(WcsGenerator.class);
 private static final String WCS_VERSION = "1.1.0";
 private static final String WCS_SERVICE = "wcs";
-private static Map<Version, Document> capabilities = new HashMap<>();
+
+// Package Private for testing only
+static Map<Version, Document> capabilities = new HashMap<>();
 private static String baseURI = null;
 
 static

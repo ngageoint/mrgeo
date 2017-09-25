@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright 2009-2017. DigitalGlobe, Inc.
-  ~
-  ~  Licensed under the Apache License, Version 2.0 (the "License");
-  ~  you may not use this file except in compliance with the License.
-  ~  You may obtain a copy of the License at
-  ~
-  ~  http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and limitations under the License.
-  -->
+     ~ Copyright 2009-2017. DigitalGlobe, Inc.
+     ~
+     ~  Licensed under the Apache License, Version 2.0 (the "License");
+     ~  you may not use this file except in compliance with the License.
+     ~  You may obtain a copy of the License at
+     ~
+     ~  http://www.apache.org/licenses/LICENSE-2.0
+     ~
+     ~ Unless required by applicable law or agreed to in writing, software
+     ~ distributed under the License is distributed on an "AS IS" BASIS,
+     ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     ~ See the License for the specific language governing permissions and limitations under the License.
+-->
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.mrgeo</groupId>
@@ -27,7 +27,7 @@
     <hadoop.config>/etc/hadoop/conf</hadoop.config>
     <!-- compiler versions -->
     <java.version>1.8</java.version>
-    <scala.version>2.10.4</scala.version>
+    <scala.version>2.11.8</scala.version>
     <!-- Many of these default/specific to the cdh5.3.0/YARN version,
          they will be overridden with profiles for the other versions.  -->
     <accumulo.version>1.7.0</accumulo.version>
@@ -79,12 +79,12 @@
     <servlet-api.version>3.1.0</servlet-api.version>
     <slf4j.version>1.7.21</slf4j.version>
     <!--
-    Leave spark.version blank. This is always overridden
-    by version-specific profiles for CDH, Apache, EMR, etc...
-    Force change.
+         Leave spark.version blank. This is always overridden
+         by version-specific profiles for CDH, Apache, EMR, etc...
+         Force change.
     -->
-    <spark.version>1.6.1</spark.version>
-    <spark.scala.version>2.10</spark.scala.version>
+    <spark.version>2.2.0</spark.version>
+    <spark.scala.version>2.11</spark.scala.version>
     <spark.scope>compile</spark.scope>
     <xerces.version>2.9.1</xerces.version>
     <xml-apis.version>1.3.04</xml-apis.version>
@@ -243,7 +243,7 @@
               <id>enforce</id>
               <configuration>
                 <rules>
-                  <DependencyConvergence/>
+                  <DependencyConvergence />
                 </rules>
               </configuration>
               <goals>
@@ -783,55 +783,15 @@
          | release.arguments - any arguments to use for releases, usually blank
     -->
     <profile>
-      <id>cdh5121-yarn</id>
+      <id>cdh5121</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.12.1</hadoop.version>
         <mahout.version>0.9-cdh5.12.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.12.1</spark.version>
+        <scala.version>2.10.4</scala.version>
+        <spark.scala.version>2.10</spark.scala.version>
         <final.classifier>cdh5.12.1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh5121</id>
-      <properties>
-        <hadoop.version>2.6.0-mr1-cdh5.12.1</hadoop.version>
-        <hadoop.yarn.version>2.6.0-cdh5.12.1</hadoop.yarn.version>
-        <mahout.version>0.9-cdh5.12.1</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.6.0-cdh5.12.1</spark.version>
-        <final.classifier>cdh5.12.1-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh5120-yarn</id>
-      <properties>
-        <hadoop.version>2.6.0-cdh5.12.0</hadoop.version>
-        <mahout.version>0.9-cdh5.12.0</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.6.0-cdh5.12.0</spark.version>
-        <final.classifier>cdh5.12.0</final.classifier>
         <release.arguments />
       </properties>
       <dependencies>
@@ -844,36 +804,13 @@
     <profile>
       <id>cdh5120</id>
       <properties>
-        <hadoop.version>2.6.0-mr1-cdh5.12.0</hadoop.version>
-        <hadoop.yarn.version>2.6.0-cdh5.12.0</hadoop.yarn.version>
+        <hadoop.version>2.6.0-cdh5.12.0</hadoop.version>
         <mahout.version>0.9-cdh5.12.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.12.0</spark.version>
-        <final.classifier>cdh5.12.0-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh5111-yarn</id>
-      <properties>
-        <hadoop.version>2.6.0-cdh5.11.1</hadoop.version>
-        <mahout.version>0.9-cdh5.11.1</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.6.0-cdh5.11.1</spark.version>
-        <final.classifier>cdh5.11.1</final.classifier>
+        <final.classifier>cdh5.12.0</final.classifier>
+        <scala.version>2.10.4</scala.version>
+        <spark.scala.version>2.10</spark.scala.version>
         <release.arguments />
       </properties>
       <dependencies>
@@ -886,36 +823,13 @@
     <profile>
       <id>cdh5111</id>
       <properties>
-        <hadoop.version>2.6.0-mr1-cdh5.11.1</hadoop.version>
-        <hadoop.yarn.version>2.6.0-cdh5.11.1</hadoop.yarn.version>
+        <hadoop.version>2.6.0-cdh5.11.1</hadoop.version>
         <mahout.version>0.9-cdh5.11.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.11.1</spark.version>
-        <final.classifier>cdh5.11.1-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh5110-yarn</id>
-      <properties>
-        <hadoop.version>2.6.0-cdh5.11.0</hadoop.version>
-        <mahout.version>0.9-cdh5.11.0</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.6.0-cdh5.11.0</spark.version>
-        <final.classifier>cdh5.11.0</final.classifier>
+        <final.classifier>cdh5.11.1</final.classifier>
+        <scala.version>2.10.4</scala.version>
+        <spark.scala.version>2.10</spark.scala.version>
         <release.arguments />
       </properties>
       <dependencies>
@@ -928,36 +842,13 @@
     <profile>
       <id>cdh5110</id>
       <properties>
-        <hadoop.version>2.6.0-mr1-cdh5.11.0</hadoop.version>
-        <hadoop.yarn.version>2.6.0-cdh5.11.0</hadoop.yarn.version>
+        <hadoop.version>2.6.0-cdh5.11.0</hadoop.version>
         <mahout.version>0.9-cdh5.11.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.11.0</spark.version>
-        <final.classifier>cdh5.11.0-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh5101-yarn</id>
-      <properties>
-        <hadoop.version>2.6.0-cdh5.10.1</hadoop.version>
-        <mahout.version>0.9-cdh5.10.1</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.6.0-cdh5.10.1</spark.version>
-        <final.classifier>cdh5.10.1</final.classifier>
+        <final.classifier>cdh5.11.0</final.classifier>
+        <scala.version>2.10.4</scala.version>
+        <spark.scala.version>2.10</spark.scala.version>
         <release.arguments />
       </properties>
       <dependencies>
@@ -970,45 +861,16 @@
     <profile>
       <id>cdh5101</id>
       <properties>
-        <hadoop.version>2.6.0-mr1-cdh5.10.1</hadoop.version>
-        <hadoop.yarn.version>2.6.0-cdh5.10.1</hadoop.yarn.version>
+        <hadoop.version>2.6.0-cdh5.10.1</hadoop.version>
         <mahout.version>0.9-cdh5.10.1</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.10.1</spark.version>
-        <final.classifier>cdh5.10.1-mr1</final.classifier>
+        <final.classifier>cdh5.10.1</final.classifier>
+        <scala.version>2.10.4</scala.version>
+        <spark.scala.version>2.10</spark.scala.version>
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh5100-yarn</id>
-      <properties>
-        <hadoop.version>2.6.0-cdh5.10.0</hadoop.version>
-        <mahout.version>0.9-cdh5.10.0</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.6.0-cdh5.10.0</spark.version>
-        <final.classifier>cdh5.10.0</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
         <dependency>
           <groupId>org.glassfish.jersey.containers</groupId>
           <artifactId>jersey-container-servlet-core</artifactId>
@@ -1018,1027 +880,16 @@
     <profile>
       <id>cdh5100</id>
       <properties>
-        <hadoop.version>2.6.0-mr1-cdh5.10.0</hadoop.version>
-        <hadoop.yarn.version>2.6.0-cdh5.10.0</hadoop.yarn.version>
+        <hadoop.version>2.6.0-cdh5.10.0</hadoop.version>
         <mahout.version>0.9-cdh5.10.0</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.10.0</spark.version>
-        <final.classifier>cdh5.10.0-mr1</final.classifier>
+        <final.classifier>cdh5.10.0</final.classifier>
+        <scala.version>2.10.4</scala.version>
+        <spark.scala.version>2.10</spark.scala.version>
         <release.arguments />
       </properties>
       <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh591-yarn</id>
-      <properties>
-        <hadoop.version>2.6.0-cdh5.9.1</hadoop.version>
-        <mahout.version>0.9-cdh5.9.1</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.6.0-cdh5.9.1</spark.version>
-        <final.classifier>cdh5.9.1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh591</id>
-      <properties>
-        <hadoop.version>2.6.0-mr1-cdh5.9.1</hadoop.version>
-        <hadoop.yarn.version>2.6.0-cdh5.9.1</hadoop.yarn.version>
-        <mahout.version>0.9-cdh5.9.1</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.6.0-cdh5.9.1</spark.version>
-        <final.classifier>cdh5.9.1-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh590-yarn</id>
-      <properties>
-        <hadoop.version>2.6.0-cdh5.9.0</hadoop.version>
-        <mahout.version>0.9-cdh5.9.0</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.6.0-cdh5.9.0</spark.version>
-        <final.classifier>cdh5.9.0</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh590</id>
-      <properties>
-        <hadoop.version>2.6.0-mr1-cdh5.9.0</hadoop.version>
-        <hadoop.yarn.version>2.6.0-cdh5.9.0</hadoop.yarn.version>
-        <mahout.version>0.9-cdh5.9.0</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.6.0-cdh5.9.0</spark.version>
-        <final.classifier>cdh5.9.0-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh582-yarn</id>
-      <properties>
-        <hadoop.version>2.6.0-cdh5.8.2</hadoop.version>
-        <mahout.version>0.9-cdh5.8.2</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.6.0-cdh5.8.2</spark.version>
-        <final.classifier>cdh5.8.2</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh582</id>
-      <properties>
-        <hadoop.version>2.6.0-mr1-cdh5.8.2</hadoop.version>
-        <hadoop.yarn.version>2.6.0-cdh5.8.2</hadoop.yarn.version>
-        <mahout.version>0.9-cdh5.8.2</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.6.0-cdh5.8.2</spark.version>
-        <final.classifier>cdh5.8.2-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh580-yarn</id>
-      <properties>
-        <hadoop.version>2.6.0-cdh5.8.0</hadoop.version>
-        <mahout.version>0.9-cdh5.8.0</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.6.0-cdh5.8.0</spark.version>
-        <final.classifier>cdh5.8.0</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh580</id>
-      <properties>
-        <hadoop.version>2.6.0-mr1-cdh5.8.0</hadoop.version>
-        <hadoop.yarn.version>2.6.0-cdh5.8.0</hadoop.yarn.version>
-        <mahout.version>0.9-cdh5.8.0</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.6.0-cdh5.8.0</spark.version>
-        <final.classifier>cdh5.8.0-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh571-yarn</id>
-      <properties>
-        <hadoop.version>2.6.0-cdh5.7.1</hadoop.version>
-        <mahout.version>0.9-cdh5.7.1</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.6.0-cdh5.7.1</spark.version>
-        <final.classifier>cdh5.7.1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh571</id>
-      <properties>
-        <hadoop.version>2.6.0-mr1-cdh5.7.1</hadoop.version>
-        <hadoop.yarn.version>2.6.0-cdh5.7.1</hadoop.yarn.version>
-        <mahout.version>0.9-cdh5.7.1</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.6.0-cdh5.7.1</spark.version>
-        <final.classifier>cdh5.7.1-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh570-yarn</id>
-      <properties>
-        <hadoop.version>2.6.0-cdh5.7.0</hadoop.version>
-        <mahout.version>0.9-cdh5.7.0</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.6.0-cdh5.7.0</spark.version>
-        <final.classifier>cdh5.7.0</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh570</id>
-      <properties>
-        <hadoop.version>2.6.0-mr1-cdh5.7.0</hadoop.version>
-        <hadoop.yarn.version>2.6.0-cdh5.7.0</hadoop.yarn.version>
-        <mahout.version>0.9-cdh5.7.0</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.6.0-cdh5.7.0</spark.version>
-        <final.classifier>cdh5.7.0-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh560-yarn</id>
-      <properties>
-        <hadoop.version>2.6.0-cdh5.6.0</hadoop.version>
-        <mahout.version>0.9-cdh5.6.0</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.5.0-cdh5.6.0</spark.version>
-        <final.classifier>cdh5.6.0</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh560</id>
-      <properties>
-        <hadoop.version>2.6.0-mr1-cdh5.6.0</hadoop.version>
-        <hadoop.yarn.version>2.6.0-cdh5.6.0</hadoop.yarn.version>
-        <mahout.version>0.9-cdh5.6.0</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.5.0-cdh5.6.0</spark.version>
-        <final.classifier>cdh5.6.0-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh552-yarn</id>
-      <properties>
-        <hadoop.version>2.6.0-cdh5.5.2</hadoop.version>
-        <mahout.version>0.9-cdh5.5.2</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.5.0-cdh5.5.2</spark.version>
-        <final.classifier>cdh5.5.2</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh552</id>
-      <properties>
-        <hadoop.version>2.6.0-mr1-cdh5.5.2</hadoop.version>
-        <hadoop.yarn.version>2.6.0-cdh5.5.2</hadoop.yarn.version>
-        <mahout.version>0.9-cdh5.5.2</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.5.0-cdh5.5.1</spark.version>
-        <final.classifier>cdh5.5.2-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh551-yarn</id>
-      <properties>
-        <hadoop.version>2.6.0-cdh5.5.1</hadoop.version>
-        <mahout.version>0.9-cdh5.5.1</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.5.0-cdh5.5.1</spark.version>
-        <final.classifier>cdh5.5.1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh551</id>
-      <properties>
-        <hadoop.version>2.6.0-mr1-cdh5.5.1</hadoop.version>
-        <hadoop.yarn.version>2.6.0-cdh5.5.1</hadoop.yarn.version>
-        <mahout.version>0.9-cdh5.5.1</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.5.0-cdh5.5.1</spark.version>
-        <final.classifier>cdh5.5.1-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh550-yarn</id>
-      <properties>
-        <hadoop.version>2.6.0-cdh5.5.0</hadoop.version>
-        <mahout.version>0.9-cdh5.5.0</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.5.0-cdh5.5.0</spark.version>
-        <final.classifier>cdh5.5.0</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh550</id>
-      <properties>
-        <hadoop.version>2.6.0-mr1-cdh5.5.0</hadoop.version>
-        <hadoop.yarn.version>2.6.0-cdh5.5.0</hadoop.yarn.version>
-        <mahout.version>0.9-cdh5.5.0</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.5.0-cdh5.5.0</spark.version>
-        <final.classifier>cdh5.5.0-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh548-yarn</id>
-      <properties>
-        <hadoop.version>2.6.0-cdh5.4.8</hadoop.version>
-        <mahout.version>0.9-cdh5.4.8</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.3.0-cdh5.4.8</spark.version>
-        <final.classifier>cdh5.4.8</final.classifier>
-        <release.arguments />
-      </properties>
-    </profile>
-    <profile>
-      <id>cdh548</id>
-      <properties>
-        <hadoop.version>2.6.0-mr1-cdh5.4.8</hadoop.version>
-        <hadoop.yarn.version>2.6.0-cdh5.4.8</hadoop.yarn.version>
-        <mahout.version>0.9-cdh5.4.8</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.3.0-cdh5.4.8</spark.version>
-        <final.classifier>cdh5.4.8-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh547-yarn</id>
-      <properties>
-        <hadoop.version>2.6.0-cdh5.4.7</hadoop.version>
-        <mahout.version>0.9-cdh5.4.7</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.3.0-cdh5.4.7</spark.version>
-        <final.classifier>cdh5.4.7</final.classifier>
-        <release.arguments />
-      </properties>
-    </profile>
-    <profile>
-      <id>cdh547</id>
-      <properties>
-        <hadoop.version>2.6.0-mr1-cdh5.4.7</hadoop.version>
-        <hadoop.yarn.version>2.6.0-cdh5.4.7</hadoop.yarn.version>
-        <mahout.version>0.9-cdh5.4.7</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.3.0-cdh5.4.7</spark.version>
-        <final.classifier>cdh5.4.7-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh545-yarn</id>
-      <properties>
-        <hadoop.version>2.6.0-cdh5.4.5</hadoop.version>
-        <mahout.version>0.9-cdh5.4.5</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.3.0-cdh5.4.5</spark.version>
-        <final.classifier>cdh5.4.5</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies />
-    </profile>
-    <profile>
-      <id>cdh545</id>
-      <properties>
-        <hadoop.version>2.6.0-mr1-cdh5.4.5</hadoop.version>
-        <hadoop.yarn.version>2.6.0-cdh5.4.5</hadoop.yarn.version>
-        <mahout.version>0.9-cdh5.4.5</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.3.0-cdh5.4.5</spark.version>
-        <final.classifier>cdh5.4.5-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh544-yarn</id>
-      <properties>
-        <hadoop.version>2.6.0-cdh5.4.4</hadoop.version>
-        <mahout.version>0.9-cdh5.4.4</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.3.0-cdh5.4.4</spark.version>
-        <final.classifier>cdh5.4.4</final.classifier>
-        <release.arguments />
-      </properties>
-    </profile>
-    <profile>
-      <id>cdh544</id>
-      <properties>
-        <hadoop.version>2.6.0-mr1-cdh5.4.4</hadoop.version>
-        <hadoop.yarn.version>2.6.0-cdh5.4.4</hadoop.yarn.version>
-        <mahout.version>0.9-cdh5.4.4</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.3.0-cdh5.4.4</spark.version>
-        <final.classifier>cdh5.4.4-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh543-yarn</id>
-      <properties>
-        <hadoop.version>2.6.0-cdh5.4.3</hadoop.version>
-        <mahout.version>0.9-cdh5.4.3</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.3.0-cdh5.4.3</spark.version>
-        <final.classifier>cdh5.4.3</final.classifier>
-        <release.arguments />
-      </properties>
-    </profile>
-    <profile>
-      <id>cdh543</id>
-      <properties>
-        <hadoop.version>2.6.0-mr1-cdh5.4.3</hadoop.version>
-        <hadoop.yarn.version>2.6.0-cdh5.4.3</hadoop.yarn.version>
-        <mahout.version>0.9-cdh5.4.3</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.3.0-cdh5.4.3</spark.version>
-        <final.classifier>cdh5.4.3-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh542-yarn</id>
-      <properties>
-        <hadoop.version>2.6.0-cdh5.4.2</hadoop.version>
-        <mahout.version>0.9-cdh5.4.2</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.3.0-cdh5.4.2</spark.version>
-        <final.classifier>cdh5.4.2</final.classifier>
-        <release.arguments />
-      </properties>
-    </profile>
-    <profile>
-      <id>cdh542</id>
-      <properties>
-        <hadoop.version>2.6.0-mr1-cdh5.4.2</hadoop.version>
-        <hadoop.yarn.version>2.6.0-cdh5.4.2</hadoop.yarn.version>
-        <mahout.version>0.9-cdh5.4.2</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.3.0-cdh5.4.2</spark.version>
-        <final.classifier>cdh5.4.2-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh541-yarn</id>
-      <properties>
-        <hadoop.version>2.6.0-cdh5.4.1</hadoop.version>
-        <mahout.version>0.9-cdh5.4.1</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.3.0-cdh5.4.1</spark.version>
-        <final.classifier>cdh5.4.1</final.classifier>
-        <release.arguments />
-      </properties>
-    </profile>
-    <profile>
-      <id>cdh541</id>
-      <properties>
-        <hadoop.version>2.6.0-mr1-cdh5.4.1</hadoop.version>
-        <hadoop.yarn.version>2.6.0-cdh5.4.1</hadoop.yarn.version>
-        <mahout.version>0.9-cdh5.4.1</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.3.0-cdh5.4.1</spark.version>
-        <final.classifier>cdh5.4.1-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh540-yarn</id>
-      <properties>
-        <hadoop.version>2.6.0-cdh5.4.0</hadoop.version>
-        <mahout.version>0.9-cdh5.4.0</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.3.0-cdh5.4.0</spark.version>
-        <final.classifier>cdh5.4.0</final.classifier>
-        <release.arguments />
-      </properties>
-    </profile>
-    <profile>
-      <id>cdh540</id>
-      <properties>
-        <hadoop.version>2.6.0-mr1-cdh5.4.0</hadoop.version>
-        <hadoop.yarn.version>2.6.0-cdh5.4.0</hadoop.yarn.version>
-        <mahout.version>0.9-cdh5.4.0</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.3.0-cdh5.4.0</spark.version>
-        <final.classifier>cdh5.4.0-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh533-yarn</id>
-      <properties>
-        <hadoop.version>2.5.0-cdh5.3.3</hadoop.version>
-        <mahout.version>0.9-cdh5.3.3</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.2.0-cdh5.3.3</spark.version>
-        <final.classifier>cdh5.3.3</final.classifier>
-        <release.arguments />
-      </properties>
-    </profile>
-    <profile>
-      <id>cdh533</id>
-      <properties>
-        <hadoop.version>2.5.0-mr1-cdh5.3.3</hadoop.version>
-        <hadoop.yarn.version>2.5.0-cdh5.3.3</hadoop.yarn.version>
-        <mahout.version>0.9-cdh5.3.3</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.2.0-cdh5.3.3</spark.version>
-        <final.classifier>cdh5.3.3-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh532-yarn</id>
-      <properties>
-        <hadoop.version>2.5.0-cdh5.3.2</hadoop.version>
-        <mahout.version>0.9-cdh5.3.2</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.2.0-cdh5.3.2</spark.version>
-        <final.classifier>cdh5.3.2</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <dependency>
-          <groupId>org.apache.spark</groupId>
-          <artifactId>spark-core_${spark.scala.version}</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh532</id>
-      <properties>
-        <hadoop.version>2.5.0-mr1-cdh5.3.2</hadoop.version>
-        <hadoop.yarn.version>2.5.0-cdh5.3.2</hadoop.yarn.version>
-        <mahout.version>0.9-cdh5.3.2</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.2.0-cdh5.3.2</spark.version>
-        <final.classifier>cdh5.3.2-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <dependency>
-          <groupId>org.apache.spark</groupId>
-          <artifactId>spark-core_${spark.scala.version}</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>org.apache.hadoop</groupId>
-          <artifactId>hadoop-yarn-api</artifactId>
-        </dependency>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh531-yarn</id>
-      <properties>
-        <hadoop.version>2.5.0-cdh5.3.1</hadoop.version>
-        <mahout.version>0.9-cdh5.3.1</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.2.0-cdh5.3.1</spark.version>
-        <final.classifier>cdh5.3.1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <dependency>
-          <groupId>org.apache.spark</groupId>
-          <artifactId>spark-core_${spark.scala.version}</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh531</id>
-      <properties>
-        <hadoop.version>2.5.0-mr1-cdh5.3.1</hadoop.version>
-        <hadoop.yarn.version>2.5.0-cdh5.3.1</hadoop.yarn.version>
-        <mahout.version>0.9-cdh5.3.1</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.2.0-cdh5.3.1</spark.version>
-        <final.classifier>cdh5.3.1-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <dependency>
-          <groupId>org.apache.spark</groupId>
-          <artifactId>spark-core_${spark.scala.version}</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>org.apache.hadoop</groupId>
-          <artifactId>hadoop-yarn-api</artifactId>
-        </dependency>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh530-yarn</id>
-      <properties>
-        <hadoop.version>2.5.0-cdh5.3.0</hadoop.version>
-        <mahout.version>0.9-cdh5.3.0</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.2.0-cdh5.3.0</spark.version>
-        <final.classifier>cdh5.3.0</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <dependency>
-          <groupId>org.apache.spark</groupId>
-          <artifactId>spark-core_${spark.scala.version}</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>cdh530</id>
-      <properties>
-        <hadoop.version>2.5.0-mr1-cdh5.3.0</hadoop.version>
-        <hadoop.yarn.version>2.5.0-cdh5.3.0</hadoop.yarn.version>
-        <mahout.version>0.9-cdh5.3.0</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.2.0-cdh5.3.0</spark.version>
-        <final.classifier>cdh5.3.0-mr1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <dependency>
-          <groupId>org.apache.spark</groupId>
-          <artifactId>spark-core_${spark.scala.version}</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>org.apache.hadoop</groupId>
-          <artifactId>hadoop-yarn-api</artifactId>
-        </dependency>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>apache220</id>
-      <properties>
-        <hadoop.version>2.2.0</hadoop.version>
-        <mahout.version>0.7</mahout.version>
-        <protobuf.version>2.4.1</protobuf.version>
-        <spark.version>1.6.1</spark.version>
-        <final.classifier>2.2.0</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>apache230</id>
-      <properties>
-        <hadoop.version>2.3.0</hadoop.version>
-        <mahout.version>0.7</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.6.1</spark.version>
-        <final.classifier>2.3.0</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>apache240</id>
-      <properties>
-        <hadoop.version>2.4.0</hadoop.version>
-        <mahout.version>0.7</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.6.1</spark.version>
-        <final.classifier>2.4.0</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>apache241</id>
-      <properties>
-        <hadoop.version>2.4.1</hadoop.version>
-        <mahout.version>0.7</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.6.1</spark.version>
-        <final.classifier>2.4.1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>apache250</id>
-      <properties>
-        <hadoop.version>2.5.0</hadoop.version>
-        <mahout.version>0.7</mahout.version>
-        <protobuf.version>2.4.1</protobuf.version>
-        <spark.version>1.6.1</spark.version>
-        <final.classifier>2.5.0</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>apache251</id>
-      <properties>
-        <hadoop.version>2.5.1</hadoop.version>
-        <mahout.version>0.7</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.6.1</spark.version>
-        <final.classifier>2.5.1</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>apache252</id>
-      <properties>
-        <hadoop.version>2.5.2</hadoop.version>
-        <mahout.version>0.7</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.6.1</spark.version>
-        <final.classifier>2.5.2</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>apache260</id>
-      <properties>
-        <hadoop.version>2.6.0</hadoop.version>
-        <mahout.version>0.7</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <spark.version>1.6.1</spark.version>
-        <final.classifier>2.6.0</final.classifier>
-        <release.arguments />
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
         <dependency>
           <groupId>commons-httpclient</groupId>
           <artifactId>commons-httpclient</artifactId>
@@ -2070,6 +921,13 @@
           <artifactId>commons-httpclient</artifactId>
           <version>${commons-httpclient.version}</version>
           <scope>test</scope>
+        </dependency>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>org.apache.httpcomponents</groupId>
+          <artifactId>httpclient</artifactId>
+          <version>${httpcomponents.version}</version>
+          <scope>${hadoop.scope}</scope>
         </dependency>
         <dependency>
           <groupId>org.glassfish.jersey.containers</groupId>
@@ -2106,7 +964,7 @@
     <profile>
       <id>apache273</id>
       <properties>
-        <aws.version>1.7.4</aws.version>
+        <aws.version>1.10.6</aws.version>
         <aws.s3.version>1.10.6</aws.s3.version>
         <hadoop.version>2.7.3</hadoop.version>
         <scala.version>2.11.8</scala.version>
@@ -2153,8 +1011,10 @@
         <slf4j.version>1.7.10</slf4j.version>
         <final.classifier>emr5.8.0</final.classifier>
         <release.arguments />
-        <gdal.version>1.11.1</gdal.version>
+        <gdal.version>2.1.2</gdal.version>
+        <scala.version>2.11.8</scala.version>
         <spark.version>2.2.0</spark.version>
+        <spark.scala.version>2.11</spark.scala.version>
         <aws.version>1.11.160</aws.version>
         <aws.s3.version>1.11.160</aws.s3.version>
         <aws.scope>provided</aws.scope>
@@ -2191,6 +1051,8 @@
         <aws.version>1.10.6</aws.version>
         <aws.s3.version>1.10.6</aws.s3.version>
         <aws.scope>provided</aws.scope>
+        <scala.version>2.10.4</scala.version>
+        <spark.scala.version>2.10</spark.scala.version>
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -2224,6 +1086,8 @@
         <aws.version>1.10.6</aws.version>
         <aws.s3.version>1.10.6</aws.s3.version>
         <aws.scope>provided</aws.scope>
+        <scala.version>2.10.4</scala.version>
+        <spark.scala.version>2.10</spark.scala.version>
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -2252,6 +1116,8 @@
         <release.arguments />
         <gdal.version>1.11.1</gdal.version>
         <spark.version>1.6.2</spark.version>
+        <scala.version>2.10.4</scala.version>
+        <spark.scala.version>2.10</spark.scala.version>
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -2280,134 +1146,8 @@
         <release.arguments />
         <gdal.version>1.11.1</gdal.version>
         <spark.version>1.6.1</spark.version>
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.apache.httpcomponents</groupId>
-          <artifactId>httpclient</artifactId>
-          <version>${httpcomponents.version}</version>
-          <scope>provided</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>emr470</id>
-      <properties>
-        <hadoop.version>2.7.2</hadoop.version>
-        <mahout.version>0.11.1</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <slf4j.version>1.7.10</slf4j.version>
-        <final.classifier>emr4.7.0</final.classifier>
-        <release.arguments />
-        <gdal.version>1.11.1</gdal.version>
-        <spark.version>1.6.1</spark.version>
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.apache.httpcomponents</groupId>
-          <artifactId>httpclient</artifactId>
-          <version>${httpcomponents.version}</version>
-          <scope>provided</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>emr460</id>
-      <properties>
-        <hadoop.version>2.7.2</hadoop.version>
-        <mahout.version>0.11.1</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <slf4j.version>1.7.10</slf4j.version>
-        <final.classifier>emr4.6.0</final.classifier>
-        <release.arguments />
-        <gdal.version>1.11.1</gdal.version>
-        <spark.version>1.6.1</spark.version>
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.apache.httpcomponents</groupId>
-          <artifactId>httpclient</artifactId>
-          <version>${httpcomponents.version}</version>
-          <scope>provided</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>emr450</id>
-      <properties>
-        <hadoop.version>2.7.2</hadoop.version>
-        <mahout.version>0.11.1</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <slf4j.version>1.7.10</slf4j.version>
-        <final.classifier>emr4.5.0</final.classifier>
-        <release.arguments />
-        <gdal.version>1.11.1</gdal.version>
-        <spark.version>1.6.1</spark.version>
-      </properties>
-      <dependencies>
-        <!-- for some reason, this is missing from hadoop -->
-        <dependency>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-          <version>${commons-httpclient.version}</version>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.apache.httpcomponents</groupId>
-          <artifactId>httpclient</artifactId>
-          <version>${httpcomponents.version}</version>
-          <scope>provided</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet-core</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>emr440</id>
-      <properties>
-        <hadoop.version>2.7.1</hadoop.version>
-        <mahout.version>0.11.1</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
-        <slf4j.version>1.7.10</slf4j.version>
-        <final.classifier>emr4.4.0</final.classifier>
-        <release.arguments />
-        <gdal.version>1.11.1</gdal.version>
-        <spark.version>1.6.1</spark.version>
+        <scala.version>2.10.4</scala.version>
+        <spark.scala.version>2.10</spark.scala.version>
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -2447,11 +1187,11 @@
       </properties>
     </profile>
     <profile>
-        <id>scala-2_10</id>
-        <properties>
-            <scala.version>2.10.4</scala.version>
-            <spark.scala.version>2.10</spark.scala.version>
-        </properties>
+      <id>scala-2_10</id>
+      <properties>
+        <scala.version>2.10.4</scala.version>
+        <spark.scala.version>2.10</spark.scala.version>
+      </properties>
     </profile>
     <profile>
       <id>standalone-webserver</id>
@@ -2829,10 +1569,10 @@
       <id>build-ogc</id>
       <properties>
         <!--
-        Need jets3t 0.9.4 to get credentials from IAM role. We set this
-        specially for OGC services because it will run on an EC2 instance
-        without hadoop or Databricks installed, so access to S3 goes
-        through jets3t.
+             Need jets3t 0.9.4 to get credentials from IAM role. We set this
+             specially for OGC services because it will run on an EC2 instance
+             without hadoop or Databricks installed, so access to S3 goes
+             through jets3t.
         -->
         <jets3t.version>0.9.4</jets3t.version>
       </properties>
@@ -3207,6 +1947,16 @@
         <version>${jackson.version}</version>
       </dependency>
       <dependency>
+        <groupId>com.fasterxml.jackson.module</groupId>
+        <artifactId>jackson-module-paranamer</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.module</groupId>
+        <artifactId>jackson-module-scala_${spark.scala.version}</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
         <groupId>xerces</groupId>
         <artifactId>xercesImpl</artifactId>
         <version>${xerces.version}</version>
@@ -3269,10 +2019,12 @@
             <groupId>com.thoughtworks.paranamer</groupId>
             <artifactId>paranamer</artifactId>
           </exclusion>
-          <exclusion>
-            <groupId>org.codehaus.jackson</groupId>
-            <artifactId>jackson-core-asl</artifactId>
-          </exclusion>
+          <!--
+               <exclusion>
+               <groupId>org.codehaus.jackson</groupId>
+               <artifactId>jackson-core-asl</artifactId>
+               </exclusion>
+          -->
           <exclusion>
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-mapper-asl</artifactId>
@@ -3350,6 +2102,12 @@
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-xc</artifactId>
           </exclusion>
+          <!--
+               <exclusion>
+               <groupId>org.codehaus.jackson</groupId>
+               <artifactId>jackson-mapper-asl</artifactId>
+               </exclusion>
+          -->
           <exclusion>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-server</artifactId>
@@ -3396,6 +2154,10 @@
           <exclusion>
             <groupId>org.eclipse.jetty.orbit</groupId>
             <artifactId>javax.servlet</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
