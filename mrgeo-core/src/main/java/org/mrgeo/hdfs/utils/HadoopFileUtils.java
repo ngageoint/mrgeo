@@ -888,7 +888,7 @@ public static class MapFileReaderWrapper
               }
               long indexSize = copyFileFromS3(s3Client, indexUri, tmpIndexFile,
                       cacheEntry.getPrimaryFileOutputStream());
-              log.debug("Copied data from " + indexUri + " to " +
+              log.debug("Copied index from " + indexUri + " to " +
                       tmpIndexFile.getAbsolutePath() + ": " + indexSize);
               log.debug("Index " + indexUri + " size is " + indexSize);
             } finally {
