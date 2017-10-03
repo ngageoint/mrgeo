@@ -3,7 +3,7 @@
 # find the mrgeo tar.  For now, we'll just take the 1st instance,  we
 # should probably take the latest version
 S3_BASE="s3://mrgeo-deploy/"
-VERSION="emr4.5.0"
+VERSION="emr5.8.0"
 
 FILES=`aws s3 ls $S3_BASE | awk '{print $4}' | grep '^mrgeo' | grep '\.tar\.gz$' | grep $VERSION`
 
@@ -53,4 +53,6 @@ sudo sh -c "echo -e 'export PATH=\$PATH:$MRGEO_HOME/bin' >> $PROFILE"
 PROFILE=/etc/profile.d/spark.sh
 sudo sh -c "echo -e '# Spark' > $PROFILE"
 sudo sh -c "echo -e 'export SPARK_HOME=/usr/lib/spark' >> $PROFILE"
+sudo sh -c "echo -e 'export CLASSPATH=$CLASSPATH:/usr/lib/spark/*:/usr/lib/spark/jars/*' >> $PROFILE"
+
 exit 0
