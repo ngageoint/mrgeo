@@ -218,6 +218,15 @@
       </build>
     </profile>
     <profile>
+      <id>include-accumulo</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.mrgeo</groupId>
+          <artifactId>mrgeo-dataprovider-accumulo</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
       <id>include-geowave</id>
       <dependencies>
         <dependency>
@@ -282,10 +291,6 @@
     <dependency>
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-cmd-webserver</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.mrgeo</groupId>
-      <artifactId>mrgeo-dataprovider-accumulo</artifactId>
     </dependency>
     <dependency>
       <groupId>org.mrgeo</groupId>
