@@ -31,6 +31,7 @@
     <!-- Many of these default/specific to the cdh5.3.0/YARN version,
          they will be overridden with profiles for the other versions.  -->
     <accumulo.version>1.7.0</accumulo.version>
+    <accumulo.scope>provided</accumulo.scope>
     <antlr.version>3.1.3</antlr.version>
     <axiom.version>1.2.9</axiom.version>
     <aws.scope>compile</aws.scope>
@@ -44,11 +45,9 @@
     <commons-jexl.version>2.1.1</commons-jexl.version>
     <commons-lang.version>3.3.1</commons-lang.version>
     <geotiff-jai.version>0.0</geotiff-jai.version>
-    <!--<gdal.version>1.11.2</gdal.version>-->
     <gdal.version>1.10.1</gdal.version>
     <geotools.version>12.1</geotools.version>
     <geowave.version>0.9.1</geowave.version>
-    <gson.version>2.2.2</gson.version>
     <guava.version>14.0.1</guava.version>
     <hadoop.version>2.5.0-cdh5.3.0</hadoop.version>
     <hadoop.scope>provided</hadoop.scope>
@@ -68,6 +67,7 @@
     <json.version>20090211</json.version>
     <jts.version>1.13</jts.version>
     <kryo.version>2.21</kryo.version>
+    <log4j.version>1.2.17</log4j.version>
     <mahout.version>0.9-cdh5.3.0</mahout.version>
     <opencv.version>2.4.9-7</opencv.version>
     <opencv.group>nu.pattern</opencv.group>
@@ -78,14 +78,9 @@
     <reflections.version>0.9.9-RC1</reflections.version>
     <servlet-api.version>3.1.0</servlet-api.version>
     <slf4j.version>1.7.21</slf4j.version>
-    <!--
-         Leave spark.version blank. This is always overridden
-         by version-specific profiles for CDH, Apache, EMR, etc...
-         Force change.
-    -->
     <spark.version>2.2.0</spark.version>
     <spark.scala.version>2.11</spark.scala.version>
-    <spark.scope>compile</spark.scope>
+    <spark.scope>provided</spark.scope>
     <xerces.version>2.9.1</xerces.version>
     <xml-apis.version>1.3.04</xml-apis.version>
     <xtiff-jai.version>beta-0.3</xtiff-jai.version>
@@ -177,7 +172,7 @@
     <repository>
       <id>central</id>
       <name>Maven Central Repository</name>
-      <url>http://repo1.maven.org/maven2/</url>
+      <url>https://repo1.maven.org/maven2/</url>
     </repository>
     <repository>
       <id>osgeo</id>
@@ -414,7 +409,7 @@
             <args>
               <arg>-feature</arg>
               <arg>-deprecation</arg>
-              <arg>-target:jvm-1.7</arg>
+              <arg>-target:jvm-${java.version}</arg>
               <arg>-Xmax-classfile-name</arg>
               <arg>143</arg>
               <arg>-optimize</arg>
@@ -986,10 +981,12 @@
           <version>${commons-httpclient.version}</version>
           <scope>test</scope>
         </dependency>
+        <!--
         <dependency>
           <groupId>org.glassfish.jersey.containers</groupId>
           <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
+        -->
       </dependencies>
     </profile>
     <!--
@@ -1198,6 +1195,7 @@
       <id>standalone-webserver</id>
       <properties>
         <hadoop.scope>compile</hadoop.scope>
+        <spark.scope>compile</spark.scope>
       </properties>
       <dependencies>
         <dependency>
@@ -1219,6 +1217,12 @@
           <scope>compile</scope>
         </dependency>
       </dependencies>
+    </profile>
+    <profile>
+      <id>include-accumulo</id>
+      <properties>
+        <accumulo.scope>compile</accumulo.scope>
+      </properties>
     </profile>
     <!-- Add the hadoop conf directory as a dependency, but only in an eclipse project. -->
     <profile>
@@ -1272,6 +1276,7 @@
       <id>intellij</id>
       <properties>
         <hadoop.scope>compile</hadoop.scope>
+        <spark.scope>compile</spark.scope>
       </properties>
       <dependencies>
         <dependency>
@@ -1891,11 +1896,15 @@
         <classifier>hadoop2</classifier>
         <scope>test</scope>
         <exclusions>
-          <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-          </exclusion>
-        </exclusions>
+            <exclusion>
+              <groupId>log4j</groupId>
+              <artifactId>log4j</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>commons-logging</groupId>
+              <artifactId>commons-logging</artifactId>
+            </exclusion>
+          </exclusions>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
@@ -1911,11 +1920,34 @@
         <groupId>org.slf4j</groupId>
         <artifactId>jcl-over-slf4j</artifactId>
         <version>${slf4j.version}</version>
+        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>jul-to-slf4j</artifactId>
         <version>${slf4j.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>log4j</groupId>
+        <artifactId>log4j</artifactId>
+        <version>${log4j.version}</version>
+        <scope>provided</scope>
+        <optional>true</optional>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.jms</groupId>
+            <artifactId>jms</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jmx</groupId>
+            <artifactId>jmxri</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jdmk</groupId>
+            <artifactId>jmxtools</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
@@ -2147,6 +2179,7 @@
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-core_${spark.scala.version}</artifactId>
         <version>${spark.version}</version>
+        <scope>${spark.scope}</scope>
         <exclusions>
           <exclusion>
             <groupId>commons-net</groupId>
@@ -2166,6 +2199,7 @@
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-streaming_${spark.scala.version}</artifactId>
         <version>${spark.version}</version>
+        <scope>${spark.scope}</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.spark</groupId>
@@ -2216,6 +2250,7 @@
         <groupId>org.apache.accumulo</groupId>
         <artifactId>accumulo-core</artifactId>
         <version>${accumulo.version}</version>
+        <scope>${accumulo.scope}</scope>
         <exclusions>
           <exclusion>
             <groupId>org.slf4j</groupId>
@@ -2244,6 +2279,7 @@
         <groupId>org.apache.accumulo</groupId>
         <artifactId>accumulo-fate</artifactId>
         <version>${accumulo.version}</version>
+        <scope>${accumulo.scope}</scope>
         <exclusions>
           <exclusion>
             <groupId>org.slf4j</groupId>
@@ -2264,6 +2300,7 @@
         <groupId>org.apache.accumulo</groupId>
         <artifactId>accumulo-start</artifactId>
         <version>${accumulo.version}</version>
+        <scope>${accumulo.scope}</scope>
         <exclusions>
           <exclusion>
             <groupId>org.slf4j</groupId>
@@ -2284,6 +2321,7 @@
         <groupId>org.apache.accumulo</groupId>
         <artifactId>accumulo-trace</artifactId>
         <version>${accumulo.version}</version>
+        <scope>${accumulo.scope}</scope>
         <exclusions>
           <exclusion>
             <groupId>org.slf4j</groupId>
@@ -2334,11 +2372,6 @@
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>${guava.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.google.code.gson</groupId>
-        <artifactId>gson</artifactId>
-        <version>${gson.version}</version>
       </dependency>
       <dependency>
         <groupId>com.google.protobuf</groupId>
@@ -2660,6 +2693,12 @@
         <artifactId>scalatest_${spark.scala.version}</artifactId>
         <version>${scalatest.version}</version>
         <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>org.scala-lang.modules</groupId>
+            <artifactId>scala-xml_${spark.scala.version}</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.esotericsoftware.kryo</groupId>
@@ -2727,7 +2766,7 @@
         <groupId>com.google.code.findbugs</groupId>
         <artifactId>annotations</artifactId>
         <version>${findbugs.version}</version>
-        <scope>compile</scope>
+        <scope>runtime</scope>
       </dependency>
       <!-- jasypt for property file encrytpion/decryption.  Included in parent pom dependencies to allow the command line
            tools to be run form the mrgeo parent directory.-->
@@ -2741,10 +2780,12 @@
   </dependencyManagement>
   <dependencies>
     <!-- everyone gets hadoop, whether they want it or not! -->
+    <!--
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
     </dependency>
+    -->
     <!-- and spark-yarn, now we've converted everything to that -->
     <dependency>
       <groupId>org.apache.spark</groupId>
@@ -2813,6 +2854,10 @@
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-reflect</artifactId>
     </dependency>
   </dependencies>
   <!-- move me back to the top of this POM!!!  -->

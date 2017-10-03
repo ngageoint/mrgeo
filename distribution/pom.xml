@@ -155,10 +155,12 @@
     </plugins>
   </build>
   <dependencies>
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-client</artifactId>
-    </dependency>
+    <!--
+         <dependency>
+         <groupId>org.apache.hadoop</groupId>
+         <artifactId>hadoop-client</artifactId>
+         </dependency>
+    -->
     <dependency>
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-core</artifactId>
@@ -184,10 +186,6 @@
         </dependency>
         <dependency>
           <groupId>org.mrgeo</groupId>
-          <artifactId>mrgeo-dataprovider-accumulo</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>org.mrgeo</groupId>
           <artifactId>mrgeo-mapalgebra-image</artifactId>
         </dependency>
         <dependency>
@@ -210,6 +208,15 @@
     </profile>
     <profile>
       <id>build-ogc</id>
+    </profile>
+    <profile>
+      <id>include-accumulo</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.mrgeo</groupId>
+          <artifactId>mrgeo-dataprovider-accumulo</artifactId>
+        </dependency>
+      </dependencies>
     </profile>
     <profile>
       <id>include-geowave</id>
