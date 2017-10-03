@@ -20,7 +20,9 @@ import org.apache.log4j.Layout;
 import org.apache.log4j.spi.ErrorHandler;
 import org.apache.log4j.spi.Filter;
 import org.apache.log4j.spi.LoggingEvent;
+import org.apache.log4j.spi.RootLogger;
 
+import java.util.Enumeration;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -142,4 +144,28 @@ public boolean requiresLayout()
   assert (wrappedAppender != null);
   return wrappedAppender.requiresLayout();
 }
+
+static void wrapAppenders(Object rootlogger, Enumeration appenders)
+{
+  RootLogger rl;
+  if (rootlogger instanceof RootLogger)
+  {
+    rl = (RootLogger) rootlogger;
+
+    while (appenders.hasMoreElements())
+    {
+      Object next = appenders.nextElement();
+      if (next instanceof Appender)
+      {
+        Appender app = (Appender) next;
+
+        Appender wrapped = new Log4JAppenderWrapper(app);
+        rl.removeAppender(app);
+        rl.addAppender(wrapped);
+      }
+    }
+
+  }
+}
+
 }
