@@ -794,6 +794,10 @@
           <groupId>org.glassfish.jersey.containers</groupId>
           <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
+        </dependency>
       </dependencies>
     </profile>
     <profile>
@@ -812,6 +816,10 @@
         <dependency>
           <groupId>org.glassfish.jersey.containers</groupId>
           <artifactId>jersey-container-servlet-core</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -832,6 +840,10 @@
           <groupId>org.glassfish.jersey.containers</groupId>
           <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
+        </dependency>
       </dependencies>
     </profile>
     <profile>
@@ -851,6 +863,10 @@
           <groupId>org.glassfish.jersey.containers</groupId>
           <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
+        </dependency>
       </dependencies>
     </profile>
     <profile>
@@ -869,6 +885,10 @@
         <dependency>
           <groupId>org.glassfish.jersey.containers</groupId>
           <artifactId>jersey-container-servlet-core</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -895,12 +915,16 @@
           <groupId>org.glassfish.jersey.containers</groupId>
           <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
+        </dependency>
       </dependencies>
     </profile>
     <profile>
       <id>apache271</id>
       <properties>
-        <aws.version>1.7.4</aws.version>
+        <aws.version>1.10.6</aws.version>
         <aws.s3.version>1.10.6</aws.s3.version>
         <hadoop.version>2.7.1</hadoop.version>
         <mahout.version>0.7</mahout.version>
@@ -928,6 +952,10 @@
           <groupId>org.glassfish.jersey.containers</groupId>
           <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
+        </dependency>
       </dependencies>
     </profile>
     <profile>
@@ -953,6 +981,10 @@
         <dependency>
           <groupId>org.glassfish.jersey.containers</groupId>
           <artifactId>jersey-container-servlet-core</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -980,6 +1012,10 @@
           <artifactId>commons-httpclient</artifactId>
           <version>${commons-httpclient.version}</version>
           <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk-s3</artifactId>
         </dependency>
         <!--
         <dependency>
@@ -1066,6 +1102,10 @@
           <version>${httpcomponents.version}</version>
           <scope>provided</scope>
         </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
+        </dependency>
       </dependencies>
     </profile>
     <profile>
@@ -1101,6 +1141,10 @@
           <version>${httpcomponents.version}</version>
           <scope>provided</scope>
         </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
+        </dependency>
       </dependencies>
     </profile>
     <profile>
@@ -1130,6 +1174,10 @@
           <artifactId>httpclient</artifactId>
           <version>${httpcomponents.version}</version>
           <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -1165,6 +1213,10 @@
           <groupId>org.glassfish.jersey.containers</groupId>
           <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
+        </dependency>
       </dependencies>
     </profile>
     <profile>
@@ -1175,6 +1227,20 @@
           <artifactId>hadoop-aws</artifactId>
           <version>${hadoop.version}</version>
           <scope>${hadoop.scope}</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>com.sun.jersey</groupId>
+              <artifactId>jersey-core</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>com.sun.jersey</groupId>
+              <artifactId>jersey-json</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>com.sun.jersey</groupId>
+              <artifactId>jersey-server</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
       </dependencies>
     </profile>
@@ -1214,6 +1280,12 @@
           <groupId>org.apache.httpcomponents</groupId>
           <artifactId>httpclient</artifactId>
           <version>${httpcomponents.version}</version>
+          <scope>compile</scope>
+        </dependency>
+        <dependency>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+          <version>${log4j.version}</version>
           <scope>compile</scope>
         </dependency>
       </dependencies>
