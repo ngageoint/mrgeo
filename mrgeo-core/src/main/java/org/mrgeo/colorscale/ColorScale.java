@@ -18,7 +18,7 @@ package org.mrgeo.colorscale;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.mrgeo.utils.FloatUtils;
 import org.mrgeo.utils.XmlUtils;
 import org.slf4j.Logger;
