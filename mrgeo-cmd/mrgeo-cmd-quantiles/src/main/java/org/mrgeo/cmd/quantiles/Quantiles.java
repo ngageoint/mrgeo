@@ -46,7 +46,7 @@ private static Logger log = LoggerFactory.getLogger(Quantiles.class);
 public void addOptions(Options options)
 {
   Option num = new Option("n", "numQuantiles", true, "The number of quantiles to compute");
-  num.setRequired(false);
+  num.setRequired(true);
   options.addOption(num);
 
   Option fraction = new Option("f", "fraction", true, "The fraction of pixel values to sample. Must be between 0.0 - 1.0");
