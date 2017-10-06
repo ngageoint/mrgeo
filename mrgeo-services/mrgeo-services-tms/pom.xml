@@ -72,10 +72,6 @@
       <artifactId>httpunit</artifactId>
     </dependency>
     <dependency>
-      <groupId>xmlunit</groupId>
-      <artifactId>xmlunit</artifactId>
-    </dependency>
-    <dependency>
       <groupId>rhino</groupId>
       <artifactId>js</artifactId>
     </dependency>

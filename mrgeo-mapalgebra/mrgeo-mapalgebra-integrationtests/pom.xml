@@ -112,12 +112,6 @@
   <dependencies>
     <dependency>
       <groupId>org.mrgeo</groupId>
-      <artifactId>mrgeo-core</artifactId>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-mapalgebra-costdistance</artifactId>
     </dependency>
     <dependency>
