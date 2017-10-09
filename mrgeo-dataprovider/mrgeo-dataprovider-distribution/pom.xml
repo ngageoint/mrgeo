@@ -140,12 +140,15 @@
         </dependency>
       </dependencies>
     </profile>
+    <profile>
+      <id>include-accumulo</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.mrgeo</groupId>
+          <artifactId>mrgeo-dataprovider-accumulo</artifactId>
+          <version>1.2.0-SNAPSHOT</version>
+        </dependency>
+      </dependencies>
+    </profile>
   </profiles>
-  <dependencies>
-    <dependency>
-      <groupId>org.mrgeo</groupId>
-      <artifactId>mrgeo-dataprovider-accumulo</artifactId>
-      <version>1.2.0-SNAPSHOT</version>
-    </dependency>
-  </dependencies>
 </project>
