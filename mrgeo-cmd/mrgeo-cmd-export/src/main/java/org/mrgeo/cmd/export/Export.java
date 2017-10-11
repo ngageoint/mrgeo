@@ -76,7 +76,7 @@ private int maxSizeInKb = -1;
 @Override
 @SuppressWarnings("squid:S1166") // Exception caught and handled
 public int run(CommandLine line, Configuration conf,
-               ProviderProperties providerProperties) throws ParseException
+    ProviderProperties providerProperties) throws ParseException
 {
   log.info("Export");
 
@@ -202,15 +202,15 @@ public int run(CommandLine line, Configuration conf,
       ColorScaleApplier applier = null;
       if (colorscale != null || !"tif".equalsIgnoreCase(format)) {
         switch (format) {
-          case "jpg":
-          case "jpeg":
-            applier = new JpegColorScaleApplier();
-            break;
-          case "tif":
-          case "png":
-          default:
-            applier = new PngColorScaleApplier();
-            break;
+        case "jpg":
+        case "jpeg":
+          applier = new JpegColorScaleApplier();
+          break;
+        case "tif":
+        case "png":
+        default:
+          applier = new PngColorScaleApplier();
+          break;
         }
       }
 
@@ -223,7 +223,7 @@ public int run(CommandLine line, Configuration conf,
         Bounds b = (useBounds) ? bounds : pyramid.getBounds();
         int maxZoom = pyramid.getMaximumLevel();
         zoomlevel = RasterUtils.getMaxPixelsForSize(maxSizeInKb, b,
-                bytesPerPixelPerBand, bands, meta.getTilesize()).getZoom();
+            bytesPerPixelPerBand, bands, meta.getTilesize()).getZoom();
         zoomlevel = Math.min(zoomlevel, maxZoom);
         System.out.println("Exporting image at zoom level " + zoomlevel);
       }
@@ -277,14 +277,13 @@ public int run(CommandLine line, Configuration conf,
               ob += "-" + zoomlevel;
             }
             saveMultipleTiles(ob, pyramidName, format, image, applier,
-                    ArrayUtils.toPrimitive(tiles.toArray(new Long[tiles.size()])),
-                    providerProperties);
+                ArrayUtils.toPrimitive(tiles.toArray(new Long[tiles.size()])),
+                providerProperties);
           }
           else if (mosaicTiles && mosaicTileCount > 0)
           {
-
-            if (!outputbase.contains(X) || !outputbase.contains(Y) ||
-                !outputbase.contains(LAT) || !outputbase.contains(LON))
+            if (!useTMS && !outputbase.contains(X) && !outputbase.contains(Y) &&
+                !outputbase.contains(LAT) && !outputbase.contains(LON))
             {
               outputbase = outputbase + "/$Y-$X";
             }
@@ -293,20 +292,19 @@ public int run(CommandLine line, Configuration conf,
               final Tile t = TMSUtils.tileid(tileid, zoomlevel);
               final Set<Long> tilesToMosaic = new HashSet<>();
               final LongRectangle tileBounds = pyramid.getTileBounds(zoomlevel);
-              for (long ty1 = t.ty; ((ty1 < (t.ty + mosaicTileCount)) && (ty1 <= tileBounds
-                  .getMaxY())); ty1++)
+              for (long ty1 = t.ty; ((ty1 < (t.ty + mosaicTileCount)) && (ty1 <= tileBounds.getMaxY())); ty1++)
               {
-                for (long tx1 = t.tx; ((tx1 < (t.tx + mosaicTileCount)) && (tx1 <= tileBounds
-                    .getMaxX())); tx1++)
+                for (long tx1 = t.tx; ((tx1 < (t.tx + mosaicTileCount)) && (tx1 <= tileBounds.getMaxX())); tx1++)
                 {
                   tilesToMosaic.add(TMSUtils.tileid(tx1, ty1, zoomlevel));
+
                 }
               }
 //                final String mosaicOutput = output + "/" + t.ty + "-" + t.tx + "-" +
 //                    TMSUtils.tileid(t.tx, t.ty, zoomlevel);
               saveMultipleTiles(outputbase, pyramidName, format, image, applier,
-                      ArrayUtils.toPrimitive(tilesToMosaic.toArray(new Long[tilesToMosaic.size()])),
-                      providerProperties);
+                  ArrayUtils.toPrimitive(tilesToMosaic.toArray(new Long[tilesToMosaic.size()])),
+                  providerProperties);
             }
           }
           else
@@ -314,7 +312,7 @@ public int run(CommandLine line, Configuration conf,
             for (final Long tileid : tiles)
             {
               saveSingleTile(outputbase, pyramidName, image, applier, format,
-                      tileid, zoomlevel, tilesize, providerProperties);
+                  tileid, zoomlevel, tilesize, providerProperties);
             }
           }
         }
@@ -430,18 +428,18 @@ private Bounds parseBounds(String boundsOption)
 }
 
 private MrGeoRaster colorRaster(MrGeoRaster raster,
-                                MrsPyramidMetadata metadata,
-                                ColorScaleApplier applier,
-                                final int zoom,
-                                final String pyramidName,
-                                final String format,
-                                final ProviderProperties providerProperties) throws IOException
+    MrsPyramidMetadata metadata,
+    ColorScaleApplier applier,
+    final int zoom,
+    final String pyramidName,
+    final String format,
+    final ProviderProperties providerProperties) throws IOException
 {
   if (colorscale != null || !"tif".equals(format))
   {
     if (colorscale == null) {
       MrsImageDataProvider dp = DataProviderFactory.getMrsImageDataProvider(pyramidName,
-              DataProviderFactory.AccessMode.READ, providerProperties);
+          DataProviderFactory.AccessMode.READ, providerProperties);
       MrsPyramidMetadata meta = dp.getMetadataReader().read();
 
       String csname = meta.getTag(MrGeoConstants.MRGEO_DEFAULT_COLORSCALE);
@@ -468,10 +466,10 @@ private MrGeoRaster colorRaster(MrGeoRaster raster,
     try
     {
       raster = applier.applyColorScale(raster,
-              colorscale,
-              metadata.getExtrema(zoom),
-              metadata.getDefaultValues(),
-              metadata.getQuantiles());
+          colorscale,
+          metadata.getExtrema(zoom),
+          metadata.getDefaultValues(),
+          metadata.getQuantiles());
     }
     catch (Exception e)
     {
@@ -522,9 +520,9 @@ private boolean saveSingleTile(final String output, final String pyramidName, fi
 }
 
 private boolean saveMultipleTiles(String output, String pyramidName,
-                                  String format, final MrsImage image,
-                                  ColorScaleApplier applier,
-                                  final long[] tiles, ProviderProperties providerProperties)
+    String format, final MrsImage image,
+    ColorScaleApplier applier,
+    final long[] tiles, ProviderProperties providerProperties)
 {
   try
   {
@@ -724,6 +722,26 @@ private Set<Long> calculateTiles(final MrsPyramid pyramid, int zoomlevel)
   LongRectangle tileBounds = pyramid.getTileBounds(zoomlevel);
   if (mosaicTiles && mosaicTileCount > 0)
   {
+    if (useRand && maxTiles > 0)
+    {
+
+      int i = 0;
+      while (i < maxTiles)
+      {
+        final long tx = (long) (tileBounds.getMinX() + (Math.random() * (tileBounds.getMaxX() - tileBounds.getMinX()) / mosaicTileCount));
+        final long ty = (long) (tileBounds.getMinY() + (Math.random() * (tileBounds.getMaxY() - tileBounds.getMinY()) / mosaicTileCount));
+
+        final long id = TMSUtils.tileid(tx, ty, zoomlevel);
+        if (!tiles.contains(id))
+        {
+          tiles.add(id);
+          i++;
+        }
+      }
+
+      return tiles;
+    }
+
     for (long ty = tileBounds.getMinY(); ty <= tileBounds.getMaxY(); ty += mosaicTileCount)
     {
       for (long tx = tileBounds.getMinX(); tx <= tileBounds.getMaxX(); tx += mosaicTileCount)
@@ -750,17 +768,17 @@ private Set<Long> calculateTiles(final MrsPyramid pyramid, int zoomlevel)
 
   if (useRand && maxTiles > 0)
   {
-    for (int i = 0; i < maxTiles; i++)
+    int i = 0;
+    while (i < maxTiles)
     {
-      final long tx = (long) (tileBounds.getMinX() +
-          (Math.random() * (tileBounds.getMaxX() - tileBounds.getMinX())));
-      final long ty = (long) (tileBounds.getMinY() +
-          (Math.random() * (tileBounds.getMaxY() - tileBounds.getMinY())));
+      final long tx = (long) (tileBounds.getMinX() + (Math.random() * (tileBounds.getMaxX() - tileBounds.getMinX())));
+      final long ty = (long) (tileBounds.getMinY() + (Math.random() * (tileBounds.getMaxY() - tileBounds.getMinY())));
 
       final long id = TMSUtils.tileid(tx, ty, zoomlevel);
       if (!tiles.contains(id))
       {
         tiles.add(id);
+        i++;
       }
     }
 

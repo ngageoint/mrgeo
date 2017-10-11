@@ -37,12 +37,12 @@ else
   LIBS=$HOME_DIR/*:$HOME_DIR/lib/*
 fi
 
-#echo $CMD_JAR
-#echo $LIBS
+echo $CMD_JAR
+echo $LIBS
 
 # set the hadoop user classpath and force it to be prefixed in the classpath
 export HADOOP_USER_CLASSPATH_FIRST=true
-export HADOOP_CLASSPATH=$CMD_JAR:$LIBS
+export HADOOP_CLASSPATH=$CMD_JAR:$LIBS:$CLASSPATH
 
 # run the command
 hadoop jar $CMD_JAR "$@"

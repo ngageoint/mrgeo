@@ -27,10 +27,15 @@
   <name>mrgeo-dataprovider</name>
   <packaging>pom</packaging>
   <modules>
-    <module>mrgeo-dataprovider-accumulo</module>
     <module>mrgeo-dataprovider-distribution</module>
   </modules>
   <profiles>
+    <profile>
+      <id>include-accumulo</id>
+      <modules>
+        <module>mrgeo-dataprovider-accumulo</module>
+      </modules>
+    </profile>
     <profile>
       <id>include-geowave</id>
       <modules>

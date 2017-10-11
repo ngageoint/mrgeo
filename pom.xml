@@ -28,9 +28,11 @@
     <!-- compiler versions -->
     <java.version>1.8</java.version>
     <scala.version>2.11.8</scala.version>
+    <scala.jvm.version>1.8</scala.jvm.version>
     <!-- Many of these default/specific to the cdh5.3.0/YARN version,
          they will be overridden with profiles for the other versions.  -->
     <accumulo.version>1.7.0</accumulo.version>
+    <accumulo.scope>provided</accumulo.scope>
     <antlr.version>3.1.3</antlr.version>
     <axiom.version>1.2.9</axiom.version>
     <aws.scope>compile</aws.scope>
@@ -44,11 +46,9 @@
     <commons-jexl.version>2.1.1</commons-jexl.version>
     <commons-lang.version>3.3.1</commons-lang.version>
     <geotiff-jai.version>0.0</geotiff-jai.version>
-    <!--<gdal.version>1.11.2</gdal.version>-->
     <gdal.version>1.10.1</gdal.version>
     <geotools.version>12.1</geotools.version>
     <geowave.version>0.9.1</geowave.version>
-    <gson.version>2.2.2</gson.version>
     <guava.version>14.0.1</guava.version>
     <hadoop.version>2.5.0-cdh5.3.0</hadoop.version>
     <hadoop.scope>provided</hadoop.scope>
@@ -68,6 +68,7 @@
     <json.version>20090211</json.version>
     <jts.version>1.13</jts.version>
     <kryo.version>2.21</kryo.version>
+    <log4j.version>1.2.17</log4j.version>
     <mahout.version>0.9-cdh5.3.0</mahout.version>
     <opencv.version>2.4.9-7</opencv.version>
     <opencv.group>nu.pattern</opencv.group>
@@ -78,14 +79,9 @@
     <reflections.version>0.9.9-RC1</reflections.version>
     <servlet-api.version>3.1.0</servlet-api.version>
     <slf4j.version>1.7.21</slf4j.version>
-    <!--
-         Leave spark.version blank. This is always overridden
-         by version-specific profiles for CDH, Apache, EMR, etc...
-         Force change.
-    -->
     <spark.version>2.2.0</spark.version>
     <spark.scala.version>2.11</spark.scala.version>
-    <spark.scope>compile</spark.scope>
+    <spark.scope>provided</spark.scope>
     <xerces.version>2.9.1</xerces.version>
     <xml-apis.version>1.3.04</xml-apis.version>
     <xtiff-jai.version>beta-0.3</xtiff-jai.version>
@@ -177,7 +173,7 @@
     <repository>
       <id>central</id>
       <name>Maven Central Repository</name>
-      <url>http://repo1.maven.org/maven2/</url>
+      <url>https://repo1.maven.org/maven2/</url>
     </repository>
     <repository>
       <id>osgeo</id>
@@ -414,13 +410,11 @@
             <args>
               <arg>-feature</arg>
               <arg>-deprecation</arg>
-              <arg>-target:jvm-1.7</arg>
+              <arg>-target:jvm-${scala.jvm.version}</arg>
               <arg>-Xmax-classfile-name</arg>
               <arg>143</arg>
+              <!--<arg>-Xfatal-warnings</arg>-->
               <arg>-optimize</arg>
-              <!--<arg>-source ${java.version}</arg>-->
-              <!--<arg>-target ${java.version}</arg>-->
-              <!--<arg>-XDignore.symbol.file=true</arg>-->
             </args>
             <sourceDir>${project.basedir}/src/main/scala</sourceDir>
             <testSourceDir>${project.basedir}/src/test/scala</testSourceDir>
@@ -792,12 +786,17 @@
         <scala.version>2.10.4</scala.version>
         <spark.scala.version>2.10</spark.scala.version>
         <final.classifier>cdh5.12.1</final.classifier>
+        <scala.jvm.version>1.7</scala.jvm.version>
         <release.arguments />
       </properties>
       <dependencies>
         <dependency>
           <groupId>org.glassfish.jersey.containers</groupId>
           <artifactId>jersey-container-servlet-core</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -811,12 +810,17 @@
         <final.classifier>cdh5.12.0</final.classifier>
         <scala.version>2.10.4</scala.version>
         <spark.scala.version>2.10</spark.scala.version>
+        <scala.jvm.version>1.7</scala.jvm.version>
         <release.arguments />
       </properties>
       <dependencies>
         <dependency>
           <groupId>org.glassfish.jersey.containers</groupId>
           <artifactId>jersey-container-servlet-core</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -830,12 +834,17 @@
         <final.classifier>cdh5.11.1</final.classifier>
         <scala.version>2.10.4</scala.version>
         <spark.scala.version>2.10</spark.scala.version>
+        <scala.jvm.version>1.7</scala.jvm.version>
         <release.arguments />
       </properties>
       <dependencies>
         <dependency>
           <groupId>org.glassfish.jersey.containers</groupId>
           <artifactId>jersey-container-servlet-core</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -849,12 +858,17 @@
         <final.classifier>cdh5.11.0</final.classifier>
         <scala.version>2.10.4</scala.version>
         <spark.scala.version>2.10</spark.scala.version>
+        <scala.jvm.version>1.7</scala.jvm.version>
         <release.arguments />
       </properties>
       <dependencies>
         <dependency>
           <groupId>org.glassfish.jersey.containers</groupId>
           <artifactId>jersey-container-servlet-core</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -868,12 +882,17 @@
         <final.classifier>cdh5.10.1</final.classifier>
         <scala.version>2.10.4</scala.version>
         <spark.scala.version>2.10</spark.scala.version>
+        <scala.jvm.version>1.7</scala.jvm.version>
         <release.arguments />
       </properties>
       <dependencies>
         <dependency>
           <groupId>org.glassfish.jersey.containers</groupId>
           <artifactId>jersey-container-servlet-core</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -887,6 +906,7 @@
         <final.classifier>cdh5.10.0</final.classifier>
         <scala.version>2.10.4</scala.version>
         <spark.scala.version>2.10</spark.scala.version>
+        <scala.jvm.version>1.7</scala.jvm.version>
         <release.arguments />
       </properties>
       <dependencies>
@@ -900,18 +920,25 @@
           <groupId>org.glassfish.jersey.containers</groupId>
           <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
+        </dependency>
       </dependencies>
     </profile>
     <profile>
       <id>apache271</id>
       <properties>
-        <aws.version>1.7.4</aws.version>
+        <aws.version>1.10.6</aws.version>
         <aws.s3.version>1.10.6</aws.s3.version>
         <hadoop.version>2.7.1</hadoop.version>
         <mahout.version>0.7</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.1</spark.version>
         <final.classifier>2.7.1</final.classifier>
+        <scala.version>2.10.4</scala.version>
+        <spark.scala.version>2.10</spark.scala.version>
+        <scala.jvm.version>1.7</scala.jvm.version>
         <release.arguments />
       </properties>
       <dependencies>
@@ -932,6 +959,10 @@
         <dependency>
           <groupId>org.glassfish.jersey.containers</groupId>
           <artifactId>jersey-container-servlet-core</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -959,13 +990,17 @@
           <groupId>org.glassfish.jersey.containers</groupId>
           <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
+        </dependency>
       </dependencies>
     </profile>
     <profile>
       <id>apache273</id>
       <properties>
-        <aws.version>1.10.6</aws.version>
-        <aws.s3.version>1.10.6</aws.s3.version>
+        <aws.version>1.11.160</aws.version>
+        <aws.s3.version>1.11.160</aws.s3.version>
         <hadoop.version>2.7.3</hadoop.version>
         <scala.version>2.11.8</scala.version>
         <spark.version>2.2.0</spark.version>
@@ -973,8 +1008,9 @@
         <mahout.version>0.7</mahout.version>
         <protobuf.version>2.5.0</protobuf.version>
         <jackson.version>2.6.6</jackson.version>
-        <spark.version>2.2.0</spark.version>
         <final.classifier>2.7.3</final.classifier>
+        <httpcomponents.version>4.5.2</httpcomponents.version>
+        <jets3t.version>0.9.4</jets3t.version>
         <release.arguments />
       </properties>
       <dependencies>
@@ -986,9 +1022,15 @@
           <scope>test</scope>
         </dependency>
         <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk-s3</artifactId>
+        </dependency>
+        <!--
+        <dependency>
           <groupId>org.glassfish.jersey.containers</groupId>
           <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
+        -->
       </dependencies>
     </profile>
     <!--
@@ -1035,6 +1077,10 @@
           <version>${httpcomponents.version}</version>
           <scope>provided</scope>
         </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk-s3</artifactId>
+        </dependency>
       </dependencies>
     </profile>
     <profile>
@@ -1053,6 +1099,7 @@
         <aws.scope>provided</aws.scope>
         <scala.version>2.10.4</scala.version>
         <spark.scala.version>2.10</spark.scala.version>
+        <scala.jvm.version>1.7</scala.jvm.version>
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1067,6 +1114,10 @@
           <artifactId>httpclient</artifactId>
           <version>${httpcomponents.version}</version>
           <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -1088,6 +1139,7 @@
         <aws.scope>provided</aws.scope>
         <scala.version>2.10.4</scala.version>
         <spark.scala.version>2.10</spark.scala.version>
+        <scala.jvm.version>1.7</scala.jvm.version>
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1102,6 +1154,10 @@
           <artifactId>httpclient</artifactId>
           <version>${httpcomponents.version}</version>
           <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -1118,6 +1174,7 @@
         <spark.version>1.6.2</spark.version>
         <scala.version>2.10.4</scala.version>
         <spark.scala.version>2.10</spark.scala.version>
+        <scala.jvm.version>1.7</scala.jvm.version>
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1132,6 +1189,10 @@
           <artifactId>httpclient</artifactId>
           <version>${httpcomponents.version}</version>
           <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
         </dependency>
       </dependencies>
     </profile>
@@ -1148,6 +1209,7 @@
         <spark.version>1.6.1</spark.version>
         <scala.version>2.10.4</scala.version>
         <spark.scala.version>2.10</spark.scala.version>
+        <scala.jvm.version>1.7</scala.jvm.version>
       </properties>
       <dependencies>
         <!-- for some reason, this is missing from hadoop -->
@@ -1167,6 +1229,10 @@
           <groupId>org.glassfish.jersey.containers</groupId>
           <artifactId>jersey-container-servlet-core</artifactId>
         </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
+        </dependency>
       </dependencies>
     </profile>
     <profile>
@@ -1177,6 +1243,20 @@
           <artifactId>hadoop-aws</artifactId>
           <version>${hadoop.version}</version>
           <scope>${hadoop.scope}</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>com.sun.jersey</groupId>
+              <artifactId>jersey-core</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>com.sun.jersey</groupId>
+              <artifactId>jersey-json</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>com.sun.jersey</groupId>
+              <artifactId>jersey-server</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
       </dependencies>
     </profile>
@@ -1191,12 +1271,14 @@
       <properties>
         <scala.version>2.10.4</scala.version>
         <spark.scala.version>2.10</spark.scala.version>
+        <scala.jvm.version>1.7</scala.jvm.version>
       </properties>
     </profile>
     <profile>
       <id>standalone-webserver</id>
       <properties>
         <hadoop.scope>compile</hadoop.scope>
+        <spark.scope>compile</spark.scope>
       </properties>
       <dependencies>
         <dependency>
@@ -1217,7 +1299,19 @@
           <version>${httpcomponents.version}</version>
           <scope>compile</scope>
         </dependency>
+        <dependency>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+          <version>${log4j.version}</version>
+          <scope>compile</scope>
+        </dependency>
       </dependencies>
+    </profile>
+    <profile>
+      <id>include-accumulo</id>
+      <properties>
+        <accumulo.scope>compile</accumulo.scope>
+      </properties>
     </profile>
     <!-- Add the hadoop conf directory as a dependency, but only in an eclipse project. -->
     <profile>
@@ -1271,6 +1365,7 @@
       <id>intellij</id>
       <properties>
         <hadoop.scope>compile</hadoop.scope>
+        <spark.scope>compile</spark.scope>
       </properties>
       <dependencies>
         <dependency>
@@ -1890,11 +1985,15 @@
         <classifier>hadoop2</classifier>
         <scope>test</scope>
         <exclusions>
-          <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-          </exclusion>
-        </exclusions>
+            <exclusion>
+              <groupId>log4j</groupId>
+              <artifactId>log4j</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>commons-logging</groupId>
+              <artifactId>commons-logging</artifactId>
+            </exclusion>
+          </exclusions>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
@@ -1910,11 +2009,34 @@
         <groupId>org.slf4j</groupId>
         <artifactId>jcl-over-slf4j</artifactId>
         <version>${slf4j.version}</version>
+        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>jul-to-slf4j</artifactId>
         <version>${slf4j.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>log4j</groupId>
+        <artifactId>log4j</artifactId>
+        <version>${log4j.version}</version>
+        <scope>provided</scope>
+        <optional>true</optional>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.jms</groupId>
+            <artifactId>jms</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jmx</groupId>
+            <artifactId>jmxri</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jdmk</groupId>
+            <artifactId>jmxtools</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
@@ -2146,6 +2268,7 @@
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-core_${spark.scala.version}</artifactId>
         <version>${spark.version}</version>
+        <scope>${spark.scope}</scope>
         <exclusions>
           <exclusion>
             <groupId>commons-net</groupId>
@@ -2165,6 +2288,7 @@
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-streaming_${spark.scala.version}</artifactId>
         <version>${spark.version}</version>
+        <scope>${spark.scope}</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.spark</groupId>
@@ -2215,6 +2339,7 @@
         <groupId>org.apache.accumulo</groupId>
         <artifactId>accumulo-core</artifactId>
         <version>${accumulo.version}</version>
+        <scope>${accumulo.scope}</scope>
         <exclusions>
           <exclusion>
             <groupId>org.slf4j</groupId>
@@ -2243,6 +2368,7 @@
         <groupId>org.apache.accumulo</groupId>
         <artifactId>accumulo-fate</artifactId>
         <version>${accumulo.version}</version>
+        <scope>${accumulo.scope}</scope>
         <exclusions>
           <exclusion>
             <groupId>org.slf4j</groupId>
@@ -2263,6 +2389,7 @@
         <groupId>org.apache.accumulo</groupId>
         <artifactId>accumulo-start</artifactId>
         <version>${accumulo.version}</version>
+        <scope>${accumulo.scope}</scope>
         <exclusions>
           <exclusion>
             <groupId>org.slf4j</groupId>
@@ -2283,6 +2410,7 @@
         <groupId>org.apache.accumulo</groupId>
         <artifactId>accumulo-trace</artifactId>
         <version>${accumulo.version}</version>
+        <scope>${accumulo.scope}</scope>
         <exclusions>
           <exclusion>
             <groupId>org.slf4j</groupId>
@@ -2333,11 +2461,6 @@
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>${guava.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.google.code.gson</groupId>
-        <artifactId>gson</artifactId>
-        <version>${gson.version}</version>
       </dependency>
       <dependency>
         <groupId>com.google.protobuf</groupId>
@@ -2659,6 +2782,12 @@
         <artifactId>scalatest_${spark.scala.version}</artifactId>
         <version>${scalatest.version}</version>
         <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>org.scala-lang.modules</groupId>
+            <artifactId>scala-xml_${spark.scala.version}</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.esotericsoftware.kryo</groupId>
@@ -2726,7 +2855,13 @@
         <groupId>com.google.code.findbugs</groupId>
         <artifactId>annotations</artifactId>
         <version>${findbugs.version}</version>
-        <scope>compile</scope>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.google.code.findbugs</groupId>
+        <artifactId>jsr305</artifactId>
+        <version>${findbugs.version}</version>
+        <scope>provided</scope>
       </dependency>
       <!-- jasypt for property file encrytpion/decryption.  Included in parent pom dependencies to allow the command line
            tools to be run form the mrgeo parent directory.-->
@@ -2736,14 +2871,35 @@
         <version>${jasypt.version}</version>
         <scope>compile</scope>
       </dependency>
+      <!-- Scala dependencies, due to interactions with Java -->
+      <!-- Scala will produce a "[WARNING] warning: Class <classname> not found - continuing with a stub."
+           This is caused by class/method annotations in Java that are directly referenced from Scala code.
+           It will actually cause an error compiling, so we need to add them as provided dependencies
+      -->
+      <dependency>
+        <groupId>javax.servlet</groupId>
+        <artifactId>servlet-api</artifactId>
+        <version>LATEST</version>
+        <scope>provided</scope>
+      </dependency>
+      <!-- org.codehaus.jackson moved to com.fasterxml.jackson, which takes care of the annotation -->
+      <dependency>
+        <groupId>org.codehaus.jackson</groupId>
+        <artifactId>jackson-core-asl</artifactId>
+        <version>1.9.13</version>
+        <scope>provided</scope>
+      </dependency>
+
     </dependencies>
   </dependencyManagement>
   <dependencies>
     <!-- everyone gets hadoop, whether they want it or not! -->
+    <!--
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
     </dependency>
+    -->
     <!-- and spark-yarn, now we've converted everything to that -->
     <dependency>
       <groupId>org.apache.spark</groupId>
@@ -2805,13 +2961,26 @@
       <artifactId>annotations</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.jasypt</groupId>
-      <artifactId>jasypt</artifactId>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
     </dependency>
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-reflect</artifactId>
+    </dependency>
+    <!-- Scala dependencies, due to interactions with Java -->
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-core-asl</artifactId>
     </dependency>
   </dependencies>
   <!-- move me back to the top of this POM!!!  -->

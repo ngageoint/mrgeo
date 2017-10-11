@@ -111,10 +111,12 @@
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-mapalgebra-costdistance</artifactId>
     </dependency>
+    <!--
     <dependency>
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-dataprovider-accumulo</artifactId>
     </dependency>
+    -->
     <dependency>
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-mapalgebra-image</artifactId>

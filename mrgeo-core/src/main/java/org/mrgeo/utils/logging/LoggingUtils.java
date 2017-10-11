@@ -16,8 +16,6 @@
 package org.mrgeo.utils.logging;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.apache.log4j.Appender;
-import org.apache.log4j.spi.RootLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -489,7 +487,7 @@ private static void initializeForReal()
       }
 
       appenders = (Enumeration) getAppenders.invoke(rootlogger);
-      wrapAppenders(rootlogger, appenders);
+      Log4JAppenderWrapper.wrapAppenders(rootlogger, appenders);
     }
     catch (IllegalAccessException | InvocationTargetException | ClassNotFoundException | NoSuchMethodException e)
     {
@@ -500,29 +498,6 @@ private static void initializeForReal()
   {
     throw new UnsupportedOperationException(
         "Only the Log4J & slf4j SimpleLogger is supported for logging.  Additional loggers can easily be added");
-  }
-}
-
-private static void wrapAppenders(Object rootlogger, Enumeration appenders)
-{
-  RootLogger rl;
-  if (rootlogger instanceof RootLogger)
-  {
-    rl = (RootLogger) rootlogger;
-
-    while (appenders.hasMoreElements())
-    {
-      Object next = appenders.nextElement();
-      if (next instanceof Appender)
-      {
-        Appender app = (Appender) next;
-
-        Appender wrapped = new Log4JAppenderWrapper(app);
-        rl.removeAppender(app);
-        rl.addAppender(wrapped);
-      }
-    }
-
   }
 }
 
