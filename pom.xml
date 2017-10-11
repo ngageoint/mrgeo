@@ -1077,6 +1077,10 @@
           <version>${httpcomponents.version}</version>
           <scope>provided</scope>
         </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk-s3</artifactId>
+        </dependency>
       </dependencies>
     </profile>
     <profile>
