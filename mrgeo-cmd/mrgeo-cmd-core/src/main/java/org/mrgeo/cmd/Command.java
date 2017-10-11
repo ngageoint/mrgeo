@@ -20,7 +20,6 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.conf.Configuration;
 import org.mrgeo.data.ProviderProperties;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * Command is the abstract base class for all mrgeo pluggable commands.  At run-time, all classes
