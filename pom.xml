@@ -412,10 +412,8 @@
               <arg>-target:jvm-${java.version}</arg>
               <arg>-Xmax-classfile-name</arg>
               <arg>143</arg>
+              <!--<arg>-Xfatal-warnings</arg>-->
               <arg>-optimize</arg>
-              <!--<arg>-source ${java.version}</arg>-->
-              <!--<arg>-target ${java.version}</arg>-->
-              <!--<arg>-XDignore.symbol.file=true</arg>-->
             </args>
             <sourceDir>${project.basedir}/src/main/scala</sourceDir>
             <testSourceDir>${project.basedir}/src/test/scala</testSourceDir>
@@ -2840,6 +2838,12 @@
         <version>${findbugs.version}</version>
         <scope>runtime</scope>
       </dependency>
+      <dependency>
+        <groupId>com.google.code.findbugs</groupId>
+        <artifactId>jsr305</artifactId>
+        <version>${findbugs.version}</version>
+        <scope>provided</scope>
+      </dependency>
       <!-- jasypt for property file encrytpion/decryption.  Included in parent pom dependencies to allow the command line
            tools to be run form the mrgeo parent directory.-->
       <dependency>
@@ -2848,6 +2852,25 @@
         <version>${jasypt.version}</version>
         <scope>compile</scope>
       </dependency>
+      <!-- Scala dependencies, due to interactions with Java -->
+      <!-- Scala will produce a "[WARNING] warning: Class <classname> not found - continuing with a stub."
+           This is caused by class/method annotations in Java that are directly referenced from Scala code.
+           It will actually cause an error compiling, so we need to add them as provided dependencies
+      -->
+      <dependency>
+        <groupId>javax.servlet</groupId>
+        <artifactId>servlet-api</artifactId>
+        <version>LATEST</version>
+        <scope>provided</scope>
+      </dependency>
+      <!-- org.codehaus.jackson moved to com.fasterxml.jackson, which takes care of the annotation -->
+      <dependency>
+        <groupId>org.codehaus.jackson</groupId>
+        <artifactId>jackson-core-asl</artifactId>
+        <version>1.9.13</version>
+        <scope>provided</scope>
+      </dependency>
+
     </dependencies>
   </dependencyManagement>
   <dependencies>
@@ -2919,6 +2942,10 @@
       <artifactId>annotations</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+    </dependency>
+    <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
       <scope>test</scope>
@@ -2926,6 +2953,15 @@
     <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-reflect</artifactId>
+    </dependency>
+    <!-- Scala dependencies, due to interactions with Java -->
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-core-asl</artifactId>
     </dependency>
   </dependencies>
   <!-- move me back to the top of this POM!!!  -->
