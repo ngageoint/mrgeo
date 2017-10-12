@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -39,6 +40,7 @@ public class ColorScaleManager
 private static final Logger log = LoggerFactory.getLogger(ColorScale.class);
 
 private static Map<String, ColorScale> colorscales;
+private static Map<String, String> colorscalenamemap;
 
 static
 {
@@ -69,6 +71,14 @@ public static ColorScale fromName(String colorScaleName) throws ColorScaleExcept
   if (colorscales.containsKey(colorScaleName)) {
     return (ColorScale) colorscales.get(colorScaleName).clone();
   }
+  else if (colorscalenamemap.containsKey(colorScaleName) &&
+      colorscales.containsKey(colorscalenamemap.get(colorScaleName))) {
+    return (ColorScale) colorscales.get(colorscalenamemap.get(colorScaleName)).clone();
+  }
+  else if ("grayscale".equalsIgnoreCase(colorScaleName))
+  {
+    return ColorScale.createDefaultGrayScale();
+  }
   return null;
 }
 
@@ -92,6 +102,7 @@ private static synchronized void initializeColorscales() throws ColorScaleExcept
   if (colorscales == null)
   {
     colorscales = new TreeMap<>();
+    colorscalenamemap = new HashMap<>();
 
     Properties props = MrGeoProperties.getInstance();
 
@@ -108,15 +119,16 @@ private static synchronized void initializeColorscales() throws ColorScaleExcept
           String name = provider.getName(i);
           if (name != null)
           {
-          if (FilenameUtils.getExtension(name).toLowerCase().equals("xml"))
-          {
-            try (InputStream fdis = provider.get(i))
+            if (FilenameUtils.getExtension(name).toLowerCase().equals("xml"))
             {
-              ColorScale cs = ColorScale.loadFromXML(fdis);
+              try (InputStream fdis = provider.get(i))
+              {
+                ColorScale cs = ColorScale.loadFromXML(fdis);
 
-              colorscales.put(cs.getName(), cs);
+                colorscales.put(cs.getName(), cs);
+                colorscalenamemap.put(FilenameUtils.getBaseName(name), cs.getName());
+              }
             }
-          }
           }
         }
       }
