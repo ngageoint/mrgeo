@@ -16,8 +16,10 @@
 package org.mrgeo.resources.wms;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.apache.commons.lang3.ArrayUtils;
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.colorscale.ColorScaleManager;
+import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsPyramid;
@@ -384,14 +386,61 @@ private void addLayersToCapability(Element capability, Version version, MrsImage
         // Add the colorscale styles if there are only 1 band...
         if (bands == 1)
         {
-          XmlUtils.createTextElement2(style, "Title", provider.getResourceName() + '-' + "Default Grayscale");
+          ColorScale[] scales = ColorScaleManager.getColorScaleList();
+
+          String csname = pyramid.getMetadata().getTag(MrGeoConstants.MRGEO_DEFAULT_COLORSCALE);
+          boolean haveDefault = false;
+          if (csname != null)
+          {
+            try
+            {
+              ColorScale cs = ColorScaleManager.fromName(csname);
+              if (cs != null)
+              {
+                haveDefault = true;
+
+
+                String title = cs.getTitle();
+                if (title == null)
+                {
+                  title = cs.getName();
+                }
+
+                title = provider.getResourceName() + '-' + title;
+                XmlUtils.createTextElement2(style, "Title", title);
+
+                String abst = cs.getDescription();
+                if (abst != null)
+                {
+                  XmlUtils.createTextElement2(style, "Abstract", abst);
+                }
+
+                createLegend(requestUrl, provider, "Default", style);
+              }
+            }
+            catch (ColorScale.ColorScaleException ignored)
+            {
+            }
+          }
+
+          if (!haveDefault)
+          {
+            XmlUtils.createTextElement2(style, "Title", provider.getResourceName() + '-' + "Grayscale");
+            XmlUtils.createTextElement2(style, "Abstract",
+                "3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value");
+
+            createLegend(requestUrl, provider, "Default", style);
+          }
+
+          style = XmlUtils.createElement(layer, "Style");
+          XmlUtils.createTextElement2(style, "Name", "GrayScale");
+          XmlUtils.createTextElement2(style, "Title", provider.getResourceName() + '-' + "Grayscale");
           XmlUtils.createTextElement2(style, "Abstract",
               "3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value");
 
-          createLegend(requestUrl, provider, "Default", style);
 
+          createLegend(requestUrl, provider, "GrayScale", style);
 
-          ColorScale[] scales = ColorScaleManager.getColorScaleList();
           for (ColorScale scale : scales)
           {
             style = XmlUtils.createElement(layer, "Style");

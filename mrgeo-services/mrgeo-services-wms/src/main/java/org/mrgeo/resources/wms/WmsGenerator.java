@@ -21,6 +21,7 @@ import org.mrgeo.colorscale.ColorScaleManager;
 import org.mrgeo.colorscale.applier.ColorScaleApplier;
 import org.mrgeo.core.MrGeoConstants;
 import org.mrgeo.data.DataProviderFactory;
+import org.mrgeo.data.DataProviderNotFound;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.raster.MrGeoRaster;
@@ -332,12 +333,7 @@ private Response.ResponseBuilder setupCaching(Response.ResponseBuilder builder,
 private Response getLegend(MultivaluedMap<String, String> allParams, ProviderProperties providerProperties)
 {
   // Get all of the query parameter values needed and validate them
-//  String layer = getQueryParam(allParams, "layer");
-//
-//  if (layer == null || layer.isEmpty())
-//  {
-//    return writeError(Response.Status.BAD_REQUEST, "Missing required LAYER parameter");
-//  }
+  String layer = getQueryParam(allParams, "layer");
 
   String format = getQueryParam(allParams, "format", "png");
   String colorscalename = getQueryParam(allParams, "style", null);
@@ -375,14 +371,35 @@ private Response getLegend(MultivaluedMap<String, String> allParams, ProviderPro
     }
     else
     {
-      cs = ColorScale.createDefaultGrayScale();
+      MrsImageDataProvider dp =
+          DataProviderFactory.getMrsImageDataProvider(layer, DataProviderFactory.AccessMode.READ, providerProperties);
+      MrsPyramidMetadata meta = dp.getMetadataReader().read();
 
+      String csname = meta.getTag(MrGeoConstants.MRGEO_DEFAULT_COLORSCALE);
+      if (csname != null)
+      {
+        cs = ColorScaleManager.fromName(csname);
+        if (cs == null)
+        {
+          throw new ColorScale.ColorScaleException("Can not load default style: " + csname);
+        }
+      }
+      else
+      {
+        cs = ColorScale.createDefaultGrayScale();
+      }
     }
+
   }
   catch (MrsPyramidServiceException e)
   {
     return writeError(Response.Status.INTERNAL_SERVER_ERROR, "Can not load STYLE");
   }
+  catch (ColorScale.ColorScaleException | IOException e)
+  {
+    return writeError(Response.Status.INTERNAL_SERVER_ERROR, e.getMessage());
+  }
+
 
   try
   {

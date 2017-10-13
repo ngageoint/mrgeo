@@ -83,11 +83,20 @@
         </BoundingBox>
         <Style>
           <Name>Default</Name>
-          <Title>IslandsElevation-v2-Default Grayscale</Title>
+          <Title>IslandsElevation-v2-Grayscale</Title>
           <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=Default&amp;LAYER=IslandsElevation-v2&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+          </LegendURL>
+        </Style>
+        <Style>
+          <Name>GrayScale</Name>
+          <Title>IslandsElevation-v2-Grayscale</Title>
+          <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
+          <LegendURL height="100" width="25">
+            <Format>image/jpeg</Format>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=GrayScale&amp;LAYER=IslandsElevation-v2&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
         <Style>
@@ -121,11 +130,20 @@
         </BoundingBox>
         <Style>
           <Name>Default</Name>
-          <Title>IslandsElevation-v2-color-scale-Default Grayscale</Title>
+          <Title>IslandsElevation-v2-color-scale-Grayscale</Title>
           <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=Default&amp;LAYER=IslandsElevation-v2-color-scale&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+          </LegendURL>
+        </Style>
+        <Style>
+          <Name>GrayScale</Name>
+          <Title>IslandsElevation-v2-color-scale-Grayscale</Title>
+          <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
+          <LegendURL height="100" width="25">
+            <Format>image/jpeg</Format>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=GrayScale&amp;LAYER=IslandsElevation-v2-color-scale&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
         <Style>
@@ -159,11 +177,20 @@
         </BoundingBox>
         <Style>
           <Name>Default</Name>
-          <Title>IslandsElevation-v2-no-pyramid-Default Grayscale</Title>
+          <Title>IslandsElevation-v2-no-pyramid-Grayscale</Title>
           <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=Default&amp;LAYER=IslandsElevation-v2-no-pyramid&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+          </LegendURL>
+        </Style>
+        <Style>
+          <Name>GrayScale</Name>
+          <Title>IslandsElevation-v2-no-pyramid-Grayscale</Title>
+          <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
+          <LegendURL height="100" width="25">
+            <Format>image/jpeg</Format>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=GrayScale&amp;LAYER=IslandsElevation-v2-no-pyramid&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
         <Style>
@@ -197,11 +224,20 @@
         </BoundingBox>
         <Style>
           <Name>Default</Name>
-          <Title>IslandsElevation-v2-no-pyramid-extra-metadata-Default Grayscale</Title>
+          <Title>IslandsElevation-v2-no-pyramid-extra-metadata-Grayscale</Title>
           <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=Default&amp;LAYER=IslandsElevation-v2-no-pyramid-extra-metadata&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+          </LegendURL>
+        </Style>
+        <Style>
+          <Name>GrayScale</Name>
+          <Title>IslandsElevation-v2-no-pyramid-extra-metadata-Grayscale</Title>
+          <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
+          <LegendURL height="100" width="25">
+            <Format>image/jpeg</Format>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=GrayScale&amp;LAYER=IslandsElevation-v2-no-pyramid-extra-metadata&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
         <Style>
@@ -235,11 +271,20 @@
         </BoundingBox>
         <Style>
           <Name>Default</Name>
-          <Title>IslandsElevation-v2-no-stats-Default Grayscale</Title>
+          <Title>IslandsElevation-v2-no-stats-Grayscale</Title>
           <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=Default&amp;LAYER=IslandsElevation-v2-no-stats&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+          </LegendURL>
+        </Style>
+        <Style>
+          <Name>GrayScale</Name>
+          <Title>IslandsElevation-v2-no-stats-Grayscale</Title>
+          <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
+          <LegendURL height="100" width="25">
+            <Format>image/jpeg</Format>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=GrayScale&amp;LAYER=IslandsElevation-v2-no-stats&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
         <Style>
@@ -273,11 +318,20 @@
         </BoundingBox>
         <Style>
           <Name>Default</Name>
-          <Title>cost-distance-Default Grayscale</Title>
+          <Title>cost-distance-Grayscale</Title>
           <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=Default&amp;LAYER=cost-distance&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+          </LegendURL>
+        </Style>
+        <Style>
+          <Name>GrayScale</Name>
+          <Title>cost-distance-Grayscale</Title>
+          <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
+          <LegendURL height="100" width="25">
+            <Format>image/jpeg</Format>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=GrayScale&amp;LAYER=cost-distance&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
         <Style>
@@ -311,11 +365,20 @@
         </BoundingBox>
         <Style>
           <Name>Default</Name>
-          <Title>cost-distance-shift-2-Default Grayscale</Title>
+          <Title>cost-distance-shift-2-Grayscale</Title>
           <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
           <LegendURL height="100" width="25">
             <Format>image/jpeg</Format>
             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=Default&amp;LAYER=cost-distance-shift-2&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
+          </LegendURL>
+        </Style>
+        <Style>
+          <Name>GrayScale</Name>
+          <Title>cost-distance-shift-2-Grayscale</Title>
+          <Abstract>3-band grayscale image, scaled from the min value (0) to max value (255).  All 3 bands contain the same 8-bit value</Abstract>
+          <LegendURL height="100" width="25">
+            <Format>image/jpeg</Format>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.foo.bar:1234/wms?REQUEST=GetLegendGraphic&amp;SERVICE=WMS&amp;VERSION=1.0.0&amp;STYLE=GrayScale&amp;LAYER=cost-distance-shift-2&amp;FORMAT=image%2Fjpeg&amp;WIDTH=25&amp;HEIGHT=100" xlink:type="simple"/>
           </LegendURL>
         </Style>
         <Style>
