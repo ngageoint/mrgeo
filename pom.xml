@@ -69,7 +69,6 @@
     <jts.version>1.13</jts.version>
     <kryo.version>2.21</kryo.version>
     <log4j.version>1.2.17</log4j.version>
-    <mahout.version>0.9-cdh5.3.0</mahout.version>
     <opencv.version>2.4.9-7</opencv.version>
     <opencv.group>nu.pattern</opencv.group>
     <pngj.version>2.0.1</pngj.version>
@@ -760,7 +759,6 @@
          |   <id>cdh520-yarn</id>
          |   <properties>
          |     <hadoop.version></hadoop.version>
-         |     <mahout.version></mahout.version>
          |     <hadoop.config></hadoop.config>
          |     <slf4j.version></slf4j.version>
          |     <final.classifier></final.classifier>
@@ -769,7 +767,6 @@
          |</profile>
          |
          | hadoop-version - the dependency version number
-         | mahout.version - the apache mahout version corresponding to the hadoop version
          | hadoop.config - the path to the hadoop config files (used for tests), usually /etc/hadoop/conf
          | slf4j.version - the slf4j version to use, this version must not conflict with the hadoop slf4j version
          | final.classifier - the classifier for the final (distribution) artifacts, usually the hadoop version without
@@ -777,11 +774,31 @@
          | release.arguments - any arguments to use for releases, usually blank
     -->
     <profile>
+      <id>cdh5130</id>
+      <properties>
+        <hadoop.version>2.6.0-cdh5.13.0</hadoop.version>
+        <spark.version>1.6.0-cdh5.13.0</spark.version>
+        <scala.version>2.10.4</scala.version>
+        <spark.scala.version>2.10</spark.scala.version>
+        <scala.jvm.version>1.7</scala.jvm.version>
+        <final.classifier>cdh5.13.0</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
       <id>cdh5121</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.12.1</hadoop.version>
-        <mahout.version>0.9-cdh5.12.1</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.12.1</spark.version>
         <scala.version>2.10.4</scala.version>
         <spark.scala.version>2.10</spark.scala.version>
@@ -804,8 +821,6 @@
       <id>cdh5120</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.12.0</hadoop.version>
-        <mahout.version>0.9-cdh5.12.0</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.12.0</spark.version>
         <final.classifier>cdh5.12.0</final.classifier>
         <scala.version>2.10.4</scala.version>
@@ -828,8 +843,6 @@
       <id>cdh5111</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.11.1</hadoop.version>
-        <mahout.version>0.9-cdh5.11.1</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.11.1</spark.version>
         <final.classifier>cdh5.11.1</final.classifier>
         <scala.version>2.10.4</scala.version>
@@ -852,8 +865,6 @@
       <id>cdh5110</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.11.0</hadoop.version>
-        <mahout.version>0.9-cdh5.11.0</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.11.0</spark.version>
         <final.classifier>cdh5.11.0</final.classifier>
         <scala.version>2.10.4</scala.version>
@@ -876,8 +887,6 @@
       <id>cdh5101</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.10.1</hadoop.version>
-        <mahout.version>0.9-cdh5.10.1</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.10.1</spark.version>
         <final.classifier>cdh5.10.1</final.classifier>
         <scala.version>2.10.4</scala.version>
@@ -900,8 +909,6 @@
       <id>cdh5100</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.10.0</hadoop.version>
-        <mahout.version>0.9-cdh5.10.0</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.0-cdh5.10.0</spark.version>
         <final.classifier>cdh5.10.0</final.classifier>
         <scala.version>2.10.4</scala.version>
@@ -932,8 +939,6 @@
         <aws.version>1.10.6</aws.version>
         <aws.s3.version>1.10.6</aws.s3.version>
         <hadoop.version>2.7.1</hadoop.version>
-        <mahout.version>0.7</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.1</spark.version>
         <final.classifier>2.7.1</final.classifier>
         <scala.version>2.10.4</scala.version>
@@ -972,8 +977,6 @@
         <aws.version>1.7.4</aws.version>
         <aws.s3.version>1.10.6</aws.s3.version>
         <hadoop.version>2.7.2</hadoop.version>
-        <mahout.version>0.7</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
         <spark.version>1.6.1</spark.version>
         <final.classifier>2.7.2</final.classifier>
         <release.arguments />
@@ -1005,8 +1008,6 @@
         <scala.version>2.11.8</scala.version>
         <spark.version>2.2.0</spark.version>
         <spark.scala.version>2.11</spark.scala.version>
-        <mahout.version>0.7</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
         <jackson.version>2.6.6</jackson.version>
         <final.classifier>2.7.3</final.classifier>
         <httpcomponents.version>4.5.2</httpcomponents.version>
@@ -1048,8 +1049,6 @@
       <id>emr580</id>
       <properties>
         <hadoop.version>2.7.3</hadoop.version>
-        <mahout.version>0.13.0</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.10</slf4j.version>
         <final.classifier>emr5.8.0</final.classifier>
         <release.arguments />
@@ -1087,8 +1086,6 @@
       <id>emr530</id>
       <properties>
         <hadoop.version>2.7.3</hadoop.version>
-        <mahout.version>0.12.2</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.10</slf4j.version>
         <final.classifier>emr5.3.0</final.classifier>
         <release.arguments />
@@ -1128,8 +1125,6 @@
         <scala.version>2.11.8</scala.version>
         <spark.version>2.0.0</spark.version>
         <spark.scala.version>2.11</spark.scala.version>
-        <mahout.version>0.12.2</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.10</slf4j.version>
         <final.classifier>emr5.0.0</final.classifier>
         <release.arguments />
@@ -1165,8 +1160,6 @@
       <id>emr472</id>
       <properties>
         <hadoop.version>2.7.2</hadoop.version>
-        <mahout.version>0.11.1</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.10</slf4j.version>
         <final.classifier>emr4.7.2</final.classifier>
         <release.arguments />
@@ -1200,8 +1193,6 @@
       <id>emr471</id>
       <properties>
         <hadoop.version>2.7.2</hadoop.version>
-        <mahout.version>0.11.1</mahout.version>
-        <protobuf.version>2.5.0</protobuf.version>
         <slf4j.version>1.7.10</slf4j.version>
         <final.classifier>emr4.7.1</final.classifier>
         <release.arguments />
@@ -2531,22 +2522,6 @@
         <groupId>joda-time</groupId>
         <artifactId>joda-time</artifactId>
         <version>${joda-time.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.mahout</groupId>
-        <artifactId>mahout-core</artifactId>
-        <version>${mahout.version}</version>
-        <!-- keep hadoop-core out of mahout, it may be the wrong version (mr1 vs. yarn) -->
-        <exclusions>
-          <exclusion>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-core</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-math3</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.json</groupId>
