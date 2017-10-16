@@ -18,6 +18,7 @@ package org.mrgeo.colorscale;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.mrgeo.utils.FloatUtils;
 import org.mrgeo.utils.XmlUtils;
@@ -275,6 +276,14 @@ public void clear()
   min = null;
   max = null;
   cache = null;
+  nullColor = new int[]{0, 0, 0, 0};
+  transparent = Double.NaN;
+  name = null;
+  title = null;
+  description = null;
+  quantiles = null;
+  quantileSubScales = null;
+
 }
 //
 //  public ColorScale(final InputStream strm) throws ColorScaleException
@@ -303,7 +312,16 @@ public Object clone()
   result.transparent = transparent;
   result.forceValuesIntoRange = forceValuesIntoRange;
   result.putAll(this);
+  result.name = name;
+  result.title = title;
+  result.description = description;
+  result.quantiles = ArrayUtils.clone(quantiles);
 
+  if (quantileSubScales  != null)
+  {
+    result.quantileSubScales = new ColorScale[quantileSubScales.length];
+    System.arraycopy(quantileSubScales, 0, result.quantileSubScales, 0, quantileSubScales.length);
+  }
   return result;
 }
 
