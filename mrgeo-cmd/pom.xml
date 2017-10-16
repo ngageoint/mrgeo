@@ -61,7 +61,13 @@
       </modules>
     </profile>
     <profile>
-      <id>build-ogc</id>
+      <id>cmd-build-ogc</id>
+      <activation>
+        <property>
+          <name>modules</name>
+          <value>ogc</value>
+        </property>
+      </activation>
       <modules>
         <module>mrgeo-cmd-core</module>
         <module>mrgeo-cmd-webserver</module>
