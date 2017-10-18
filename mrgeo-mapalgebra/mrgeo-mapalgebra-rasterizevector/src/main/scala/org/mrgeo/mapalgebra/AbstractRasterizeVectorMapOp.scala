@@ -149,8 +149,7 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
 
   def initialize(node:ParserNode, variables:String => Option[ParserNode]):Unit = {
     val usageMsg = "RasterizeVector and RasterizePoints take these arguments. (source vector, aggregation type, cellsize, [column], [point/line width], [bounds (minx, miny, maxx, maxy], [raster for bounds] )"
-    if (!(node.getNumChildren == 3 || node.getNumChildren == 4 || node.getNumChildren == 5 ||
-          node.getNumChildren == 7 || node.getNumChildren == 8)) {
+    if (node.getNumChildren < 3 || node.getNumChildren > 8) {
       throw new ParserException(usageMsg)
     }
     vectorMapOp = VectorMapOp.decodeToVector(node.getChild(0), variables)
@@ -212,6 +211,18 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
         case 5 =>
           p1 = parseForRaster(node, variables, 3)
           p2 = parseForRaster(node, variables, 4)
+        case 6 =>
+          p1 = parseForRaster(node, variables, 3)
+          p2 = parseForRaster(node, variables, 4)
+          if (p1.isEmpty) {
+            p1 = parseForRaster(node, variables, 5)
+          }
+          else if (p2.isEmpty) {
+            p2 = parseForRaster(node, variables, 5)
+          }
+          else {
+            parseForRaster(node, variables, 5)
+          }
         case 7 =>
           parseBounds(node, variables, 3)
         case 8 =>
@@ -239,9 +250,9 @@ abstract class AbstractRasterizeVectorMapOp extends RasterMapOp with Externaliza
               }
               catch {
                 case e:ParserException =>
-                    p1 = parseForRaster(node, variables, 3)
-                    p2 = parseForRaster(node, variables, 4)
-                    parseBounds(node, variables, 5)
+                  p1 = parseForRaster(node, variables, 3)
+                  p2 = parseForRaster(node, variables, 4)
+                  parseBounds(node, variables, 5)
               }
           }
         case _ => throw new ParserException(usageMsg)
