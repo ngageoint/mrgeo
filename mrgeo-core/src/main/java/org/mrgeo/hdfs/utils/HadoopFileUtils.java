@@ -23,6 +23,7 @@ import com.amazonaws.services.s3.model.S3Object;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -297,6 +298,16 @@ public static void create(String path) throws IOException
 public static void create(Configuration conf, String path) throws IOException
 {
   create(conf, new Path(path));
+}
+
+public static FSDataOutputStream createOutputStream(String output) throws IOException
+{
+  Configuration conf = HadoopUtils.createConfiguration();
+  Path path = new Path(output);
+  create(conf, path.getParent());
+
+  FileSystem fs = getFileSystem(conf, path);
+  return fs.create(path, true);
 }
 
 public static void delete(Path path) throws IOException

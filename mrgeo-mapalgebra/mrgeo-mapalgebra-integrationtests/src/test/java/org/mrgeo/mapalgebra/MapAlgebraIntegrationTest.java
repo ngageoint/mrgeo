@@ -1086,10 +1086,10 @@ public void export() throws Exception
     testUtils.runRasterExpression(this.conf, testname.getMethodName(),
         TestUtils.nanTranslatorToMinus9999, TestUtils.nanTranslatorToMinus9999,
         String
-            .format("export([%s], \"%s\", \"true\")", allones, testUtils.getOutputLocalFor(testname.getMethodName())));
+            .format("export([%s], \"%s\", \"true\")", allones, testUtils.getOutputHdfsFor(testname.getMethodName())));
 
     // now check the file that was saved...
-    testUtils.compareLocalRasterOutput(testname.getMethodName(), TestUtils.nanTranslatorToMinus9999);
+    testUtils.compareRasterOutput(testname.getMethodName(), TestUtils.nanTranslatorToMinus9999);
   }
 }
 
