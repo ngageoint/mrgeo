@@ -22,6 +22,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.mrgeo.cmd.Command;
 import org.mrgeo.colorscale.ColorScale;
 import org.mrgeo.colorscale.ColorScaleManager;
@@ -35,6 +36,7 @@ import org.mrgeo.data.image.MrsImageDataProvider;
 import org.mrgeo.data.raster.MrGeoRaster;
 import org.mrgeo.data.raster.RasterUtils;
 import org.mrgeo.data.tile.TileNotFoundException;
+import org.mrgeo.hdfs.utils.HadoopFileUtils;
 import org.mrgeo.image.MrsImage;
 import org.mrgeo.image.MrsImageException;
 import org.mrgeo.image.MrsPyramid;
@@ -50,6 +52,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -495,14 +499,28 @@ private boolean saveSingleTile(final String output, final String pyramidName, fi
 
     if (raster != null)
     {
-      String out = makeOutputName(output, pyramidName, format, tileid, zoom, tilesize, true);
-
       raster = colorRaster(raster, metadata, applier, zoom, pyramidName, format, providerProperties);
-      Bounds bnds = TMSUtils.tileBounds(t.tx, t.ty, image.getZoomlevel(), metadata.getTilesize());
-      GDALJavaUtils.saveRasterTile(raster.toDataset(bnds, metadata.getDefaultValues()),
-          out, t.tx, t.ty, image.getZoomlevel(), metadata.getDefaultValue(0), format);
 
-      System.out.println("Wrote output to " + out);
+      String out = makeOutputName(output, pyramidName, format, tileid, zoom, tilesize, true);
+      try
+      {
+        if (new URI(out).getScheme() == null)
+        {
+          out = "file://" + out;
+        }
+      }
+      catch (URISyntaxException ignored)
+      {
+      }
+
+      Bounds bnds = TMSUtils.tileBounds(t.tx, t.ty, image.getZoomlevel(), metadata.getTilesize());
+
+      try (FSDataOutputStream stream = HadoopFileUtils.createOutputStream(out))
+      {
+        GDALJavaUtils.saveRasterTile(raster.toDataset(bnds, metadata.getDefaultValues()),
+            stream, t.tx, t.ty, image.getZoomlevel(), metadata.getDefaultValue(0), format);
+        System.out.println("Wrote output to " + out);
+      }
       return true;
     }
 
@@ -570,13 +588,28 @@ private boolean saveMultipleTiles(String output, String pyramidName,
     {
       throw new MrsImageException("Error, could not load any tiles");
     }
-    String out = makeOutputName(output, pyramidName, format, minId, zoomlevel, tilesize, false);
     raster = colorRaster(raster, metadata, applier, zoomlevel, pyramidName, format, providerProperties);
-    GDALJavaUtils
-        .saveRaster(raster.toDataset(imageBounds, metadata.getDefaultValues()), out, null, metadata.getDefaultValue(0),
-            format);
 
-    System.out.println("Wrote output to " + out);
+    String out = makeOutputName(output, pyramidName, format, minId, zoomlevel, tilesize, false);
+
+    try
+    {
+      if (new URI(out).getScheme() == null)
+      {
+        out = "file://" + out;
+      }
+    }
+    catch (URISyntaxException ignored)
+    {
+    }
+
+    try (FSDataOutputStream stream = HadoopFileUtils.createOutputStream(out))
+    {
+      GDALJavaUtils.saveRaster(raster.toDataset(imageBounds, metadata.getDefaultValues()), stream,
+          null, metadata.getDefaultValue(0), format);
+      System.out.println("Wrote output to " + out);
+    }
+
     return true;
   }
   catch (IOException e)
@@ -608,8 +641,8 @@ private String makeTMSOutputName(String base, String format, long tileid, int zo
     break;
   }
 
-  File f = new File(output);
-  FileUtils.createDir(f.getParentFile());
+  //File f = new File(output);
+  //FileUtils.createDir(f.getParentFile());
 
   return output;
 }
@@ -703,8 +736,8 @@ private String makeOutputName(String template, String imageName, String format,
     output += ".jpg";
   }
 
-  File f = new File(output);
-  FileUtils.createDir(f.getParentFile());
+  //File f = new File(output);
+  //FileUtils.createDir(f.getParentFile());
 
   return output;
 }

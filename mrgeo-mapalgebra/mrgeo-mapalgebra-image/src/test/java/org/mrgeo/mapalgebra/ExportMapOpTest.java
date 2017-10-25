@@ -82,9 +82,19 @@ public void exportOneTile() throws IOException
   File parent = new File(output).getParentFile();
   File[] files = parent.listFiles();
   Assert.assertNotNull("No files exported", files);
-  Assert.assertEquals("Wrong number of files exported", 1, files.length);
+  // should be the image and a .<image>.crc file created locally
+  Assert.assertEquals("Wrong number of files exported", 2, files.length);
 
-  Dataset gdal = GDALUtils.open(files[0].getCanonicalPath());
+  String name;
+  if (files[0].getCanonicalPath().endsWith(".tif"))
+  {
+    name = files[0].getCanonicalPath();
+  }
+  else
+  {
+    name = files[1].getCanonicalPath();
+  }
+  Dataset gdal = GDALUtils.open(name);
   MrGeoRaster exported = MrGeoRaster.fromDataset(gdal);
 
   testUtils.compareRasters(testname.getMethodName(), exported);

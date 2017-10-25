@@ -16,6 +16,7 @@
 package org.mrgeo.mapalgebra
 
 import java.io._
+import java.net.URI
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.{SparkConf, SparkContext}
@@ -26,6 +27,7 @@ import org.mrgeo.core.MrGeoConstants
 import org.mrgeo.data.raster.{MrGeoRaster, RasterUtils, RasterWritable}
 import org.mrgeo.data.rdd.RasterRDD
 import org.mrgeo.data.tile.TileIdWritable
+import org.mrgeo.hdfs.utils.HadoopFileUtils
 import org.mrgeo.image.MrsPyramidMetadata
 import org.mrgeo.job.JobArguments
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
@@ -397,8 +399,10 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
                         meta:MrsPyramidMetadata,
                         applier:Option[ColorScaleApplier],
                         bnds:Bounds,
-                        reformat:Boolean = true) = {
-    implicit val tileIdOrdering = new Ordering[TileIdWritable] {
+                        reformat:Boolean = true):Unit = {
+    implicit val tileIdOrdering:Ordering[TileIdWritable] {
+      def compare(x:TileIdWritable, y:TileIdWritable):Int
+    } = new Ordering[TileIdWritable] {
       override def compare(x:TileIdWritable, y:TileIdWritable):Int = x.compareTo(y)
     }
 
@@ -515,8 +519,20 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
       mergednodata = Some(nd)
     }
     else {
-      val output = makeOutputName(name, format.get, replaced.keys.min().get(), zoom.get, meta.getTilesize, reformat)
-      GDALUtils.saveRaster(rasterToSave.toDataset(bnds, nd), output, bnds, nd(0), format.get)
+      val formatted = makeOutputName(name, format.get, replaced.keys.min().get(), zoom.get, meta.getTilesize, reformat)
+
+      val uri = (if (new URI(formatted).getScheme == null) {
+        "file://"
+      }
+      else {
+        ""
+      }) + formatted
+
+      val stream = HadoopFileUtils.createOutputStream(uri)
+      try {
+        GDALUtils.saveRaster(rasterToSave.toDataset(bnds, nd), stream, bnds, nd(0), format.get)
+      }
+      finally stream.close()
     }
   }
 
@@ -637,8 +653,9 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
       else if ((format == "jpg") && !(output.endsWith(".jpg") || output.endsWith(".jpeg"))) {
         output += ".jpg"
       }
-      val f:File = new File(output)
-      FileUtils.createDir(f.getParentFile)
+
+//      val f:File = new File(output)
+//      FileUtils.createDir(f.getParentFile)
 
       output
     }
@@ -658,8 +675,8 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
           "jpg"
       })
 
-    val f:File = new File(output)
-    FileUtils.createDir(f.getParentFile)
+//    val f:File = new File(output)
+//    FileUtils.createDir(f.getParentFile)
 
     output
   }
