@@ -117,6 +117,17 @@ def generate(mrgeo, gateway, gateway_client):
     global _initialized
 
     if _initialized:
+        # Make sure the object have the proper code in them.  In case somewhere we've made a new mrgeo object
+        for method_name, code in _mapop_code.items():
+            if not hasattr(mrgeo, method_name):
+                setattr(mrgeo, method_name, code.compile(method_name).get(method_name))
+        for method_name, code in _rastermapop_code.items():
+            if not hasattr(RasterMapOp, method_name):
+                setattr(RasterMapOp, method_name, code.compile(method_name).get(method_name))
+        for method_name, code in _vectormapop_code.items():
+            if not hasattr(VectorMapOp, method_name):
+                setattr(VectorMapOp, method_name, code.compile(method_name).get(method_name))
+                
         return
 
     jvm = gateway.jvm
@@ -183,15 +194,20 @@ def generate(mrgeo, gateway, gateway_client):
                             _vectormapop_code[method_name] = code
                             setattr(VectorMapOp, method_name, code.compile(method_name).get(method_name))
                         elif is_instance_of(gateway, cls, jvm.MapOp):
-                            _mapop_code[method_name] = code
+                            # _mapop_code[method_name] = code
+                            _rastermapop_code[method_name] = code
                             setattr(RasterMapOp, method_name, code.compile(method_name).get(method_name))
+                            _vectormapop_code[method_name] = code
                             setattr(VectorMapOp, method_name, code.compile(method_name).get(method_name))
+
                 if procCodes is not None:
                     for method_name, code in procCodes.items():
+                        print(method_name)
                         _mapop_code[method_name] = code
                         setattr(mrgeo, method_name, code.compile(method_name).get(method_name))
 
     _initialized = True
+    print("add: " + str(hasattr(mrgeo, "add")))
 
 
 def _get_instance_type(signatures, gateway, cls, mapop):
@@ -316,6 +332,10 @@ def _generate_procedural_method_code(gateway, client, mapop, name, signatures, i
     methods = _generate_methods(instance, signatures)
 
     # print("working on " + name)
+
+    if (name == "add"):
+        pass
+
     jvm = gateway.jvm
     cls = JavaClass(mapop, gateway_client=client)
 
