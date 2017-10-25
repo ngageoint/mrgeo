@@ -73,7 +73,7 @@ public void exportOneTile() throws IOException
 //    tms:Boolean = false, colorscale:String = "", tileids:String = "",
 //    bounds:String = "", allLevels:Boolean = false, overridenodata:Double = Double.NegativeInfinity):MapOp = {
 
-  MapOp exportmapop = ExportMapOp.create(mapop, "file://" + output,
+  MapOp exportmapop = ExportMapOp.create(mapop, output,
       false, -1, "", -1, -1, "tif", false, false, "", "", "", false,
       Double.NEGATIVE_INFINITY);  // this line is all defaults.
 
