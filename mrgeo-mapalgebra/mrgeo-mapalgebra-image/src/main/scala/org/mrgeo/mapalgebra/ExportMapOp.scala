@@ -16,6 +16,7 @@
 package org.mrgeo.mapalgebra
 
 import java.io._
+import java.net.URI
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.{SparkConf, SparkContext}
@@ -518,9 +519,16 @@ class ExportMapOp extends RasterMapOp with Logging with Externalizable {
       mergednodata = Some(nd)
     }
     else {
-      val output = makeOutputName(name, format.get, replaced.keys.min().get(), zoom.get, meta.getTilesize, reformat)
+      val formatted = makeOutputName(name, format.get, replaced.keys.min().get(), zoom.get, meta.getTilesize, reformat)
 
-      val stream = HadoopFileUtils.createOutputStream(output)
+      val uri = (if (new URI(formatted).getScheme == null) {
+        "file://"
+      }
+      else {
+        ""
+      }) + formatted
+
+      val stream = HadoopFileUtils.createOutputStream(uri)
       try {
         GDALUtils.saveRaster(rasterToSave.toDataset(bnds, nd), stream, bnds, nd(0), format.get)
       }
