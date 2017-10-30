@@ -17,8 +17,6 @@ package org.mrgeo.mapalgebra
 
 import java.awt.image.DataBuffer
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
-import javax.vecmath.Vector3d
-
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
@@ -48,62 +46,88 @@ object SlopeAspectMapOp {
   final private val zn = 7
   final private val pn = 8
 
+  class Vector3d(var x:Double, var y:Double, var z:Double) {
 
-  private def isnodata(v:Double, nodata:Double):Boolean = if (nodata.isNaN) {
-    v.isNaN
-  }
-  else {
-    v == nodata
-  }
-
-  private def calculateNormal(raster:MrGeoRaster, x:Int, y:Int, mpd:Double,
-                              nodata:Double):(Double, Double, Double) = {
-    val z = Array.ofDim[Double](9)
-
-    val vx = new Vector3d()
-    val vy = new Vector3d()
-    val normal = new Vector3d()
-
-    // if the origin pixel is nodata, the normal is nodata
-    val origin = raster.getPixelDouble(x, y, 0)
-    if (isnodata(origin, nodata)) {
-      return (Double.NaN, Double.NaN, Double.NaN)
+    def this() {
+      this(Double.NaN, Double.NaN, Double.NaN)
     }
 
-    // get the elevations of the 3x3 grid of elevations, if a neighbor is nodata, make the elevation
-    // the same as the origin, this makes the slopes a little prettier
-    var ndx = 0
-    var dy:Int = y - 1
-    while (dy <= y + 1) {
-      var dx:Int = x - 1
-      while (dx <= x + 1) {
-        z(ndx) = raster.getPixelDouble(dx, dy, 0)
-        if (isnodata(z(ndx), nodata)) {
-          z(ndx) = origin
-        }
+    def cross(v1:Vector3d, v2:Vector3d):Unit = {
+      x = v1.y * v2.z - v1.z * v2.y
+      y = v2.x * v1.z - v2.z * v1.x
+      z = v1.x * v2.y - v1.y * v2.x
+    }
 
-        ndx += 1
-        dx += 1
+    def normalize():Unit = {
+      def length = Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z)
+
+      if (length > 0.0D) {
+        x = x / length
+        y = y / length
+        z = z / length
       }
-      dy += 1
     }
 
-    vx.x = mpd
-    vx.y = 0.0
-    vx.z = ((z(pp) + z(pz) * 2 + z(pn)) - (z(np) + z(nz) * 2 + z(nn))) / 8.0
-
-    vy.x = 0.0
-    vy.y = mpd
-    vy.z = ((z(pp) + z(zp) * 2 + z(np)) - (z(pn) + z(zn) * 2 + z(nn))) / 8.0
-
-    normal.cross(vx, vy)
-    normal.normalize()
-
-    // we want the normal to always point up.
-    normal.z = Math.abs(normal.z)
-
-    (normal.x, normal.y, normal.z)
+    def dot(v1: Vector3d):Double = {
+      x * v1.x + y * v1.y + z * v1.z
+    }
   }
+
+private def isnodata(v:Double, nodata:Double):Boolean = if (nodata.isNaN) {
+v.isNaN
+}
+else {
+v == nodata
+}
+
+private def calculateNormal(raster:MrGeoRaster, x:Int, y:Int, mpd:Double,
+nodata:Double):(Double, Double, Double) = {
+val z = Array.ofDim[Double](9)
+
+val vx = new Vector3d()
+val vy = new Vector3d()
+val normal = new Vector3d()
+
+// if the origin pixel is nodata, the normal is nodata
+val origin = raster.getPixelDouble(x, y, 0)
+if (isnodata(origin, nodata)) {
+return (Double.NaN, Double.NaN, Double.NaN)
+}
+
+// get the elevations of the 3x3 grid of elevations, if a neighbor is nodata, make the elevation
+// the same as the origin, this makes the slopes a little prettier
+var ndx = 0
+var dy:Int = y - 1
+while (dy <= y + 1) {
+var dx:Int = x - 1
+while (dx <= x + 1) {
+z(ndx) = raster.getPixelDouble(dx, dy, 0)
+if (isnodata(z(ndx), nodata)) {
+z(ndx) = origin
+}
+
+ndx += 1
+dx += 1
+}
+dy += 1
+}
+
+vx.x = mpd
+vx.y = 0.0
+vx.z = ((z(pp) + z(pz) * 2 + z(pn)) - (z(np) + z(nz) * 2 + z(nn))) / 8.0
+
+vy.x = 0.0
+vy.y = mpd
+vy.z = ((z(pp) + z(zp) * 2 + z(np)) - (z(pn) + z(zn) * 2 + z(nn))) / 8.0
+
+normal.cross(vx, vy)
+normal.normalize()
+
+// we want the normal to always point up.
+normal.z = Math.abs(normal.z)
+
+(normal.x, normal.y, normal.z)
+}
 
 }
 

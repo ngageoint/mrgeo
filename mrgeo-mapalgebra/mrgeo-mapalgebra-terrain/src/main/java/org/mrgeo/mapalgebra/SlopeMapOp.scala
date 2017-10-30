@@ -15,8 +15,7 @@
 
 package org.mrgeo.mapalgebra
 
-import javax.vecmath.Vector3d
-
+import org.mrgeo.mapalgebra.SlopeAspectMapOp.Vector3d
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 
