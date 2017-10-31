@@ -17,8 +17,6 @@ package org.mrgeo.mapalgebra
 
 import java.awt.image.DataBuffer
 import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
-import javax.vecmath.Vector3d
-
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
@@ -48,6 +46,32 @@ object SlopeAspectMapOp {
   final private val zn = 7
   final private val pn = 8
 
+  class Vector3d(var x:Double, var y:Double, var z:Double) {
+
+    def this() {
+      this(Double.NaN, Double.NaN, Double.NaN)
+    }
+
+    def cross(u:Vector3d, v:Vector3d):Unit = {
+      x = u.y * v.z - v.y * u.z
+      y = v.x * u.z - u.x * v.z
+      z = u.x * v.y - v.x * u.y
+    }
+
+    def normalize():Unit = {
+      val length = Math.sqrt(x * x + y * y + z * z)
+
+      if (length > 0.0) {
+        x = x / length
+        y = y / length
+        z = z / length
+      }
+    }
+
+    def dot(v1: Vector3d):Double = {
+      x * v1.x + y * v1.y + z * v1.z
+    }
+  }
 
   private def isnodata(v:Double, nodata:Double):Boolean = if (nodata.isNaN) {
     v.isNaN
