@@ -199,6 +199,7 @@ private Server startWebServer(String host, int httpPort, boolean singleThreaded,
         new HttpConnectionFactory(https_config));
 
     httpsConnector.setPort(httpPort);
+    httpsConnector.setHost(host);
   }
 
   if (singleThreaded)
