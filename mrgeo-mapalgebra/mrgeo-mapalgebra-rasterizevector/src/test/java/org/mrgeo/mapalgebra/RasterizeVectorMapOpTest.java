@@ -389,14 +389,6 @@ public void sumWithBadBounds3() throws Exception
   MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
 }
 
-@Test(expected = ParserException.class)
-@Category(UnitTest.class)
-public void sumWithBadBounds2() throws Exception
-{
-  String exp = "RasterizeVector([" + hdfsShapefile + "], \"SUM\", 0.0001716614, \"" + column + "\", 34.25, 69.35)";
-  MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
-}
-
 
 @Test(expected = ParserException.class)
 @Category(UnitTest.class)

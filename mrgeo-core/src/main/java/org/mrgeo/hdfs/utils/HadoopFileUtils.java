@@ -23,6 +23,7 @@ import com.amazonaws.services.s3.model.S3Object;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -297,6 +298,16 @@ public static void create(String path) throws IOException
 public static void create(Configuration conf, String path) throws IOException
 {
   create(conf, new Path(path));
+}
+
+public static FSDataOutputStream createOutputStream(String output) throws IOException
+{
+  Configuration conf = HadoopUtils.createConfiguration();
+  Path path = new Path(output);
+  create(conf, path.getParent());
+
+  FileSystem fs = getFileSystem(conf, path);
+  return fs.create(path, true);
 }
 
 public static void delete(Path path) throws IOException
@@ -759,7 +770,7 @@ public static class SequenceFileReaderWrapper {
               // existing cache entry and wait on the lock to be released (which happens
               // after the files have been copied - below).
               s3Cache.addEntry(path.toString(), cacheEntry);
-              AmazonS3 s3Client = new AmazonS3Client(new DefaultAWSCredentialsProviderChain());
+              AmazonS3 s3Client = getS3Client(conf, scheme);
               // Copy the index and data files locally
               long fileSize = copyFileFromS3(s3Client, pathUri, tmpFile, cacheEntry.getPrimaryFileOutputStream());
               log.debug("Copied data from " + pathUri + " to " + tmpFile.getAbsolutePath() + ": " + fileSize);
@@ -875,7 +886,7 @@ public static class MapFileReaderWrapper
               // existing cache entry and wait on the lock to be released (which happens
               // after the files have been copied - below).
               localS3Cache.addEntry(path.toString(), cacheEntry);
-              AmazonS3 s3Client = new AmazonS3Client(new DefaultAWSCredentialsProviderChain());
+              AmazonS3 s3Client = getS3Client(conf, scheme);
               // Copy the index and data files locally. Do the index file last since it also
               // acts as the lock file for both and we don't want to release the lock until
               // all the files are copied.
@@ -929,5 +940,33 @@ public static class MapFileReaderWrapper
       }
     }
   }
+}
+
+/**
+ * Return an AmazonS3Client set up with the proper endpoint
+ * defined in core-site.xml using a property like fs.s3a.endpoint.
+ * This mimics code found in S3AFileSystem.
+ *
+ * @param conf
+ * @param scheme
+ * @return
+ */
+private static AmazonS3Client getS3Client(Configuration conf, String scheme)
+{
+  AmazonS3Client s3Client = new AmazonS3Client(new DefaultAWSCredentialsProviderChain());
+  String endpointKey = "fs." + scheme.toLowerCase() + ".endpoint";
+  String endPoint = conf.getTrimmed(endpointKey,"");
+  log.debug("Using endpoint setting " + endpointKey);
+  if (!endPoint.isEmpty()) {
+    try {
+      log.debug("Setting S3 client endpoint to " + endPoint);
+      s3Client.setEndpoint(endPoint);
+    } catch (IllegalArgumentException e) {
+      String msg = "Incorrect endpoint: "  + e.getMessage();
+      log.error(msg);
+      throw new IllegalArgumentException(msg, e);
+    }
+  }
+  return s3Client;
 }
 }

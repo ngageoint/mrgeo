@@ -67,11 +67,6 @@
   </build>
   <dependencies>
     <dependency>
-      <groupId>java3d</groupId>
-      <artifactId>vecmath</artifactId>
-      <version>${java3d.version}</version>
-    </dependency>
-    <dependency>
       <groupId>org.mrgeo</groupId>
       <artifactId>mrgeo-mapalgebra-image</artifactId>
     </dependency>

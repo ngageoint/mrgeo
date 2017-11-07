@@ -302,14 +302,6 @@ public void sumPointsWithBadBounds3() throws Exception
   MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
 }
 
-@Test(expected = ParserException.class)
-@Category(UnitTest.class)
-public void sumPointsWithBadBounds2() throws Exception
-{
-  String exp = "RasterizePoints([" + hdfsShapefile + "], \"SUM\", 0.0001716614, \"" + column + "\", 34.25, 69.35)";
-  MapAlgebra.validateWithExceptions(exp, ProviderProperties.fromDelimitedString(""));
-}
-
 
 @Test(expected = ParserException.class)
 @Category(UnitTest.class)
