@@ -72,6 +72,8 @@ public void addOptions(Options options)
   Option pw = new Option("pw", "password", true, "Keystore password (prefix with \"OBF:\" to use a Jetty obfuscated password)");
   options.addOption(pw);
 
+  // The purpose of single-threaded mode is that GDAL 1.x does not work properly
+  // when used from multiple threads.
   Option singleThreaded = new Option("st", "singleThreaded", false, "Specify this argument in order to run the web server in essentially single-threaded mode for processing one request at a time");
   options.addOption(singleThreaded);
 }
