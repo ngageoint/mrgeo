@@ -22,7 +22,6 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.eclipse.jetty.io.EndPoint;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.ResourceHandler;
@@ -39,10 +38,8 @@ import org.mrgeo.utils.logging.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.UriBuilder;
 import java.io.File;
 import java.net.*;
-import java.security.KeyStore;
 import java.util.Enumeration;
 
 public class WebServer extends Command
