@@ -14,8 +14,8 @@
 -->
 <ColorMap name="green-yellow-red-quantile">
   <Title>Green Yellow Red Quantile</Title>
-  <Description>Stoplight scale, green->yellow->red</Description>
-  <Scaling>MinMax</Scaling>
+  <Description>Stoplight scale, green->yellow->red, binned by quantile</Description>
+  <Scaling>Quantile</Scaling>
   <Interpolate>yes</Interpolate>
   <NoData color="0,0,0" value="-9999" opacity="0" />
   <Color color="#1a9641" value="0.0" opacity="255" />
