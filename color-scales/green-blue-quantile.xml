@@ -16,7 +16,7 @@
 <ColorMap name="green-blue-quantile">
   <Title>Green Blue Quantile</Title>
   <Description>Green to Blue, binned by quantile</Description>
-  <Scaling>MinMax</Scaling>
+  <Scaling>Quantile</Scaling>
   <Interpolate>yes</Interpolate>
   <NoData color="0,0,0" opacity="0"/>
   <Color color="#eaffea" value="0.0" opacity="255"/>

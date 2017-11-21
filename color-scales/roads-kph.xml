@@ -13,12 +13,18 @@
   ~ See the License for the specific language governing permissions and limitations under the License.
   -->
 
-<ColorMap name="green-blue">
-  <Title>Green Blue</Title>
-  <Description>Green to Blue</Description>
-  <Scaling>MinMax</Scaling>
+<ColorMap name="roads-kph">
+  <Title>Roads kph</Title>
+  <Description>Stoplight scale based on road speed (kph) 0 - 100kph, green->yellow->red</Description>
+  <Scaling>Absolute</Scaling>
   <Interpolate>yes</Interpolate>
-  <NoData color="0,0,0" opacity="0"/>
-  <Color color="#eaffea" value="0.0" opacity="255"/>
-  <Color color="#0066cc" value="1.0" opacity="255"/>
+  <Color color="#007F00" value="0" />
+  <Color color="#009F00" value="10" />
+  <Color color="#00BF00" value="20" />
+  <Color color="#00DF00" value="30" />
+  <Color color="#FFFF00" value="40" />
+  <Color color="#FFC500" value="50" />
+  <Color color="#FFA500" value="60" />
+  <Color color="#FF6500" value="80" />
+  <Color color="#FF0000" value="100" />
 </ColorMap>

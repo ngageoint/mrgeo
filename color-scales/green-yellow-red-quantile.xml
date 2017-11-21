@@ -13,12 +13,13 @@
   ~ See the License for the specific language governing permissions and limitations under the License.
   -->
 
-<ColorMap name="green-blue">
-  <Title>Green Blue</Title>
-  <Description>Green to Blue</Description>
+<ColorMap name="green-yellow-red-quantile">
+  <Title>Green Yellow Red Quantile</Title>
+  <Description>Stoplight scale, green->yellow->red</Description>
   <Scaling>MinMax</Scaling>
   <Interpolate>yes</Interpolate>
-  <NoData color="0,0,0" opacity="0"/>
-  <Color color="#eaffea" value="0.0" opacity="255"/>
-  <Color color="#0066cc" value="1.0" opacity="255"/>
+  <NoData color="0,0,0" value="-9999" opacity="0"/>
+  <Color color="#1a9641" value="0.0" opacity="255"/>
+  <Color color="#ffffc0" value="0.5" opacity="255"/>
+  <Color color="#d7191c" value="1.0" opacity="255"/>
 </ColorMap>
