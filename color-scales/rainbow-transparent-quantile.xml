@@ -12,18 +12,16 @@
      ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
      ~ See the License for the specific language governing permissions and limitations under the License.
 -->
-<ColorMap name="elevation-quantile">
-  <Title>Elevation Quantile</Title>
-  <Description>Colorscale intended for elevation datasets.  dark green->light green->yellow->orange->brown->white, binned by quantile</Description>
+<ColorMap name="rainbow-quantile">
+  <Title>Rainbow Quantile</Title>
+  <Description>Rainbow, blue->cyan->green->yellow->red, binned by quantile</Description>
   <Scaling>Quantile</Scaling>
   <Interpolate>yes</Interpolate>
   <NoData color="0,0,0" opacity="0" />
-  <Color value="0.00" color="45,89,0" />
-  <Color value="0.10" color="119,190,119" />
-  <Color value="0.25" color="253,253,150" />
-  <Color value="0.30" color="255,179,71" />
-  <Color value="0.40" color="255,145,76" />
-  <Color value="0.55" color="130,105,83" />
-  <Color value="0.95" color="193,193,193" />
-  <Color value="1.00" color="255,255,255" />
+  <Color value="0.0" color="0,0,127" opacity="170" />
+  <Color value="0.2" color="0,0,255" opacity="170" />
+  <Color value="0.4" color="0,255,255" opacity="170" />
+  <Color value="0.6" color="0,255,0" opacity="170" />
+  <Color value="0.8" color="255,255,0" opacity="170" />
+  <Color value="1.0" color="255,0,0" opacity="170" />
 </ColorMap>
