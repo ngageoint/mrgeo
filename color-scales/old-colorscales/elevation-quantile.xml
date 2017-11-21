@@ -12,22 +12,23 @@
   ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   ~ See the License for the specific language governing permissions and limitations under the License.
   -->
-
-<ColorMap name="aspect-deg">
-  <Scaling>Absolute</Scaling> <!-- Could also be Absolute -->
+<ColorMap name="elevation-quantile">
+  <!-- An elevation theme color scale intended for small scale maps -->
+  <Scaling>Quantile</Scaling>
   <ReliefShading>0</ReliefShading>
   <Interpolate>1</Interpolate>
-<!--
-  <ForceValuesIntoRange>1</ForceValuesIntoRange>
--->
-  <NullColor color="#000000" value="-1" opacity="0"/>
-  <Color color="#e31a1c" value="0.0" opacity="255"/>
-  <Color color="#eeee00" value="45.0" opacity="255"/>
-  <Color color="#d3ec95" value="90.0" opacity="255"/>
-  <Color color="#60b855" value="135.0" opacity="255"/>
-  <Color color="#6dd2db" value="180.0" opacity="255"/>
-  <Color color="#1f78b4" value="225.0" opacity="255"/>
-  <Color color="#00538a" value="270.0" opacity="255"/>
-  <Color color="#e435ff" value="315.0" opacity="255"/>
-  <Color color="#e31a1c" value="360.0" opacity="255"/>
+  <!--  null values will be transparent  -->
+  <NullColor color="0,0,0" opacity="0"/>
+  <!--  Dark Green  -->
+  <Color value="0.0" color="45,89,0"/>
+  <!--  Light Green  -->
+  <Color value="1.0" color="119,190,119"/>
+  <!--  Yellow  -->
+  <Color value="2.0" color="253,253,150"/>
+  <!--  Orangish  -->
+  <Color value="3.0" color="255,179,71"/>
+  <!--  Brown  -->
+  <Color value="4.0" color="130,105,83"/>
+  <!--  White  -->
+  <Color value="5.0" color="255,255,255"/>
 </ColorMap>
