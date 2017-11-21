@@ -46,7 +46,6 @@ public void testLoadXmlDefaults() throws ColorScale.ColorScaleException
   Assert.assertTrue(ColorScale.Scaling.Absolute.name().equals(cs.getScaling().name()));
   Assert.assertFalse(cs.getForceValuesIntoRange());
   Assert.assertTrue(cs.getInterpolate());
-  Assert.assertFalse(cs.getReliefShading());
   Assert.assertEquals(6, cs.size());
 
   int[] color = new int[4];
@@ -61,7 +60,6 @@ public void testLoadXmlTags() throws ColorScale.ColorScaleException
 {
   String xml = "<ColorMap name=\"Rainbow\">";
   xml += "<Scaling>MinMax</Scaling> <!-- Could also be Absolute -->";
-  xml += "<ReliefShading>true</ReliefShading>";
   xml += "<Interpolate>false</Interpolate>";
   xml += "<ForceValuesIntoRange>true</ForceValuesIntoRange>";
   xml += "<NullColor color=\"0,0,0\" opacity=\"0\"/>";
@@ -79,7 +77,6 @@ public void testLoadXmlTags() throws ColorScale.ColorScaleException
   Assert.assertTrue(ColorScale.Scaling.MinMax.name().equals(cs.getScaling().name()));
   Assert.assertTrue(cs.getForceValuesIntoRange());
   Assert.assertFalse(cs.getInterpolate());
-  Assert.assertTrue(cs.getReliefShading());
   Assert.assertEquals(6, cs.size());
 }
 
@@ -89,7 +86,6 @@ public void testLoadXmlTagsEmpty() throws ColorScale.ColorScaleException
 {
   String xml = "<ColorMap name=\"Rainbow\">";
   xml += "<Scaling>MinMax</Scaling>";
-  xml += "<ReliefShading></ReliefShading>";
   xml += "<Interpolate></Interpolate>";
   xml += "<ForceValuesIntoRange></ForceValuesIntoRange>";
   xml += "<NullColor color=\"0,0,0\" opacity=\"0\"/>";
@@ -106,7 +102,6 @@ public void testLoadXmlTagsEmpty() throws ColorScale.ColorScaleException
   Assert.assertTrue(ColorScale.Scaling.MinMax.name().equals(cs.getScaling().name()));
   Assert.assertFalse(cs.getForceValuesIntoRange());
   Assert.assertTrue(cs.getInterpolate());
-  Assert.assertFalse(cs.getReliefShading());
   Assert.assertEquals(6, cs.size());
 }
 
@@ -122,7 +117,6 @@ public void testLoadJsonDefaults() throws ColorScale.ColorScaleException
   Assert.assertTrue(ColorScale.Scaling.Absolute.name().equals(cs.getScaling().name()));
   Assert.assertFalse(cs.getForceValuesIntoRange());
   Assert.assertTrue(cs.getInterpolate());
-  Assert.assertFalse(cs.getReliefShading());
   Assert.assertEquals(4, cs.size());
 }
 
@@ -131,14 +125,13 @@ public void testLoadJsonDefaults() throws ColorScale.ColorScaleException
 public void testLoadJson() throws ColorScale.ColorScaleException
 {
   String json =
-      "{\"Interpolate\":\"false\",\"ForceValuesIntoRange\":\"true\",\"ReliefShading\":\"true\",\"NullColor\":{\"color\":\"0,0,0\",\"opacity\":\"0\"},\"Colors\":[{\"color\":\"255,0,0\",\"value\":\"0.0\"},{\"color\":\"255,255,0\",\"value\":\"0.25\"},{\"color\":\"0,255,255\",\"value\":\"0.75\"},{\"color\":\"255,255,255\",\"value\":\"1.0\"}],\"Scaling\":\"MinMax\"}";
+      "{\"Interpolate\":\"false\",\"ForceValuesIntoRange\":\"true\",\"NullColor\":{\"color\":\"0,0,0\",\"opacity\":\"0\"},\"Colors\":[{\"color\":\"255,0,0\",\"value\":\"0.0\"},{\"color\":\"255,255,0\",\"value\":\"0.25\"},{\"color\":\"0,255,255\",\"value\":\"0.75\"},{\"color\":\"255,255,255\",\"value\":\"1.0\"}],\"Scaling\":\"MinMax\"}";
 
   ColorScale cs = ColorScale.loadFromJSON(json);
 
   Assert.assertTrue(ColorScale.Scaling.MinMax.name().equals(cs.getScaling().name()));
   Assert.assertTrue(cs.getForceValuesIntoRange());
   Assert.assertFalse(cs.getInterpolate());
-  Assert.assertTrue(cs.getReliefShading());
   Assert.assertEquals(4, cs.size());
 }
 
@@ -153,7 +146,7 @@ public void testDefault()
   Assert.assertTrue(ColorScale.Scaling.Absolute.name().equals(cs.getScaling().name()));
   Assert.assertEquals(0, cs.size());
 
-  Assert.assertEquals(Double.NaN, cs.getTransparent());
+  Assert.assertEquals(Double.NaN, cs.getTransparentValue());
   Assert.assertEquals(null, cs.getMin());
   Assert.assertEquals(null, cs.getMax());
 }
@@ -178,7 +171,7 @@ public void testSetDefault() throws ColorScale.ColorScaleException
 
   Assert.assertTrue(ColorScale.Scaling.MinMax.name().equals(def.getScaling().name()));
   Assert.assertEquals(2, def.size());
-  Assert.assertEquals(Double.NaN, def.getTransparent());
+  Assert.assertEquals(Double.NaN, def.getTransparentValue());
   Assert.assertEquals(null, def.getMin());
   Assert.assertEquals(null, def.getMax());
 
@@ -242,7 +235,7 @@ public void testMinMaxInterpolateForceValuesIntoRange() throws Exception
   cs.setForceValuesIntoRange(true);
   cs.setScaleRange(-10, 10);
   cs.setScaling(ColorScale.Scaling.MinMax);
-  cs.setTransparent(0.0);
+  cs.setTransparentValue(0.0);
 
   check(cs.lookup(0.0), new int[]{0, 0, 0, 0});
 
@@ -253,7 +246,7 @@ public void testMinMaxInterpolateForceValuesIntoRange() throws Exception
   check(cs.lookup(10.0), new int[]{0, 0, 0, 255});
   check(cs.lookup(15.0), new int[]{0, 0, 0, 255});
 
-  Assert.assertEquals(0.0, cs.getTransparent());
+  Assert.assertEquals(0.0, cs.getTransparentValue());
   Assert.assertEquals(-10.0, cs.getMin());
   Assert.assertEquals(10.0, cs.getMax());
 
@@ -267,7 +260,7 @@ public void testMinMaxInterpolate() throws Exception
   cs.setInterpolate(true);
   cs.setScaleRange(-10, 10);
   cs.setScaling(ColorScale.Scaling.MinMax);
-  cs.setTransparent(0.0);
+  cs.setTransparentValue(0.0);
 
   check(cs.lookup(0.0), new int[]{0, 0, 0, 0});
 
@@ -289,7 +282,7 @@ public void testMinMaxNoInterpolateForceValuesIntoRange() throws Exception
   cs.setForceValuesIntoRange(true);
   cs.setScaleRange(-10, 10);
   cs.setScaling(ColorScale.Scaling.MinMax);
-  cs.setTransparent(0.0);
+  cs.setTransparentValue(0.0);
 
   check(cs.lookup(0.0), new int[]{0, 0, 0, 0});
 
@@ -311,7 +304,7 @@ public void testMinMaxNoInterpolate() throws Exception
   cs.setInterpolate(false);
   cs.setScaleRange(-10, 10);
   cs.setScaling(ColorScale.Scaling.MinMax);
-  cs.setTransparent(0.0);
+  cs.setTransparentValue(0.0);
 
   check(cs.lookup(0.0), new int[]{0, 0, 0, 0});
 
@@ -333,7 +326,7 @@ public void testAbsoluteNoInterpolateForceValuesIntoRange() throws Exception
   cs.setInterpolate(false);
   cs.setForceValuesIntoRange(true);
   cs.setScaling(ColorScale.Scaling.Absolute);
-  cs.setTransparent(-1.0);
+  cs.setTransparentValue(-1.0);
   cs.put(0.0, 255, 0, 0, 0);
   cs.put(25.0, 172, 0, 64);
   cs.put(50.0, 128, 0, 128);
@@ -359,7 +352,7 @@ public void testAbsoluteNoInterpolate() throws Exception
   ColorScale cs = ColorScale.empty();
   cs.setInterpolate(false);
   cs.setScaling(ColorScale.Scaling.Absolute);
-  cs.setTransparent(-1.0);
+  cs.setTransparentValue(-1.0);
   cs.put(0.0, 255, 0, 0, 0);
   cs.put(25.0, 172, 0, 64);
   cs.put(50.0, 128, 0, 128);
@@ -386,7 +379,7 @@ public void testAbsoluteInterpolateForceValuesIntoRange() throws Exception
   cs.setInterpolate(true);
   cs.setForceValuesIntoRange(true);
   cs.setScaling(ColorScale.Scaling.Absolute);
-  cs.setTransparent(-1.0);
+  cs.setTransparentValue(-1.0);
   cs.put(0.0, 255, 0, 0, 0);
   cs.put(12.0, 172, 0, 64);
   cs.put(50.0, 128, 0, 128);
@@ -415,7 +408,7 @@ public void testAbsoluteInterpolate() throws Exception
   ColorScale cs = ColorScale.empty();
   cs.setInterpolate(true);
   cs.setScaling(ColorScale.Scaling.Absolute);
-  cs.setTransparent(-1.0);
+  cs.setTransparentValue(-1.0);
   cs.put(0.0, 255, 0, 0, 0);
   cs.put(12.0, 172, 0, 64);
   cs.put(50.0, 128, 0, 128);
@@ -444,7 +437,7 @@ public void testQuantilesFallbackToAbsolute1() throws Exception
   ColorScale cs = ColorScale.empty();
   cs.setInterpolate(true);
   cs.setScaling(ColorScale.Scaling.Quantile);
-  cs.setTransparent(-1.0);
+  cs.setTransparentValue(-1.0);
   cs.put(1.0, 255, 0, 0);
   cs.put(2.0, 0, 0, 255);
   cs.setScaleRangeWithQuantiles(0, 100, null);
@@ -461,7 +454,7 @@ public void testQuantilesFallbackToAbsolute2() throws Exception
   ColorScale cs = ColorScale.empty();
   cs.setInterpolate(true);
   cs.setScaling(ColorScale.Scaling.Quantile);
-  cs.setTransparent(-1.0);
+  cs.setTransparentValue(-1.0);
   double[] quantiles = { };
   cs.put(1.0, 255, 0, 0);
   cs.put(2.0, 0, 0, 255);
@@ -479,7 +472,7 @@ public void testQuantilesOne() throws Exception
   ColorScale cs = ColorScale.empty();
   cs.setInterpolate(true);
   cs.setScaling(ColorScale.Scaling.Quantile);
-  cs.setTransparent(-1.0);
+  cs.setTransparentValue(-1.0);
   double[] quantiles = { 75 };
   cs.put(1.0, 255, 0, 0);
   cs.put(2.0, 128, 0, 128);
@@ -498,7 +491,7 @@ public void testMultiOddColorOneQuantile() throws Exception
   ColorScale cs = ColorScale.empty();
   cs.setInterpolate(true);
   cs.setScaling(ColorScale.Scaling.Quantile);
-  cs.setTransparent(-1.0);
+  cs.setTransparentValue(-1.0);
   double[] quantiles = { 75 };
   cs.put(1.0, 255, 0, 0);
   cs.put(2.0, 170, 0, 60);
@@ -519,7 +512,7 @@ public void testMultiEvenColorOneQuantile() throws Exception
   ColorScale cs = ColorScale.empty();
   cs.setInterpolate(true);
   cs.setScaling(ColorScale.Scaling.Quantile);
-  cs.setTransparent(-1.0);
+  cs.setTransparentValue(-1.0);
   double[] quantiles = { 75 };
   cs.put(1.0, 255, 0, 0);
   cs.put(2.0, 170, 0, 60);
@@ -541,7 +534,7 @@ public void testMultiOddColorTwoQuantiles() throws Exception
   ColorScale cs = ColorScale.empty();
   cs.setInterpolate(true);
   cs.setScaling(ColorScale.Scaling.Quantile);
-  cs.setTransparent(-1.0);
+  cs.setTransparentValue(-1.0);
   double[] quantiles = { 75, 90 };
   cs.put(1.0, 255, 0, 0);
   cs.put(2.0, 170, 0, 60);
@@ -563,7 +556,7 @@ public void testMultiEvenColorTwoQuantiles() throws Exception
   ColorScale cs = ColorScale.empty();
   cs.setInterpolate(true);
   cs.setScaling(ColorScale.Scaling.Quantile);
-  cs.setTransparent(-1.0);
+  cs.setTransparentValue(-1.0);
   double[] quantiles = { 75, 90 };
   cs.put(1.0, 255, 0, 0);
   cs.put(2.0, 170, 0, 60);
@@ -586,7 +579,7 @@ public void testQuantilesTwo() throws Exception
   ColorScale cs = ColorScale.empty();
   cs.setInterpolate(true);
   cs.setScaling(ColorScale.Scaling.Quantile);
-  cs.setTransparent(-1.0);
+  cs.setTransparentValue(-1.0);
   double[] quantiles = { 70, 90 };
   cs.put(1.0, 255, 0, 0);
   cs.put(2.0, 128, 0, 128);
@@ -606,7 +599,7 @@ public void testQuantilesThree() throws Exception
   ColorScale cs = ColorScale.empty();
   cs.setInterpolate(true);
   cs.setScaling(ColorScale.Scaling.Quantile);
-  cs.setTransparent(-1.0);
+  cs.setTransparentValue(-1.0);
   double[] quantiles = { 60, 70, 90 };
   cs.put(1.0, 255, 0, 0, 0);
   cs.put(2.0, 128, 0, 128);
@@ -631,7 +624,7 @@ public void testQuantilesFour() throws Exception
   ColorScale cs = ColorScale.empty();
   cs.setInterpolate(true);
   cs.setScaling(ColorScale.Scaling.Quantile);
-  cs.setTransparent(-1.0);
+  cs.setTransparentValue(-1.0);
   double[] quantiles = { 60, 65, 70, 90 };
   cs.put(1.0, 255, 0, 0, 0);
   cs.put(2.0, 128, 0, 128);
@@ -651,7 +644,7 @@ public void testQuantilesFive() throws Exception
   ColorScale cs = ColorScale.empty();
   cs.setInterpolate(true);
   cs.setScaling(ColorScale.Scaling.Quantile);
-  cs.setTransparent(-1.0);
+  cs.setTransparentValue(-1.0);
   double[] quantiles = { 60, 65, 70, 80, 90 };
   cs.put(1.0, 255, 0, 0, 0);
   cs.put(2.0, 128, 0, 128);

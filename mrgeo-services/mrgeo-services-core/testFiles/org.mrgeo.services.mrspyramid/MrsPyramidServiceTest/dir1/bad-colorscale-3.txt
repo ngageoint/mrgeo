@@ -1,6 +1,5 @@
 <ColorMap name="Rainbow">
   <Scaling>MinMax</Scaling> <!-- Could also be Absolute -->
-  <ReliefShading>0</ReliefShading>
   <Interpolate>1</Interpolate>
   <NullColor color="0,0,0" opacity="0"/>
   <Color value="0.0" color="0,0,127" opacity="255"/>
