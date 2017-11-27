@@ -448,7 +448,7 @@ public void fromXML(Document doc) throws ColorScaleException
     if (nodeForce != null)
     {
       String forceStr = xpath.evaluate("text()", nodeForce).toLowerCase();
-      forceValuesIntoRange = forceStr.isEmpty() ||
+      forceValuesIntoRange = !forceStr.isEmpty() ||
           forceStr.equals("1") ||
           forceStr.equals("true") ||
           forceStr.equals("yes");
