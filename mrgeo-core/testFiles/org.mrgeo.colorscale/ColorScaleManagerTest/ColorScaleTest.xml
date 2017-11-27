@@ -15,7 +15,6 @@
 
 <ColorMap name="ColorScaleTest">
   <Scaling>Absolute</Scaling> <!-- Could also be Absolute -->
-  <ReliefShading>1</ReliefShading>
   <Interpolate>1</Interpolate>
   <ForceValuesIntoRange>1</ForceValuesIntoRange>
   <NullColor color="0,0,0" opacity="0"/>

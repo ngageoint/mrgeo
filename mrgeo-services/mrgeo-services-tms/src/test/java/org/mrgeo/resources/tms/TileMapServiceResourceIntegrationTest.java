@@ -442,7 +442,7 @@ public void testGetTileJsonColorScalePng() throws Exception
   int z = 12;
   String format = "png";
   String json =
-      "{\"Interpolate\":\"true\",\"ForceValuesIntoRange\":\"false\",\"ReliefShading\":\"false\",\"NullColor\":{\"color\":\"0,0,0\",\"opacity\":\"0\"},\"Colors\":[{\"color\":\"255,0,0\",\"value\":\"0.0\"},{\"color\":\"255,255,0\",\"value\":\"0.25\"},{\"color\":\"0,255,255\",\"value\":\"0.75\"},{\"color\":\"255,255,255\",\"value\":\"1.0\"}],\"Scaling\":\"MinMax\"}";
+      "{\"Interpolate\":\"true\",\"ForceValuesIntoRange\":\"false\",\"NullColor\":{\"color\":\"0,0,0\",\"opacity\":\"0\"},\"Colors\":[{\"color\":\"255,0,0\",\"value\":\"0.0\"},{\"color\":\"255,255,0\",\"value\":\"0.25\"},{\"color\":\"0,255,255\",\"value\":\"0.75\"},{\"color\":\"255,255,255\",\"value\":\"1.0\"}],\"Scaling\":\"MinMax\"}";
 
   when(service.getMetadata(raster)).thenReturn(getMetadata(raster));
   when(service.getPyramid(raster)).thenReturn(getPyramid(raster));
@@ -489,7 +489,7 @@ public void testGetTileJsonColorScaleMinMaxPng() throws Exception
   int z = 12;
   String format = "png";
   String json =
-      "{\"Interpolate\":\"true\",\"ForceValuesIntoRange\":\"false\",\"ReliefShading\":\"false\",\"NullColor\":{\"color\":\"0,0,0\",\"opacity\":\"0\"},\"Colors\":[{\"color\":\"255,0,0\",\"value\":\"0.0\"},{\"color\":\"255,255,0\",\"value\":\"0.25\"},{\"color\":\"0,255,255\",\"value\":\"0.75\"},{\"color\":\"255,255,255\",\"value\":\"1.0\"}],\"Scaling\":\"MinMax\"}";
+      "{\"Interpolate\":\"true\",\"ForceValuesIntoRange\":\"false\",\"NullColor\":{\"color\":\"0,0,0\",\"opacity\":\"0\"},\"Colors\":[{\"color\":\"255,0,0\",\"value\":\"0.0\"},{\"color\":\"255,255,0\",\"value\":\"0.25\"},{\"color\":\"0,255,255\",\"value\":\"0.75\"},{\"color\":\"255,255,255\",\"value\":\"1.0\"}],\"Scaling\":\"MinMax\"}";
   int min = 3000;
   int max = 4000;
 

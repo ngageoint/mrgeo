@@ -39,18 +39,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
 
-/**
- * @author jason.surratt
- *         <p/>
- *         Example file format: <ColorMap name="My Color Map"> <Scaling>MinMax</Scaling> <!-defaults
- *         to Absolute --> <ReliefShading>0</ReliefShading> <!-- defaults to 0/false -->
- *         <Interpolate>1</Interpolate> <!-- defaults to 1/true --> <NullColor color="0,0,0"
- *         opacity="0"> <!-- defaults to transparent --> <Color value="0.0" color="255,0,0"
- *         opacity="255"> <Color value="0.2" color="255,255,0"> <!-- if not specified an opacity
- *         defaults to 255 --> <Color value="0.4" color="0,255,0"> <Color value="0.6"
- *         color="0,255,255"> <Color value="0.8" color="0,0,255"> <Color value="1.0"
- *         color="255,0,255"> </ColorMap>
- */
 public class ColorScale extends TreeMap<Double, Color>
 {
 private static final Logger log = LoggerFactory.getLogger(ColorScale.class);
@@ -66,8 +54,7 @@ private static ColorScale _grayScale;
 private int[][] cache;
 private boolean interpolate;
 private Double min, max;
-private int[] nullColor = {0, 0, 0, 0};
-private boolean reliefShading;
+private int[] nodataColor = {0, 0, 0, 0};
 private Scaling scaling = Scaling.Absolute;
 private boolean forceValuesIntoRange;
 private double transparent = Double.NaN;
@@ -89,41 +76,6 @@ public static ColorScale loadFromXML(InputStream stream) throws ColorScaleExcept
 
   return cs;
 }
-
-//  public static ColorScale loadFromXML(String filename) throws ColorScaleException
-//  {
-//    try
-//    {
-//      InputStream stream = null;
-//      try
-//      {
-//        stream = new FileInputStream(filename);
-//        ColorScale cs = new ColorScale();
-//        cs.fromXML(stream);
-//
-//        return cs;
-//      }
-//      finally
-//      {
-//        if (stream != null)
-//        {
-//          IOUtils.closeQuietly(stream);
-//        }
-//      }
-//    }
-//    catch (IOException e)
-//    {
-//      e.printStackTrace();
-//      throw new ColorScaleException(e);
-//    }
-//  }
-//
-//  public static ColorScale loadFromJSON(InputStream stream) throws ColorScaleException
-//  {
-//    ColorScale cs = new ColorScale();
-//    cs.fromJSON(stream);
-//    return cs;
-//  }
 
 public static ColorScale loadFromJSON(String json) throws ColorScaleException
 {
@@ -201,7 +153,6 @@ private static void parseColor(String colorStr, String opacityStr, int[] color)
     color[0] = Integer.parseInt(colors[0]);
     color[1] = Integer.parseInt(colors[1]);
     color[2] = Integer.parseInt(colors[2]);
-    color[3] = parseOpacity(opacityStr);
   }
   else if (colors.length == 1) {
     // Allows colors to be specified in hex as #0F0F0F for example
@@ -209,11 +160,12 @@ private static void parseColor(String colorStr, String opacityStr, int[] color)
     color[0] = (c & 0xFF0000) >> 16;
     color[1] = (c & 0x00FF00) >> 8;
     color[2] = (c & 0x0000FF);
-    color[3] = parseOpacity(opacityStr);
   }
   else {
     throw new IOException("Error parsing XML: There must be three elements in color.");
   }
+
+  color[3] = parseOpacity(opacityStr);
 }
 
 public String getName()
@@ -232,34 +184,6 @@ public String getTitle()
   return title;
 }
 
-//  public static ColorScale loadFromJSONFile(String filename) throws ColorScaleException
-//  {
-//    try
-//    {
-//      InputStream stream;
-//      try
-//      {
-//       stream = HadoopFileUtils.open(new Path(filename));
-//      }
-//      catch (FileNotFoundException e)
-//      {
-//        // if the file wasn't found, try a local file
-//        LocalFileSystem lf = FileSystem.getLocal(HadoopUtils.createConfiguration());
-//        stream = lf.open(new Path(filename));
-//      }
-//      ColorScale cs = new ColorScale();
-//      cs.fromJSON(stream);
-//      IOUtils.closeQuietly(stream);
-//
-//      return cs;
-//    }
-//    catch (IOException e)
-//    {
-//      e.printStackTrace();
-//      throw new ColorScaleException(e);
-//    }
-//  }
-
 public String getDescription()
 {
   return description;
@@ -270,13 +194,12 @@ public void clear()
 {
   super.clear();
   scaling = Scaling.Absolute;
-  reliefShading = false;
   interpolate = true;
   forceValuesIntoRange = false;
   min = null;
   max = null;
   cache = null;
-  nullColor = new int[]{0, 0, 0, 0};
+  nodataColor = new int[]{0, 0, 0, 0};
   transparent = Double.NaN;
   name = null;
   title = null;
@@ -285,16 +208,6 @@ public void clear()
   quantileSubScales = null;
 
 }
-//
-//  public ColorScale(final InputStream strm) throws ColorScaleException
-//  {
-//    load(strm);
-//  }
-//
-//  public ColorScale(final String filename) throws ColorScaleException
-//  {
-//    load(filename);
-//  }
 
 @Override
 public Object clone()
@@ -306,8 +219,7 @@ public Object clone()
   result.interpolate = interpolate;
   result.min = min;
   result.max = max;
-  result.nullColor = nullColor.clone();
-  result.reliefShading = reliefShading;
+  result.nodataColor = nodataColor.clone();
   result.scaling = scaling;
   result.transparent = transparent;
   result.forceValuesIntoRange = forceValuesIntoRange;
@@ -338,8 +250,7 @@ public int hashCode()
       .append(interpolate)
       .append(min)
       .append(max)
-      .append(reliefShading)
-      .append(nullColor)
+      .append(nodataColor)
       .append(forceValuesIntoRange)
       .append(transparent)
       .append(name)
@@ -377,17 +288,13 @@ public boolean equals(ColorScale cs)
   {
     return false;
   }
-  if (reliefShading != cs.reliefShading)
+  if (nodataColor.length != cs.nodataColor.length)
   {
     return false;
   }
-  if (nullColor.length != cs.nullColor.length)
+  for (int i = 0; i < nodataColor.length; i++)
   {
-    return false;
-  }
-  for (int i = 0; i < nullColor.length; i++)
-  {
-    if (nullColor[i] != cs.nullColor[i])
+    if (nodataColor[i] != cs.nodataColor[i])
     {
       return false;
     }
@@ -410,10 +317,7 @@ public boolean equals(ColorScale cs)
       return false;
     }
   }
-  if (!Arrays.equals(quantiles, cs.quantiles)) {
-    return false;
-  }
-  return Arrays.equals(quantileSubScales, cs.quantileSubScales);
+  return Arrays.equals(quantiles, cs.quantiles) && Arrays.equals(quantileSubScales, cs.quantileSubScales);
 }
 
 public boolean getForceValuesIntoRange()
@@ -471,19 +375,14 @@ public Double getScaleMin()
   return firstKey();
 }
 
-public int[] getNullColor()
+public int[] getNodataColor()
 {
-  return nullColor.clone();
+  return nodataColor.clone();
 }
 
-public void setNullColor(int[] color)
+public void setNodataColor(int[] color)
 {
-  nullColor = color.clone();
-}
-
-final public boolean getReliefShading()
-{
-  return reliefShading;
+  nodataColor = color.clone();
 }
 
 public Scaling getScaling()
@@ -497,12 +396,12 @@ public void setScaling(Scaling s)
   cache = null;
 }
 
-public double getTransparent()
+public double getTransparentValue()
 {
   return transparent;
 }
 
-public void setTransparent(double transparent)
+public void setTransparentValue(double transparent)
 {
   this.transparent = transparent;
 }
@@ -535,25 +434,23 @@ public void fromXML(Document doc) throws ColorScaleException
       scaling = Scaling.valueOf(xpath.evaluate("text()", nodeScaling));
     }
 
-    Node nodeRelief = (Node) xpath.evaluate("/ColorMap/ReliefShading", doc, XPathConstants.NODE);
-    if (nodeRelief != null)
-    {
-      String reliefShadingStr = xpath.evaluate("text()", nodeRelief).toLowerCase();
-      reliefShading = reliefShadingStr.equals("1") || reliefShadingStr.equals("true");
-    }
-
     Node nodeInterp = (Node) xpath.evaluate("/ColorMap/Interpolate", doc, XPathConstants.NODE);
     if (nodeInterp != null)
     {
       String interpolateStr = xpath.evaluate("text()", nodeInterp).toLowerCase();
-      interpolate = interpolateStr.isEmpty() || (interpolateStr.equals("1") || interpolateStr.equals("true"));
+      interpolate = interpolateStr.isEmpty() ||
+          interpolateStr.equals("1") ||
+          interpolateStr.equals("true") ||
+          interpolateStr.equals("yes");
     }
 
     Node nodeForce = (Node) xpath.evaluate("/ColorMap/ForceValuesIntoRange", doc, XPathConstants.NODE);
     if (nodeForce != null)
     {
       String forceStr = xpath.evaluate("text()", nodeForce).toLowerCase();
-      forceValuesIntoRange = (forceStr.equals("1") || forceStr.equals("true"));
+      forceValuesIntoRange = forceStr.equals("1") ||
+          forceStr.equals("true") ||
+          forceStr.equals("yes");
     }
 
     Node nullColorNode = (Node) xpath.evaluate("/ColorMap/NullColor", doc, XPathConstants.NODE);
@@ -561,7 +458,15 @@ public void fromXML(Document doc) throws ColorScaleException
     {
       String colorStr = xpath.evaluate("@color", nullColorNode);
       String opacityStr = xpath.evaluate("@opacity", nullColorNode);
-      parseColor(colorStr, opacityStr, nullColor);
+      parseColor(colorStr, opacityStr, nodataColor);
+    }
+
+    nullColorNode = (Node) xpath.evaluate("/ColorMap/NoData", doc, XPathConstants.NODE);
+    if (nullColorNode != null)
+    {
+      String colorStr = xpath.evaluate("@color", nullColorNode);
+      String opacityStr = xpath.evaluate("@opacity", nullColorNode);
+      parseColor(colorStr, opacityStr, nodataColor);
     }
 
     int[] color = new int[4];
@@ -656,8 +561,6 @@ public void fromJSON(String json) throws ColorScaleException
     {
       scaling = Scaling.valueOf(scalingStr);
     }
-    String reliefShadingStr = (String) colorScaleMap.get("ReliefShading");
-    reliefShading = ("1").equals(reliefShadingStr) || ("true").equalsIgnoreCase(reliefShadingStr);
 
     String interpolateStr = (String) colorScaleMap.get("Interpolate");
     interpolate = (interpolateStr == null) || interpolateStr.isEmpty() || ("1").equals(interpolateStr) ||
@@ -671,7 +574,7 @@ public void fromJSON(String json) throws ColorScaleException
     String nullColorStr = (String) nullColorMap.get("color");
     if (nullColorStr != null)
     {
-      parseColor(nullColorStr, (String) nullColorMap.get("opacity"), nullColor);
+      parseColor(nullColorStr, (String) nullColorMap.get("opacity"), nodataColor);
     }
 
     ArrayList<?> colorsList = (ArrayList<?>) colorScaleMap.get("Colors");
@@ -709,7 +612,7 @@ final public int[] lookup(double v)
   }
   if (Double.isNaN(v) || FloatUtils.isEqual(v, transparent))
   {
-    return getNullColor();
+    return getNodataColor();
   }
   if (cache == null)
   {
@@ -722,7 +625,7 @@ final public int[] lookup(double v)
     {
       return cache[0];
     }
-    return getNullColor();
+    return getNodataColor();
   }
   else if (v > max)
   {
@@ -730,7 +633,7 @@ final public int[] lookup(double v)
     {
       return cache[CACHE_SIZE - 1];
     }
-    return getNullColor();
+    return getNodataColor();
   }
   else
   {
@@ -1116,17 +1019,18 @@ private void interpolateColor(double v, int[] color)
 
   assert (upper != null || lower != null);
 
-  if (upper == null)
+  if (upper == null || lower == null)
   {
-    Color c = lower.getValue();
-    color[R] = c.getRed();
-    color[G] = c.getGreen();
-    color[B] = c.getBlue();
-    color[A] = c.getAlpha();
-  }
-  else if (lower == null)
-  {
-    Color c = upper.getValue();
+
+    Color c;
+    if (upper == null)
+    {
+      c = lower.getValue();
+    }
+    else
+    {
+      c = upper.getValue();
+    }
     color[R] = c.getRed();
     color[G] = c.getGreen();
     color[B] = c.getBlue();

@@ -172,93 +172,6 @@ private String getAspectColorScale() throws JsonGenerationException, JsonMapping
   return mapper.writeValueAsString(colorScale);
 }
 
-//    private String getDefaultColorScale() throws JsonGenerationException, JsonMappingException,
-//        IOException
-//    {
-//      // create colorScale json
-//      final ObjectMapper mapper = new ObjectMapper();
-//
-//      final Map<String, Object> colorScale = new HashMap<String, Object>();
-//      colorScale.put("Scaling", "MinMax");
-//      colorScale.put("ForceValuesIntoRange", "1");
-//
-//      final Map<String, String> nullColor = new HashMap<String, String>();
-//      nullColor.put("color", "0,0,0");
-//      nullColor.put("opacity", "0");
-//      colorScale.put("NullColor", nullColor);
-//      final Map<String, String> color1 = new HashMap<String, String>();
-//      color1.put("value", "0.0");
-//      color1.put("color", "255,0,0");
-//      final Map<String, String> color2 = new HashMap<String, String>();
-//      color2.put("value", "0.25");
-//      color2.put("color", "255,255,0");
-//      final Map<String, String> color3 = new HashMap<String, String>();
-//      color3.put("value", "0.75");
-//      color3.put("color", "0,255,255");
-//      final Map<String, String> color4 = new HashMap<String, String>();
-//      color4.put("value", "1.0");
-//      color4.put("color", "255,255,255");
-//
-//      final ArrayList<Map<String, String>> colors = new ArrayList<Map<String, String>>();
-//      colors.add(color1);
-//      colors.add(color2);
-//      colors.add(color3);
-//      colors.add(color4);
-//
-//      colorScale.put("Colors", colors);
-//
-//      return mapper.writeValueAsString(colorScale);
-//    }
-
-//    private String getRainbowColorScale() throws JsonGenerationException, JsonMappingException,
-//        IOException
-//    {
-//      // create colorScale json
-//      final ObjectMapper mapper = new ObjectMapper();
-//
-//      final Map<String, Object> colorScale = new HashMap<String, Object>();
-//      colorScale.put("Scaling", "MinMax");
-//      colorScale.put("ReliefShading", "0");
-//      colorScale.put("Interpolate", "1");
-//      colorScale.put("ForceValuesIntoRange", "1");
-//
-//      final Map<String, String> nullColor = new HashMap<String, String>();
-//      nullColor.put("color", "0,0,0");
-//      nullColor.put("opacity", "0");
-//      colorScale.put("NullColor", nullColor);
-//      final Map<String, String> color1 = new HashMap<String, String>();
-//      color1.put("value", "0.0");
-//      color1.put("color", "0,0,127");
-//      color1.put("opacity", "255");
-//      final Map<String, String> color2 = new HashMap<String, String>();
-//      color2.put("value", "0.2");
-//      color2.put("color", "0,0,255");
-//      final Map<String, String> color3 = new HashMap<String, String>();
-//      color3.put("value", "0.4");
-//      color3.put("color", "0,255,255");
-//      final Map<String, String> color4 = new HashMap<String, String>();
-//      color4.put("value", "0.6");
-//      color4.put("color", "0,255,0");
-//      final Map<String, String> color5 = new HashMap<String, String>();
-//      color5.put("value", "0.8");
-//      color5.put("color", "255,255,0");
-//      final Map<String, String> color6 = new HashMap<String, String>();
-//      color6.put("value", "1.0");
-//      color6.put("color", "255,0,0");
-//
-//      final ArrayList<Map<String, String>> colors = new ArrayList<Map<String, String>>();
-//      colors.add(color1);
-//      colors.add(color2);
-//      colors.add(color3);
-//      colors.add(color4);
-//      colors.add(color5);
-//      colors.add(color6);
-//
-//      colorScale.put("Colors", colors);
-//
-//      return mapper.writeValueAsString(colorScale);
-//    }
-
 private String getTestColorScale() throws JsonGenerationException, JsonMappingException,
     IOException
 {
@@ -267,7 +180,6 @@ private String getTestColorScale() throws JsonGenerationException, JsonMappingEx
 
   final Map<String, Object> colorScale = new HashMap<String, Object>();
   colorScale.put("Scaling", "Absolute");
-  colorScale.put("ReliefShading", "1");
   colorScale.put("Interpolate", "1");
   colorScale.put("ForceValuesIntoRange", "1");
 
