@@ -13,21 +13,15 @@
   ~ See the License for the specific language governing permissions and limitations under the License.
   -->
 
-<ColorMap name="aspect-deg">
-  <Scaling>Absolute</Scaling> <!-- Could also be Absolute -->
+<ColorMap name="Rainbow Transparent Quantile">
+  <Scaling>Quantile</Scaling>
   <ReliefShading>0</ReliefShading>
   <Interpolate>1</Interpolate>
-<!--
-  <ForceValuesIntoRange>1</ForceValuesIntoRange>
--->
-  <NullColor color="#000000" value="-1" opacity="0"/>
-  <Color color="#e31a1c" value="0.0" opacity="255"/>
-  <Color color="#eeee00" value="45.0" opacity="255"/>
-  <Color color="#d3ec95" value="90.0" opacity="255"/>
-  <Color color="#60b855" value="135.0" opacity="255"/>
-  <Color color="#6dd2db" value="180.0" opacity="255"/>
-  <Color color="#1f78b4" value="225.0" opacity="255"/>
-  <Color color="#00538a" value="270.0" opacity="255"/>
-  <Color color="#e435ff" value="315.0" opacity="255"/>
-  <Color color="#e31a1c" value="360.0" opacity="255"/>
+  <NullColor color="0,0,0" opacity="0"/>
+  <Color value="0.0" color="0,0,127" opacity="170"/>
+  <Color value="0.2" color="0,0,255" opacity="170"/> <!-- if not specified an opacity defaults to 255 -->
+  <Color value="0.4" color="0,255,255" opacity="170"/>
+  <Color value="0.6" color="0,255,0" opacity="170"/>
+  <Color value="0.8" color="255,255,0" opacity="170"/>
+  <Color value="1.0" color="255,0,0" opacity="170"/>
 </ColorMap>

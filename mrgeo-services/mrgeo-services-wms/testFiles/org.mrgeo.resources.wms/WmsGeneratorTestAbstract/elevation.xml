@@ -15,7 +15,6 @@
 <ColorMap name="elevation">
   <!-- An elevation theme color scale intended for small scale maps -->
   <Scaling>MinMax</Scaling>
-  <ReliefShading>0</ReliefShading>
   <Interpolate>1</Interpolate>
   <!--  null values will be transparent  -->
   <NullColor color="0,0,0" opacity="0"/>

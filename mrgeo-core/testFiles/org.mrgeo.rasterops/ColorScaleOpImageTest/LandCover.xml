@@ -15,7 +15,6 @@
 
 <ColorMap name="Land Cover">
   <Scaling>Absolute</Scaling>
-  <ReliefShading>0</ReliefShading>
   <Interpolate>1</Interpolate>
   <ForceValuesIntoRange>1</ForceValuesIntoRange>
   <!-- null values will be transparent -->

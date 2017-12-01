@@ -1,0 +1,33 @@
+<!--
+     ~ Copyright 2009-2017. DigitalGlobe, Inc.
+     ~
+     ~  Licensed under the Apache License, Version 2.0 (the "License");
+     ~  you may not use this file except in compliance with the License.
+     ~  You may obtain a copy of the License at
+     ~
+     ~  http://www.apache.org/licenses/LICENSE-2.0
+     ~
+     ~ Unless required by applicable law or agreed to in writing, software
+     ~ distributed under the License is distributed on an "AS IS" BASIS,
+     ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     ~ See the License for the specific language governing permissions and limitations under the License.
+-->
+<ColorMap name="aspect-deg">
+  <Scaling>MinMax</Scaling>
+  <!-- Could also be Absolute -->
+  <ReliefShading>0</ReliefShading>
+  <Interpolate>1</Interpolate>
+  <!--
+       <ForceValuesIntoRange>1</ForceValuesIntoRange>
+  -->
+  <NullColor color="#000000" value="-1" opacity="0" />
+  <Color color="#e31a1c" value="0.0" opacity="255" />
+  <Color color="#eeee00" value="0.125" opacity="255" />
+  <Color color="#d3ec95" value="0.25" opacity="255" />
+  <Color color="#60b855" value="0.375" opacity="255" />
+  <Color color="#6dd2db" value="0.5" opacity="255" />
+  <Color color="#1f78b4" value="0.675" opacity="255" />
+  <Color color="#00538a" value="0.75" opacity="255" />
+  <Color color="#e435ff" value="0.875" opacity="255" />
+  <Color color="#e31a1c" value="1.0" opacity="255" />
+</ColorMap>

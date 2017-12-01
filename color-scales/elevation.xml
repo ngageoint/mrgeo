@@ -1,34 +1,29 @@
 <!--
-  ~ Copyright 2009-2017. DigitalGlobe, Inc.
-  ~
-  ~  Licensed under the Apache License, Version 2.0 (the "License");
-  ~  you may not use this file except in compliance with the License.
-  ~  You may obtain a copy of the License at
-  ~
-  ~  http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and limitations under the License.
-  -->
+     ~ Copyright 2009-2017. DigitalGlobe, Inc.
+     ~
+     ~  Licensed under the Apache License, Version 2.0 (the "License");
+     ~  you may not use this file except in compliance with the License.
+     ~  You may obtain a copy of the License at
+     ~
+     ~  http://www.apache.org/licenses/LICENSE-2.0
+     ~
+     ~ Unless required by applicable law or agreed to in writing, software
+     ~ distributed under the License is distributed on an "AS IS" BASIS,
+     ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     ~ See the License for the specific language governing permissions and limitations under the License.
+-->
 <ColorMap name="elevation">
-  <!-- An elevation theme color scale intended for small scale maps -->
+  <Title>Elevation</Title>
+  <Description>Colorscale intended for elevation datasets.  dark green->light green->yellow->orange->brown->white</Description>
   <Scaling>MinMax</Scaling>
-  <ReliefShading>0</ReliefShading>
-  <Interpolate>1</Interpolate>
-  <!--  null values will be transparent  -->
-  <NullColor color="0,0,0" opacity="0"/>
-  <!--  Dark Green  -->
-  <Color value="0.0" color="45,89,0"/>
-  <!--  Light Green  -->
-  <Color value="0.1" color="119,190,119"/>
-  <!--  Yellow  -->
-  <Color value="0.25" color="253,253,150"/>
-  <!--  Orangish  -->
-  <Color value="0.3" color="255,179,71"/>
-  <!--  Brown  -->
-  <Color value="0.55" color="130,105,83"/>
-  <!--  White  -->
-  <Color value="0.7" color="255,255,255"/>
+  <Interpolate>yes</Interpolate>
+  <NoData color="0,0,0" opacity="0" />
+  <Color value="0.00" color="45,89,0" />
+  <Color value="0.10" color="119,190,119" />
+  <Color value="0.25" color="253,253,150" />
+  <Color value="0.30" color="255,179,71" />
+  <Color value="0.40" color="255,145,76" />
+  <Color value="0.55" color="130,105,83" />
+  <Color value="0.95" color="193,193,193" />
+  <Color value="1.00" color="255,255,255" />
 </ColorMap>

@@ -94,6 +94,6 @@ void setupExtrema(ColorScale colorScale, double[] extrema, double defaultValue, 
     colorScale.setScaleRangeWithQuantiles(extrema[0], extrema[1], quantiles);
   }
 
-  colorScale.setTransparent(defaultValue);
+  colorScale.setTransparentValue(defaultValue);
 }
 }

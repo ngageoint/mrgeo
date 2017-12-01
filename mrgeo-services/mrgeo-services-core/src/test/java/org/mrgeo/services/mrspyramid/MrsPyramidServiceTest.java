@@ -476,7 +476,6 @@ private ColorScale createRainbowColorScale() throws ColorScaleException
 {
   String colorScaleXml = "<ColorMap name=\"Rainbow\">\n" +
       "  <Scaling>MinMax</Scaling> <!-- Could also be Absolute -->\n" +
-      "  <ReliefShading>0</ReliefShading>\n" +
       "  <Interpolate>1</Interpolate>\n" +
       "  <NullColor color=\"0,0,0\" opacity=\"0\"/>\n" +
       "  <Color value=\"0.0\" color=\"0,0,127\" opacity=\"255\"/>\n" +
