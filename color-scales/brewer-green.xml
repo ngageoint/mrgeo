@@ -1,0 +1,32 @@
+<!--
+     ~ Copyright 2009-2017. DigitalGlobe, Inc.
+     ~
+     ~  Licensed under the Apache License, Version 2.0 (the "License");
+     ~  you may not use this file except in compliance with the License.
+     ~  You may obtain a copy of the License at
+     ~
+     ~  http://www.apache.org/licenses/LICENSE-2.0
+     ~
+     ~ Unless required by applicable law or agreed to in writing, software
+     ~ distributed under the License is distributed on an "AS IS" BASIS,
+     ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     ~ See the License for the specific language governing permissions and limitations under the License.
+-->
+<ColorMap name="brewer-green">
+  <Title>Brewer Green</Title>
+  <Description>9-class sequential green, Map colors based on www.ColorBrewer.org, by Cynthia A. Brewer, Penn State</Description>
+  <Scaling>MinMax</Scaling>
+  <Interpolate>yes</Interpolate>
+  <NoData color="0,0,0" opacity="0" />
+  <Color value="0.0" color="255,255,255" />
+  <Color value="0.1" color="247,252,253" />
+  <Color value="0.2" color="229,245,249" />
+  <Color value="0.3" color="204,236,230" />
+  <Color value="0.4" color="153,216,201" />
+  <Color value="0.5" color="102,194,164" />
+  <Color value="0.6" color="65,174,118" />
+  <Color value="0.7" color="35,139,69" />
+  <Color value="0.8" color="0,109,44" />
+  <Color value="0.9" color="0,68,27" />
+  <Color value="1.0" color="0,0,0" />
+</ColorMap>

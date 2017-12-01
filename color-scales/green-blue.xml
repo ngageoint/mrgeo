@@ -1,32 +1,23 @@
 <!--
-  ~ Copyright 2009-2017. DigitalGlobe, Inc.
-  ~
-  ~  Licensed under the Apache License, Version 2.0 (the "License");
-  ~  you may not use this file except in compliance with the License.
-  ~  You may obtain a copy of the License at
-  ~
-  ~  http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and limitations under the License.
-  -->
-
+     ~ Copyright 2009-2017. DigitalGlobe, Inc.
+     ~
+     ~  Licensed under the Apache License, Version 2.0 (the "License");
+     ~  you may not use this file except in compliance with the License.
+     ~  You may obtain a copy of the License at
+     ~
+     ~  http://www.apache.org/licenses/LICENSE-2.0
+     ~
+     ~ Unless required by applicable law or agreed to in writing, software
+     ~ distributed under the License is distributed on an "AS IS" BASIS,
+     ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     ~ See the License for the specific language governing permissions and limitations under the License.
+-->
 <ColorMap name="green-blue">
-  <Scaling>Quantile</Scaling>
-  <ReliefShading>0</ReliefShading>
-  <Interpolate>1</Interpolate>
-<!--
-  <ForceValuesIntoRange>1</ForceValuesIntoRange>
--->
-<!--
-  <NullColor color="0,0,0" value="-9999" opacity="0"/>
--->
-  <!--
-    With Quantile coloring, the values are only used to order
-    the colors. They do not correspond to actual data values.
-  -->
-  <Color color="#eaffea" value="1.0" opacity="255"/>
-  <Color color="#0066cc" value="2.0" opacity="255"/>
+  <Title>Green Blue</Title>
+  <Description>Green to Blue</Description>
+  <Scaling>MinMax</Scaling>
+  <Interpolate>yes</Interpolate>
+  <NoData color="0,0,0" opacity="0" />
+  <Color color="#eaffea" value="0.0" opacity="255" />
+  <Color color="#0066cc" value="1.0" opacity="255" />
 </ColorMap>

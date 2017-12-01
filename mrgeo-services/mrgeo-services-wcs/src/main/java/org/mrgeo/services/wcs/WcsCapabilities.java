@@ -123,7 +123,7 @@ private void generate110(Document doc, Version version, String requestUrl, MrsIm
   wmc.setAttribute("xmlns:ows", "http://www.opengis.net/ows/" + version.getMajor() + "." + version.getMinor());
   wmc.setAttribute("xmlns:gml", "http://www.opengis.net/gml");
   //wmc.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
-  //wmc.setAttribute("xsi:schemaLocation", "???");
+  //wmc.setAttribute("xsi:schemaLocation", "???");.
 
   Element service = XmlUtils.createElement(wmc, "ows:ServiceIdentification");
   XmlUtils.createTextElement2(service, "ows:Title", "MrGeo Web Coverage Service");
