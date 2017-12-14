@@ -81,6 +81,7 @@ public static final String MRGEO_MAXCORES = "max.cores";
  */
 public static final String MRGEO_JAR = "jar.path";
 public static final String GDAL_PATH = "gdal.path";
+public static final String SQLITE_NATIVE_PATH = "sqlite.native.path";
 
 public static final String DEPENDENCY_CLASSPATH = "dependency.classpath";
 
@@ -114,6 +115,11 @@ public static final String MRGEO_WCS_CAPABILITIES_REFRESH = "wcs.capabilities.re
  * Postgres keys
  */
 public static final String MRGEO_POSTGRES_PARTITION_RECORDS = "mrgeo.postgres.partition.records";
+
+/*
+ * Mb Tiles keys
+ */
+public static final String MRGEO_MBTILES_PARTITION_RECORDS = "mrgeo.mbtiles.partition.records";
 
 /**
  * The default constructor for the class is private.  Additionally,

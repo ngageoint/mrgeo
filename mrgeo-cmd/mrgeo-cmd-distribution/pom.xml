@@ -244,6 +244,15 @@
         </dependency>
       </dependencies>
     </profile>
+    <profile>
+      <id>include-mbvectortiles</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.mrgeo</groupId>
+          <artifactId>mrgeo-dataprovider-mbvectortiles</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
     <!-- for some reason, this is missing in intellij, so I'll manually add it -->
     <profile>
       <id>intellij</id>

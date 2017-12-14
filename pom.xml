@@ -68,6 +68,8 @@
     <jts.version>1.13</jts.version>
     <kryo.version>2.21</kryo.version>
     <log4j.version>1.2.17</log4j.version>
+    <mapbox.vector.tile.version>2.0.0</mapbox.vector.tile.version>
+    <mapbox.vector.tile.scope>compile</mapbox.vector.tile.scope>
     <opencv.version>2.4.9-7</opencv.version>
     <opencv.group>nu.pattern</opencv.group>
     <pngj.version>2.0.1</pngj.version>
@@ -80,6 +82,8 @@
     <spark.version>2.2.0</spark.version>
     <spark.scala.version>2.11</spark.scala.version>
     <spark.scope>provided</spark.scope>
+    <sqlite4java.version>1.0.392</sqlite4java.version>
+    <sqlite4java.scope>compile</sqlite4java.scope>
     <xerces.version>2.9.1</xerces.version>
     <xml-apis.version>1.3.04</xml-apis.version>
     <xtiff-jai.version>beta-0.3</xtiff-jai.version>
@@ -685,6 +689,11 @@
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
+          <artifactId>build-helper-maven-plugin</artifactId>
+          <version>3.0.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
           <artifactId>sonar-maven-plugin</artifactId>
           <version>${sonar-maven-plugin.version}</version>
         </plugin>
@@ -702,6 +711,11 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-help-plugin</artifactId>
           <version>${maven-help.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.xolstice.maven.plugins</groupId>
+          <artifactId>protobuf-maven-plugin</artifactId>
+          <version>0.5.1</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -1738,6 +1752,20 @@
     <dependencies>
       <!-- mrgeo dependencies.  Here for consistancy between projects! -->
       <dependency>
+        <groupId>com.almworks.sqlite4java</groupId>
+        <artifactId>libsqlite4java-linux-amd64</artifactId>
+        <version>${sqlite4java.version}</version>
+        <scope>${sqlite4java.scope}</scope>
+        <type>so</type>
+      </dependency>
+      <dependency>
+        <groupId>com.almworks.sqlite4java</groupId>
+        <artifactId>sqlite4java</artifactId>
+        <version>${sqlite4java.version}</version>
+        <scope>${sqlite4java.scope}</scope>
+        <type>jar</type>
+      </dependency>
+      <dependency>
         <groupId>com.amazonaws</groupId>
         <artifactId>aws-java-sdk-s3</artifactId>
         <version>${aws.s3.version}</version>
@@ -1748,6 +1776,12 @@
         <artifactId>aws-java-sdk</artifactId>
         <version>${aws.version}</version>
         <scope>${aws.scope}</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.wdtinc</groupId>
+        <artifactId>mapbox-vector-tile</artifactId>
+        <version>${mapbox.vector.tile.version}</version>
+        <scope>${mapbox.vector.tile.scope}</scope>
       </dependency>
       <dependency>
         <groupId>org.mrgeo</groupId>
@@ -1831,6 +1865,11 @@
       <dependency>
         <groupId>org.mrgeo</groupId>
         <artifactId>mrgeo-dataprovider-geowave</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mrgeo</groupId>
+        <artifactId>mrgeo-dataprovider-mbvectortiles</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
