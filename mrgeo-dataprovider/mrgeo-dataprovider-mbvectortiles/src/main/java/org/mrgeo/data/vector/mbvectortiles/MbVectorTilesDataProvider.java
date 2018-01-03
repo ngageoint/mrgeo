@@ -19,15 +19,22 @@ import com.almworks.sqlite4java.SQLiteConnection;
 import com.almworks.sqlite4java.SQLiteException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.LocalFileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.mrgeo.data.ProviderProperties;
 import org.mrgeo.data.vector.*;
 import org.mrgeo.geometry.Geometry;
+import org.mrgeo.hdfs.utils.HadoopFileUtils;
+import org.mrgeo.hdfs.vector.HdfsVectorDataProvider;
+import org.mrgeo.utils.FileUtils;
 import org.mrgeo.utils.tms.Bounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,14 +43,18 @@ public class MbVectorTilesDataProvider extends VectorDataProvider
 {
   static Logger log = LoggerFactory.getLogger(MbVectorTilesDataProvider.class);
 
-  protected static boolean canOpen(
+  private static Map<String, String> localCopies = new HashMap<String, String>();
+
+  private Configuration conf;
+
+  protected static boolean canOpen(Configuration conf,
           String input,
           ProviderProperties providerProperties) throws IOException
   {
-    MbVectorTilesSettings dbSettings = parseResourceName(input);
+    MbVectorTilesSettings dbSettings = parseResourceName(input, conf, providerProperties);
     SQLiteConnection conn = null;
     try {
-      conn = getDbConnection(dbSettings);
+      conn = getDbConnection(dbSettings, conf);
       return true;
     }
     catch(IOException e) {
@@ -58,23 +69,40 @@ public class MbVectorTilesDataProvider extends VectorDataProvider
   }
 
   @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "File must be specified by the user")
-  static SQLiteConnection getDbConnection(MbVectorTilesSettings dbSettings) throws IOException
+  static SQLiteConnection getDbConnection(MbVectorTilesSettings dbSettings,
+                                          Configuration conf) throws IOException
   {
-    // TODO: Download the file to a local directory if it is remote. See
-    // HadoopFileUtils for how we handle SequenceFile and MapFile. We should
-    // do something similar for these files. Keep in mind that we will also
-    // need to be able to copy files from HDFS in addition to S3 because the
-    // SQLite DB has to be on the file system.
     String filename = dbSettings.getFilename();
-    java.io.File dbFile = new java.io.File(filename);
-    if (!dbFile.exists()) {
-      throw new IOException("The MB tiles file must be in the file system: " + filename);
+    Path filepath = new Path(filename);
+    FileSystem fs = HadoopFileUtils.getFileSystem(conf, filepath);
+
+    File dbFile = null;
+    if (fs instanceof LocalFileSystem) {
+      dbFile = new File(filepath.toUri().getPath());
     }
+    else {
+      String localName = localCopies.get(filename);
+      if (localName == null) {
+        dbFile = new File(FileUtils.createUniqueTmpDir(), new File(filename).getName());
+        Path localFilePath = new Path("file://" + dbFile.getAbsolutePath());
+        log.info("Attempting to copy MB tiles file " + filename +
+                " to the local machine at " + dbFile.getAbsolutePath());
+        fs.copyToLocalFile(false, filepath, localFilePath, true);
+        dbFile.deleteOnExit();
+        localCopies.put(filename, dbFile.getAbsolutePath());
+      }
+      else {
+        log.info("Using a copy of " + filename +
+                " already transferred to the local machine at " + localName);
+        dbFile = new File(localName);
+      }
+    }
+
     try {
       return new SQLiteConnection(dbFile).open(false);
     }
     catch(SQLiteException e) {
-      throw new IOException("Unable to open MB tiles file: " + filename, e);
+      throw new IOException("Unable to open MB tiles file: " + dbFile.getAbsolutePath(), e);
     }
   }
 
@@ -83,30 +111,38 @@ public class MbVectorTilesDataProvider extends VectorDataProvider
                                    ProviderProperties providerProperties)
   {
     super(inputPrefix, input, providerProperties);
+    this.conf = conf;
   }
 
   @Override
   public VectorMetadataReader getMetadataReader()
   {
-    return new MbVectorTilesMetadataReader(this);
+    // Not yet implemented. The metadata for mb tiles vector features
+    // is potentially different for every feature. So it doesn't make
+    // sense to provide metadata here.
+    return null;
   }
 
   @Override
   public VectorMetadataWriter getMetadataWriter()
   {
-    // Not yet implemented
+    // Not yet implemented. The metadata for mb tiles vector features
+    // is potentially different for every feature. So it doesn't make
+    // sense to write metadata here.
     return null;
   }
 
   @Override
   public VectorReader getVectorReader() throws IOException
   {
+    // Not yet implemented
     return null;
   }
 
   @Override
   public VectorReader getVectorReader(VectorReaderContext context) throws IOException
   {
+    // Not yet implemented
     return null;
   }
 
@@ -120,7 +156,7 @@ public class MbVectorTilesDataProvider extends VectorDataProvider
   @Override
   public RecordReader<FeatureIdWritable, Geometry> getRecordReader() throws IOException
   {
-    MbVectorTilesSettings results = parseResourceName(getResourceName());
+    MbVectorTilesSettings results = parseResourceName(getResourceName(), conf, getProviderProperties());
     return new MbVectorTilesRecordReader(results);
   }
 
@@ -134,7 +170,7 @@ public class MbVectorTilesDataProvider extends VectorDataProvider
   @Override
   public VectorInputFormatProvider getVectorInputFormatProvider(VectorInputFormatContext context) throws IOException
   {
-    MbVectorTilesSettings results = parseResourceName(getResourceName());
+    MbVectorTilesSettings results = parseResourceName(getResourceName(), conf, getProviderProperties());
     return new MbVectorTilesInputFormatProvider(context, this, results);
   }
 
@@ -159,7 +195,7 @@ public class MbVectorTilesDataProvider extends VectorDataProvider
 
   MbVectorTilesSettings parseResourceName() throws IOException
   {
-    return parseResourceName(getResourceName());
+    return parseResourceName(getResourceName(), conf, getProviderProperties());
   }
 
   /**
@@ -170,13 +206,17 @@ public class MbVectorTilesDataProvider extends VectorDataProvider
    *
    * @param input
    */
-  private static MbVectorTilesSettings parseResourceName(String input) throws IOException
+  private static MbVectorTilesSettings parseResourceName(String input,
+                                                         Configuration conf,
+                                                         ProviderProperties providerProperties) throws IOException
   {
     Map<String, String> settings = new HashMap<String, String>();
     parseDataSourceSettings(input, settings);
     String filename;
     if (settings.containsKey("filename")) {
-      filename = settings.get("filename");
+      filename = HdfsVectorDataProvider.resolveNameToPath(conf,
+              settings.get("filename"),
+              providerProperties, false).toString();
     }
     else {
       throw new IOException("Missing expected filename setting");

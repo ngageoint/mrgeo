@@ -18,12 +18,9 @@ package org.mrgeo.data.vector.mbvectortiles;
 import com.almworks.sqlite4java.SQLiteConnection;
 import com.almworks.sqlite4java.SQLiteException;
 import com.almworks.sqlite4java.SQLiteStatement;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.*;
 import org.mrgeo.data.vector.FeatureIdWritable;
-import org.mrgeo.data.vector.VectorInputFormat;
 import org.mrgeo.geometry.Geometry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,10 +29,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MbVectorTilesInputFormat extends VectorInputFormat
+public class MbVectorTilesInputFormat extends InputFormat<FeatureIdWritable, Geometry>
 {
   private static Logger log = LoggerFactory.getLogger(MbVectorTilesInputFormat.class);
   private MbVectorTilesSettings dbSettings;
+  private int zoomLevel = -1;
 
   public MbVectorTilesInputFormat(MbVectorTilesSettings dbSettings)
   {
@@ -45,19 +43,22 @@ public class MbVectorTilesInputFormat extends VectorInputFormat
   @Override
   public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException
   {
-    // TODO: Download the sqlite file if it's not local
-    int zoomLevel = dbSettings.getZoom();
+    zoomLevel = dbSettings.getZoom();
     if (zoomLevel < 0) {
       // Get the max zoom from the tile data
       SQLiteConnection conn = null;
       try {
-        conn = MbVectorTilesDataProvider.getDbConnection(dbSettings);
+        conn = MbVectorTilesDataProvider.getDbConnection(dbSettings,
+                context.getConfiguration());
         String query = "SELECT MAX(zoom_level) FROM tiles";
         SQLiteStatement stmt = null;
         try {
           stmt = conn.prepare(query, false);
           if (stmt.step()) {
             zoomLevel = stmt.columnInt(0);
+          }
+          else {
+            throw new IOException("Unable to get the max zoom level of " + dbSettings.getFilename());
           }
         }
         finally {
@@ -75,9 +76,12 @@ public class MbVectorTilesInputFormat extends VectorInputFormat
         }
       }
     }
-    long recordCount = getRecordCount(zoomLevel);
+    long recordCount = getRecordCount(context.getConfiguration());
     long recordsPerPartition = dbSettings.getTilesPerPartition();
-    long numPartitions = recordCount / recordsPerPartition + 1;
+    long numPartitions = recordCount / recordsPerPartition;
+    if (numPartitions * recordsPerPartition < recordCount) {
+      numPartitions += 1;
+    }
     List<InputSplit> splits = new ArrayList<InputSplit>();
     for (int i=0; i < numPartitions; i++) {
       MbVectorTilesInputSplit split = new MbVectorTilesInputSplit(i * recordsPerPartition, recordsPerPartition, zoomLevel);
@@ -87,18 +91,21 @@ public class MbVectorTilesInputFormat extends VectorInputFormat
   }
 
   @Override
-  public RecordReader<FeatureIdWritable, Geometry> createRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
-    return super.createRecordReader(split, context);
+  public RecordReader<FeatureIdWritable, Geometry> createRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException
+  {
+    MbVectorTilesRecordReader reader = new MbVectorTilesRecordReader(dbSettings);
+    reader.initialize(split, context);
+    return reader;
   }
 
 //  @SuppressFBWarnings(value = {"SQL_INJECTION_JDBC", "SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING"}, justification = "User supplied queries are a requirement")
-  protected long getRecordCount(int zoomLevel) throws IOException
+  protected long getRecordCount(Configuration conf) throws IOException
   {
     String countQuery = "SELECT COUNT(*) FROM tiles WHERE zoom_level=?";
     // Run the count query and grab the result.
     SQLiteConnection conn = null;
     try {
-      conn = MbVectorTilesDataProvider.getDbConnection(dbSettings);
+      conn = MbVectorTilesDataProvider.getDbConnection(dbSettings, conf);
       SQLiteStatement stmt = null;
       try {
         stmt = conn.prepare(countQuery, false);

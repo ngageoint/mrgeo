@@ -71,7 +71,8 @@ public class MbVectorTilesRecordReader extends RecordReader<FeatureIdWritable, G
     currIndex = (offset < 0) ? 0 : offset - 1;
     try
     {
-      conn = MbVectorTilesDataProvider.getDbConnection(dbSettings);
+      conn = MbVectorTilesDataProvider.getDbConnection(dbSettings,
+              context.getConfiguration());
       // If the offset is < 0, then there is only one partition, so no need
       // for a limit query.
       String query ="SELECT tile_column, tile_row, tile_data FROM tiles WHERE zoom_level=? order by zoom_level, tile_column, tile_row";
@@ -372,6 +373,7 @@ public class MbVectorTilesRecordReader extends RecordReader<FeatureIdWritable, G
             tags.put(tagKey, value);
           }
         }
+        isKey = !isKey;
       }
     }
     if (geom != null) {

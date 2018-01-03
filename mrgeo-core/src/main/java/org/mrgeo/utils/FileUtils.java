@@ -32,12 +32,9 @@ private static final Logger log = LoggerFactory.getLogger(FileUtils.class);
 
 public static File createUniqueTmpDir() throws IOException
 {
-  File baseDir = new File(System.getProperty("java.io.tmpdir"));
-
-  String username = "mrgeo-" + System.getProperty("user.name");
-  String baseName = "-" + System.currentTimeMillis();
-
-  File tempDir = new File(baseDir, username + "/" + baseName);
+  File tmpUserDir = createTmpUserDir();
+  String baseName = "" + System.currentTimeMillis();
+  File tempDir = new File(tmpUserDir, baseName);
 
   return createDisposibleDirectory(tempDir);
 }

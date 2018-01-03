@@ -33,21 +33,6 @@ public class MbVectorTilesRecordReaderTest
   private static double POINT_EPSILON = 1e-7;
   private static String input;
 
-  private MbVectorTilesInputFormat getInputFormatForWaterZoom14(int tilesPerPartition)
-  {
-    String[] layers = { "water" };
-    MbVectorTilesSettings dbSettings = new MbVectorTilesSettings(
-            "/home/dave.johnson/Downloads/2017-07-03_new-zealand_wellington.mbtiles",
-            layers,
-            6,
-            tilesPerPartition,
-            null
-
-    );
-    MbVectorTilesInputFormat inputFormat = new MbVectorTilesInputFormat(dbSettings);
-    return inputFormat;
-  }
-
   @BeforeClass
   public static void init()
   {
