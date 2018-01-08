@@ -60,6 +60,7 @@ public class MbVectorTilesInputSplit extends InputSplit implements Writable
   {
     out.writeLong(offset);
     out.writeLong(limit);
+    out.writeInt(zoomLevel);
   }
 
   @Override
@@ -67,5 +68,6 @@ public class MbVectorTilesInputSplit extends InputSplit implements Writable
   {
     offset = in.readLong();
     limit = in.readLong();
+    zoomLevel = in.readInt();
   }
 }

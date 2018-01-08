@@ -286,6 +286,9 @@ public class MbVectorTilesRecordReader extends RecordReader<FeatureIdWritable, G
 //          System.out.println("py = " + cursory);
           ndx++;
 
+          if (!points.isEmpty()) {
+            geometries.add(points);
+          }
           points = new ArrayList<Point>();
           Point pt = computePoint(tilex, tiley, extent, cursorx, cursory);
           points.add(pt);
@@ -327,9 +330,20 @@ public class MbVectorTilesRecordReader extends RecordReader<FeatureIdWritable, G
       }
     }
     else if (feature.getType() == VectorTile.Tile.GeomType.LINESTRING) {
-      WritableLineString lineString = GeometryFactory.createLineString();
-      geom = lineString;
-      lineString.setPoints(geometries.get(0));
+      if (geometries.size() > 1) {
+        WritableGeometryCollection geoms = GeometryFactory.createGeometryCollection();
+        geom = geoms;
+        for (List<Point> g: geometries) {
+          WritableLineString lineString = GeometryFactory.createLineString();
+          lineString.setPoints(g);
+          geoms.addGeometry(lineString);
+        }
+      }
+      else {
+        WritableLineString lineString = GeometryFactory.createLineString();
+        geom = lineString;
+        lineString.setPoints(geometries.get(0));
+      }
     }
     else if (feature.getType() == VectorTile.Tile.GeomType.POINT) {
       Point p = geometries.get(0).get(0);

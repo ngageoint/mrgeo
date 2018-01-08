@@ -245,7 +245,7 @@ public class MbVectorTilesDataProvider extends VectorDataProvider
       }
     }
 
-    int recordsPerPartition = -1;
+    int recordsPerPartition = 10000;
     if (settings.containsKey("partition_size")) {
       try {
         String strPartitionSize = settings.get("partition_size");
