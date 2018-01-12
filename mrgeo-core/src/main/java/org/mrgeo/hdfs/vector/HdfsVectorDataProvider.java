@@ -207,7 +207,7 @@ private static Path resolveName(Configuration conf, String input,
 
 @SuppressWarnings("squid:S1166") // Exception caught and handled
 @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "method only makes complete URI out of the name")
-private static Path resolveNameToPath(Configuration conf, String input,
+public static Path resolveNameToPath(Configuration conf, String input,
     ProviderProperties providerProperties, boolean mustExist) throws IOException
 {
   if (input.indexOf('/') >= 0)

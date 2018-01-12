@@ -53,4 +53,7 @@
   <Match>
     <Bug pattern="NM_CONFUSING"/>
   </Match>
+  <Match>
+    <Package name="org.mrgeo.mapbox.vector.tile"/>
+  </Match>
 </FindBugsFilter>

@@ -17,6 +17,7 @@ package org.mrgeo.mapalgebra.binarymath
 
 import java.awt.image.DataBuffer
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 import org.mrgeo.mapalgebra.parser.{ParserException, ParserNode}
 import org.mrgeo.mapalgebra.raster.RasterMapOp
 import org.mrgeo.mapalgebra.{MapOp, MapOpRegistrar}
@@ -62,13 +63,14 @@ class XOrMapOp extends RawBinaryMathMapOp {
     initialize(node, variables)
   }
 
+  @SuppressFBWarnings(value = Array("UCF_USELESS_CONTROL_FLOW_NEXT_LINE"), justification = "False positive")
   override private[binarymath] def function(a:Double, b:Double):Double = {
     if ((a < -RasterMapOp.EPSILON || a > RasterMapOp.EPSILON) ==
         (b < -RasterMapOp.EPSILON || b > RasterMapOp.EPSILON)) {
-      0
+      0.0
     }
     else {
-      1
+      1.0
     }
   }
 
