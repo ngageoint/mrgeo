@@ -775,6 +775,28 @@
          | release.arguments - any arguments to use for releases, usually blank
     -->
     <profile>
+      <id>cdh5131</id>
+      <properties>
+        <hadoop.version>2.6.0-cdh5.13.1</hadoop.version>
+        <spark.version>1.6.0-cdh5.13.1</spark.version>
+        <scala.version>2.10.4</scala.version>
+        <spark.scala.version>2.10</spark.scala.version>
+        <scala.jvm.version>1.7</scala.jvm.version>
+        <final.classifier>cdh5.13.1</final.classifier>
+        <release.arguments />
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>org.glassfish.jersey.containers</groupId>
+          <artifactId>jersey-container-servlet-core</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
       <id>cdh5130</id>
       <properties>
         <hadoop.version>2.6.0-cdh5.13.0</hadoop.version>

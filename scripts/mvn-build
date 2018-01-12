@@ -19,6 +19,7 @@ usage() {
     echo "  apache273 - Apache hadoop, version 2.7.3"
     echo "  apache272 - Apache hadoop, version 2.7.2"
     echo "  apache271 - Apache hadoop, version 2.7.1"
+    echo "  cdh5131   - Cloudera hadoop 5.13.1"
     echo "  cdh5130   - Cloudera hadoop 5.13.0"
     echo "  cdh5121   - Cloudera hadoop 5.12.1"
     echo "  cdh5120   - Cloudera hadoop 5.12.0"
@@ -259,7 +260,7 @@ while [ $# -gt 0 ] ; do
     "cdh5120" | "cdh5121")
         BUILD=$1
         ;;
-    "cdh5130")
+    "cdh5130" | "cdh5131")
         BUILD=$1
         ;;
     "build")
