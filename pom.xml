@@ -1084,6 +1084,43 @@
       </dependencies>
     </profile>
     <profile>
+      <id>emr540</id>
+      <properties>
+        <hadoop.version>2.7.3</hadoop.version>
+        <slf4j.version>1.7.10</slf4j.version>
+        <final.classifier>emr5.4.0</final.classifier>
+        <release.arguments />
+        <gdal.version>2.1.2</gdal.version>
+        <scala.version>2.11.8</scala.version>
+        <spark.version>2.1.0</spark.version>
+        <spark.scala.version>2.11</spark.scala.version>
+        <aws.version>1.10.75</aws.version>
+        <aws.s3.version>1.10.75</aws.s3.version>
+        <aws.scope>provided</aws.scope>
+        <jackson.version>2.6.6</jackson.version>
+        <httpcomponents.version>4.5.2</httpcomponents.version>
+      </properties>
+      <dependencies>
+        <!-- for some reason, this is missing from hadoop -->
+        <dependency>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+          <version>${commons-httpclient.version}</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.httpcomponents</groupId>
+          <artifactId>httpclient</artifactId>
+          <version>${httpcomponents.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk-s3</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
       <id>emr530</id>
       <properties>
         <hadoop.version>2.7.3</hadoop.version>
