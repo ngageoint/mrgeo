@@ -113,8 +113,8 @@ public static void copyFileToHdfs(String fromFile, String toFile,
 {
   Path toPath = new Path(toFile);
   Path fromPath = new Path(fromFile);
-  FileSystem srcFS = getFileSystem(toPath);
-  FileSystem dstFS = getFileSystem(fromPath);
+  FileSystem srcFS = getFileSystem(fromPath);
+  FileSystem dstFS = getFileSystem(toPath);
 
   Configuration conf = HadoopUtils.createConfiguration();
   InputStream in = null;
@@ -125,6 +125,30 @@ public static void copyFileToHdfs(String fromFile, String toFile,
     out = dstFS.create(toPath, overwrite);
 
     IOUtils.copyBytes(in, out, conf, true);
+  }
+  catch (IOException e)
+  {
+    IOUtils.closeStream(out);
+    IOUtils.closeStream(in);
+    throw e;
+  }
+}
+
+public static void copyFileFromHdfs(String fromFile, File toLocalFile) throws IOException
+{
+  Path fromPath = new Path(fromFile);
+  FileSystem srcFS = getFileSystem(fromPath);
+
+  Configuration conf = HadoopUtils.createConfiguration();
+  InputStream in = null;
+  OutputStream out = null;
+  try
+  {
+    in = srcFS.open(fromPath);
+    out = new FileOutputStream(toLocalFile);
+
+    IOUtils.copyBytes(in, out, conf, true);
+    toLocalFile.deleteOnExit();
   }
   catch (IOException e)
   {

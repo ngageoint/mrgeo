@@ -127,7 +127,7 @@ public void delete(String name,
   }
 }
 
-private Path getBasePath(Configuration conf)
+public static Path getBasePath(Configuration conf)
 {
   return HdfsVectorDataProvider.getBasePath(conf);
 }

@@ -1,0 +1,15 @@
+{
+"type": "FeatureCollection",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+                                                                                
+"features": [
+{ "type": "Feature", "properties": { "NAME": "Washington Institute Mouth Facility", "ADDRESS": "2021 K St NW", "webURL": "http:\/\/dchealth.dc.gov\/services\/administration_offices\/hra\/hcfd\/services_ambulatory.shtm", "GIS_ID": "amb_010", "SSL": "0076   0083" }, "geometry": { "type": "Point", "coordinates": [ -77.045801661266665, 38.902853918967104 ] } },
+{ "type": "Feature", "properties": { "NAME": "Hillcrest Women's Surgical", "ADDRESS": "3233 Pennsylvania Ave SE", "webURL": "http:\/\/dchealth.dc.gov\/services\/administration_offices\/hra\/hcfd\/services_ambulatory.shtm", "GIS_ID": "amb_011", "SSL": "PAR 02070082" }, "geometry": { "type": "Point", "coordinates": [ -76.958985488867285, 38.868361872677269 ] } },
+{ "type": "Feature", "properties": { "NAME": "The Endoscopy Center", "ADDRESS": "2021 K St NW", "webURL": "http:\/\/dchealth.dc.gov\/services\/administration_offices\/hra\/hcfd\/services_ambulatory.shtm", "GIS_ID": "amb_012", "SSL": "0076   0083" }, "geometry": { "type": "Point", "coordinates": [ -77.045801661266665, 38.902853918967104 ] } },
+{ "type": "Feature", "properties": { "NAME": "Medlantic Center", "ADDRESS": "1145 19th St NW", "webURL": "http:\/\/dchealth.dc.gov\/services\/administration_offices\/hra\/hcfd\/services_ambulatory.shtm", "GIS_ID": "amb_013", "SSL": "0140   0913" }, "geometry": { "type": "Point", "coordinates": [ -77.042905533566795, 38.90501537490308 ] } },
+{ "type": "Feature", "properties": { "NAME": "Washington Surgical Center", "ADDRESS": "1018 22nd St NW", "webURL": "http:\/\/dchealth.dc.gov\/services\/administration_offices\/hra\/hcfd\/services_ambulatory.shtm", "GIS_ID": "amb_014", "SSL": null }, "geometry": { "type": "Point", "coordinates": [ -77.048981849800342, 38.903304496299882 ] } },
+{ "type": "Feature", "properties": { "NAME": "Hillcrest NW", "ADDRESS": "7603 Georgia Ave NW", "webURL": "http:\/\/dchealth.dc.gov\/services\/administration_offices\/hra\/hcfd\/services_ambulatory.shtm", "GIS_ID": "amb_015", "SSL": "2961   0068" }, "geometry": { "type": "Point", "coordinates": [ -77.026222016610745, 38.981915887076276 ] } },
+{ "type": "Feature", "properties": { "NAME": "Premier Ambulatory Center", "ADDRESS": "6323 Georgia Ave NW", "webURL": "http:\/\/dchealth.dc.gov\/services\/administration_offices\/hra\/hcfd\/services_ambulatory.shtm", "GIS_ID": "amb_016", "SSL": "2978   0040" }, "geometry": { "type": "Point", "coordinates": [ -77.027107080085884, 38.966919100994225 ] } },
+{ "type": "Feature", "properties": { "NAME": "Planned Parenthood", "ADDRESS": "1108 16th St NW", "webURL": "http:\/\/dchealth.dc.gov\/services\/administration_offices\/hra\/hcfd\/services_ambulatory.shtm", "GIS_ID": "amb_017", "SSL": "0183   0111" }, "geometry": { "type": "Point", "coordinates": [ -77.03698118787905, 38.904024020524503 ] } }
+]
+}

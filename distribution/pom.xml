@@ -237,6 +237,15 @@
       </dependencies>
     </profile>
     <profile>
+      <id>include-mbvectortiles</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.mrgeo</groupId>
+          <artifactId>mrgeo-dataprovider-mbvectortiles</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
       <id>include-war</id>
       <modules>
         <module>distribution-war</module>

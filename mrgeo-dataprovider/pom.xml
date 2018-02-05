@@ -48,6 +48,12 @@
         <module>mrgeo-dataprovider-postgis</module>
       </modules>
     </profile>
+    <profile>
+      <id>include-mbvectortiles</id>
+      <modules>
+        <module>mrgeo-dataprovider-mbvectortiles</module>
+      </modules>
+    </profile>
   </profiles>
   <licenses>
     <license>
