@@ -84,7 +84,7 @@
     <spark.scope>provided</spark.scope>
     <sqlite4java.version>1.0.392</sqlite4java.version>
     <sqlite4java.scope>compile</sqlite4java.scope>
-    <xerces.version>2.9.1</xerces.version>
+    <xerces.version>2.12.0</xerces.version>
     <xml-apis.version>1.3.04</xml-apis.version>
     <xtiff-jai.version>beta-0.3</xtiff-jai.version>
     <!-- services -->
