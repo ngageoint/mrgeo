@@ -42,7 +42,7 @@
     <commons-codec.version>1.4</commons-codec.version>
     <commons-collections.version>3.2.2</commons-collections.version>
     <commons-httpclient.version>3.1</commons-httpclient.version>
-    <commons-io.version>2.4</commons-io.version>
+    <commons-io.version>2.7</commons-io.version>
     <commons-jexl.version>2.1.1</commons-jexl.version>
     <commons-lang.version>3.3.1</commons-lang.version>
     <geotiff-jai.version>0.0</geotiff-jai.version>
