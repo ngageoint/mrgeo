@@ -55,7 +55,7 @@
     <hadoop.aws.version>2.7.1</hadoop.aws.version>
     <hadoop.yarn.version>${hadoop.version}</hadoop.yarn.version>
     <hppc.version>0.5.2</hppc.version>
-    <httpcomponents.version>4.3.4</httpcomponents.version>
+    <httpcomponents.version>4.5.13</httpcomponents.version>
     <imageio.version>1.1.7</imageio.version>
     <jackson.version>2.10.0</jackson.version>
     <jai-imageio.version>1.1</jai-imageio.version>
