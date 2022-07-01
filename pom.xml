@@ -50,7 +50,7 @@
     <geotools.version>12.1</geotools.version>
     <geowave.version>0.9.1</geowave.version>
     <guava.version>14.0.1</guava.version>
-    <hadoop.version>2.5.0-cdh5.3.0</hadoop.version>
+    <hadoop.version>2.7.0</hadoop.version>
     <hadoop.scope>provided</hadoop.scope>
     <hadoop.aws.version>2.7.1</hadoop.aws.version>
     <hadoop.yarn.version>${hadoop.version}</hadoop.yarn.version>
