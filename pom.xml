@@ -37,7 +37,7 @@
     <axiom.version>1.2.9</axiom.version>
     <aws.scope>compile</aws.scope>
     <aws.version>1.10.6</aws.version>
-    <aws.s3.version>1.10.6</aws.s3.version>
+    <aws.s3.version>1.12.261</aws.s3.version>
     <classutil.version>1.0.5</classutil.version>
     <commons-codec.version>1.4</commons-codec.version>
     <commons-collections.version>3.2.2</commons-collections.version>
