@@ -74,7 +74,7 @@
     <opencv.group>nu.pattern</opencv.group>
     <pngj.version>2.0.1</pngj.version>
     <postgresql.version>42.1.1.jre7</postgresql.version>
-    <protobuf.version>2.5.0</protobuf.version>
+    <protobuf.version>3.16.3</protobuf.version>
     <py4j.version>0.10.3</py4j.version>
     <reflections.version>0.9.9-RC1</reflections.version>
     <servlet-api.version>3.1.0</servlet-api.version>
